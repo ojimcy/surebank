@@ -1,0 +1,37 @@
+$datetime-width:                      19rem !default;
+$datetime-zindex:                     9999 !default;
+$datetime-padding-y:                  .5rem !default;
+$datetime-padding-x:                  $datetime-padding-y !default;
+$datetime-bg:                         $bg-level-1 !default;
+$datetime-border-radius:              $border-radius !default;
+$datetime-border-width:               $border-width !default;
+$datetime-border-color:               $border-color !default;
+
+$datetime-cell-dimension:             2.5rem !default;
+$datetime-cell-border-radius:         $border-radius !default;
+$datetime-cell-hover-bg:              $component-hover-bg !default;
+$datetime-cell-hover-color:           $component-hover-color !default;
+$datetime-cell-today-bg:              rgba($primary, .1) !default;
+$datetime-cell-today-color:           $primary !default;
+$datetime-cell-off-color:             $gray-400 !default;
+$datetime-cell-disabled-bg:           transparent !default;
+$datetime-cell-disabled-color:        $bg-level-4 !default;
+$datetime-cell-active-bg:             $component-active-bg !default;
+$datetime-cell-active-color:          $component-active-color !default;
+
+$datetime-block-height:               4rem !default;
+$datetime-block-hover-bg:             $datetime-cell-hover-bg !default;
+$datetime-block-hover-color:          $datetime-cell-hover-color !default;
+
+$datetime-arrow-dimension:            .55rem !default;
+$datetime-arrow-width:                2px !default;
+$datetime-arrow-border-radius:        .1rem !default;
+$datetime-arrow-transition:           $transition-base !default;
+
+$datetime-counter-width:              4rem !default;
+$datetime-counter-height:             10rem !default;
+$datetime-counter-btn-height:         35% !default;
+$datetime-counter-font-size:          $font-size-lg !default;
+$datetime-counter-border-radius:      $border-radius !default;
+$datetime-counter-hover-bg:           $datetime-cell-hover-bg !default;
+$datetime-counter-hover-color:        $datetime-cell-hover-color !default;

@@ -1,0 +1,52 @@
+.preload {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $preload-bg;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  z-index: $zindex-preload;
+}
+
+.preload-dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.preload-spinner {
+  width: $preload-spinner-dimension !important;
+  height: $preload-spinner-dimension !important;
+}
+
+.preload-message {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: $preload-message-padding-y $preload-message-padding-x;
+  border: $preload-message-border-width solid $preload-message-border-color;
+  @include border-radius($preload-message-border-radius);
+
+  > [class*="spinner"] {
+    margin-right: $preload-message-spinner-spacer;
+  }
+}
+
+.preload-text {
+  color: $preload-message-text-color;
+  @include font-size($preload-message-text-font-size);
+  font-weight: $preload-message-text-font-weight;
+}
+// Hide body scrollbar
+body.preload-active:not(.preload-hide) {
+  overflow: hidden;
+}
+// Hide preload
+body.preload-hide {
+  .preload {
+    display: none;
+  }
+}

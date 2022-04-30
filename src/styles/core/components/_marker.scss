@@ -1,0 +1,28 @@
+// Base styles
+
+.marker {
+  display: inline-block;
+  color: $marker-color;
+  margin: 0 $marker-spacer;
+  @include marker-sizing($marker-base-dimension);
+
+  // Box shadow property is used for marker outline
+  box-shadow: 0 0 0 $marker-outline-width $marker-outline-color;
+}
+// Marker variations
+.marker-dot {
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.marker-pill {
+  background: currentColor;
+}
+
+.marker-circle {
+  border-radius: 50%;
+  background: $marker-circle-bg;
+}
+// Sizing
+.marker-lg { @include marker-sizing($marker-base-dimension-lg); }
+.marker-sm { @include marker-sizing($marker-base-dimension-sm); }

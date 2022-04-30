@@ -1,0 +1,177 @@
+// Base styles
+
+.portlet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  margin-bottom: $portlet-spacer;
+  background: $portlet-bg;
+  border: $portlet-border-width solid $portlet-border-color;
+  @include border-radius($portlet-border-radius);
+
+  // Set border radius to first and last child elements
+  > .portlet-body,
+  > .portlet-header,
+  > .portlet-footer {
+    &:first-child {
+      @include border-top-radius($portlet-border-radius);
+    }
+    
+    &:last-child {
+      @include border-bottom-radius($portlet-border-radius);
+    }
+  }
+
+  // Adjust nested portlet spacer
+  .portlet {
+    margin-bottom: $portlet-spacer-sm;
+  }
+
+  // Add maximum height to .portlet-body for the scroll
+  &.portlet-scroll {
+    > .portlet-body {
+      max-height: $portlet-max-height;
+      overflow-y: auto;
+      @include media-breakpoint-up("lg") {
+        max-height: $portlet-max-height-lg;
+      }
+      @include media-breakpoint-up("xl") {
+        max-height: $portlet-max-height-xl;
+      }
+    }
+  }
+}
+
+.portlet-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: $portlet-component-min-height;
+  padding: $portlet-component-padding;
+
+  &.portlet-header-bordered {
+    border-bottom: $portlet-border-width solid $portlet-border-color;
+
+    // Add padding to .portlet-body
+    + .portlet-body {
+      padding-top: $portlet-component-padding;
+    }
+  }
+
+  &.portlet-header-handle {
+    cursor: move;
+  }
+}
+
+.portlet-body {
+  height: 100%;
+  padding: 0 $portlet-component-padding $portlet-component-padding;
+  color: $portlet-body-color;
+
+  &:first-child {
+    padding-top: $portlet-component-padding;
+  }
+
+  &:empty {
+    display: none;
+  }
+}
+
+.portlet-footer {
+  padding: $portlet-component-padding;
+
+  &.portlet-footer-bordered {
+    border-top: $portlet-border-width solid $portlet-border-color;
+  }
+}
+
+.portlet-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: $portlet-icon-dimension;
+  height: $portlet-icon-dimension;
+  margin-right: $portlet-addon-spacer;
+  color: $portlet-icon-color;
+  @include icon-size($portlet-icon-size);
+}
+
+.portlet-title {
+  flex: 1;
+  @include font-size($portlet-title-font-size);
+  font-weight: $portlet-title-font-weight;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: $portlet-title-color;
+}
+
+.portlet-addon {
+  white-space: nowrap;
+
+  &:last-child {
+    margin-left: $portlet-addon-spacer;
+  }
+
+  &:first-child {
+    margin-right: $portlet-addon-spacer;
+  }
+}
+// Contextual portlet colors
+@each $color, $value in $theme-colors {
+  .portlet-#{$color} {
+    @include portlet-variant($value);
+  }
+}
+@each $breakpoint in map-keys($grid-breakpoints) {
+  @include media-breakpoint-up($breakpoint) {
+    $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
+    // Override .col-* class to fill spaces with portlet
+    .portlet-row-fill#{$infix} {
+      > [class*="col"] {
+        display: flex;
+        flex-direction: column;
+
+        > .portlet {
+          flex: 1;
+        }
+      }
+    }
+  }
+}
+// Fixing some problem when portlet collapsed
+.portlet-collapsed {
+  > .portlet-footer {
+    margin-top: -$portlet-border-width;
+
+    &:not(.portlet-footer-bordered) {
+      padding-top: $portlet-component-padding;
+    }
+  }
+}
+// Fixing .nav element position inside .portlet-header
+.portlet-nav {
+  margin: 0 !important;
+
+  &.nav-lines,
+  &.nav-tabs {
+    margin-bottom: calc((#{$portlet-component-padding} + #{$portlet-border-width}) * -1) !important;
+
+    .nav-link {
+      padding-bottom: calc(#{$portlet-component-padding} + #{$portlet-border-width}) !important;
+      border-width: $portlet-border-width !important;
+    }
+  }
+}
+// Decrese scrollable portlet max-height inside dropdown menu
+.dropdown-menu {
+  .portlet {
+    margin-bottom: 0;
+  }
+
+  .portlet-scroll > .portlet-body {
+    max-height: $portlet-max-height-sm;
+  }
+}

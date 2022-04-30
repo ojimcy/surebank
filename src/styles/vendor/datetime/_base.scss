@@ -1,0 +1,243 @@
+.rdt {
+  position: relative;
+}
+
+.rdtPicker {
+  display: none;
+  position: absolute;
+  min-width: $datetime-width;
+  padding: $datetime-padding-y $datetime-padding-x;
+  margin-top: $datetime-border-width;
+  z-index: $datetime-zindex !important;
+  background: $datetime-bg;
+  border: $datetime-border-width solid $datetime-border-color;
+  @include border-radius($datetime-border-radius);
+
+  @at-root {
+    .rdtOpen & {
+      display: block;
+    }
+
+    .rdtStatic & {
+      box-shadow: none;
+      position: static;
+    }
+  }
+
+  .rdtTimeToggle {
+    text-align: center;
+  }
+  
+  table {
+    width: 100%;
+    margin: 0;
+  }
+
+  td,
+  th {
+    text-align: center;
+    height: $datetime-cell-dimension;
+    @include border-radius($datetime-cell-border-radius);
+  }
+
+  td {
+    cursor: pointer;
+    
+    &.rdtDay,
+    &.rdtHour,
+    &.rdtMinute,
+    &.rdtSecond,
+    &.rdtSwitch,
+    &.rdtTimeToggle {
+      &:hover {
+        cursor: pointer;
+        color: $datetime-cell-hover-color;
+        background: $datetime-cell-hover-bg;
+      }
+    }
+
+    &.rdtOld,
+    &.rdtNew {
+      color: $datetime-cell-off-color;
+    }
+    
+    &.rdtToday {
+      color: $datetime-cell-today-color;
+      background: $datetime-cell-today-bg;
+    }
+
+    &.rdtActive {
+      &, &:hover {
+        color: $datetime-cell-active-color;
+        background: $datetime-cell-active-bg;
+      }
+    }
+
+    &.rdtDisabled {
+      &, &:hover {
+        cursor: not-allowed;
+        color: $datetime-cell-disabled-color;
+        background: $datetime-cell-disabled-bg;
+      }
+    }
+  }
+
+  // 
+  .dow {
+    width: 14.2857%;
+    border-bottom: none;
+    cursor: default;
+  }
+
+  th {
+    &.rdtSwitch {
+      width: 100%;
+    }
+    
+    &.rdtNext,
+    &.rdtPrev {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: $datetime-cell-dimension;
+      vertical-align: top;
+
+      > span {
+        display: none !important;
+      }
+
+      &:after {
+        content: "";
+        position: relative;
+        display: inline-block;
+        color: inherit;
+        width: $datetime-arrow-dimension;
+        height: $datetime-arrow-dimension;
+        border: solid currentColor;
+        border-width: 0 $datetime-arrow-width $datetime-arrow-width 0;
+        border-bottom-right-radius: $datetime-arrow-border-radius;
+        transition: $datetime-arrow-transition;
+        transform: rotate(-45deg);
+        bottom: 1px;
+      }
+    }
+
+    &.rdtPrev:after {
+      transform: rotate(-225deg);
+      left: $datetime-arrow-width;
+    }
+
+    &.rdtDisabled {
+      &, &:hover {
+        cursor: not-allowed;
+        background: $datetime-cell-disabled-bg;
+        color: $datetime-cell-disabled-color;
+      }
+    }
+  }
+  
+  thead {
+    button {
+      width: 100%;
+      height: 100%;
+    }
+
+    tr:first-of-type {
+      th {
+        cursor: pointer;
+    
+        &:hover {
+          color: $datetime-cell-hover-color;
+          background: $datetime-cell-hover-bg;
+        }
+      }
+    }
+  }
+
+  button {
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+}
+
+.rdtPrev span,
+.rdtNext span {
+  display: block;
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none;   /* Chrome/Safari/Opera */
+  -khtml-user-select: none;    /* Konqueror */
+  -moz-user-select: none;      /* Firefox */
+  -ms-user-select: none;       /* Internet Explorer/Edge */
+  user-select: none;
+}
+
+td.rdtMonth,
+td.rdtYear {
+  width: 25%;
+  height: $datetime-block-height;
+  cursor: pointer;
+
+  &:hover {
+    color: $datetime-block-hover-color;
+    background: $datetime-block-hover-bg;
+  }
+}
+
+.rdtCounters {
+  display: inline-block;
+
+  > div {
+    float: left;
+  }
+}
+
+.rdtCounter {
+  width: $datetime-counter-width;
+  height: $datetime-counter-height;
+
+  .rdtBtn {
+    height: $datetime-counter-btn-height;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    @include border-radius($datetime-counter-border-radius);
+  
+    &:hover {
+      color: $datetime-counter-hover-color;
+      background: $datetime-counter-hover-bg;
+    }
+  }
+
+  .rdtCount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100% - ($datetime-counter-btn-height * 2);
+    font-size: $datetime-counter-font-size;
+  }
+}
+
+.rdtCounterSeparator {
+  height: $datetime-counter-height;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rdtMilli {
+  vertical-align: middle;
+  padding-left: 8px;
+  width: 48px;
+
+  input {
+    width: 100%;
+    font-size: 1.2em;
+    margin-top: 37px;
+  }
+}
+
+.rdtTime td {
+  cursor: default;
+}

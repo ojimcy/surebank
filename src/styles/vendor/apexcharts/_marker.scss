@@ -1,0 +1,32 @@
+.apexcharts-marker {
+  @include transition($apexchart-marker-transition);
+}
+
+.resize-triggers {
+  animation: 1ms resizeanim;
+  visibility: hidden;
+  opacity: 0;
+
+  > div {
+    background: $apexchart-marker-color;
+    overflow: auto;
+  }
+}
+
+.resize-triggers,
+.resize-triggers > div,
+.contract-trigger:before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.contract-trigger:before {
+  width: 200%;
+  height: 200%;
+}

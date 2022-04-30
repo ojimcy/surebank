@@ -1,0 +1,120 @@
+// Base class
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: $avatar-dimension;
+  height: $avatar-dimension;
+  color: $avatar-color;
+  background: $avatar-bg;
+  @include font-size($avatar-font-size);
+  margin: 0 $avatar-spacer;
+  @include border-radius($avatar-border-radius);
+}
+
+.avatar-display {
+  display: block;
+  color: inherit;
+  line-height: 1;
+  @include font-size($avatar-display-font-size);
+  font-weight: $avatar-display-font-weight;
+  overflow: hidden;
+  @include icon-size($avatar-display-icon-size);
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    height: 100%;
+    @include border-radius($avatar-border-radius);
+  }
+}
+
+.avatar-badge,
+.avatar-icon {
+  position: relative;
+  border: $avatar-outline-width solid $avatar-outline-color;
+}
+
+.avatar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: $avatar-addon-icon-dimension;
+  height: $avatar-addon-icon-dimension;
+  color: $avatar-addon-icon-color;
+  background: $avatar-addon-icon-bg;
+  border-radius: 50%;
+  @include icon-size($avatar-addon-icon-size);
+}
+// Avatar addon
+.avatar-addon {
+  z-index: 1;
+  position: absolute;
+}
+// Addon orientation
+.avatar-addon-top {
+  top: -$avatar-addon-offset;
+  left: -$avatar-addon-offset;
+
+  .avatar-badge {
+    bottom: $avatar-addon-offset * .5;
+    right: $avatar-addon-offset * .5;
+  }
+}
+
+.avatar-addon-bottom {
+  bottom: -$avatar-addon-offset;
+  right: -$avatar-addon-offset;
+
+  .avatar-badge {
+    top: $avatar-addon-offset * .5;
+    left: $avatar-addon-offset * .5;
+  }
+}
+// Circle avatar version
+.avatar-circle,
+.avatar-circle .avatar-display img {
+  border-radius: 50% !important;
+}
+// Contextual color variations
+@each $color, $value in $theme-colors {
+  .avatar-#{$color} {
+    @include avatar-variant($value);
+  }
+
+  .avatar-label-#{$color} {
+    @include avatar-variant(rgba($value, .1), $value);
+  }
+  // Icon color variants
+  .avatar-icon-#{$color} {
+    @include avatar-icon-variant($value);
+  }
+}
+// Grouping avatars
+.avatar-group {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+
+  > .avatar {
+    margin: 0;
+    border: $avatar-outline-width solid $avatar-outline-color;
+
+    + .avatar {
+      margin-left: -$avatar-group-offset;
+    }
+  }
+}
+// Sizes
+.avatar-group-lg > .avatar,
+.avatar-lg {
+  @include font-size($avatar-font-size-lg);
+}
+
+.avatar-group-sm > .avatar,
+.avatar-sm {
+  @include font-size($avatar-font-size-sm);
+}

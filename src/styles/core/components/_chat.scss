@@ -1,0 +1,112 @@
+// Base styles
+
+.chat {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-item {
+  display: flex;
+  margin: $chat-spacer 0;
+}
+
+.chat-content {
+  display: flex;
+  flex-direction: column;
+  max-width: $chat-content-width;
+}
+
+.chat-bubble {
+  display: block;
+  text-align: inherit;
+  color: $chat-bubble-color;
+  padding: $chat-bubble-padding;
+  margin: 0;
+  @include border-radius($chat-border-radius);
+
+  [data-theme="light"] & {
+    background: rgba($chat-bubble-bg-light, $chat-bubble-opacity);
+  }
+
+  [data-theme="dark"] & {
+    background: rgba($chat-bubble-bg-dark, $chat-bubble-opacity);
+  }
+
+  // Add space between the bubbles
+  + .chat-bubble {
+    margin-top: $chat-spacer;
+  }
+
+  .chat-bubble {
+    margin-bottom: $chat-spacer;
+  }
+}
+// Chat item orientations
+.chat-item-start {
+  text-align: left;
+  flex-direction: row;
+
+  .chat-content {
+    align-items: flex-start;
+  }
+}
+
+.chat-item-end {
+  text-align: right;
+  flex-direction: row-reverse;
+
+  .chat-content {
+    align-items: flex-end;
+  }
+}
+
+// Chat bubble background color variants
+@each $color, $value in $theme-colors {
+  .chat-bubble-#{$color} {
+    background: rgba($value, $chat-bubble-opacity) !important;
+  }
+}
+// Avatar wrapper
+.chat-avatar {
+  padding: $chat-content-padding;
+}
+
+.chat-image {
+  display: block;
+  max-width: $chat-image-max-width;
+  width: 100%;
+  margin-bottom: $chat-spacer;
+  @include border-radius($chat-border-radius);
+}
+
+.chat-author {
+  display: block;
+  color: $chat-author-color;
+  @include font-size($chat-author-font-size);
+  font-weight: $chat-author-font-weight;
+  padding: $chat-content-padding;
+}
+
+.chat-time {
+  display: block;
+  color: $chat-time-color;
+  @include font-size($chat-time-font-size);
+  font-weight: $chat-time-font-weight;
+  padding: $chat-content-padding;
+}
+// Chat section marker
+.chat-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: $chat-spacer 0;
+}
+
+.chat-section-text {
+  color: $chat-section-color;
+  background: $chat-section-bg;
+  @include font-size($chat-section-font-size);
+  font-weight: $chat-section-font-weight;
+  padding: $chat-section-padding-y $chat-section-padding-x;
+  @include border-radius($chat-section-border-radius);
+}

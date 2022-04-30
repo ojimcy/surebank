@@ -1,0 +1,31 @@
+[data-theme="light"] {
+  --#{$variable-prefix}body-bg: #{$body-bg-light};
+
+  --#{$variable-prefix}text-level-1: #{$text-level-1-light};
+  --#{$variable-prefix}text-level-2: #{$text-level-2-light};
+  --#{$variable-prefix}text-level-3: #{$text-level-3-light};
+  --#{$variable-prefix}text-level-4: #{$text-level-4-light};
+
+  --#{$variable-prefix}bg-level-1: #{$bg-level-1-light};
+  --#{$variable-prefix}bg-level-2: #{$bg-level-2-light};
+  --#{$variable-prefix}bg-level-3: #{$bg-level-3-light};
+  --#{$variable-prefix}bg-level-4: #{$bg-level-4-light};
+  
+  --#{$variable-prefix}border-color: #{$border-color-light};
+}
+
+[data-theme="dark"] {
+  --#{$variable-prefix}body-bg: #{$body-bg-dark};
+
+  --#{$variable-prefix}text-level-1: #{$text-level-1-dark};
+  --#{$variable-prefix}text-level-2: #{$text-level-2-dark};
+  --#{$variable-prefix}text-level-3: #{$text-level-3-dark};
+  --#{$variable-prefix}text-level-4: #{$text-level-4-dark};
+
+  --#{$variable-prefix}bg-level-1: #{$bg-level-1-dark};
+  --#{$variable-prefix}bg-level-2: #{$bg-level-2-dark};
+  --#{$variable-prefix}bg-level-3: #{$bg-level-3-dark};
+  --#{$variable-prefix}bg-level-4: #{$bg-level-4-dark};
+
+  --#{$variable-prefix}border-color: #{$border-color-dark};
+}

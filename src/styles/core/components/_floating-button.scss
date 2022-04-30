@@ -1,0 +1,20 @@
+.floating-btn {
+  position: fixed;
+  transform: translateY(-50%);
+  top: 50%;
+  background: $floating-btn-bg;
+  padding: $floating-btn-padding-y $floating-btn-padding-x;
+  border: $floating-btn-border-width solid $floating-btn-border-color;
+  z-index: $zindex-floating-btn;
+}
+
+// Alignments
+.floating-btn-start {
+  left: 0;
+  @include border-end-radius($floating-btn-border-radius);
+}
+
+.floating-btn-end {
+  right: 0;
+  @include border-start-radius($floating-btn-border-radius);
+}

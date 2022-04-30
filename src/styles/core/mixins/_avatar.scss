@@ -1,0 +1,10 @@
+// Avatar
+@mixin avatar-variant($bg, $color: color-contrast($bg)) {
+  color: $color !important;
+  background: $bg !important;
+}
+
+@mixin avatar-icon-variant($bg, $color: color-contrast($bg)) {
+  color: $color !important;
+  background: $bg !important;
+}
