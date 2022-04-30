@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col, Portlet, Table } from '@blueupcode/components'
 import type { ExtendedNextPage } from '@blueupcode/components/types'
 
@@ -611,4 +611,4 @@ TablePage.breadcrumb = [
 	{ text: 'Table', link: '/elements/base/table' },
 ]
 
-export default withAuth(TablePage)
+export default withGuest(TablePage)

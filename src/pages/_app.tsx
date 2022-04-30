@@ -8,7 +8,7 @@ import 'styles/vendor/datetime/datetime.scss'
 import 'styles/vendor/sweetalert2/sweetalert2.scss'
 
 import { SSRProvider, DirectionProvider, ThemeProvider } from '@blueupcode/components'
-import { AuthProvider } from 'components/auth/authContext'
+// import { AuthProvider } from 'components/auth/authContext'
 import { wrapper } from 'store'
 import Head from 'next/head'
 import Progress from '@blueupcode/progress'
@@ -21,7 +21,7 @@ function MyApp({ Component, pageProps }: ExtendedAppProps) {
 
 	return (
 		<SSRProvider>
-			<AuthProvider>
+			{/* <AuthProvider> */}
 				<ThemeProvider forcedTheme={Component.theme}>
 					<DirectionProvider defaultDirection={PAGE.defaultDirection}>
 						<Head>
@@ -35,7 +35,7 @@ function MyApp({ Component, pageProps }: ExtendedAppProps) {
 						</Layout>
 					</DirectionProvider>
 				</ThemeProvider>
-			</AuthProvider>
+			{/* </AuthProvider> */}
 		</SSRProvider>
 	)
 }

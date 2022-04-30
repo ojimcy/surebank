@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col, Portlet, Pagination } from '@blueupcode/components'
 import type { ExtendedNextPage } from '@blueupcode/components/types'
 
@@ -127,4 +127,4 @@ PaginationPage.breadcrumb = [
 	{ text: 'Pagination', link: '/elements/base/pagination' },
 ]
 
-export default withAuth(PaginationPage)
+export default withGuest(PaginationPage)

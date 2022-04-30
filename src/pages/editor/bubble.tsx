@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col, Portlet } from '@blueupcode/components'
 import ReactQuill from '@blueupcode/quill'
 import type { ExtendedNextPage } from '@blueupcode/components/types'
@@ -76,4 +76,4 @@ EditorBubblePage.breadcrumb = [
 	{ text: 'Bubble', link: '/editor/bubble' },
 ]
 
-export default withAuth(EditorBubblePage)
+export default withGuest(EditorBubblePage)

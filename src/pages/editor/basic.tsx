@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col, Portlet } from '@blueupcode/components'
 import ReactQuill from '@blueupcode/quill'
 import type { ExtendedNextPage } from '@blueupcode/components/types'
@@ -62,4 +62,4 @@ EditorBasicPage.breadcrumb = [
 	{ text: 'Basic', link: '/editor/basic' },
 ]
 
-export default withAuth(EditorBasicPage)
+export default withGuest(EditorBasicPage)

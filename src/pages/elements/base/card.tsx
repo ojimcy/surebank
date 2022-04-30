@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col, Portlet, Card, ListGroup, Nav, Button, Image, Badge, CardGroup } from '@blueupcode/components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCog, faStar } from '@fortawesome/free-solid-svg-icons'
@@ -602,4 +602,4 @@ CardPage.breadcrumb = [
 	{ text: 'Card', link: '/elements/base/card' },
 ]
 
-export default withAuth(CardPage)
+export default withGuest(CardPage)

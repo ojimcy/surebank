@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col, Portlet, Alert, AlertProps } from '@blueupcode/components'
 import { faArchive, faCog, faWrench } from '@fortawesome/free-solid-svg-icons'
 import { faStar } from '@fortawesome/free-regular-svg-icons'
@@ -231,4 +231,4 @@ AlertPage.breadcrumb = [
 	{ text: 'Alert', link: '/elements/base/alert' },
 ]
 
-export default withAuth(AlertPage)
+export default withGuest(AlertPage)

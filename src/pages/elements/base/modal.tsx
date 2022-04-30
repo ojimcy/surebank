@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col, Portlet, Button, FormLabel, Modal, FormGroup, FormControl, FormText } from '@blueupcode/components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
@@ -484,4 +484,4 @@ ModalPage.breadcrumb = [
 	{ text: 'Modal', link: '/elements/base/modal' },
 ]
 
-export default withAuth(ModalPage)
+export default withGuest(ModalPage)

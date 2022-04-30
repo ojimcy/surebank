@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { faBell, faBookmark, faPaperPlane } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Row, Col, Accordion, Portlet } from '@blueupcode/components'
@@ -129,4 +129,4 @@ AccordionPage.breadcrumb = [
 	{ text: 'Accordion', link: '/elements/base/accordion' },
 ]
 
-export default withAuth(AccordionPage)
+export default withGuest(AccordionPage)

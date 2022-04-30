@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col, Portlet, useTheme } from '@blueupcode/components'
 import { ApexOptions } from 'apexcharts'
 import Chart from '@blueupcode/apexcharts'
@@ -977,4 +977,4 @@ ApexChartsPage.breadcrumb = [
 	{ text: 'Apex chart', link: '/chart/apex-chart' },
 ]
 
-export default withAuth(ApexChartsPage)
+export default withGuest(ApexChartsPage)

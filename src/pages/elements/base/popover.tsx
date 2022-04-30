@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col, Portlet, FormLabel, Button, OverlayTrigger, Popover } from '@blueupcode/components'
 import type { ExtendedNextPage } from '@blueupcode/components/types'
 
@@ -133,4 +133,4 @@ PopoverPage.breadcrumb = [
 	{ text: 'Popover', link: '/elements/base/popover' },
 ]
 
-export default withAuth(PopoverPage)
+export default withGuest(PopoverPage)

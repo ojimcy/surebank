@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col, Portlet, Badge, Nav, Caret } from '@blueupcode/components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArchive, faCog, faWrench } from '@fortawesome/free-solid-svg-icons'
@@ -347,4 +347,4 @@ NavPage.breadcrumb = [
 	{ text: 'Nav', link: '/elements/base/nav' },
 ]
 
-export default withAuth(NavPage)
+export default withGuest(NavPage)

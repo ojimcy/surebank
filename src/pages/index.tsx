@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col } from '@blueupcode/components'
 import Widget3 from 'components/widgets/Widget3'
 import Widget7 from 'components/widgets/Widget7'
@@ -98,4 +98,4 @@ DashboardPage.breadcrumb = [
 	{ text: "Dashboard", link: "/" },
 ]
 
-export default withAuth(DashboardPage)
+export default withGuest(DashboardPage)

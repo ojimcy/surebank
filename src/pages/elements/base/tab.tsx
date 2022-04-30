@@ -1,5 +1,5 @@
 import React from 'react'
-import withAuth from 'components/auth/withAuth'
+import withGuest from 'components/auth/withGuest'
 import { Row, Col, Portlet, Nav, Tabs, Tab, Card } from '@blueupcode/components'
 import type { ExtendedNextPage } from '@blueupcode/components/types'
 
@@ -540,4 +540,4 @@ TabPage.breadcrumb = [
 	{ text: 'Tab', link: '/elements/base/tab' },
 ]
 
-export default withAuth(TabPage)
+export default withGuest(TabPage)
