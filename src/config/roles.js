@@ -1,8 +1,8 @@
-const userPermissions = [];
+const userPermissions = ['getBranches'];
 
-const adminPermissions = [...userPermissions, 'manageUsers', 'deleteUser', 'getUsers'];
+const adminPermissions = [...userPermissions, 'manageUsers', 'deleteUser', 'getUsers', 'manageBranch'];
 
-const superAdminPermissions = [...adminPermissions, 'createAdmin'];
+const superAdminPermissions = [...adminPermissions, 'createAdmin', 'updateBranchManager'];
 
 const allRoles = {
   user: userPermissions,
