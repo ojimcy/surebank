@@ -12,9 +12,18 @@ router
   .get(auth('getBranches'), validate(branchValidation.getBranches), branchController.getBranches);
 
 router
-  .route('/change-manager/:branchId')
-  .patch(auth('updateBranchManager'), validate(branchValidation.updateBranchManager), branchController.updateBranchManager);
+  .route('/:branchId')
+  .get(auth('getBranches'), validate(branchValidation.getBranch), branchController.getBranch)
+  .delete(auth('manageBranch'), validate(branchValidation.deleteBranch), branchController.deleteBranch);
 
-router.route('/:branchId').get(auth('getBranches'), validate(branchValidation.getBranch), branchController.getBranch);
+router
+  .route('/:branchId/staff')
+  .post(auth('updateBranchStaff'), validate(branchValidation.addStaffToBranch), branchController.addStaffToBranch)
+  .get(auth('getStaffInBranch'), validate(branchValidation.getStaffInBranch), branchController.getStaffInBranch)
+  .patch(auth('updateBranchStaff'), validate(branchValidation.updateBranchStaff), branchController.updateBranchStaff);
+
+router
+  .route('/:branchId/change-manager')
+  .patch(auth('updateBranchManager'), validate(branchValidation.updateBranchManager), branchController.updateBranchManager);
 
 module.exports = router;

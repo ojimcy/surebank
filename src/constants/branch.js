@@ -1,0 +1,7 @@
+const BRANCH_STAFF_NOT_CURRENT = false;
+const BRANCH_STAFF_IS_CURRENT = true;
+
+module.exports = {
+  BRANCH_STAFF_NOT_CURRENT,
+  BRANCH_STAFF_IS_CURRENT,
+};

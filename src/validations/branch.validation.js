@@ -35,9 +35,52 @@ const updateBranchManager = {
   }),
 };
 
+const addStaffToBranch = {
+  params: Joi.object().keys({
+    branchId: Joi.string().required().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    staffId: Joi.string().required().custom(objectId),
+    isCurrent: Joi.boolean(),
+  }),
+};
+
+const getStaffInBranch = {
+  params: Joi.object().keys({
+    branchId: Joi.string().required().custom(objectId),
+  }),
+  query: Joi.object().keys({
+    sortBy: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
+const updateBranchStaff = {
+  params: Joi.object().keys({
+    branchId: Joi.string().required().custom(objectId),
+  }),
+  query: Joi.object().keys({
+    staffId: Joi.string().required().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    isCurrent: Joi.boolean(),
+  }),
+};
+
+const deleteBranch = {
+  params: Joi.object().keys({
+    branchId: Joi.string().custom(objectId),
+  }),
+};
+
 module.exports = {
   createBranch,
   getBranches,
   getBranch,
   updateBranchManager,
+  addStaffToBranch,
+  getStaffInBranch,
+  updateBranchStaff,
+  deleteBranch,
 };
