@@ -31,8 +31,9 @@ const accountSchema = mongoose.Schema(
       required: true,
     },
     accountManagerId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      type: String,
+      // type: mongoose.Schema.Types.ObjectId,
+      // ref: 'User',
     },
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
