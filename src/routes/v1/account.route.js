@@ -3,6 +3,7 @@ const auth = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const accountValidation = require('../../validations/account.validation');
 const accountController = require('../../controllers/account.controller');
+const accountingController = require('../../controllers/Accounting.controller');
 
 const router = express.Router();
 
@@ -15,5 +16,10 @@ router
 router
   .route('/:managerId/asign-manager')
   .post(auth('assignManager'), validate(accountValidation.assignManager), accountController.assignManager);
+
+router
+  .route('/entry')
+  .post(auth('addEntry'), validate(accountValidation.ledgerEntry), accountingController.ledgerEntry)
+  .get(auth('getEntry'), validate(accountValidation.getLedgerEntries), accountingController.getLedgerEntries);
 
 module.exports = router;

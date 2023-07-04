@@ -2,32 +2,6 @@ const Joi = require('joi');
 const { objectId } = require('./custom.validation');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 
-const createAccount = {
-  body: Joi.object().keys({
-    userId: Joi.string().required().custom(objectId),
-    accountType: Joi.string().required(),
-    branchId: Joi.string().required().custom(objectId),
-  }),
-};
-
-const assignBranch = {
-  params: Joi.object().keys({
-    accountId: Joi.string().required().custom(objectId),
-  }),
-  body: Joi.object().keys({
-    branchId: Joi.string().required().custom(objectId),
-  }),
-};
-
-const assignManager = {
-  params: Joi.object().keys({
-    accountId: Joi.string().required().custom(objectId),
-  }),
-  body: Joi.object().keys({
-    managerId: Joi.string().required().custom(objectId),
-  }),
-};
-
 const ledgerEntry = {
   body: Joi.object().keys({
     amount: Joi.number().required(),
@@ -58,11 +32,17 @@ const computeDailySummary = {
   }),
 };
 
+const getDailySummary = {
+  query: Joi.object().keys({
+    sortBy: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
 module.exports = {
-  createAccount,
-  assignBranch,
-  assignManager,
   ledgerEntry,
   getLedgerEntries,
   computeDailySummary,
+  getDailySummary,
 };
