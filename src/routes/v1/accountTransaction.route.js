@@ -18,8 +18,8 @@ router
   .route('/deposit')
   .post(
     auth('manageCustomerTransaction'),
-    validate(accountTransactionValidation.makeCustomerWithdrawal),
-    accountTransactionController.makeCustomerWithdrawal
+    validate(accountTransactionValidation.makeCustomerDeposit),
+    accountTransactionController.makeCustomerDeposit
   );
 
 router
