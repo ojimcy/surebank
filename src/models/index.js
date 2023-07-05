@@ -5,3 +5,4 @@ module.exports.BranchStaff = require('./branchStaff.model');
 module.exports.Account = require('./account.model');
 module.exports.Ledger = require('./ledger.model');
 module.exports.DailySummary = require('./dailySummary.model');
+module.exports.AccountTransaction = require('./accountTransaction.model');

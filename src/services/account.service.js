@@ -30,9 +30,9 @@ const createAccount = async (accountData, createdBy) => {
     ledgerBalance: 0,
     accountType,
     createdBy,
-    accountManagerId: '',
+    accountManagerId: accountData.accountManagerId || null,
     branchId,
-    status: 'pending',
+    status: 'active',
   };
 
   return Account.create(account);
@@ -60,20 +60,8 @@ const assignManager = async (accountId, managerId) => {
   return account;
 };
 
-/**
- * Update the status of an account
- * @param {string} accountId - Account ID
- * @param {string} status - New account status
- * @returns {Promise<Account>} Updated account
- */
-const updateAccountStatus = async (accountId, status) => {
-  const account = await Account.findByIdAndUpdate(accountId, { $set: { status } }, { new: true });
-  return account;
-};
-
 module.exports = {
   createAccount,
   assignBranch,
   assignManager,
-  updateAccountStatus,
 };

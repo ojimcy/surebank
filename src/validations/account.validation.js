@@ -58,6 +58,15 @@ const computeDailySummary = {
   }),
 };
 
+const makeCustomerDeposit = {
+  body: Joi.object().keys({
+    accountNumber: Joi.string().required(),
+    amount: Joi.number().required(),
+    operatorId: Joi.string().required(),
+    narration: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -65,4 +74,5 @@ module.exports = {
   ledgerEntry,
   getLedgerEntries,
   computeDailySummary,
+  makeCustomerDeposit,
 };

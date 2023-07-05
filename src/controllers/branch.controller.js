@@ -40,7 +40,7 @@ const addStaffToBranch = catchAsync(async (req, res) => {
 
 const getStaffInBranch = catchAsync(async (req, res) => {
   const { branchId } = req.params;
-  const filter = pick(req.query, ['name', 'role']);
+  const filter = pick(req.query, ['staffId', 'isCurrent']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await branchService.getStaffInBranch(branchId, filter, options);
   if (result.error) {
