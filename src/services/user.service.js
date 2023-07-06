@@ -81,6 +81,43 @@ const deleteUserById = async (userId) => {
   return user;
 };
 
+/**
+ * Update user's profile
+ * @param {string} userId - User ID
+ * @param {Object} updateData - Update data
+ * @returns {Promise<User>} Updated user profile
+ */
+const updateProfile = async (userId, updateData) => {
+  const user = await getUserById(userId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  if (updateData.email) {
+    // Check if the new email is already taken by another user
+    if (await User.isEmailTaken(updateData.email, userId)) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+    }
+    user.email = updateData.email;
+  }
+  if (updateData.firstName) {
+    user.firstName = updateData.firstName;
+  }
+  if (updateData.lastName) {
+    user.lastName = updateData.lastName;
+  }
+  if (updateData.address) {
+    user.address = updateData.address;
+  }
+  if (updateData.phoneNumber) {
+    user.phoneNumber = updateData.phoneNumber;
+  }
+
+  await user.save();
+  return user;
+};
+
 module.exports = {
   createUser,
   queryUsers,
@@ -88,4 +125,5 @@ module.exports = {
   getUserByEmail,
   updateUserById,
   deleteUserById,
+  updateProfile,
 };

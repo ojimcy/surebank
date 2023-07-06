@@ -35,9 +35,13 @@ const updateUser = {
   }),
   body: Joi.object()
     .keys({
-      email: Joi.string().email(),
-      password: Joi.string().custom(password),
-      name: Joi.string(),
+      email: Joi.string().optional().email(),
+      password: Joi.string().optional().custom(password),
+      firstName: Joi.string().optional(),
+      lastName: Joi.string().optional(),
+      address: Joi.string().optional(),
+      branch: Joi.string(),
+      role: Joi.string().optional().valid('user', 'admin'),
     })
     .min(1),
 };
@@ -48,10 +52,28 @@ const deleteUser = {
   }),
 };
 
+const getMyProfile = {
+  query: Joi.object().keys({
+    name: Joi.string(),
+  }),
+};
+
+const updateProfile = {
+  body: Joi.object().keys({
+    email: Joi.string().optional().email(),
+    firstName: Joi.string().optional(),
+    lastName: Joi.string().optional(),
+    address: Joi.string().optional(),
+    phoneNumber: Joi.string().optional(),
+  }),
+};
+
 module.exports = {
   createUser,
   getUsers,
   getUser,
   updateUser,
   deleteUser,
+  getMyProfile,
+  updateProfile,
 };

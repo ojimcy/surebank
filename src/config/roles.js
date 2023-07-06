@@ -1,4 +1,12 @@
-const userPermissions = ['getBranches', 'addEntry', 'getEntries', 'viewBalance', 'viewRoles', 'getPermission'];
+const userPermissions = [
+  'getBranches',
+  'addEntry',
+  'getEntries',
+  'viewBalance',
+  'viewRoles',
+  'getPermission',
+  'updateProfile',
+];
 
 const adminPermissions = [
   ...userPermissions,
