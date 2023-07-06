@@ -9,6 +9,7 @@ const branchRoute = require('./branch.route');
 const accountRoute = require('./account.route');
 const accountingRoute = require('./accounting.route');
 const accountTransactionRoute = require('./accountTransaction.route');
+const aclRoute = require('./acl.route');
 
 const router = express.Router();
 
@@ -44,6 +45,10 @@ const defaultRoutes = [
   {
     path: '/transactions',
     route: accountTransactionRoute,
+  },
+  {
+    path: '/roles',
+    route: aclRoute,
   },
 ];
 

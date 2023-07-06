@@ -1,4 +1,4 @@
-const userPermissions = ['getBranches', 'addEntry', 'getEntries', 'viewBalance'];
+const userPermissions = ['getBranches', 'addEntry', 'getEntries', 'viewBalance', 'viewRoles', 'getPermission'];
 
 const adminPermissions = [
   ...userPermissions,
@@ -11,6 +11,7 @@ const adminPermissions = [
   'manageAccounts',
   'manageSummary',
   'manageCustomerTransaction',
+  'manageRoles',
 ];
 
 const superAdminPermissions = [

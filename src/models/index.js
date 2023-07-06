@@ -6,5 +6,6 @@ module.exports.Account = require('./account.model');
 module.exports.Ledger = require('./ledger.model');
 module.exports.DailySummary = require('./dailySummary.model');
 module.exports.AccountTransaction = require('./accountTransaction.model');
-module.exports.UserRole = require('./userRole.model');
+module.exports.UserRoles = require('./userRole.model');
 module.exports.RolePermission = require('./rolePermission.model');
+module.exports.Role = require('./role.model');

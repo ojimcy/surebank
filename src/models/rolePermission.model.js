@@ -3,12 +3,11 @@ const { toJSON, paginate } = require('./plugins');
 
 const rolePermissionSchema = mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+    roleId: {
+      type: String,
       required: true,
     },
-    roleId: {
+    permissionId: {
       type: String,
       required: true,
     },
