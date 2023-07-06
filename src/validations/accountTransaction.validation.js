@@ -4,7 +4,6 @@ const makeCustomerDeposit = {
   body: Joi.object().keys({
     accountNumber: Joi.string().required(),
     amount: Joi.number().required(),
-    operatorId: Joi.string().required(),
     narration: Joi.string().required(),
   }),
 };
@@ -25,7 +24,6 @@ const makeCustomerWithdrawal = {
   body: Joi.object().keys({
     accountNumber: Joi.string().required(),
     amount: Joi.number().required(),
-    operatorId: Joi.string().required(),
     narration: Joi.string().required(),
   }),
 };
