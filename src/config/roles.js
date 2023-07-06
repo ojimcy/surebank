@@ -20,6 +20,7 @@ const adminPermissions = [
   'manageSummary',
   'manageCustomerTransaction',
   'manageRoles',
+  'manageCustomer',
 ];
 
 const superAdminPermissions = [
