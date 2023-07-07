@@ -1,6 +1,6 @@
 const { startSession } = require('mongoose');
 const httpStatus = require('http-status');
-const { accountService, userService } = require('../services');
+const { accountService, userService, customerService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 
 const createCustomer = catchAsync(async (req, res) => {
@@ -52,6 +52,25 @@ const createCustomer = catchAsync(async (req, res) => {
   }
 });
 
+// customer transactions
+
+const makeDeposit = catchAsync(async (req, res) => {
+  const depositInput = req.body;
+  const operatorId = req.user._id;
+  const result = await customerService.makeDeposit({ ...depositInput, operatorId });
+  res.status(httpStatus.OK).json(result);
+});
+
+const makeWithdrawal = catchAsync(async (req, res) => {
+  const withdrawalInput = req.body;
+  const operatorId = req.user._id;
+  const userId = req.user._id.toString();
+  const result = await customerService.makeWithdrawal(withdrawalInput, userId, operatorId);
+  res.status(httpStatus.OK).json(result);
+});
+
 module.exports = {
   createCustomer,
+  makeDeposit,
+  makeWithdrawal,
 };

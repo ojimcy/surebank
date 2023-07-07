@@ -13,6 +13,24 @@ const createCustomer = {
   }),
 };
 
+const makeDeposit = {
+  body: Joi.object().keys({
+    accountNumber: Joi.string().required(),
+    amount: Joi.number().required(),
+    narration: Joi.string().required(),
+  }),
+};
+
+const makeWithdrawal = {
+  body: Joi.object().keys({
+    accountNumber: Joi.string().required(),
+    amount: Joi.number().required(),
+    narration: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   createCustomer,
+  makeDeposit,
+  makeWithdrawal,
 };

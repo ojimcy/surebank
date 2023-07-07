@@ -60,8 +60,22 @@ const assignManager = async (accountId, managerId) => {
   return account;
 };
 
+/**
+ * Retrieve user's account number
+ * @param {string} userId - User ID
+ * @returns {Promise<string>} User's account number
+ */
+const getUserAccountNumber = async (userId) => {
+  const account = await Account.findOne({ userId });
+  if (!account) {
+    throw new Error('User does not have an account');
+  }
+  return account.accountNumber;
+};
+
 module.exports = {
   createAccount,
   assignBranch,
   assignManager,
+  getUserAccountNumber,
 };

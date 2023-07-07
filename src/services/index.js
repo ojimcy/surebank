@@ -7,3 +7,4 @@ module.exports.accountService = require('./account.service');
 module.exports.accountingService = require('./accounting.service');
 module.exports.accountTransactionService = require('./accountTransaction.service');
 module.exports.aclService = require('./acl.service');
+module.exports.customerService = require('./customer.service');

@@ -10,4 +10,12 @@ router
   .route('/')
   .post(auth('manageCustomer'), validate(customerValidation.createCustomer), customerController.createCustomer);
 
+router
+  .route('/transactions/deposit')
+  .post(auth('makeDeposit'), validate(customerValidation.makeDeposit), customerController.makeDeposit);
+
+router
+  .route('/transactions/withdraw')
+  .post(auth('makeWithdrawal'), validate(customerValidation.makeWithdrawal), customerController.makeWithdrawal);
+
 module.exports = router;

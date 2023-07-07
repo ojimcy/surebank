@@ -6,6 +6,8 @@ const userPermissions = [
   'viewRoles',
   'getPermission',
   'updateProfile',
+  'makeDeposit',
+  'makeWithdrawal',
 ];
 
 const adminPermissions = [
