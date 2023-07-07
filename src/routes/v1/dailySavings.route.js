@@ -7,11 +7,19 @@ const dailySavingsController = require('../../controllers/dailySavings.controlle
 const router = express.Router();
 
 router
-  .route('/')
+  .route('/package')
   .post(
     auth('manageSavings'),
     validate(dailySavingsValidation.createDailySavingsPackage),
     dailySavingsController.createDailySavingsPackage
+  );
+
+router
+  .route('/')
+  .post(
+    auth('manageSavings'),
+    validate(dailySavingsValidation.saveDailyContribution),
+    dailySavingsController.saveDailyContribution
   );
 
 module.exports = router;
