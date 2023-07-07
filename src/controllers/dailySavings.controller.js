@@ -26,7 +26,15 @@ const saveDailyContribution = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(result);
 });
 
+const makeDailySavingsWithdrawal = catchAsync(async (req, res) => {
+  const withdrawal = req.body;
+  const userReps = req.user._id;
+  const withdrawalDetails = await dailySavingsService.makeDailySavingsWithdrawal({ ...withdrawal, userReps });
+  res.status(httpStatus.OK).json(withdrawalDetails);
+});
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
+  makeDailySavingsWithdrawal,
 };

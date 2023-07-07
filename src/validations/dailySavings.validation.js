@@ -20,7 +20,17 @@ const saveDailyContribution = {
   }),
 };
 
+const makeDailySavingsWithdrawal = {
+  query: Joi.object().keys({
+    body: Joi.object().keys({
+      accountNumber: Joi.string().required(),
+      amount: Joi.number().required(),
+    }),
+  }),
+};
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
+  makeDailySavingsWithdrawal,
 };

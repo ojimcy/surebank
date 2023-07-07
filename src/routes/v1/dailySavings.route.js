@@ -15,11 +15,19 @@ router
   );
 
 router
-  .route('/')
+  .route('/make-contribution')
   .post(
     auth('manageSavings'),
     validate(dailySavingsValidation.saveDailyContribution),
     dailySavingsController.saveDailyContribution
+  );
+
+router
+  .route('/withdraw')
+  .post(
+    auth('manageSavings'),
+    validate(dailySavingsValidation.makeDailySavingsWithdrawal),
+    dailySavingsController.makeDailySavingsWithdrawal
   );
 
 module.exports = router;

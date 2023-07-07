@@ -122,7 +122,6 @@ const saveDailyContribution = async (contributionInput) => {
       userId: userPackage.userReps,
       branchId: contributionInput.branchId,
     };
-
     await addLedgerEntry(addLedgerEntryInput);
   }
 
@@ -153,7 +152,48 @@ const saveDailyContribution = async (contributionInput) => {
   return newContribution;
 };
 
+/**
+ * Make a daily savings withdrawal
+ * @param {Object} withdrawal - Withdrawal details
+ * @returns {Promise<Object>} Withdrawal details
+ */
+const makeDailySavingsWithdrawal = async (withdrawal) => {
+  const userPackage = await Package.findOne({
+    accountNumber: withdrawal.accountNumber,
+    status: 'open',
+  });
+
+  if (userPackage.totalContribution < withdrawal.amount) {
+    throw new ApiError(400, 'Insufficient balance');
+  }
+
+  const balanceAfterWithdrawal = userPackage.totalContribution - withdrawal.amount;
+
+  await Package.findOneAndUpdate({ accountNumber: withdrawal.accountNumber }, { totalContribution: balanceAfterWithdrawal });
+
+  const withdrawalDetails = {
+    accountNumber: withdrawal.accountNumber,
+    amount: withdrawal.amount,
+    salesRepId: withdrawal.userReps,
+    narration: 'Daily contribution withdrawal',
+  };
+
+  await makeCustomerDeposit(
+    withdrawalDetails.accountNumber,
+    withdrawalDetails.amount,
+    withdrawalDetails.salesRepId,
+    withdrawalDetails.narration
+  );
+
+  if (balanceAfterWithdrawal === 0) {
+    await Package.findOneAndUpdate({ accountNumber: withdrawal.accountNumber }, { status: 'closed' });
+  }
+
+  return withdrawalDetails;
+};
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
+  makeDailySavingsWithdrawal,
 };
