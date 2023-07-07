@@ -9,3 +9,4 @@ module.exports.AccountTransaction = require('./accountTransaction.model');
 module.exports.UserRoles = require('./userRole.model');
 module.exports.RolePermission = require('./rolePermission.model');
 module.exports.Role = require('./role.model');
+module.exports.Package = require('./package.model');

@@ -8,6 +8,7 @@ const userPermissions = [
   'updateProfile',
   'makeDeposit',
   'makeWithdrawal',
+  'manageSavings',
 ];
 
 const adminPermissions = [

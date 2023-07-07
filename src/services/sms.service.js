@@ -43,7 +43,6 @@ const sendSms = async ({ phone, template, message }, vars) => {
     to: phone,
     body,
   };
-  console.log(params);
   const resp = await axios.get(url, params);
   logger.info(resp);
 };
