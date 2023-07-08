@@ -109,6 +109,12 @@ const getUsersInRole = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+const createPermission = catchAsync(async (req, res) => {
+  const { label, merchantPermission, description } = req.body;
+  const permission = await aclService.createPermission(label, merchantPermission, description);
+  res.send(permission);
+});
+
 module.exports = {
   getRolesForUser,
   createRole,
@@ -123,4 +129,5 @@ module.exports = {
   getRolePermissions,
   updateRole,
   getUsersInRole,
+  createPermission,
 };

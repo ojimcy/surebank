@@ -13,7 +13,8 @@ router
 
 router
   .route('/permission')
-  .get(auth('getPermission'), validate(aclValidation.getPermissionsForUser), aclController.getPermissionsForUser);
+  .get(auth('getPermission'), validate(aclValidation.getPermissionsForUser), aclController.getPermissionsForUser)
+  .post(auth('managePermission'), validate(aclValidation.createPermission), aclController.createPermission);
 
 router
   .route('/:userId/')

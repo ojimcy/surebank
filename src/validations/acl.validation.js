@@ -84,6 +84,14 @@ const updateRole = {
   }),
 };
 
+const createPermission = {
+  body: Joi.object().keys({
+    label: Joi.string().required(),
+    description: Joi.string().required(),
+    merchantPermission: Joi.boolean(),
+  }),
+};
+
 module.exports = {
   createRole,
   getRoles,
@@ -96,4 +104,5 @@ module.exports = {
   deleteUserFromRole,
   getRolePermissions,
   updateRole,
+  createPermission,
 };

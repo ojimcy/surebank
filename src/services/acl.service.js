@@ -1,5 +1,5 @@
 const { PERMISSIONS } = require('../constants/permission');
-const { UserRoles, RolePermission, Role } = require('../models');
+const { UserRoles, RolePermission, Role, Permission } = require('../models');
 
 /**
  * Create a new role
@@ -176,6 +176,23 @@ const updateRole = async (roleId, roleData) => {
   return role;
 };
 
+/**
+ * Create a new permission
+ * @param {string} label - Permission label
+ * @param {string} description - Permission description
+ * @param {boolean} merchantPermission - Whether the permission is a merchant permission
+ * @returns {Promise<Object>} Result of the operation
+ */
+const createPermission = async (label, merchantPermission, description) => {
+  const checkPermission = await Permission.findOne({ label });
+  if (checkPermission) {
+    throw new Error(`${label} Permission already exists`);
+  } else {
+    const permission = await Permission.create({ label, merchantPermission, description });
+    return permission;
+  }
+};
+
 module.exports = {
   getRolesForUser,
   getUsersInRole,
@@ -192,4 +209,5 @@ module.exports = {
   deleteRolePermission,
   deleteUserFromRole,
   updateRole,
+  createPermission,
 };
