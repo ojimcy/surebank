@@ -61,6 +61,37 @@ const getMerchants = {
   }),
 };
 
+const addMerchantAdmin = {
+  query: Joi.object().keys({
+    merchantId: Joi.string().custom(objectId).required(),
+  }),
+  body: Joi.object().keys({
+    role: Joi.string().required(),
+    userId: Joi.string().custom(objectId).required(),
+  }),
+};
+
+const removeMerchantAdmin = {
+  params: Joi.object().keys({
+    merchantId: Joi.string().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    adminId: Joi.string().custom(objectId).required(),
+  }),
+};
+
+const listMerchantAdmins = {
+  params: Joi.object().keys({
+    merchantId: Joi.string().custom(objectId),
+  }),
+};
+
+const getMerchant = {
+  params: Joi.object().keys({
+    merchantId: Joi.string().custom(objectId),
+  }),
+};
+
 module.exports = {
   createMerchantRequest,
   viewRequests,
@@ -68,5 +99,9 @@ module.exports = {
   cancelledRequest,
   denyRequest,
   getMerchants,
+  getMerchant,
   approveRequest,
+  addMerchantAdmin,
+  removeMerchantAdmin,
+  listMerchantAdmins,
 };

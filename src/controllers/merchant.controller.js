@@ -74,6 +74,38 @@ const getMerchants = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(result);
 });
 
+const addMerchantAdmin = catchAsync(async (req, res) => {
+  const { merchantId } = req.query;
+  const loggedInUserId = req.user._id;
+  const { role, userId } = req.body;
+  const merchantAdmin = await merchantService.addMerchantAdmin(merchantId, userId, loggedInUserId, role);
+  res.status(httpStatus.CREATED).send(merchantAdmin);
+});
+
+const removeMerchantAdmin = catchAsync(async (req, res) => {
+  const { merchantId } = req.query;
+  const { adminId } = req.body;
+  const loggedInUserId = req.user._id;
+  await merchantService.removeMerchantAdmin(merchantId, adminId, loggedInUserId);
+  res.status(httpStatus.NO_CONTENT).send('Admin removed successfully');
+});
+
+const listMerchantAdmins = catchAsync(async (req, res) => {
+  const merchantAdmins = await merchantService.listMerchantAdmins(req.params.merchantId);
+  if (!merchantAdmins) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Merchant admin not found');
+  }
+  res.send(merchantAdmins);
+});
+
+const getMerchant = catchAsync(async (req, res) => {
+  const request = await merchantService.getMerchant(req.params.requestId);
+  if (!request) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Request not found');
+  }
+  res.send(request);
+});
+
 module.exports = {
   createMerchantRequest,
   viewRequests,
@@ -85,4 +117,8 @@ module.exports = {
   approveMerchantRequest,
   getApprovedRequests,
   getMerchants,
+  getMerchant,
+  addMerchantAdmin,
+  removeMerchantAdmin,
+  listMerchantAdmins,
 };

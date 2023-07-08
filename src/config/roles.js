@@ -10,6 +10,7 @@ const userPermissions = [
   'makeWithdrawal',
   'manageSavings',
   'request',
+  'manageMerchantAdmin',
 ];
 
 const adminPermissions = [
@@ -26,6 +27,7 @@ const adminPermissions = [
   'manageRoles',
   'manageCustomer',
   'merchantRequest',
+  'managePermission',
 ];
 
 const superAdminPermissions = [

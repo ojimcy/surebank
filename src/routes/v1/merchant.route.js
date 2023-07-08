@@ -9,6 +9,10 @@ const router = express.Router();
 router.route('/').get(auth('merchantRequest'), validate(merchantValidation.getMerchants), merchantController.getMerchants);
 
 router
+  .route('/:merchatnId')
+  .get(auth('merchantRequest'), validate(merchantValidation.getMerchant), merchantController.getMerchant);
+
+router
   .route('/request')
   .post(auth('request'), validate(merchantValidation.createMerchantRequest), merchantController.createMerchantRequest)
   .get(auth('merchantRequest'), validate(merchantValidation.viewRequests), merchantController.viewRequests);
@@ -40,5 +44,18 @@ router
 router
   .route('/approved')
   .get(auth('merchantRequest'), validate(merchantValidation.viewRequests), merchantController.getApprovedRequests);
+
+router
+  .route('/admin/add-admin')
+  .post(auth('manageMerchantAdmin'), validate(merchantValidation.addMerchantAdmin), merchantController.addMerchantAdmin)
+  .patch(
+    auth('manageMerchantAdmin'),
+    validate(merchantValidation.removeMerchantAdmin),
+    merchantController.removeMerchantAdmin
+  );
+
+router
+  .route('/admin/:merchantId/')
+  .get(auth('manageMerchantAdmin'), validate(merchantValidation.listMerchantAdmins), merchantController.listMerchantAdmins);
 
 module.exports = router;

@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { MerchantRequest, Merchant } = require('../models');
+const { MerchantRequest, Merchant, MerchantAdmin } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -166,6 +166,97 @@ const getMerchants = async (filter, options) => {
   return merchants;
 };
 
+/**
+ * Get merchant by id
+ * @param {ObjectId} id
+ * @returns {Promise<Merchant>}
+ */
+const getMerchant = async (id) => {
+  return Merchant.findById(id);
+};
+
+/**
+ * Add a merchant admin
+ * @param {ObjectId} merchantId - ID of the merchant
+ * @param {ObjectId} userId - ID of the admin
+ * @param {string} role - Role of the admin
+ * @returns {Promise<Object>} Result of the operation
+ */
+const addMerchantAdmin = async (merchantId, userId, loggedInUserId, role) => {
+  // Find the Merchant document that was created by the logged-in user
+  const merchant = await getMerchant(merchantId);
+
+  // Check that the Merchant document was found
+  if (!merchant) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Merchant not found');
+  }
+
+  // Check that the logged-in user is the owner of the Merchant
+  if (merchant.userId.toString() !== loggedInUserId.toString()) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'You are not authorized to perform this action');
+  }
+
+  // Check if the admin entry already exists
+  const existingAdmin = await MerchantAdmin.findOne({ merchantId, userId, role });
+
+  if (existingAdmin) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Duplicate entry');
+  }
+
+  // Create a new MerchantAdmin document
+  return MerchantAdmin.create({
+    merchantId,
+    userId,
+    loggedInUserId,
+    role,
+  });
+};
+
+/**
+ * Remove a merchant admin
+ * @param {ObjectId} merchantId - ID of the merchant
+ * @param {ObjectId} adminId - ID of the admin to be removed
+ * @param {ObjectId} loggedInUserId - ID of the logged-in user
+ * @returns {Promise<Object>} Result of the operation
+ */
+const removeMerchantAdmin = async (merchantId, adminId, loggedInUserId) => {
+  // Find the Merchant document that was created by the logged-in user
+  const merchant = await getMerchant(merchantId);
+
+  // Check that the Merchant document was found
+  if (!merchant) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Merchant not found');
+  }
+
+  // Check that the logged-in user is the owner of the Merchant
+  if (merchant.userId.toString() !== loggedInUserId.toString()) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'You are not authorized to perform this action');
+  }
+
+  // Find the MerchantAdmin document for the specified admin ID
+  const admin = await MerchantAdmin.findOne({ merchantId, userId: adminId });
+
+  // Check if the admin exists
+  if (!admin) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Admin not found');
+  }
+
+  // Remove the admin
+  await admin.remove();
+
+  return { success: true, message: 'Admin removed successfully' };
+};
+
+/**
+ * List of merchant admins
+ * @param {ObjectId} merchantId
+ * @returns {Promise<Merchant>}
+ */
+const listMerchantAdmins = async (merchantId) => {
+  const merchantAdmins = await MerchantAdmin.find({ merchantId });
+  return merchantAdmins;
+};
+
 module.exports = {
   createMerchantRequest,
   viewRequests,
@@ -177,4 +268,8 @@ module.exports = {
   approveMerchantRequest,
   getApprovedRequests,
   getMerchants,
+  getMerchant,
+  addMerchantAdmin,
+  removeMerchantAdmin,
+  listMerchantAdmins,
 };

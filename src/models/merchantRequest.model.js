@@ -35,7 +35,7 @@ const merchantRequestSchema = mongoose.Schema(
     },
     reasons: {
       type: [String],
-      required: true,
+      required: false,
     },
   },
   {
