@@ -9,6 +9,7 @@ const userPermissions = [
   'makeDeposit',
   'makeWithdrawal',
   'manageSavings',
+  'request',
 ];
 
 const adminPermissions = [
@@ -24,6 +25,7 @@ const adminPermissions = [
   'manageCustomerTransaction',
   'manageRoles',
   'manageCustomer',
+  'merchantRequest',
 ];
 
 const superAdminPermissions = [

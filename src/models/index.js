@@ -11,3 +11,5 @@ module.exports.RolePermission = require('./rolePermission.model');
 module.exports.Role = require('./role.model');
 module.exports.Package = require('./package.model');
 module.exports.Contribution = require('./contribution.model');
+module.exports.MerchantRequest = require('./merchantRequest.model');
+module.exports.Merchant = require('./merchant.model');
