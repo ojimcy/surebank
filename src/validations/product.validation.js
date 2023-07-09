@@ -2,15 +2,13 @@ const Joi = require('joi');
 const { objectId } = require('./custom.validation');
 
 const createProductRequest = {
-  params: Joi.object().keys({
-    categoryId: Joi.string().required().custom(objectId),
-    merchantId: Joi.string().required().custom(objectId),
-  }),
   body: Joi.object().keys({
     name: Joi.string().required(),
     description: Joi.string().required(),
     longDescription: Joi.string().required(),
     image: Joi.string().required(),
+    barcode: Joi.string().required(),
+    categoryId: Joi.string().required().custom(objectId),
   }),
 };
 

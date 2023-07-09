@@ -1,15 +1,15 @@
 const httpStatus = require('http-status');
 const { ProductRequest, Product } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { getMerchant } = require('./merchant.service');
+const { getMerchantByUserId } = require('./merchant.service');
 
 /**
  * Create product request
  * @param {Object} requestData - Request data
  * @returns {Promise<Object>} Result of the operation
  */
-const createProductRequest = async (requestData) => {
-  const merchant = await getMerchant(requestData.merchantId);
+const createProductRequest = async (requestData, userId) => {
+  const merchant = await getMerchantByUserId(userId);
 
   // Check that the Merchant document was found
   if (!merchant) {
@@ -26,7 +26,7 @@ const createProductRequest = async (requestData) => {
     throw new ApiError(`Product with the name ${requestData.name} already exist or requested`);
   }
 
-  return ProductRequest.create(requestData);
+  return ProductRequest.create({ ...requestData, merchantId: merchant._id });
 };
 
 /**

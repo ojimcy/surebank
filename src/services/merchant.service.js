@@ -175,6 +175,11 @@ const getMerchant = async (id) => {
   return Merchant.findById(id);
 };
 
+const getMerchantByUserId = async (userId) => {
+  const merchant = await Merchant.findOne({ userId });
+  return merchant;
+};
+
 /**
  * Add a merchant admin
  * @param {ObjectId} merchantId - ID of the merchant
@@ -269,6 +274,7 @@ module.exports = {
   getApprovedRequests,
   getMerchants,
   getMerchant,
+  getMerchantByUserId,
   addMerchantAdmin,
   removeMerchantAdmin,
   listMerchantAdmins,
