@@ -29,6 +29,7 @@ const adminPermissions = [
   'manageCustomer',
   'merchantRequest',
   'managePermission',
+  'manageCategory',
 ];
 
 const superAdminPermissions = [

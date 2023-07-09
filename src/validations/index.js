@@ -6,4 +6,6 @@ module.exports.accountingValidation = require('./accounting.validation');
 module.exports.accountTransactionValidation = require('./accountTransaction.validation');
 module.exports.aclValidation = require('./acl.validation');
 module.exports.dailySavingsValidation = require('./dailySavings.validation');
-module.exports.merchantRequestValidation = require('./merchantRequest.validation');
+module.exports.merchantRequestValidation = require('./merchant.validation');
+module.exports.productValidation = require('./product.validation');
+module.exports.storeValidation = require('./store.validation');
