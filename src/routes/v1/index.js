@@ -13,6 +13,7 @@ const aclRoute = require('./acl.route');
 const customerRoute = require('./customer.route');
 const dailySavingsRoute = require('./dailySavings.route');
 const merchantRoute = require('./merchant.route');
+const productRoute = require('./product.route');
 
 const router = express.Router();
 
@@ -64,6 +65,10 @@ const defaultRoutes = [
   {
     path: '/merchant',
     route: merchantRoute,
+  },
+  {
+    path: '/product',
+    route: productRoute,
   },
 ];
 

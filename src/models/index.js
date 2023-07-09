@@ -15,3 +15,6 @@ module.exports.Contribution = require('./contribution.model');
 module.exports.MerchantRequest = require('./merchantRequest.model');
 module.exports.Merchant = require('./merchant.model');
 module.exports.MerchantAdmin = require('./merchantAdmin.model');
+module.exports.ProductRequest = require('./productRequest.model');
+module.exports.Category = require('./category.model');
+module.exports.Product = require('./product.model');

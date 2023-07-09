@@ -10,3 +10,4 @@ module.exports.aclService = require('./acl.service');
 module.exports.customerService = require('./customer.service');
 module.exports.dailySavingsService = require('./dailySavings.service');
 module.exports.merchantService = require('./merchant.service');
+module.exports.productService = require('./product.service');
