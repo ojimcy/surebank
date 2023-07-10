@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { ProductRequest, Product } = require('../models');
+const { ProductRequest, Product, ProductCatalogue } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getMerchantByUserId } = require('./merchant.service');
 
@@ -30,16 +30,16 @@ const createProductRequest = async (requestData, userId) => {
 };
 
 /**
- * Get cancelled merchant requests with pagination
+ * View product requests with pagination
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
  * @param {number} [options.page] - Current page (default = 1)
- * @returns {Promise<Object>} Object containing cancelled merchant requests and pagination information
+ * @returns {Promise<Object>} Object containing product requests and pagination information
  */
 const viewProductRequests = async (filter, options) => {
-  const productRequests = await ProductRequest.paginate({ status: 'cancel', ...filter }, options);
+  const productRequests = await ProductRequest.paginate(filter, options);
   return productRequests;
 };
 
@@ -93,9 +93,34 @@ const deleteProductRequest = async (requestId, merchantId) => {
   return productRequest;
 };
 
+/**
+ * Create a product catalogue
+ * @param {Object} productData - Product catalogue data
+ * @returns {Promise<Object>} Result of the operation
+ */
+const createProductCatalogue = async (productData) => {
+  // Check if the product exists and is available
+  const product = await Product.findById(productData.productId);
+  if (!product || product.quantity === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Product not found or not available');
+  }
+
+  // Check if the title is unique
+  const existingProductCatalogue = await ProductCatalogue.findOne({ title: productData.title });
+  if (existingProductCatalogue) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Product with the same title already exists in the catalogue');
+  }
+
+  // Create the product catalogue entry
+  const productCatalogue = await ProductCatalogue.create(productData);
+
+  return productCatalogue;
+};
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
   updateProductRequest,
   deleteProductRequest,
+  createProductCatalogue,
 };

@@ -30,6 +30,7 @@ const adminPermissions = [
   'merchantRequest',
   'managePermission',
   'manageCategory',
+  'productCatalogue',
 ];
 
 const superAdminPermissions = [

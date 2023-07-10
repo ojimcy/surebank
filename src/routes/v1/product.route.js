@@ -16,4 +16,12 @@ router
   .patch(auth('productRequest'), validate(productValidation.updateProductRequest), productController.updateProductRequest)
   .delete(auth('productRequest'), validate(productValidation.deleteProductRequest), productController.deleteProductRequest);
 
+router
+  .route('/cat/create')
+  .post(
+    auth('productCatalogue'),
+    validate(productValidation.createProductCatalogue),
+    productController.createProductCatalogue
+  );
+
 module.exports = router;

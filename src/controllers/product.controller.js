@@ -36,9 +36,16 @@ const deleteProductRequest = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(deletedProductRequest);
 });
 
+const createProductCatalogue = catchAsync(async (req, res) => {
+  const productData = req.body;
+  const productCatalogue = await productService.createProductCatalogue(productData);
+  res.status(httpStatus.CREATED).send(productCatalogue);
+});
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
   updateProductRequest,
   deleteProductRequest,
+  createProductCatalogue,
 };

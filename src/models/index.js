@@ -18,3 +18,4 @@ module.exports.MerchantAdmin = require('./merchantAdmin.model');
 module.exports.ProductRequest = require('./productRequest.model');
 module.exports.Category = require('./category.model');
 module.exports.Product = require('./product.model');
+module.exports.ProductCatalogue = require('./productCatalogue.model');

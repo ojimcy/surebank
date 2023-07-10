@@ -46,9 +46,27 @@ const deleteProductRequest = {
   }),
 };
 
+const createProductCatalogue = {
+  query: Joi.object().keys({
+    productId: Joi.string().required().custom(objectId),
+    merchantId: Joi.string().required().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    image: Joi.string().required(),
+    title: Joi.string().required(),
+    description: Joi.string().required(),
+    costPrice: Joi.string().required(),
+    originalPrice: Joi.string().required(),
+    price: Joi.string().required(),
+    quantity: Joi.string().required(),
+    text: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
   updateProductRequest,
   deleteProductRequest,
+  createProductCatalogue,
 };
