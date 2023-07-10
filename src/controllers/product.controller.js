@@ -48,6 +48,13 @@ const approveProductRequest = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send(newProduct);
 });
 
+const rejectProduct = catchAsync(async (req, res) => {
+  const { requestId } = req.params;
+  const { reviewComment } = req.body;
+  const updatedRequest = await productService.rejectProduct(requestId, reviewComment);
+  res.status(httpStatus.OK).json(updatedRequest);
+});
+
 const viewProduct = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['name', 'role']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
@@ -81,6 +88,7 @@ module.exports = {
   deleteProductRequest,
   createProductCatalogue,
   approveProductRequest,
+  rejectProduct,
   viewProduct,
   updateProduct,
   deleteProduct,

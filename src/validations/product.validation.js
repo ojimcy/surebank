@@ -69,6 +69,15 @@ const approveProductRequest = {
   }),
 };
 
+const rejectProduct = {
+  params: Joi.object().keys({
+    requestId: Joi.string().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    reviewComment: Joi.string().required(),
+  }),
+};
+
 const viewProduct = {
   query: Joi.object().keys({
     name: Joi.string(),
@@ -112,6 +121,7 @@ module.exports = {
   deleteProductRequest,
   createProductCatalogue,
   approveProductRequest,
+  rejectProduct,
   viewProduct,
   deleteProduct,
   updateProduct,

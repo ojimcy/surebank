@@ -128,6 +128,10 @@ const approveProductRequest = async (requestId) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product request not found');
   }
 
+  // Update the status of the product request to "approved"
+  productRequest.status = 'approved';
+  await productRequest.save();
+
   // Create a new Product document using the product request data
   const newProduct = new Product({
     name: productRequest.name,
@@ -137,16 +141,31 @@ const approveProductRequest = async (requestId) => {
     barcode: productRequest.barcode,
     categoryId: productRequest.categoryId,
     merchantId: productRequest.merchantId,
-    status: 'approved',
   });
 
   // Save the new product document
   await newProduct.save();
 
-  // Delete the approved product request
-  await ProductRequest.findByIdAndRemove(requestId);
-
   return newProduct;
+};
+
+/**
+ * Reject a product request
+ * @param {ObjectId} requestId - ID of the product request to be rejected
+ * @returns {Promise<Object>} Result of the operation
+ */
+const rejectProduct = async (requestId, reviewComment) => {
+  const productRequest = await ProductRequest.findById(requestId);
+  if (!productRequest) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product request not found');
+  }
+
+  const updatedRequest = await ProductRequest.findByIdAndUpdate(
+    requestId,
+    { status: 'denied', reviewComment },
+    { new: true }
+  );
+  return updatedRequest;
 };
 
 /**
@@ -219,6 +238,7 @@ module.exports = {
   deleteProductRequest,
   createProductCatalogue,
   approveProductRequest,
+  rejectProduct,
   viewProduct,
   updateProduct,
   deleteProduct,

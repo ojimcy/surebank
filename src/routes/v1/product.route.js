@@ -24,7 +24,15 @@ router
 
 router
   .route('/request/:requestId/approve')
-  .post(auth('productRequest'), validate(productValidation.approveProductRequest), productController.approveProductRequest);
+  .post(
+    auth('manageProductRequest'),
+    validate(productValidation.approveProductRequest),
+    productController.approveProductRequest
+  );
+
+router
+  .route('/request/:requestId/reject')
+  .post(auth('manageProductRequest'), validate(productValidation.rejectProduct), productController.rejectProduct);
 
 router
   .route('/cat/create')
