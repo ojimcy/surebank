@@ -7,7 +7,6 @@ const createCategory = catchAsync(async (req, res) => {
   const category = await storeService.createCategory(categoryData);
   res.status(httpStatus.CREATED).send(category);
 });
-
 module.exports = {
   createCategory,
 };

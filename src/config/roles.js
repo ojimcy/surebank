@@ -31,6 +31,7 @@ const adminPermissions = [
   'managePermission',
   'manageCategory',
   'productCatalogue',
+  'manageBrand',
 ];
 
 const superAdminPermissions = [

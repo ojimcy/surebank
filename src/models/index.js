@@ -19,3 +19,4 @@ module.exports.ProductRequest = require('./productRequest.model');
 module.exports.Category = require('./category.model');
 module.exports.Product = require('./product.model');
 module.exports.ProductCatalogue = require('./productCatalogue.model');
+module.exports.Brand = require('./brand.model');

@@ -15,6 +15,7 @@ const dailySavingsRoute = require('./dailySavings.route');
 const merchantRoute = require('./merchant.route');
 const productRoute = require('./product.route');
 const storeRoute = require('./store.route');
+const brandRoute = require('./brand.route');
 
 const router = express.Router();
 
@@ -74,6 +75,10 @@ const defaultRoutes = [
   {
     path: '/store',
     route: storeRoute,
+  },
+  {
+    path: '/brand',
+    route: brandRoute,
   },
 ];
 
