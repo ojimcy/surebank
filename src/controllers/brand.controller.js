@@ -8,6 +8,21 @@ const createBrand = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send(brand);
 });
 
+const deleteBrand = catchAsync(async (req, res) => {
+  const { brandId } = req.params;
+  const brand = await brandService.deleteBrand(brandId);
+  res.status(httpStatus.OK).send(brand);
+});
+
+const updateBrand = catchAsync(async (req, res) => {
+  const { brandId } = req.params;
+  const updateData = req.body;
+  const brand = await brandService.updateBrand(brandId, updateData);
+  res.status(httpStatus.OK).send(brand);
+});
+
 module.exports = {
   createBrand,
+  deleteBrand,
+  updateBrand,
 };

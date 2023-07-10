@@ -1,11 +1,28 @@
 const Joi = require('joi');
 
-const creatBrand = {
+const createBrand = {
+  body: Joi.object().keys({
+    name: Joi.string().required(),
+  }),
+};
+
+const deleteBrand = {
+  params: Joi.object().keys({
+    brandId: Joi.string().required(),
+  }),
+};
+
+const updateBrand = {
+  params: Joi.object().keys({
+    brandId: Joi.string().required(),
+  }),
   body: Joi.object().keys({
     name: Joi.string().required(),
   }),
 };
 
 module.exports = {
-  creatBrand,
+  createBrand,
+  deleteBrand,
+  updateBrand,
 };
