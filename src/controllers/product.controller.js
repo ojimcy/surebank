@@ -42,10 +42,46 @@ const createProductCatalogue = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send(productCatalogue);
 });
 
+const approveProductRequest = catchAsync(async (req, res) => {
+  const { requestId } = req.params;
+  const newProduct = await productService.approveProductRequest(requestId);
+  res.status(httpStatus.CREATED).send(newProduct);
+});
+
+const viewProduct = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['name', 'role']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const result = await productService.viewProduct(filter, options);
+  res.status(httpStatus.OK).send(result);
+});
+
+const updateProduct = catchAsync(async (req, res) => {
+  const { productId } = req.params;
+  const { merchantId } = req.query;
+  const updateData = req.body;
+
+  const updatedProduct = await productService.updateProduct(productId, merchantId, updateData);
+
+  res.status(httpStatus.OK).send(updatedProduct);
+});
+
+const deleteProduct = catchAsync(async (req, res) => {
+  const { productId } = req.params;
+  const { merchantId } = req.query;
+
+  const deletedProduct = await productService.deleteProduct(productId, merchantId);
+
+  res.status(httpStatus.OK).send(deletedProduct);
+});
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
   updateProductRequest,
   deleteProductRequest,
   createProductCatalogue,
+  approveProductRequest,
+  viewProduct,
+  updateProduct,
+  deleteProduct,
 };

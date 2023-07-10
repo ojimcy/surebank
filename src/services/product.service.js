@@ -117,10 +117,109 @@ const createProductCatalogue = async (productData) => {
   return productCatalogue;
 };
 
+/**
+ * Approve a product request and create a new Product document
+ * @param {string} requestId - The ID of the product request to approve
+ * @returns {Promise<Object>} The created product
+ */
+const approveProductRequest = async (requestId) => {
+  const productRequest = await ProductRequest.findById(requestId);
+  if (!productRequest) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product request not found');
+  }
+
+  // Create a new Product document using the product request data
+  const newProduct = new Product({
+    name: productRequest.name,
+    description: productRequest.description,
+    image: productRequest.image,
+    longDescription: productRequest.longDescription,
+    barcode: productRequest.barcode,
+    categoryId: productRequest.categoryId,
+    merchantId: productRequest.merchantId,
+    status: 'approved',
+  });
+
+  // Save the new product document
+  await newProduct.save();
+
+  // Delete the approved product request
+  await ProductRequest.findByIdAndRemove(requestId);
+
+  return newProduct;
+};
+
+/**
+ * View product with pagination
+ * @param {Object} filter - Mongo filter
+ * @param {Object} options - Query options
+ * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<Object>} Object containing product and pagination information
+ */
+const viewProduct = async (filter, options) => {
+  const product = await Product.paginate(filter, options);
+  return product;
+};
+
+/**
+ * Update product
+ * @param {string} productId - The ID of the product to update
+ * @param {string} merchantId - The ID of the  merchant
+ * @param {Object} updateData - The updated data for the product
+ * @returns {Promise<Object>} The updated product
+ */
+const updateProduct = async (productId, merchantId, updateData) => {
+  // Check if the product exists
+  const product = await Product.findById(productId);
+  if (!product) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
+  }
+
+  // Check if the product request belongs to the requesting merchant
+  if (product.merchantId.toString() !== merchantId) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Access denied');
+  }
+
+  Object.assign(product, updateData);
+  await product.save();
+
+  return product;
+};
+
+/**
+ * Delete product
+ * @param {string} Id - The ID of the product  to delete
+ * @param {string} merchantId - The ID of the merchant
+ * @returns {Promise<Object>} The deleted product
+ */
+const deleteProduct = async (productId, merchantId) => {
+  // Check if the product exists
+  const product = await Product.findById(productId);
+  if (!product) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
+  }
+
+  // Check if the product belongs to the requesting merchant
+  if (product.merchantId.toString() !== merchantId) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Access denied');
+  }
+
+  // Delete the product
+  await product.findByIdAndRemove(productId);
+
+  return product;
+};
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
   updateProductRequest,
   deleteProductRequest,
   createProductCatalogue,
+  approveProductRequest,
+  viewProduct,
+  updateProduct,
+  deleteProduct,
 };

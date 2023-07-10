@@ -5,6 +5,12 @@ const productValidation = require('../../validations/product.validation');
 const productController = require('../../controllers/product.controller');
 
 const router = express.Router();
+router.route('/').get(auth('getProducts'), validate(productValidation.viewProduct), productController.viewProduct);
+
+router
+  .route('/:productId')
+  .patch(auth('manageProduct'), validate(productValidation.updateProduct), productController.updateProduct)
+  .delete(auth('manageProduct'), validate(productValidation.deleteProduct), productController.deleteProduct);
 
 router
   .route('/request')
@@ -15,6 +21,10 @@ router
   .route('/request/:requestId')
   .patch(auth('productRequest'), validate(productValidation.updateProductRequest), productController.updateProductRequest)
   .delete(auth('productRequest'), validate(productValidation.deleteProductRequest), productController.deleteProductRequest);
+
+router
+  .route('/request/:requestId/approve')
+  .post(auth('productRequest'), validate(productValidation.approveProductRequest), productController.approveProductRequest);
 
 router
   .route('/cat/create')

@@ -63,10 +63,56 @@ const createProductCatalogue = {
   }),
 };
 
+const approveProductRequest = {
+  params: Joi.object().keys({
+    requestId: Joi.string().custom(objectId),
+  }),
+};
+
+const viewProduct = {
+  query: Joi.object().keys({
+    name: Joi.string(),
+    role: Joi.string(),
+    sortBy: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
+const updateProduct = {
+  params: Joi.object().keys({
+    productId: Joi.string().required().custom(objectId),
+  }),
+  query: Joi.object().keys({
+    merchantId: Joi.string().required().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    image: Joi.string().optional(),
+    name: Joi.string().optional(),
+    description: Joi.string().optional(),
+    longDescription: Joi.string().optional(),
+    barcode: Joi.string().optional(),
+    categoryId: Joi.string().optional().custom(objectId),
+  }),
+};
+
+const deleteProduct = {
+  params: Joi.object().keys({
+    productId: Joi.string().custom(objectId),
+  }),
+  query: Joi.object().keys({
+    merchantId: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
   updateProductRequest,
   deleteProductRequest,
   createProductCatalogue,
+  approveProductRequest,
+  viewProduct,
+  deleteProduct,
+  updateProduct,
 };

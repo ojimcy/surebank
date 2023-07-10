@@ -12,6 +12,7 @@ const userPermissions = [
   'request',
   'manageMerchantAdmin',
   'productRequest',
+  'getProducts',
 ];
 
 const adminPermissions = [
