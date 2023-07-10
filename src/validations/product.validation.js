@@ -47,18 +47,16 @@ const deleteProductRequest = {
 };
 
 const createProductCatalogue = {
-  query: Joi.object().keys({
+  body: Joi.object().keys({
     productId: Joi.string().required().custom(objectId),
     merchantId: Joi.string().required().custom(objectId),
-  }),
-  body: Joi.object().keys({
     image: Joi.string().required(),
     title: Joi.string().required(),
     description: Joi.string().required(),
-    costPrice: Joi.string().required(),
-    originalPrice: Joi.string().required(),
-    price: Joi.string().required(),
-    quantity: Joi.string().required(),
+    costPrice: Joi.number().required(),
+    originalPrice: Joi.number().required(),
+    price: Joi.number().required(),
+    quantity: Joi.number().required(),
     text: Joi.string().required(),
   }),
 };

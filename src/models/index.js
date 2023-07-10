@@ -20,3 +20,5 @@ module.exports.Category = require('./category.model');
 module.exports.Product = require('./product.model');
 module.exports.ProductCatalogue = require('./productCatalogue.model');
 module.exports.Brand = require('./brand.model');
+module.exports.Cart = require('./cart.model');
+module.exports.CartItem = require('./cartItem.model');

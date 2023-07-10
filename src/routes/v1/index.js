@@ -16,6 +16,7 @@ const merchantRoute = require('./merchant.route');
 const productRoute = require('./product.route');
 const storeRoute = require('./store.route');
 const brandRoute = require('./brand.route');
+const cartRoute = require('./cart.route');
 
 const router = express.Router();
 
@@ -79,6 +80,10 @@ const defaultRoutes = [
   {
     path: '/brand',
     route: brandRoute,
+  },
+  {
+    path: '/cart',
+    route: cartRoute,
   },
 ];
 
