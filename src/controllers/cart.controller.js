@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 
@@ -29,9 +30,39 @@ const clearCart = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send();
 });
 
+const commitSale = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const salesData = {
+    ...req.body,
+  };
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const makeSales = await cartService.commitSale(userId, salesData, session);
+
+    if (makeSales.error) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(httpStatus.BAD_REQUEST).json({ error: makeSales.error });
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(httpStatus.OK).json(makeSales);
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ error: err.message });
+  }
+});
+
 module.exports = {
   addToCart,
   viewCartItems,
   removeCartItem,
   clearCart,
+  commitSale,
 };
