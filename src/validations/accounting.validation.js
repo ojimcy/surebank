@@ -7,7 +7,7 @@ const ledgerEntry = {
     amount: Joi.number().required(),
     userId: Joi.string().required().custom(objectId),
     branchId: Joi.string().required().custom(objectId),
-    naration: Joi.string().required(),
+    narration: Joi.string().required(),
     type: Joi.string()
       .valid(...ACCOUNT_TYPE)
       .required(),

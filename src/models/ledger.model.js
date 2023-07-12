@@ -17,7 +17,7 @@ const ledgerSchema = mongoose.Schema(
       ref: 'Branch',
       required: true,
     },
-    naration: {
+    narration: {
       type: String,
       required: true,
       unique: true,

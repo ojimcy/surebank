@@ -31,6 +31,8 @@ const saleSchema = mongoose.Schema(
     paymentStatus: {
       type: String,
       required: true,
+      enum: ['pending', 'approved'],
+      default: 'pending',
     },
     status: {
       type: String,
