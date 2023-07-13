@@ -27,19 +27,9 @@ const clearCart = {
   }),
 };
 
-const commitSale = {
-  body: Joi.object().keys({
-    merchantId: Joi.string().required().custom(objectId),
-    salesRepId: Joi.string().required().custom(objectId),
-    paymentMethod: Joi.string().required(),
-    branchId: Joi.string().required().custom(objectId),
-  }),
-};
-
 module.exports = {
   addToCart,
   getCartItems,
   removeCartItem,
   clearCart,
-  commitSale,
 };

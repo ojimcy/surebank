@@ -14,7 +14,7 @@ const userPermissions = [
   'productRequest',
   'getProducts',
   'manageCart',
-  'comitSales',
+  'salesOperations',
 ];
 
 const adminPermissions = [

@@ -8,3 +8,4 @@ module.exports.dailySavingsController = require('./dailySavings.controller');
 module.exports.merchantController = require('./merchant.controller');
 module.exports.storeController = require('./store.controller');
 module.exports.brandController = require('./brand.controller');
+module.exports.salesController = require('./sales.contoller');

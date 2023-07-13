@@ -39,17 +39,9 @@ const clearCart = catchAsync(async (req, res) => {
   res.sendStatus(httpStatus.OK);
 });
 
-const commitSale = catchAsync(async (req, res) => {
-  const userId = req.user._id;
-  const salesData = { ...req.body };
-  await cartService.commitSale(userId, salesData);
-  res.status(httpStatus.OK).send({ message: 'Sale committed successfully' });
-});
-
 module.exports = {
   addToCart,
   viewCartItems,
   removeCartItem,
   clearCart,
-  commitSale,
 };

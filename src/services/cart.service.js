@@ -1,9 +1,7 @@
 /* eslint-disable no-await-in-loop */
-const mongoose = require('mongoose');
 const httpStatus = require('http-status');
-const { Cart, CartItem, ProductCatalogue, Ledger, Sales, SalesItem } = require('../models');
+const { Cart, CartItem } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { ACCOUNT_TYPE, DIRECTION_VALUE, SALES_PAYMENT_METHOD } = require('../constants/account');
 
 /**
  * Initialize a new cart for the user
@@ -119,110 +117,9 @@ const clearCart = async (userId) => {
   }
 };
 
-const checkProductAvailability = async (productCatalogueId, quantityDemand) => {
-  const productCatalogue = await ProductCatalogue.findById(productCatalogueId);
-  if (productCatalogue) {
-    const { quantity } = productCatalogue;
-    return quantity >= quantityDemand;
-  }
-  return false;
-};
-
-/**
- * Update inventory
- * @param {ObjectId} productCatalogueId
- * @param {Object} quantityDemand
- * @returns {Promise<User>}
- */
-const updateInventory = async (productCatalogueId, quantityDemand, session) => {
-  const productCatalogue = await ProductCatalogue.findById(productCatalogueId);
-  if (!productCatalogue) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
-  }
-  const newQuantity = productCatalogue.quantity - quantityDemand;
-  productCatalogue.quantity = newQuantity;
-  await ProductCatalogue.findByIdAndUpdate(productCatalogueId, { quantity: newQuantity }, { session });
-};
-
-/**
- * Commit a sale by creating sales records, updating inventory, and posting ledger entries.
- * @param {string} userId - The ID of the user initiating the sale.
- * @param {Object} salesData - The sales data.
- * @param {Object} session - The database session object for transactional consistency.
- * @returns {Promise<Object>} The result of the sale operation
- */
-const commitSale = async (userId, salesData) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const cart = await Cart.findOne({ userId }).session(session);
-    if (!cart) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Cart not found');
-    }
-
-    const cartId = cart._id;
-    const { total } = cart;
-
-    const cartItems = await CartItem.find({ cartId }).session(session);
-    if (cartItems.length === 0) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'No items in the cart');
-    }
-
-    const sales = await Sales.create([{ ...salesData, userId, total, branchId: salesData.branchId }], { session });
-
-    for (let i = 0; i < cartItems.length; i += 1) {
-      const item = cartItems[i];
-      const isAvailable = await checkProductAvailability(item.productCatalogueId, item.quantity);
-      if (isAvailable) {
-        await SalesItem.create(
-          [
-            {
-              salesId: sales[0]._id,
-              productCatalogueId: item.productCatalogueId,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              subTotal: item.subTotal,
-            },
-          ],
-          { session }
-        );
-
-        const updateInventoryResult = await updateInventory(item.productCatalogueId, item.quantity, session);
-        if (!updateInventoryResult) {
-          throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Product Catalogue could not be updated');
-        }
-      } else {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Product not available');
-      }
-    }
-
-    if (SALES_PAYMENT_METHOD.includes(salesData.paymentMethod)) {
-      const currentDate = new Date().getTime();
-      const amount = total;
-      const type = ACCOUNT_TYPE[0];
-      const direction = DIRECTION_VALUE[0];
-      const narration = 'Sale Transaction';
-      const { branchId } = salesData;
-
-      await Ledger.create([{ date: currentDate, amount, type, direction, narration, branchId, userId }], { session });
-    }
-
-    await session.commitTransaction();
-    session.endSession();
-
-    return { message: 'Sale committed successfully', error: null };
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
-  }
-};
-
 module.exports = {
   addToCart,
   getCartItems,
   removeCartItem,
   clearCart,
-  commitSale,
 };
