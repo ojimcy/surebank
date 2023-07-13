@@ -166,6 +166,17 @@ const viewSales = async (userId, filters, pagination) => {
   // Retrieve sales data based on the constructed query and options
   const salesData = await Sales.paginate(query, options);
 
+  // Check if no sales data found
+  if (salesData.totalDocs === 0) {
+    return {
+      sales: [],
+      totalCount: 0,
+      currentPage: page,
+      totalPages: 0,
+      message: 'No sales data available for the user',
+    };
+  }
+
   return salesData;
 };
 
