@@ -2,7 +2,7 @@ const Joi = require('joi');
 const { objectId } = require('./custom.validation');
 
 const commitSale = {
-  body: Joi.object().keys({
+  query: Joi.object().keys({
     merchantId: Joi.string().required().custom(objectId),
     salesRepId: Joi.string().required().custom(objectId),
     paymentMethod: Joi.string().required(),
@@ -11,9 +11,6 @@ const commitSale = {
 };
 
 const viewSales = {
-  params: Joi.object().keys({
-    salesRepId: Joi.string().required().custom(objectId),
-  }),
   query: Joi.object().keys({
     status: Joi.string(),
     paymentMethod: Joi.string(),
@@ -21,12 +18,23 @@ const viewSales = {
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
   }),
-  body: Joi.object().keys({
-    role: Joi.string(),
+};
+
+const cancelSale = {
+  params: Joi.object().keys({
+    salesId: Joi.string().required().custom(objectId),
+  }),
+};
+
+const updatePayment = {
+  params: Joi.object().keys({
+    salesId: Joi.string().required().custom(objectId),
   }),
 };
 
 module.exports = {
   commitSale,
   viewSales,
+  cancelSale,
+  updatePayment,
 };

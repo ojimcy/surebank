@@ -6,7 +6,7 @@ const pick = require('../utils/pick');
 
 const commitSale = catchAsync(async (req, res) => {
   const userId = req.user._id;
-  const salesData = { ...req.body };
+  const salesData = req.query;
   await salesService.commitSale(userId, salesData);
   res.status(httpStatus.OK).send({ message: 'Sale committed successfully' });
 });
@@ -21,7 +21,30 @@ const viewSales = catchAsync(async (req, res) => {
   res.send(salesData);
 });
 
+const cancelSale = catchAsync(async (req, res) => {
+  const { salesId } = req.params;
+  const userId = req.user._id;
+  const updatedSale = await salesService.cancelSale(salesId, userId);
+  res.status(httpStatus.OK).send(updatedSale);
+});
+
+const updatePayment = catchAsync(async (req, res) => {
+  const { salesId } = req.query;
+  const ledger = await salesService.updatePayment(salesId);
+
+  res.status(httpStatus.OK).send(ledger);
+});
+
+const deleteSale = catchAsync(async (req, res) => {
+  const { salesId } = req.query;
+  const result = await salesService.deleteSale(salesId);
+  res.status(httpStatus.OK).send(result);
+});
+
 module.exports = {
   commitSale,
   viewSales,
+  cancelSale,
+  updatePayment,
+  deleteSale,
 };

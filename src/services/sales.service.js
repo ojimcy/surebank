@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const httpStatus = require('http-status');
 const { ProductCatalogue, Sales, SalesItem, Ledger, Cart, CartItem } = require('../models');
-const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
+const { ACCOUNT_TYPE, DIRECTION_VALUE, PAYMENT_STATUS } = require('../constants/account');
 const ApiError = require('../utils/ApiError');
 const { getMerchantByUserId } = require('./merchant.service');
 
@@ -180,7 +180,119 @@ const viewSales = async (userId, filters, pagination) => {
   return salesData;
 };
 
+/**
+ * Cancel a sale by updating its status and refunding product quantities
+ * @param {string} salesId - The ID of the sale
+ * @returns {Promise<object>} The updated sale document
+ */
+const cancelSale = async (salesId, userId) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const sale = await Sales.findById(salesId);
+
+    // Check if the user is authorized to cancel the sale
+    if (userId !== sale.userId.toString()) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized to cancel the sale');
+    }
+
+    const updateSale = await Sales.findByIdAndUpdate(salesId, { status: PAYMENT_STATUS[1] }, { session });
+
+    const saleItems = await SalesItem.find({ salesId });
+
+    await Promise.all(
+      saleItems.map(async (item) => {
+        const { quantity, productCatalogueId } = item;
+        const productCat = await ProductCatalogue.findById(productCatalogueId);
+        await ProductCatalogue.findByIdAndUpdate(
+          productCatalogueId,
+          { quantity: quantity + productCat.quantity },
+          { session }
+        );
+      })
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return updateSale;
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    throw err;
+  }
+};
+
+/**
+ * Cancel a sale by updating its status and refunding product quantities
+ * @param {string} salesId - The ID of the sale
+ * @returns {Promise<object>} The updated sale document
+ */
+const updatePayment = async (salesId) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  const sales = await Sales.findById(salesId);
+  if (!sales) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Sale not found');
+  }
+
+  // Check if the sale status is "approved"
+  if (sales.status !== PAYMENT_STATUS[2]) {
+    await Sales.findByIdAndUpdate(salesId, { status: PAYMENT_STATUS[0] }, { session });
+
+    const date = new Date().getTime();
+    const amount = sales.total;
+    const type = ACCOUNT_TYPE[0];
+    const direction = DIRECTION_VALUE[0];
+    const narration = sales.salesRepId;
+    const { branchId } = sales;
+
+    const ledger = await Ledger.create(
+      [
+        {
+          date,
+          amount,
+          type,
+          direction,
+          narration,
+          branchId,
+          userId: sales.userId,
+        },
+      ],
+      { session }
+    );
+
+    return ledger;
+  }
+  throw new ApiError(httpStatus.BAD_REQUEST, "Sales can't be completed");
+};
+
+const deleteSale = async (salesId) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    await Sales.findByIdAndDelete({ _id: salesId }, { session });
+
+    await SalesItem.deleteMany({ salesId }, { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return 'Successfully Deleted';
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 module.exports = {
   commitSale,
   viewSales,
+  cancelSale,
+  updatePayment,
+  deleteSale,
 };

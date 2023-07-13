@@ -128,12 +128,21 @@ const approveProductRequest = async (requestId) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product request not found');
   }
 
+  const existingProduct = await Product.findOne({
+    name: productRequest.name,
+    merchantId: productRequest.merchantId,
+  });
+  if (existingProduct) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Product already exists for the merchant');
+  }
+
   // Update the status of the product request to "approved"
   productRequest.status = 'approved';
   await productRequest.save();
 
   // Create a new Product document using the product request data
   const newProduct = new Product({
+    status: 'approved',
     name: productRequest.name,
     description: productRequest.description,
     image: productRequest.image,
