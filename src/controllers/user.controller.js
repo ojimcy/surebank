@@ -35,9 +35,8 @@ const deleteUser = catchAsync(async (req, res) => {
 });
 
 const updateProfile = catchAsync(async (req, res) => {
-  const { userId } = req.user;
+  const userId = req.user._id;
   const { email, firstName, lastName, address, phoneNumber } = req.body;
-
   const updateData = {
     email,
     firstName,
@@ -51,6 +50,11 @@ const updateProfile = catchAsync(async (req, res) => {
   res.send(updatedUser);
 });
 
+const me = catchAsync(async (req, res) => {
+  const { user } = req;
+  res.send(user);
+});
+
 module.exports = {
   createUser,
   getUsers,
@@ -58,4 +62,5 @@ module.exports = {
   updateUser,
   deleteUser,
   updateProfile,
+  me,
 };

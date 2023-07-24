@@ -9,7 +9,6 @@ const createUser = {
     lastName: Joi.string().required(),
     address: Joi.string().required(),
     branch: Joi.string(),
-    role: Joi.string().required().valid('user', 'admin'),
   }),
 };
 
@@ -42,6 +41,7 @@ const updateUser = {
       address: Joi.string().optional(),
       branch: Joi.string(),
       role: Joi.string().optional().valid('user', 'admin'),
+      phoneNumber: Joi.string().optional(),
     })
     .min(1),
 };

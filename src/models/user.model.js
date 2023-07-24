@@ -76,7 +76,7 @@ const userSchema = mongoose.Schema(
       default: 'active',
     },
     branch: {
-      type: [String],
+      type: String,
       enum: ['Hq', 'lagos', 'abuja'],
       default: ['Hq'],
     },
