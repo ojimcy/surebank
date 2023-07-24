@@ -8,6 +8,7 @@ const createCustomer = {
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
     address: Joi.string().required(),
+    phoneNumber: Joi.string().required(),
     branchId: Joi.string().custom(objectId).optional(),
     accountType: Joi.string().optional(),
   }),

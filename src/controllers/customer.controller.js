@@ -4,7 +4,7 @@ const { accountService, userService, customerService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 
 const createCustomer = catchAsync(async (req, res) => {
-  const { email, password, firstName, lastName, address, accountType, branchId } = req.body;
+  const { email, password, firstName, lastName, address, accountType, phoneNmber, branchId } = req.body;
 
   // Start a MongoDB session
   const session = await startSession();
@@ -20,6 +20,8 @@ const createCustomer = catchAsync(async (req, res) => {
         firstName,
         lastName,
         address,
+        phoneNmber,
+        branchId,
         role: 'user',
       },
       session
@@ -28,8 +30,8 @@ const createCustomer = catchAsync(async (req, res) => {
     // Create the account for the user within the session
     const accountData = {
       userId: user._id,
-      accountType: accountType || '',
-      branchId: branchId || 'Hq',
+      accountType,
+      branchId,
     };
 
     const createdBy = req.user._id;

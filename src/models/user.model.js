@@ -75,10 +75,9 @@ const userSchema = mongoose.Schema(
       enum: ['active', 'inactive'],
       default: 'active',
     },
-    branch: {
-      type: String,
-      enum: ['Hq', 'lagos', 'abuja'],
-      default: ['Hq'],
+    branchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Branch',
     },
     isEmailVerified: {
       type: Boolean,

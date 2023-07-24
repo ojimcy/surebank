@@ -8,7 +8,7 @@ const createUser = {
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
     address: Joi.string().required(),
-    branch: Joi.string(),
+    branchId: Joi.string().optional().custom(objectId),
   }),
 };
 
@@ -39,7 +39,7 @@ const updateUser = {
       firstName: Joi.string().optional(),
       lastName: Joi.string().optional(),
       address: Joi.string().optional(),
-      branch: Joi.string(),
+      branchId: Joi.string(),
       role: Joi.string().optional().valid('user', 'admin'),
       phoneNumber: Joi.string().optional(),
     })
