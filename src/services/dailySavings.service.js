@@ -192,8 +192,23 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
   return withdrawalDetails;
 };
 
+/**
+ * Get the user's daily savings package
+ * @param {string} userId - User ID
+ * @returns {Promise<Object>} User's daily savings package
+ */
+const getUserDailySavingsPackage = async (userId) => {
+  const userPackage = await Package.findOne({
+    userReps: userId,
+    status: 'open',
+  });
+
+  return userPackage;
+};
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
   makeDailySavingsWithdrawal,
+  getUserDailySavingsPackage,
 };

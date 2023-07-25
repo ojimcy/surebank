@@ -12,6 +12,11 @@ router
     auth('manageSavings'),
     validate(dailySavingsValidation.createDailySavingsPackage),
     dailySavingsController.createDailySavingsPackage
+  )
+  .get(
+    auth('userPackage'),
+    validate(dailySavingsValidation.getUserDailySavingsPackage),
+    dailySavingsController.getUserDailySavingsPackage
   );
 
 router
