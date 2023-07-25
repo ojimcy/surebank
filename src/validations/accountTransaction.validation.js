@@ -28,9 +28,18 @@ const makeCustomerWithdrawal = {
   }),
 };
 
+const getAccountTransactions = {
+  query: Joi.object().keys({
+    accountNumber: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
 module.exports = {
   makeCustomerDeposit,
   getAvailableBalance,
   getAccountBalance,
   makeCustomerWithdrawal,
+  getAccountTransactions,
 };

@@ -67,6 +67,12 @@ const makeCustomerDeposit = {
   }),
 };
 
+const getUserAccount = {
+  params: Joi.object().keys({
+    userId: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -75,4 +81,5 @@ module.exports = {
   getLedgerEntries,
   computeDailySummary,
   makeCustomerDeposit,
+  getUserAccount,
 };

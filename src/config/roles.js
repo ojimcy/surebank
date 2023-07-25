@@ -16,6 +16,8 @@ const userPermissions = [
   'manageCart',
   'salesOperations',
   'manageSales',
+  'accountTransactions',
+  'getUserAccount',
 ];
 
 const adminPermissions = [

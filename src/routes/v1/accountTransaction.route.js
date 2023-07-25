@@ -7,6 +7,14 @@ const accountTransactionController = require('../../controllers/accountTransacti
 const router = express.Router();
 
 router
+  .route('/')
+  .get(
+    auth('accountTransactions'),
+    validate(accountTransactionValidation.getAccountTransactions),
+    accountTransactionController.getAccountTransactions
+  );
+
+router
   .route('/balance')
   .post(
     auth('viewBalance'),

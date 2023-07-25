@@ -20,7 +20,8 @@ const accountTransactionSchema = mongoose.Schema(
       required: true,
     },
     operatorId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
     },
   },

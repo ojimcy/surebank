@@ -10,6 +10,10 @@ const router = express.Router();
 router.route('/').post(auth('manageAccounts'), validate(accountValidation.createAccount), accountController.createAccount);
 
 router
+  .route('/:userId')
+  .get(auth('getUserAccount'), validate(accountValidation.getUserAccount), accountController.getUserAccount);
+
+router
   .route('/:accountId/assign-branch')
   .post(auth('manageAccounts'), validate(accountValidation.assignBranch), accountController.assignBranch);
 
