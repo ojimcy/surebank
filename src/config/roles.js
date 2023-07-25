@@ -18,6 +18,7 @@ const userPermissions = [
   'manageSales',
   'accountTransactions',
   'getUserAccount',
+  'userPackage',
 ];
 
 const adminPermissions = [

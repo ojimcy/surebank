@@ -29,8 +29,15 @@ const makeDailySavingsWithdrawal = {
   }),
 };
 
+const getUserDailySavingsPackage = {
+  query: Joi.object().keys({
+    userId: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
   makeDailySavingsWithdrawal,
+  getUserDailySavingsPackage,
 };
