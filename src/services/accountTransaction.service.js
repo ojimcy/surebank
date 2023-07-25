@@ -224,6 +224,20 @@ const makeCustomerWithdrawal = async (withdrawalInput) => {
   }
 };
 
+/**
+ * Get account transactions for a specific account with pagination
+ * @param {string} accountNumber - Account number
+ * @param {number} page - Current page number
+ * @param {number} limit - Maximum number of transactions per page
+ * @returns {Promise<Array>} Array of account transactions
+ */
+const getAccountTransactions = async (accountNumber, page, limit) => {
+  const skip = (page - 1) * limit;
+  // Assuming AccountTransaction model has a field called "accountNumber" to link transactions to accounts
+  const transactions = await AccountTransaction.find({ accountNumber }).skip(skip).limit(limit).sort({ date: 'desc' });
+  return transactions;
+};
+
 module.exports = {
   getUserByAccountNumber,
   makeCustomerDeposit,
@@ -234,4 +248,5 @@ module.exports = {
   getAvailableBalance,
   getAccountBalance,
   makeCustomerWithdrawal,
+  getAccountTransactions,
 };

@@ -23,8 +23,15 @@ const assignManager = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(account);
 });
 
+const getUserAccount = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+  const account = await accountService.getUserAccount(userId);
+  res.status(httpStatus.OK).json(account);
+});
+
 module.exports = {
   createAccount,
   assignBranch,
   assignManager,
+  getUserAccount,
 };

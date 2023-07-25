@@ -78,6 +78,16 @@ const makeCustomerWithdrawal = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(result);
 });
 
+const getAccountTransactions = catchAsync(async (req, res) => {
+  const { accountNumber, page = 1, limit = 10 } = req.query;
+  const parsedPage = parseInt(page, 10);
+  const parsedLimit = parseInt(limit, 10);
+
+  const transactions = await accountTransactionService.getAccountTransactions(accountNumber, parsedPage, parsedLimit);
+
+  res.status(httpStatus.OK).json(transactions);
+});
+
 module.exports = {
   makeCustomerDeposit,
   updateAccountStatus,
@@ -88,4 +98,5 @@ module.exports = {
   getAvailableBalance,
   getAccountBalance,
   makeCustomerWithdrawal,
+  getAccountTransactions,
 };
