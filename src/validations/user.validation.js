@@ -40,7 +40,7 @@ const updateUser = {
       lastName: Joi.string().optional(),
       address: Joi.string().optional(),
       branchId: Joi.string(),
-      role: Joi.string().optional().valid('user', 'admin'),
+      role: Joi.string().optional(),
       phoneNumber: Joi.string().optional(),
     })
     .min(1),
