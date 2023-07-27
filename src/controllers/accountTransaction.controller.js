@@ -4,19 +4,10 @@ const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
 
 const getUserByAccountNumber = catchAsync(async (req, res) => {
-  const { accountNumber } = req.params;
+  const { accountNumber } = req.query;
 
   const result = await accountTransactionService.getUserByAccountNumber(accountNumber);
-
-  if (result.success) {
-    res.status(httpStatus.OK).json(result.data);
-  } else {
-    res.status(httpStatus.NOT_FOUND).json({
-      error: {
-        message: result.message,
-      },
-    });
-  }
+  res.status(httpStatus.OK).json(result);
 });
 
 const makeCustomerDeposit = catchAsync(async (req, res) => {
