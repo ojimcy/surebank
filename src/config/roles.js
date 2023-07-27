@@ -43,6 +43,7 @@ const superAdminPermissions = [
   ...adminPermissions,
   'createAdmin',
   'updateBranchManager',
+  'updateBranch',
   'addStaffToBranch',
   'assignManager',
 ];
