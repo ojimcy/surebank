@@ -17,15 +17,15 @@ router
   .post(auth('managePermission'), validate(aclValidation.createPermission), aclController.createPermission);
 
 router
+  .route('/:userId/')
+  .get(auth('viewRoles'), validate(aclValidation.getRolesForUser), aclController.getRolesForUser)
+  .delete(auth('manageRoles'), validate(aclValidation.deleteUserFromRole), aclController.deleteUserFromRole);
+
+router
   .route('/:roleId/')
   .delete(auth('manageRoles'), validate(aclValidation.deleteRole), aclController.deleteRole)
   .get(auth('viewRoles'), validate(aclValidation.getRoleById), aclController.getRoleById)
   .patch(auth('manageRoles'), validate(aclValidation.updateRole), aclController.updateRole);
-
-router
-  .route('/:userId/user')
-  .get(auth('viewRoles'), validate(aclValidation.getRolesForUser), aclController.getRolesForUser)
-  .delete(auth('manageRoles'), validate(aclValidation.deleteUserFromRole), aclController.deleteUserFromRole);
 
 router
   .route('/:roleId/permission')

@@ -15,14 +15,6 @@ router
   );
 
 router
-  .route('/user')
-  .get(
-    auth('accountTransactions'),
-    validate(accountTransactionValidation.getAccountTransactions),
-    accountTransactionController.getUserByAccountNumber
-  );
-
-router
   .route('/balance')
   .post(
     auth('viewBalance'),

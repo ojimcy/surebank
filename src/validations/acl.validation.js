@@ -4,7 +4,7 @@ const { objectId } = require('./custom.validation');
 const createRole = {
   body: Joi.object().keys({
     label: Joi.string().required(),
-    merchantRole: Joi.boolean().optional(),
+    merchantRole: Joi.boolean(),
   }),
 };
 

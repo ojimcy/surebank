@@ -142,8 +142,7 @@ const deleteRole = async (roleId) => {
  * @returns {Promise<Role>} Role object
  */
 const getRoleById = async (roleId) => {
-  const role = await Role.findById(roleId);
-  return role;
+  return Role.findById(roleId);
 };
 
 /**
