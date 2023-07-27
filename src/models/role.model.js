@@ -9,7 +9,6 @@ const roleSchema = mongoose.Schema(
     },
     merchantRole: {
       type: Boolean,
-      required: true,
     },
   },
   {
