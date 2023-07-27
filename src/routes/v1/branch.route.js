@@ -14,6 +14,7 @@ router
 router
   .route('/:branchId')
   .get(auth('getBranches'), validate(branchValidation.getBranch), branchController.getBranch)
+  .patch(auth('updateBranch'), validate(branchValidation.updateBranch), branchController.updateBranch)
   .delete(auth('manageBranch'), validate(branchValidation.deleteBranch), branchController.deleteBranch);
 
 router

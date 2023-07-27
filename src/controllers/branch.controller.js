@@ -30,6 +30,11 @@ const updateBranchManager = catchAsync(async (req, res) => {
 
   res.send(branch);
 });
+const updateBranch = catchAsync(async (req, res) => {
+  const branch = await branchService.updateBranchById(req.params.branchId, req.body);
+
+  res.send(branch);
+});
 
 const addStaffToBranch = catchAsync(async (req, res) => {
   const { branchId } = req.params;
@@ -72,5 +77,6 @@ module.exports = {
   addStaffToBranch,
   getStaffInBranch,
   updateBranchStaff,
+  updateBranch,
   deleteBranch,
 };

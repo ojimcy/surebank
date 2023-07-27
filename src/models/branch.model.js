@@ -14,7 +14,7 @@ const branchSchema = mongoose.Schema(
       required: true,
       trim: true,
     },
-    phoneNumber: {
+    phone: {
       type: String,
       required: true,
       trim: true,

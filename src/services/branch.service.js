@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const { Branch, BranchStaff } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { string } = require('joi');
 
 /**
  * Create a Branch
@@ -40,6 +41,29 @@ const queryBranches = async (filter, options) => {
  */
 const getBranchById = async (id) => {
   return Branch.findById(id);
+};
+const getBranchByEmail = async (email) => {
+  return Branch.findOne(email);
+};
+/**
+ * Update branch by id
+ * @param {string} branchId
+ * @param {Object} updateBody
+ * @returns {Promise<Branch>}
+ */
+const updateBranchById = async (branchId, updateBody) => {
+  // console.log(branchId, updateBody);
+  const branch = await getBranchById(branchId);
+  if (!branch) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Branch not found');
+  }
+  // const email = await getBranchByEmail(updateBody.email);
+  // if (email) {
+  //   throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+  // }
+  Object.assign(branch, updateBody);
+  await branch.save();
+  return branch;
 };
 
 /**
@@ -135,6 +159,7 @@ module.exports = {
   createBranch,
   getBranchById,
   queryBranches,
+  updateBranchById,
   updateBranchManager,
   addStaffToBranch,
   getStaffInBranch,
