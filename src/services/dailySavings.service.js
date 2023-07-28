@@ -1,4 +1,5 @@
-const { Package, Contribution } = require('../models');
+const { startSession } = require('mongoose');
+const { Package, Contribution, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
@@ -103,6 +104,7 @@ const saveDailyContribution = async (contributionInput) => {
     packageId: userPackageId,
     count: contributionDaysCount,
     date: currentDate,
+    narration: 'Daily contribution',
   });
 
   userPackage.totalContribution += contributionInput.amount;
@@ -158,38 +160,57 @@ const saveDailyContribution = async (contributionInput) => {
  * @returns {Promise<Object>} Withdrawal details
  */
 const makeDailySavingsWithdrawal = async (withdrawal) => {
-  const userPackage = await Package.findOne({
-    accountNumber: withdrawal.accountNumber,
-    status: 'open',
-  });
+  const session = await startSession();
+  session.startTransaction();
 
-  if (userPackage.totalContribution < withdrawal.amount) {
-    throw new ApiError(400, 'Insufficient balance');
+  try {
+    const userPackage = await Package.findOne(
+      {
+        accountNumber: withdrawal.accountNumber,
+        status: 'open',
+      },
+      null,
+      { session }
+    );
+
+    if (!userPackage) {
+      throw new ApiError(404, 'User does not have an active daily savings package');
+    }
+
+    if (userPackage.totalContribution < withdrawal.amount) {
+      throw new ApiError(400, 'Insufficient balance');
+    }
+
+    const balanceAfterWithdrawal = userPackage.totalContribution - withdrawal.amount;
+
+    await Package.findOneAndUpdate(
+      { accountNumber: withdrawal.accountNumber },
+      { totalContribution: balanceAfterWithdrawal },
+      { session }
+    );
+
+    const withdrawalDetails = {
+      accountNumber: withdrawal.accountNumber,
+      amount: withdrawal.amount,
+      operatorId: withdrawal.userReps,
+      narration: 'Daily contribution withdrawal',
+    };
+
+    await makeCustomerDeposit(withdrawalDetails, session);
+
+    if (balanceAfterWithdrawal === 0) {
+      await Package.findOneAndUpdate({ accountNumber: withdrawal.accountNumber }, { status: 'closed' }, { session });
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return withdrawalDetails;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
-
-  const balanceAfterWithdrawal = userPackage.totalContribution - withdrawal.amount;
-
-  await Package.findOneAndUpdate({ accountNumber: withdrawal.accountNumber }, { totalContribution: balanceAfterWithdrawal });
-
-  const withdrawalDetails = {
-    accountNumber: withdrawal.accountNumber,
-    amount: withdrawal.amount,
-    salesRepId: withdrawal.userReps,
-    narration: 'Daily contribution withdrawal',
-  };
-
-  await makeCustomerDeposit(
-    withdrawalDetails.accountNumber,
-    withdrawalDetails.amount,
-    withdrawalDetails.salesRepId,
-    withdrawalDetails.narration
-  );
-
-  if (balanceAfterWithdrawal === 0) {
-    await Package.findOneAndUpdate({ accountNumber: withdrawal.accountNumber }, { status: 'closed' });
-  }
-
-  return withdrawalDetails;
 };
 
 /**
@@ -206,9 +227,38 @@ const getUserDailySavingsPackage = async (userId) => {
   return userPackage;
 };
 
+/**
+ * Get all contributions for a package
+ * @param {string} packageId - Package ID
+ * @returns {Promise<Array>} Array of contributions
+ */
+const getDailySavingsContributions = async (packageId) => {
+  try {
+    return await Contribution.find({ packageId }).lean();
+  } catch (error) {
+    throw new ApiError('Failed to get contributions for the package', error);
+  }
+};
+
+/**
+ * Get all daily savings withdrawals with a specific narration
+ * @param {string} narration - The narration to filter withdrawals by
+ * @returns {Promise<Array>} Array of withdrawals with the specified narration
+ */
+const getDailySavingsWithdrawals = async (narration) => {
+  try {
+    const withdrawals = await AccountTransaction.find({ narration }).lean();
+    return withdrawals;
+  } catch (error) {
+    throw new ApiError('Failed to get daily savings withdrawals', error);
+  }
+};
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
   makeDailySavingsWithdrawal,
   getUserDailySavingsPackage,
+  getDailySavingsContributions,
+  getDailySavingsWithdrawals,
 };

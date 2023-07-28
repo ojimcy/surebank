@@ -19,6 +19,10 @@ const accountTransactionSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    narration: {
+      type: String,
+      required: true,
+    },
     operatorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
