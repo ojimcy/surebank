@@ -1,5 +1,6 @@
 const { Account } = require('../models');
 const { generateAccountNumber } = require('../utils/account/accountUtils');
+const { getUserByEmail } = require('./user.service');
 
 /**
  * Create an account
@@ -11,8 +12,9 @@ const { generateAccountNumber } = require('../utils/account/accountUtils');
  * @returns {Promise<Account>} Created account
  */
 const createAccount = async (accountData, createdBy) => {
-  const { userId, accountType, branchId } = accountData;
-
+  const { email, accountType, branchId } = accountData;
+  const user = await getUserByEmail(email);
+  const userId = user._id;
   // Check if the user already has an account of the specified type
   const existingAccount = await Account.findOne({ userId, accountType });
   if (existingAccount) {
@@ -21,10 +23,11 @@ const createAccount = async (accountData, createdBy) => {
 
   // Generate a unique account number
   const accountNumber = await generateAccountNumber();
-
   // Create the account object
   const account = {
     userId,
+    firstName: user.firstName,
+    lastName: user.lastName,
     accountNumber,
     availableBalance: 0,
     ledgerBalance: 0,
@@ -86,10 +89,25 @@ const getUserAccount = async (userId) => {
   return account;
 };
 
+/**
+ * Query for users
+ * @param {Object} filter - Mongo filter
+ * @param {Object} options - Query options
+ * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<QueryResult>}
+ */
+const getAllAccounts = async (filter, options) => {
+  const accounts = await Account.paginate(filter, options);
+  return accounts;
+};
+
 module.exports = {
   createAccount,
   assignBranch,
   assignManager,
   getUserAccountNumber,
   getUserAccount,
+  getAllAccounts,
 };

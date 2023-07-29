@@ -4,7 +4,7 @@ const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 
 const createAccount = {
   body: Joi.object().keys({
-    userId: Joi.string().required().custom(objectId),
+    email: Joi.string().required().email(),
     accountType: Joi.string().required(),
     branchId: Joi.string().required().custom(objectId),
   }),
@@ -73,6 +73,16 @@ const getUserAccount = {
   }),
 };
 
+const getAllAccounts = {
+  query: Joi.object().keys({
+    branchId: Joi.string().custom(objectId),
+    accountNumber: Joi.number(),
+    sortBy: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -82,4 +92,5 @@ module.exports = {
   computeDailySummary,
   makeCustomerDeposit,
   getUserAccount,
+  getAllAccounts,
 };

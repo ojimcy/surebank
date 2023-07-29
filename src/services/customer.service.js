@@ -2,6 +2,54 @@ const mongoose = require('mongoose');
 const { Account, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, getAccountBalance } = require('./accountTransaction.service');
+const { userService, accountService } = require('.');
+
+/**
+ * Create a customer
+ * @param {Object} customerData - Customer data
+ * @param {string} customerData.email - Customer's email
+ * @param {string} customerData.password - Customer's password
+ * @param {string} customerData.firstName - Customer's first name
+ * @param {string} customerData.lastName - Customer's last name
+ * @param {string} customerData.address - Customer's address
+ * @param {string} customerData.accountType - Account type
+ * @param {string} customerData.phoneNumber - Customer's phone number
+ * @param {string} customerData.branchId - Branch ID
+ * @param {string} createdBy - ID of the admin user who initiated the creation
+ * @returns {Promise<{ user: User, account: Account }>} Created user and account
+ */
+const createCustomer = async (customerData, createdBy) => {
+  // Check if the user already exists
+  let user = await userService.getUserByEmail(customerData.email);
+
+  if (!user) {
+    // If user doesn't exist, create a new user
+    user = await userService.createUser({
+      email: customerData.email,
+      password: customerData.password,
+      firstName: customerData.firstName,
+      lastName: customerData.lastName,
+      address: customerData.address,
+      phoneNumber: customerData.phoneNumber,
+      branchId: customerData.branchId,
+    });
+  }
+
+  // Create an account for the user
+  const accountData = {
+    email: user.email,
+    userId: user._id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    accountType: customerData.accountType,
+    branchId: customerData.branchId,
+    accountManagerId: null,
+  };
+
+  const account = await accountService.createAccount(accountData, createdBy);
+
+  return { user, account };
+};
 
 /**
  * Make a deposit
@@ -126,6 +174,7 @@ const makeWithdrawal = async (withdrawalInput, userId, operatorId) => {
 };
 
 module.exports = {
+  createCustomer,
   makeDeposit,
   makeWithdrawal,
 };
