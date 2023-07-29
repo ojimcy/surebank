@@ -1,7 +1,6 @@
 const httpStatus = require('http-status');
 const { Branch, BranchStaff } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { string } = require('joi');
 
 /**
  * Create a Branch
@@ -10,13 +9,13 @@ const { string } = require('joi');
  */
 const createBranch = async (branchBody) => {
   const { name } = branchBody;
-  const checkBranch = await Branch.findOne({ name });
+  const checkBranch = await Branch.findOne({ name: name.toLowerCase() });
 
   if (checkBranch) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Branch already exists');
   }
 
-  const branch = await Branch.create(branchBody);
+  const branch = await Branch.create({ ...branchBody, name: name.toLowerCase() });
   return branch;
 };
 
@@ -42,9 +41,11 @@ const queryBranches = async (filter, options) => {
 const getBranchById = async (id) => {
   return Branch.findById(id);
 };
+
 const getBranchByEmail = async (email) => {
   return Branch.findOne(email);
 };
+
 /**
  * Update branch by id
  * @param {string} branchId
@@ -155,6 +156,15 @@ const deleteBranch = async (branchId) => {
   return branch;
 };
 
+/**
+ * Get branch by name (case-insensitive)
+ * @param {string} name - Branch name
+ * @returns {Promise<Branch>}
+ */
+const getBranchByName = async (name) => {
+  return Branch.findOne({ name: name.toLowerCase() });
+};
+
 module.exports = {
   createBranch,
   getBranchById,
@@ -165,4 +175,6 @@ module.exports = {
   getStaffInBranch,
   updateBranchStaff,
   deleteBranch,
+  getBranchByEmail,
+  getBranchByName,
 };

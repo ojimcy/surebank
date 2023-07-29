@@ -46,6 +46,10 @@ const accountSchema = mongoose.Schema(
       ref: 'Branch',
       required: true,
     },
+    branchName: {
+      type: String,
+      required: true,
+    },
     status: {
       type: String,
       enum: ['active', 'inactive'],

@@ -3,6 +3,7 @@ const { Account, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, getAccountBalance } = require('./accountTransaction.service');
 const { userService, accountService } = require('.');
+const { getBranchByName } = require('./branch.service');
 
 /**
  * Create a customer
@@ -14,13 +15,15 @@ const { userService, accountService } = require('.');
  * @param {string} customerData.address - Customer's address
  * @param {string} customerData.accountType - Account type
  * @param {string} customerData.phoneNumber - Customer's phone number
- * @param {string} customerData.branchId - Branch ID
+ * @param {string} customerData.branchName - Branch name
  * @param {string} createdBy - ID of the admin user who initiated the creation
  * @returns {Promise<{ user: User, account: Account }>} Created user and account
  */
 const createCustomer = async (customerData, createdBy) => {
   // Check if the user already exists
   let user = await userService.getUserByEmail(customerData.email);
+  const branch = await getBranchByName(customerData.branchName);
+  const branchId = branch._id;
 
   if (!user) {
     // If user doesn't exist, create a new user
@@ -31,7 +34,7 @@ const createCustomer = async (customerData, createdBy) => {
       lastName: customerData.lastName,
       address: customerData.address,
       phoneNumber: customerData.phoneNumber,
-      branchId: customerData.branchId,
+      branchId,
     });
   }
 
@@ -42,7 +45,7 @@ const createCustomer = async (customerData, createdBy) => {
     firstName: user.firstName,
     lastName: user.lastName,
     accountType: customerData.accountType,
-    branchId: customerData.branchId,
+    branchName: customerData.branchName,
     accountManagerId: null,
   };
 

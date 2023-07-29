@@ -1,5 +1,6 @@
 const { Account } = require('../models');
 const { generateAccountNumber } = require('../utils/account/accountUtils');
+const { getBranchByName } = require('./branch.service');
 const { getUserByEmail } = require('./user.service');
 
 /**
@@ -7,12 +8,12 @@ const { getUserByEmail } = require('./user.service');
  * @param {Object} accountData - Account data
  * @param {string} accountData.userId - User ID
  * @param {string} accountData.accountType - Account type
- * @param {string} accountData.branchId - Branch ID
+ * @param {string} accountData.branchName - Branch name
  * @param {string} createdBy - ID of the admin user who initiated the creation
  * @returns {Promise<Account>} Created account
  */
 const createAccount = async (accountData, createdBy) => {
-  const { email, accountType, branchId } = accountData;
+  const { email, accountType, branchName } = accountData;
   const user = await getUserByEmail(email);
   const userId = user._id;
   // Check if the user already has an account of the specified type
@@ -23,6 +24,13 @@ const createAccount = async (accountData, createdBy) => {
 
   // Generate a unique account number
   const accountNumber = await generateAccountNumber();
+  const lowerCaseBranchName = branchName.toLowerCase();
+  const branch = await getBranchByName(lowerCaseBranchName);
+
+  if (!branch) {
+    throw new Error('Branch not found');
+  }
+
   // Create the account object
   const account = {
     userId,
@@ -34,13 +42,13 @@ const createAccount = async (accountData, createdBy) => {
     accountType,
     createdBy,
     accountManagerId: accountData.accountManagerId || null,
-    branchId,
+    branchName: lowerCaseBranchName,
+    branchId: branch._id,
     status: 'active',
   };
 
   return Account.create(account);
 };
-
 /**
  * Assign a branch to a user based on the account ID
  * @param {string} accountId - Account ID

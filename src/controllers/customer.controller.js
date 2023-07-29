@@ -4,9 +4,12 @@ const catchAsync = require('../utils/catchAsync');
 
 const createCustomer = catchAsync(async (req, res) => {
   const createdBy = req.user._id;
-  const { email, firstName, lastName, address, password, accountType, branchId } = req.body;
+  // Convert the branchName to lowercase before passing it to createCustomer
+  const { branchName, ...customerData } = req.body;
+  const lowerCaseBranchName = branchName.toLowerCase();
+
   const { user, account } = await customerService.createCustomer(
-    { email, firstName, lastName, address, password, accountType, branchId },
+    { ...customerData, branchName: lowerCaseBranchName },
     createdBy
   );
   res.status(httpStatus.CREATED).json({ user, account });
