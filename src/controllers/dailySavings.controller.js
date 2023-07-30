@@ -45,7 +45,7 @@ const getUserDailySavingsPackage = catchAsync(async (req, res) => {
 });
 
 const getUserSavingsActivities = catchAsync(async (req, res) => {
-  const { userId } = req.query;
+  const { userId, accountNumber } = req.query;
 
   // Fetch user's daily savings package
   const userPackage = await dailySavingsService.getUserDailySavingsPackage(userId);
@@ -56,7 +56,7 @@ const getUserSavingsActivities = catchAsync(async (req, res) => {
 
   // Fetch all contributions and withdrawals for the user's package
   const contributions = await dailySavingsService.getDailySavingsContributions(userPackage._id);
-  const withdrawals = await dailySavingsService.getDailySavingsWithdrawals(narration);
+  const withdrawals = await dailySavingsService.getDailySavingsWithdrawals(accountNumber, narration);
 
   // Combine contributions and withdrawals into a single array and sort by date
   const savingsActivities = [...contributions, ...withdrawals].sort((a, b) => a.date - b.date);

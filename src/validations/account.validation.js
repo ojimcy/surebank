@@ -75,8 +75,8 @@ const getUserAccount = {
 
 const getAllAccounts = {
   query: Joi.object().keys({
-    branchId: Joi.string().custom(objectId),
     accountNumber: Joi.number(),
+    name: Joi.string(),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),

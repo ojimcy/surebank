@@ -15,7 +15,6 @@ const createDailySavingsPackage = async (dailyInput) => {
   if (!confirmAccountNumber) {
     throw new ApiError(404, 'Account number does not exist.');
   }
-
   const userPackageExist = await Package.findOne({
     accountNumber: dailyInput.accountNumber,
     status: 'open',
@@ -27,6 +26,7 @@ const createDailySavingsPackage = async (dailyInput) => {
 
   const createdPackage = await Package.create({
     ...dailyInput,
+    userId: confirmAccountNumber._id,
   });
 
   return createdPackage;
@@ -220,7 +220,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
  */
 const getUserDailySavingsPackage = async (userId) => {
   const userPackage = await Package.findOne({
-    userReps: userId,
+    userId,
     status: 'open',
   });
 
@@ -241,13 +241,14 @@ const getDailySavingsContributions = async (packageId) => {
 };
 
 /**
- * Get all daily savings withdrawals with a specific narration
+ * Get all daily savings withdrawals with a specific narration for a given account number
+ * @param {string} accountNumber - The account number to filter withdrawals by
  * @param {string} narration - The narration to filter withdrawals by
  * @returns {Promise<Array>} Array of withdrawals with the specified narration
  */
-const getDailySavingsWithdrawals = async (narration) => {
+const getDailySavingsWithdrawals = async (accountNumber, narration) => {
   try {
-    const withdrawals = await AccountTransaction.find({ narration }).lean();
+    const withdrawals = await AccountTransaction.find({ accountNumber, narration });
     return withdrawals;
   } catch (error) {
     throw new ApiError('Failed to get daily savings withdrawals', error);

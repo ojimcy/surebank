@@ -38,6 +38,7 @@ const getUserDailySavingsPackage = {
 const getUserSavingsActivities = {
   query: Joi.object().keys({
     userId: Joi.string().required().custom(objectId),
+    accountNumber: Joi.string().required(),
   }),
 };
 
