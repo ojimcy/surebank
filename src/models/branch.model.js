@@ -47,6 +47,17 @@ branchSchema.plugin(toJSON);
 branchSchema.plugin(paginate);
 
 /**
+ * Check if email is taken
+ * @param {string} email - The user's email
+ * @param {ObjectId} [excludeBranchId] - The id of the user to be excluded
+ * @returns {Promise<boolean>}
+ */
+branchSchema.statics.isEmailTaken = async function (email, excludeBranchId) {
+  const branch = await this.findOne({ email, _id: { $ne: excludeBranchId } });
+  return !!branch;
+};
+
+/**
  * @typedef Branch
  */
 const Branch = mongoose.model('Branch', branchSchema);

@@ -37,12 +37,25 @@ const updateBranch = catchAsync(async (req, res) => {
 });
 
 const addStaffToBranch = catchAsync(async (req, res) => {
-  const { branchId } = req.params;
-  const { staffId } = req.body;
+  // const { branchId } = req.params;
+  const { staffId, branchId } = req.body;
+  console.log(branchId, staffId);
   const branchStaff = await branchService.addStaffToBranch(branchId, staffId);
   res.send(branchStaff);
 });
 
+const getAllStaff = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['staffId', 'isCurrent']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const result = await branchService.getAllStaffService(filter, options);
+  if (result.error) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, result.error);
+  }
+
+  const staffIds = result.map((staff) => staff.staffId);
+  const users = await User.find({ _id: { $in: staffIds } });
+  res.send(users);
+});
 const getStaffInBranch = catchAsync(async (req, res) => {
   const { branchId } = req.params;
   const filter = pick(req.query, ['staffId', 'isCurrent']);
@@ -53,19 +66,30 @@ const getStaffInBranch = catchAsync(async (req, res) => {
   }
 
   const staffIds = result.map((staff) => staff.staffId);
-  const users = await User.find({ userId: { $in: staffIds } });
+  const users = await User.find({ _id: { $in: staffIds } });
   res.send(users);
 });
 
 const updateBranchStaff = catchAsync(async (req, res) => {
-  const { branchId } = req.params;
-  const { staffId } = req.query;
-  const branchStaff = branchService.updateBranchStaff(staffId, branchId);
+  // const { branchId } = req.params;
+  const { staffId, branchId } = req.body;
+  console.log(branchId, staffId);
+  const branchStaff = branchService.updateBranchStaffService(staffId, branchId);
   res.send(branchStaff);
 });
 
 const deleteBranch = catchAsync(async (req, res) => {
-  await branchService.deleteUserById(req.params.userId);
+  await branchService.deleteBranchById(req.params.branchId);
+  res.status(httpStatus.NO_CONTENT).send();
+});
+const deleteBranchStaff = catchAsync(async (req, res) => {
+  console.log(req.params.branchId);
+  await branchService.deleteBranchStaffById(req.params.branchId);
+  res.status(httpStatus.NO_CONTENT).send();
+});
+const deleteAllBranchStaff = catchAsync(async (req, res) => {
+  console.log(req.params.branchId);
+  await branchService.deleteAllBranchStaffById(req.params.branchId);
   res.status(httpStatus.NO_CONTENT).send();
 });
 
@@ -76,7 +100,10 @@ module.exports = {
   updateBranchManager,
   addStaffToBranch,
   getStaffInBranch,
+  getAllStaff,
   updateBranchStaff,
   updateBranch,
   deleteBranch,
+  deleteBranchStaff,
+  deleteAllBranchStaff,
 };

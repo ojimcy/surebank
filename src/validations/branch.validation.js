@@ -19,6 +19,14 @@ const getBranches = {
     page: Joi.number().integer(),
   }),
 };
+const getAllStaff = {
+  query: Joi.object().keys({
+    // name: Joi.string(),
+    sortBy: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
 
 const getBranch = {
   params: Joi.object().keys({
@@ -41,11 +49,11 @@ const updateBranchManager = {
 };
 
 const addStaffToBranch = {
-  params: Joi.object().keys({
-    branchId: Joi.string().required().custom(objectId),
-  }),
+  // params: Joi.object().keys({
+  // }),
   body: Joi.object().keys({
     staffId: Joi.string().required().custom(objectId),
+    branchId: Joi.string().required().custom(objectId),
     isCurrent: Joi.boolean(),
   }),
 };
@@ -62,18 +70,28 @@ const getStaffInBranch = {
 };
 
 const updateBranchStaff = {
-  params: Joi.object().keys({
-    branchId: Joi.string().required().custom(objectId),
-  }),
-  query: Joi.object().keys({
-    staffId: Joi.string().required().custom(objectId),
-  }),
+  // params: Joi.object().keys({
+  // }),
+  // query: Joi.object().keys({
+  // }),
   body: Joi.object().keys({
+    staffId: Joi.string().required().custom(objectId),
+    branchId: Joi.string().required().custom(objectId),
     isCurrent: Joi.boolean(),
   }),
 };
 
 const deleteBranch = {
+  params: Joi.object().keys({
+    branchId: Joi.string().custom(objectId),
+  }),
+};
+const deleteBranchStaff = {
+  params: Joi.object().keys({
+    branchId: Joi.string().custom(objectId),
+  }),
+};
+const deleteAllBranchStaff = {
   params: Joi.object().keys({
     branchId: Joi.string().custom(objectId),
   }),
@@ -87,6 +105,9 @@ module.exports = {
   addStaffToBranch,
   updateBranch,
   getStaffInBranch,
+  getAllStaff,
   updateBranchStaff,
   deleteBranch,
+  deleteBranchStaff,
+  deleteAllBranchStaff,
 };

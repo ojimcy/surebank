@@ -12,6 +12,12 @@ router
   .get(auth('getBranches'), validate(branchValidation.getBranches), branchController.getBranches);
 
 router
+  .route('/staff')
+  .post(auth('addStaffToBranch'), validate(branchValidation.addStaffToBranch), branchController.addStaffToBranch)
+  .get(auth('getAllStaff'), validate(branchValidation.getAllStaff), branchController.getAllStaff)
+  .patch(auth('updateBranchStaff'), validate(branchValidation.updateBranchStaff), branchController.updateBranchStaff)
+  .delete(auth('manageBranch'), validate(branchValidation.deleteBranchStaff), branchController.deleteBranchStaff);
+router
   .route('/:branchId')
   .get(auth('getBranches'), validate(branchValidation.getBranch), branchController.getBranch)
   .patch(auth('updateBranch'), validate(branchValidation.updateBranch), branchController.updateBranch)
@@ -19,9 +25,14 @@ router
 
 router
   .route('/:branchId/staff')
-  .post(auth('updateBranchStaff'), validate(branchValidation.addStaffToBranch), branchController.addStaffToBranch)
+  // .post(auth('addStaffToBranch'), validate(branchValidation.addStaffToBranch), branchController.addStaffToBranch)
   .get(auth('getStaffInBranch'), validate(branchValidation.getStaffInBranch), branchController.getStaffInBranch)
-  .patch(auth('updateBranchStaff'), validate(branchValidation.updateBranchStaff), branchController.updateBranchStaff);
+  .patch(auth('updateBranchStaff'), validate(branchValidation.updateBranchStaff), branchController.updateBranchStaff)
+  .delete(auth('manageBranch'), validate(branchValidation.deleteBranchStaff), branchController.deleteBranchStaff);
+
+router
+  .route('/:branchId/deletestaffbranch')
+  .delete(auth('manageBranch'), validate(branchValidation.deleteAllBranchStaff), branchController.deleteAllBranchStaff);
 
 router
   .route('/:branchId/change-manager')

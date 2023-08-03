@@ -35,6 +35,14 @@ const queryBranches = async (filter, options) => {
 };
 
 /**
+ * Get branch staff by id
+ * @param {ObjectId} id
+ * @returns {Promise<Branch>}
+ */
+const getBranchStaffById = async (id) => {
+  return BranchStaff.findOne({ staffId: id });
+};
+/**
  * Get branch by id
  * @param {ObjectId} id
  * @returns {Promise<Branch>}
@@ -43,7 +51,7 @@ const getBranchById = async (id) => {
   return Branch.findById(id);
 };
 const getBranchByEmail = async (email) => {
-  return Branch.findOne(email);
+  return Branch.findOne({ email: email });
 };
 /**
  * Update branch by id
@@ -52,13 +60,15 @@ const getBranchByEmail = async (email) => {
  * @returns {Promise<Branch>}
  */
 const updateBranchById = async (branchId, updateBody) => {
-  // console.log(branchId, updateBody);
   const branch = await getBranchById(branchId);
   if (!branch) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Branch not found');
   }
-  // const email = await getBranchByEmail(updateBody.email);
-  // if (email) {
+  const checkEmail = await getBranchByEmail(updateBody.email);
+  if (checkEmail && checkEmail._id === branchId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+  }
+  // if (updateBody.email && (await Branch.isEmailTaken(updateBody.email, branchId))) {
   //   throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   // }
   Object.assign(branch, updateBody);
@@ -91,7 +101,6 @@ const updateBranchManager = async (branchId, manager) => {
 const addStaffToBranch = async (branchId, staffId) => {
   const checkStaff = await BranchStaff.findOne({
     staffId,
-    branchId,
   });
 
   if (checkStaff) {
@@ -107,14 +116,31 @@ const addStaffToBranch = async (branchId, staffId) => {
 };
 
 /**
- * Get staff in branch with pagination
- * @param {string} branchId
+ * Get all staff with pagination
+ * @param {Object} branchId
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
  * @param {number} [options.page] - Current page (default = 1)
- * @returns {Promise<{ staffIds: string[], totalCounts: number, error: string|null }>}
+ * @returns {Promise<{ staffIds: Object, totalCounts: number, error: string|null }>}
+ */
+const getAllStaffService = async (filter, options) => {
+  const { limit = 10, page = 1, sortBy } = options;
+  const skip = (page - 1) * limit;
+
+  const branchStaff = await BranchStaff.find({}).skip(skip).limit(limit).sort(sortBy);
+  return branchStaff;
+};
+/**
+ * Get staff in branch with pagination
+ * @param {Object} branchId
+ * @param {Object} filter - Mongo filter
+ * @param {Object} options - Query options
+ * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<{ staffIds: Object, totalCounts: number, error: string|null }>}
  */
 const getStaffInBranch = async (branchId, filter, options) => {
   const { limit = 10, page = 1, sortBy } = options;
@@ -127,12 +153,14 @@ const getStaffInBranch = async (branchId, filter, options) => {
   return branchStaff;
 };
 
-const updateBranchStaff = async (staffId, branchId) => {
+const updateBranchStaffService = async (staffId, branchId) => {
   try {
+    // console.log(branchId, staffId);
     const updatedBranchStaff = await BranchStaff.findOneAndUpdate(
-      { staffId, branchId },
-      { isCurrent: false },
-      { new: true }
+      { staffId: staffId },
+      { branchId: branchId },
+      // { isCurrent: false },
+      { new: true, useFindAndModify: false }
     );
 
     return updatedBranchStaff;
@@ -146,12 +174,34 @@ const updateBranchStaff = async (staffId, branchId) => {
  * @param {ObjectId} branchId
  * @returns {Promise<Branch>}
  */
-const deleteBranch = async (branchId) => {
+const deleteBranchById = async (branchId) => {
   const branch = await getBranchById(branchId);
   if (!branch) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Branch not found');
   }
   await branch.remove();
+  return branch;
+};
+/**
+ * Delete branch staff by id
+ * @param {ObjectId} branchId
+ * @returns {Promise<Branch>}
+ */
+const deleteBranchStaffById = async (branchStaffId) => {
+  const branch = await getBranchStaffById(branchStaffId);
+  if (!branch) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Branch not found');
+  }
+  await branch.remove();
+  return branch;
+};
+/**
+ * Delete branch staff by id
+ * @param {ObjectId} branchId
+ * @returns {Promise<Branch>}
+ */
+const deleteAllBranchStaffById = async (branchId) => {
+  const branch = await BranchStaff.deleteMany({ branchId: branchId });
   return branch;
 };
 
@@ -163,6 +213,9 @@ module.exports = {
   updateBranchManager,
   addStaffToBranch,
   getStaffInBranch,
-  updateBranchStaff,
-  deleteBranch,
+  getAllStaffService,
+  updateBranchStaffService,
+  deleteBranchById,
+  deleteBranchStaffById,
+  deleteAllBranchStaffById,
 };
