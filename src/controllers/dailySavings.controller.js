@@ -59,7 +59,7 @@ const getUserSavingsActivities = catchAsync(async (req, res) => {
   const withdrawals = await dailySavingsService.getDailySavingsWithdrawals(accountNumber, narration);
 
   // Combine contributions and withdrawals into a single array and sort by date
-  const savingsActivities = [...contributions, ...withdrawals].sort((a, b) => a.date - b.date);
+  const savingsActivities = [...contributions, ...withdrawals].sort((a, b) => b.date - a.date);
 
   res.status(httpStatus.OK).json(savingsActivities);
 });

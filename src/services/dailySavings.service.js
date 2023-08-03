@@ -32,34 +32,34 @@ const createDailySavingsPackage = async (dailyInput) => {
   return createdPackage;
 };
 
-/**
- * Count contributions for a package
- * @param {Object} input - Input data
- * @param {string} input.packageId - Package ID
- * @returns {Promise<number>} Total count of contributions
- */
-const countContribution = async ({ packageId }) => {
-  try {
-    const totalCount = await Contribution.aggregate([
-      {
-        $match: {
-          packageId,
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          TotalCount: {
-            $sum: '$count',
-          },
-        },
-      },
-    ]);
-    return totalCount[0].TotalCount;
-  } catch (error) {
-    throw new ApiError('Failed to count contributions', error);
-  }
-};
+// /**
+//  * Count contributions for a package
+//  * @param {Object} input - Input data
+//  * @param {string} input.packageId - Package ID
+//  * @returns {Promise<number>} Total count of contributions
+//  */
+// const countContribution = async ({ packageId }) => {
+//   try {
+//     const totalCount = await Contribution.aggregate([
+//       {
+//         $match: {
+//           packageId,
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: null,
+//           TotalCount: {
+//             $sum: '$count',
+//           },
+//         },
+//       },
+//     ]);
+//     return totalCount[0].TotalCount;
+//   } catch (error) {
+//     throw new ApiError('Failed to count contributions', error);
+//   }
+// };
 
 /**
  * Save a daily contribution
@@ -97,12 +97,16 @@ const saveDailyContribution = async (contributionInput) => {
     throw new ApiError(403, 'This package has been closed');
   }
 
+  // Calculate the new total count by adding contributionDaysCount to the existing value
+  const totalCount = userPackage.totalCount + contributionDaysCount;
+
   const newContribution = await Contribution.create({
     userReps: contributionInput.userReps,
     amount: contributionInput.amount,
     accountNumber: contributionInput.accountNumber,
     packageId: userPackageId,
     count: contributionDaysCount,
+    totalCount,
     date: currentDate,
     narration: 'Daily contribution',
   });
@@ -131,10 +135,12 @@ const saveDailyContribution = async (contributionInput) => {
     totalContribution: userPackage.totalContribution,
   });
 
-  const packageId = userPackageId;
-  const numberOfDays = await countContribution({ packageId });
+  // Update the total contribution count in the Package model
+  await Package.findByIdAndUpdate(userPackageId, {
+    $set: { totalCount }, // Update the totalCount field with the new value
+  });
 
-  if (numberOfDays === 31) {
+  if (totalCount === 31) {
     const narration = 'Total contribution';
     const depositDetail = {
       accountNumber: contributionInput.accountNumber,
@@ -145,13 +151,26 @@ const saveDailyContribution = async (contributionInput) => {
 
     await makeCustomerDeposit(depositDetail);
 
+    // Close the package and reset total contribution count to 0
     await Package.findByIdAndUpdate(userPackageId, {
       status: 'closed',
       totalContribution: 0,
+      totalCount: 0,
     });
   }
 
-  return newContribution;
+  const transactionDate = new Date().getTime();
+
+  const contributionTransaction = await AccountTransaction.create({
+    accountNumber: contributionInput.accountNumber,
+    amount: contributionInput.amount,
+    operatorId: contributionInput.userReps,
+    date: transactionDate,
+    direction: 'inflow',
+    narration: 'Daily contribution',
+  });
+
+  return { newContribution, contributionTransaction };
 };
 
 /**

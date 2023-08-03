@@ -47,13 +47,14 @@ const getStaffInBranch = catchAsync(async (req, res) => {
   const { branchId } = req.params;
   const filter = pick(req.query, ['staffId', 'isCurrent']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  const result = await branchService.getStaffInBranch(branchId, filter, options);
-  if (result.error) {
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, result.error);
-  }
 
-  const staffIds = result.map((staff) => staff.staffId);
-  const users = await User.find({ userId: { $in: staffIds } });
+  const staffMembers = await branchService.getStaffInBranch(branchId, filter, options);
+
+  const staffIds = staffMembers.map((staff) => staff.staffId);
+
+  // Use the staffIds to fetch the corresponding user details from the User collection.
+  const users = await User.find({ _id: { $in: staffIds } });
+
   res.send(users);
 });
 

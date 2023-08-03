@@ -1,7 +1,9 @@
+const httpStatus = require('http-status');
 const { Account } = require('../models');
+const ApiError = require('../utils/ApiError');
 const { generateAccountNumber } = require('../utils/account/accountUtils');
 const { getBranchByName } = require('./branch.service');
-const { getUserByEmail } = require('./user.service');
+const { getUserByEmail, getUserById } = require('./user.service');
 
 /**
  * Create an account
@@ -31,6 +33,13 @@ const createAccount = async (accountData, createdBy) => {
     throw new Error('Branch not found');
   }
 
+  // Fetch the manager's name if available
+  let managerName = null;
+  if (accountData.accountManagerId) {
+    const manager = await getUserById(accountData.accountManagerId);
+    managerName = `${manager.firstName} ${manager.lastName}`;
+  }
+
   // Create the account object
   const account = {
     userId,
@@ -42,6 +51,7 @@ const createAccount = async (accountData, createdBy) => {
     accountType,
     createdBy,
     accountManagerId: accountData.accountManagerId || null,
+    managerName,
     branchName: lowerCaseBranchName,
     branchId: branch._id,
     status: 'active',
@@ -49,6 +59,7 @@ const createAccount = async (accountData, createdBy) => {
 
   return Account.create(account);
 };
+
 /**
  * Assign a branch to a user based on the account ID
  * @param {string} accountId - Account ID
@@ -111,6 +122,38 @@ const getAllAccounts = async (filter, options) => {
   return accounts;
 };
 
+/**
+ * Delete user by id
+ * @param {ObjectId} userId
+ * @returns {Promise<User>}
+ */
+const deletAccount = async (userId) => {
+  const account = await getUserAccount(userId);
+  if (!account) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
+  }
+  await account.remove();
+  return account;
+};
+
+/**
+ * Get the account manager of an account based on the account number
+ * @param {string} accountNumber - Account number
+ * @returns {Promise<User>} Account manager user object
+ */
+const getAccountManager = async (accountNumber) => {
+  const account = await Account.findOne({ accountNumber }).populate('accountManagerId', '-password');
+  if (!account) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
+  }
+
+  if (!account.accountManagerId) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Account manager not assigned');
+  }
+
+  return account.accountManagerId;
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -118,4 +161,6 @@ module.exports = {
   getUserAccountNumber,
   getUserAccount,
   getAllAccounts,
+  deletAccount,
+  getAccountManager,
 };

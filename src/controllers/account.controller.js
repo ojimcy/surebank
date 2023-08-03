@@ -36,10 +36,23 @@ const getAllAccounts = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+const deletAccount = catchAsync(async (req, res) => {
+  await accountService.deletAccount(req.params.userId);
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
+const getAccountManager = catchAsync(async (req, res) => {
+  const { accountNumber } = req.query;
+  const accountManager = await accountService.getAccountManager(accountNumber);
+  res.status(httpStatus.OK).json(accountManager);
+});
+
 module.exports = {
   createAccount,
   assignBranch,
   assignManager,
   getUserAccount,
   getAllAccounts,
+  deletAccount,
+  getAccountManager,
 };

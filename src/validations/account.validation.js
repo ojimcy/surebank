@@ -7,6 +7,7 @@ const createAccount = {
     email: Joi.string().required().email(),
     accountType: Joi.string().required(),
     branchName: Joi.string().required(),
+    accountManagerName: Joi.string(),
   }),
 };
 
@@ -83,6 +84,18 @@ const getAllAccounts = {
   }),
 };
 
+const deletAccount = {
+  params: Joi.object().keys({
+    userId: Joi.string().custom(objectId),
+  }),
+};
+
+const getAccountManager = {
+  query: Joi.object().keys({
+    accountNumber: Joi.string(),
+  }),
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -93,4 +106,6 @@ module.exports = {
   makeCustomerDeposit,
   getUserAccount,
   getAllAccounts,
+  deletAccount,
+  getAccountManager,
 };

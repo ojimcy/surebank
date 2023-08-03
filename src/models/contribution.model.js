@@ -29,6 +29,9 @@ const contributionSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
+    totalCount: {
+      type: Number,
+    },
     narration: {
       type: String,
     },
