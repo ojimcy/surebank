@@ -2,43 +2,29 @@ const httpStatus = require('http-status');
 const { Account } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { generateAccountNumber } = require('../utils/account/accountUtils');
-const { getBranchByName } = require('./branch.service');
-const { getUserByEmail, getUserById } = require('./user.service');
+const { getUserByEmail } = require('./user.service');
 
 /**
  * Create an account
  * @param {Object} accountData - Account data
  * @param {string} accountData.userId - User ID
  * @param {string} accountData.accountType - Account type
- * @param {string} accountData.branchName - Branch name
+ * @param {string} accountData.branchId - Branch ID
  * @param {string} createdBy - ID of the admin user who initiated the creation
  * @returns {Promise<Account>} Created account
  */
 const createAccount = async (accountData, createdBy) => {
-  const { email, accountType, branchName } = accountData;
+  const { email, accountType, branchId } = accountData;
   const user = await getUserByEmail(email);
   const userId = user._id;
   // Check if the user already has an account of the specified type
   const existingAccount = await Account.findOne({ userId, accountType });
   if (existingAccount) {
-    throw new Error('User already has an account of the specified type');
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User already has an account of the specified type');
   }
 
   // Generate a unique account number
   const accountNumber = await generateAccountNumber();
-  const lowerCaseBranchName = branchName.toLowerCase();
-  const branch = await getBranchByName(lowerCaseBranchName);
-
-  if (!branch) {
-    throw new Error('Branch not found');
-  }
-
-  // Fetch the manager's name if available
-  let managerName = null;
-  if (accountData.accountManagerId) {
-    const manager = await getUserById(accountData.accountManagerId);
-    managerName = `${manager.firstName} ${manager.lastName}`;
-  }
 
   // Create the account object
   const account = {
@@ -51,9 +37,7 @@ const createAccount = async (accountData, createdBy) => {
     accountType,
     createdBy,
     accountManagerId: accountData.accountManagerId || null,
-    managerName,
-    branchName: lowerCaseBranchName,
-    branchId: branch._id,
+    branchId,
     status: 'active',
   };
 
@@ -90,7 +74,7 @@ const assignManager = async (accountId, managerId) => {
 const getUserAccountNumber = async (userId) => {
   const account = await Account.findOne({ userId });
   if (!account) {
-    throw new Error('User does not have an account');
+    throw new ApiError(httpStatus.NOT_FOUND, 'User does not have an account');
   }
   return account.accountNumber;
 };
@@ -101,15 +85,15 @@ const getUserAccountNumber = async (userId) => {
  * @returns {Promise<Account>} User's account details
  */
 const getUserAccount = async (userId) => {
-  const account = await Account.findOne({ userId });
+  const account = await Account.findOne({ userId }).populate('accountManagerId', 'firstName lastName').lean();
   if (!account) {
-    throw new Error('User does not have an account');
+    throw new ApiError(httpStatus.NOT_FOUND, 'User does not have an account');
   }
   return account;
 };
 
 /**
- * Query for users
+ * Query for accounts
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
@@ -118,7 +102,18 @@ const getUserAccount = async (userId) => {
  * @returns {Promise<QueryResult>}
  */
 const getAllAccounts = async (filter, options) => {
-  const accounts = await Account.paginate(filter, options);
+  const accounts = await Account.paginate(filter, options, {
+    populate: [
+      {
+        path: 'accountManagerId',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'branchId',
+        select: 'name',
+      },
+    ],
+  });
   return accounts;
 };
 
@@ -127,31 +122,13 @@ const getAllAccounts = async (filter, options) => {
  * @param {ObjectId} userId
  * @returns {Promise<User>}
  */
-const deletAccount = async (userId) => {
-  const account = await getUserAccount(userId);
+const deleteAccount = async (userId) => {
+  const account = await getUserAccount(userId).lean();
   if (!account) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
   }
   await account.remove();
   return account;
-};
-
-/**
- * Get the account manager of an account based on the account number
- * @param {string} accountNumber - Account number
- * @returns {Promise<User>} Account manager user object
- */
-const getAccountManager = async (accountNumber) => {
-  const account = await Account.findOne({ accountNumber }).populate('accountManagerId', '-password');
-  if (!account) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
-  }
-
-  if (!account.accountManagerId) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Account manager not assigned');
-  }
-
-  return account.accountManagerId;
 };
 
 module.exports = {
@@ -161,6 +138,5 @@ module.exports = {
   getUserAccountNumber,
   getUserAccount,
   getAllAccounts,
-  deletAccount,
-  getAccountManager,
+  deleteAccount,
 };

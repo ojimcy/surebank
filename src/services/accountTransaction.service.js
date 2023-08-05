@@ -41,7 +41,7 @@ const makeCustomerDeposit = async (depositInput) => {
         {
           accountNumber: depositInput.accountNumber,
           amount: depositInput.amount,
-          operatorId: depositInput.operatorId,
+          userReps: depositInput.userReps,
           date: transactionDate,
           direction: 'inflow',
           narration: depositInput.narration,
@@ -187,7 +187,7 @@ const makeCustomerWithdrawal = async (withdrawalInput) => {
         {
           accountNumber: withdrawalInput.accountNumber,
           amount: withdrawalInput.amount,
-          operatorId: withdrawalInput.operatorId,
+          userReps: withdrawalInput.userReps,
           date: transactionDate,
           direction: 'outflow',
           narration: withdrawalInput.narration,

@@ -34,8 +34,8 @@ const makeDailySavingsWithdrawal = catchAsync(async (req, res) => {
 });
 
 const getUserDailySavingsPackage = catchAsync(async (req, res) => {
-  const { userId } = req.query;
-  const userPackage = await dailySavingsService.getUserDailySavingsPackage(userId);
+  const { userId, accountNumber } = req.query;
+  const userPackage = await dailySavingsService.getUserDailySavingsPackage(userId, accountNumber);
 
   if (!userPackage) {
     return res.status(httpStatus.NOT_FOUND).json({ message: 'User does not have an active daily savings package' });
@@ -48,7 +48,7 @@ const getUserSavingsActivities = catchAsync(async (req, res) => {
   const { userId, accountNumber } = req.query;
 
   // Fetch user's daily savings package
-  const userPackage = await dailySavingsService.getUserDailySavingsPackage(userId);
+  const userPackage = await dailySavingsService.getUserDailySavingsPackage(userId, accountNumber);
   const narration = 'Daily contribution withdrawal';
   if (!userPackage) {
     return res.status(httpStatus.NOT_FOUND).json({ message: 'User does not have an active daily savings package' });

@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const { password } = require('./custom.validation');
+const { password, objectId } = require('./custom.validation');
 
 const createCustomer = {
   body: Joi.object().keys({
@@ -9,7 +9,7 @@ const createCustomer = {
     lastName: Joi.string().required(),
     address: Joi.string().required(),
     phoneNumber: Joi.string().required(),
-    branchName: Joi.string().required(),
+    branchId: Joi.string().required().custom(objectId),
     accountType: Joi.string().optional(),
   }),
 };

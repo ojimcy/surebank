@@ -32,35 +32,6 @@ const createDailySavingsPackage = async (dailyInput) => {
   return createdPackage;
 };
 
-// /**
-//  * Count contributions for a package
-//  * @param {Object} input - Input data
-//  * @param {string} input.packageId - Package ID
-//  * @returns {Promise<number>} Total count of contributions
-//  */
-// const countContribution = async ({ packageId }) => {
-//   try {
-//     const totalCount = await Contribution.aggregate([
-//       {
-//         $match: {
-//           packageId,
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: null,
-//           TotalCount: {
-//             $sum: '$count',
-//           },
-//         },
-//       },
-//     ]);
-//     return totalCount[0].TotalCount;
-//   } catch (error) {
-//     throw new ApiError('Failed to count contributions', error);
-//   }
-// };
-
 /**
  * Save a daily contribution
  * @param {Object} contributionInput - Contribution input
@@ -145,7 +116,7 @@ const saveDailyContribution = async (contributionInput) => {
     const depositDetail = {
       accountNumber: contributionInput.accountNumber,
       amount: userPackage.totalContribution,
-      operatorId: userPackage.userReps,
+      userReps: userPackage.userReps,
       narration,
     };
 
@@ -164,7 +135,7 @@ const saveDailyContribution = async (contributionInput) => {
   const contributionTransaction = await AccountTransaction.create({
     accountNumber: contributionInput.accountNumber,
     amount: contributionInput.amount,
-    operatorId: contributionInput.userReps,
+    userReps: contributionInput.userReps,
     date: transactionDate,
     direction: 'inflow',
     narration: 'Daily contribution',
@@ -211,7 +182,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
     const withdrawalDetails = {
       accountNumber: withdrawal.accountNumber,
       amount: withdrawal.amount,
-      operatorId: withdrawal.userReps,
+      userReps: withdrawal.userReps,
       narration: 'Daily contribution withdrawal',
     };
 
@@ -237,9 +208,10 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
  * @param {string} userId - User ID
  * @returns {Promise<Object>} User's daily savings package
  */
-const getUserDailySavingsPackage = async (userId) => {
+const getUserDailySavingsPackage = async (userId, accountNumber) => {
   const userPackage = await Package.findOne({
     userId,
+    accountNumber,
     status: 'open',
   });
 
@@ -253,7 +225,7 @@ const getUserDailySavingsPackage = async (userId) => {
  */
 const getDailySavingsContributions = async (packageId) => {
   try {
-    return await Contribution.find({ packageId }).lean();
+    return await Contribution.find({ packageId }).populate('userReps', 'firstName lastName').lean();
   } catch (error) {
     throw new ApiError('Failed to get contributions for the package', error);
   }
@@ -267,7 +239,9 @@ const getDailySavingsContributions = async (packageId) => {
  */
 const getDailySavingsWithdrawals = async (accountNumber, narration) => {
   try {
-    const withdrawals = await AccountTransaction.find({ accountNumber, narration });
+    const withdrawals = await AccountTransaction.find({ accountNumber, narration })
+      .populate('userReps', 'firstName lastName')
+      .lean();
     return withdrawals;
   } catch (error) {
     throw new ApiError('Failed to get daily savings withdrawals', error);

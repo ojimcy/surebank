@@ -6,7 +6,7 @@ const createAccount = {
   body: Joi.object().keys({
     email: Joi.string().required().email(),
     accountType: Joi.string().required(),
-    branchName: Joi.string().required(),
+    branchId: Joi.string().required().custom(objectId),
     accountManagerName: Joi.string(),
   }),
 };
@@ -63,7 +63,7 @@ const makeCustomerDeposit = {
   body: Joi.object().keys({
     accountNumber: Joi.string().required(),
     amount: Joi.number().required(),
-    operatorId: Joi.string().required(),
+    userReps: Joi.string().required(),
     narration: Joi.string().required(),
   }),
 };

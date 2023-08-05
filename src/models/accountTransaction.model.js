@@ -23,7 +23,7 @@ const accountTransactionSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    operatorId: {
+    userReps: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,

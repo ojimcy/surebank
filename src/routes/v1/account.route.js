@@ -13,10 +13,6 @@ router
   .get(auth('manageAccounts'), validate(accountValidation.getAllAccounts), accountController.getAllAccounts);
 
 router
-  .route('/manager')
-  .get(auth('manageAccounts'), validate(accountValidation.getAccountManager), accountController.getAccountManager);
-
-router
   .route('/:userId')
   .get(auth('getUserAccount'), validate(accountValidation.getUserAccount), accountController.getUserAccount)
   .delete(auth('manageAccounts'), validate(accountValidation.deletAccount), accountController.deletAccount);

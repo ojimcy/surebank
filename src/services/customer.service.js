@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
+const httpStatus = require('http-status');
 const { Account, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, getAccountBalance } = require('./accountTransaction.service');
 const { userService, accountService } = require('.');
-const { getBranchByName } = require('./branch.service');
 
 /**
  * Create a customer
@@ -15,15 +15,13 @@ const { getBranchByName } = require('./branch.service');
  * @param {string} customerData.address - Customer's address
  * @param {string} customerData.accountType - Account type
  * @param {string} customerData.phoneNumber - Customer's phone number
- * @param {string} customerData.branchName - Branch name
+ * @param {string} customerData.branchId - Branch ID
  * @param {string} createdBy - ID of the admin user who initiated the creation
  * @returns {Promise<{ user: User, account: Account }>} Created user and account
  */
-const createCustomer = async (customerData, createdBy) => {
+const createCustomer = async (customerData, branchId) => {
   // Check if the user already exists
   let user = await userService.getUserByEmail(customerData.email);
-  const branch = await getBranchByName(customerData.branchName);
-  const branchId = branch._id;
 
   if (!user) {
     // If user doesn't exist, create a new user
@@ -45,11 +43,10 @@ const createCustomer = async (customerData, createdBy) => {
     firstName: user.firstName,
     lastName: user.lastName,
     accountType: customerData.accountType,
-    branchName: customerData.branchName,
+    branchId: customerData.branchId,
     accountManagerId: null,
   };
-
-  const account = await accountService.createAccount(accountData, createdBy);
+  const account = await accountService.createAccount(accountData, customerData.createdBy);
 
   return { user, account };
 };
@@ -67,7 +64,7 @@ const makeDeposit = async (depositInput) => {
   try {
     const confirmAccountNumber = await getUserByAccountNumber(depositInput.accountNumber);
     if (!confirmAccountNumber) {
-      throw new ApiError(404, 'Account number does not exist.');
+      throw new ApiError(httpStatus.NOT_FOUND, 'Account number does not exist.');
     }
 
     const transactionDate = new Date().getTime();
@@ -77,7 +74,7 @@ const makeDeposit = async (depositInput) => {
         {
           accountNumber: depositInput.accountNumber,
           amount: depositInput.amount,
-          operatorId: depositInput.operatorId,
+          userReps: depositInput.userReps,
           date: transactionDate,
           direction: 'inflow',
           narration: depositInput.narration,
@@ -117,22 +114,22 @@ const makeDeposit = async (depositInput) => {
  * @param {string} userId - ID of the logged-in user
  * @returns {Promise<Object>} Result of the operation
  */
-const makeWithdrawal = async (withdrawalInput, userId, operatorId) => {
+const makeWithdrawal = async (withdrawalInput, userId, userReps) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const confirmAccountNumber = await getUserByAccountNumber(withdrawalInput.accountNumber);
     if (!confirmAccountNumber) {
-      throw new ApiError(404, 'Account number does not exist.');
+      throw new ApiError(httpStatus.NOT_FOUND, 'Account number does not exist.');
     }
     if (confirmAccountNumber._id.toString() !== userId) {
-      throw new ApiError(404, "You can't make this transaction");
+      throw new ApiError(httpStatus.NOT_FOUND, "You can't make this transaction");
     }
     const accountBalance = await getAccountBalance(withdrawalInput.accountNumber);
 
     if (accountBalance < withdrawalInput.amount) {
-      throw new ApiError(500, 'Insufficient balance');
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Insufficient balance');
     }
 
     const transactionDate = new Date().getTime();
@@ -142,7 +139,7 @@ const makeWithdrawal = async (withdrawalInput, userId, operatorId) => {
         {
           accountNumber: withdrawalInput.accountNumber,
           amount: withdrawalInput.amount,
-          operatorId,
+          userReps,
           date: transactionDate,
           direction: 'outflow',
           narration: withdrawalInput.narration,

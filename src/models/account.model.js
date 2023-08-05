@@ -41,16 +41,9 @@ const accountSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
-    accountManagerName: {
-      type: String,
-    },
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Branch',
-      required: true,
-    },
-    branchName: {
-      type: String,
       required: true,
     },
     status: {
