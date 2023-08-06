@@ -13,7 +13,20 @@ const getDailySavingsWithdrawals = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(totalWithdrawals);
 });
 
+const getPackageReport = catchAsync(async (req, res) => {
+  const totalPackages = await reportService.getTotalPackages();
+  const totalOpenPackages = await reportService.getTotalOpenPackages();
+  const totalClosedPackages = await reportService.getTotalClosedPackages();
+
+  res.status(httpStatus.OK).json({
+    totalPackages,
+    totalOpenPackages,
+    totalClosedPackages,
+  });
+});
+
 module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
+  getPackageReport,
 };

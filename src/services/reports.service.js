@@ -1,4 +1,4 @@
-const { Contribution, AccountTransaction } = require('../models');
+const { Contribution, AccountTransaction, Package } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -61,7 +61,7 @@ const getTotalContributionsByDay = async (startDate, endDate) => {
 
 /**
  * Get total daily savings withdrawals made each day
- * @returns {Promise<Array>} Array of total daily savings withdrawals for each day
+ * @returns {Promise<number>} Array of total daily savings withdrawals for each day
  */
 const getTotalDailySavingsWithdrawal = async () => {
   try {
@@ -105,7 +105,37 @@ const getTotalDailySavingsWithdrawal = async () => {
   }
 };
 
+/**
+ * Get total number of packages
+ * @returns {Promise<number>} Total number of packages
+ */
+const getTotalPackages = async () => {
+  const totalPackages = await Package.countDocuments();
+  return totalPackages;
+};
+
+/**
+ * Get total number of open packages
+ * @returns {Promise<number>} Total number of open packages
+ */
+const getTotalOpenPackages = async () => {
+  const totalOpenPackages = await Package.countDocuments({ status: 'open' });
+  return totalOpenPackages;
+};
+
+/**
+ * Get total number of closed packages
+ * @returns {Promise<number>} Total number of closed packages
+ */
+const getTotalClosedPackages = async () => {
+  const totalClosedPackages = await Package.countDocuments({ status: 'closed' });
+  return totalClosedPackages;
+};
+
 module.exports = {
   getTotalContributionsByDay,
   getTotalDailySavingsWithdrawal,
+  getTotalPackages,
+  getTotalOpenPackages,
+  getTotalClosedPackages,
 };

@@ -13,4 +13,8 @@ router
   .route('/total-savings-withdrawal')
   .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getDailySavingsWithdrawals);
 
+router
+  .route('/packages')
+  .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getPackageReport);
+
 module.exports = router;
