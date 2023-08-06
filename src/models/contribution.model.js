@@ -18,7 +18,7 @@ const contributionSchema = mongoose.Schema(
       required: true,
     },
     date: {
-      type: String,
+      type: Number,
       required: true,
     },
     amount: {
