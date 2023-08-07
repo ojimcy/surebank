@@ -3,13 +3,14 @@ const catchAsync = require('../utils/catchAsync');
 const { reportService } = require('../services');
 
 const getTotalContributions = catchAsync(async (req, res) => {
-  const { startDate, endDate } = req.query;
-  const totalContributions = await reportService.getTotalContributionsByDay(startDate, endDate);
+  const { startDate, endDateParam } = req.query;
+  const totalContributions = await reportService.getTotalContributionsByDay(startDate, endDateParam);
   res.status(httpStatus.OK).json(totalContributions);
 });
 
 const getDailySavingsWithdrawals = catchAsync(async (req, res) => {
-  const totalWithdrawals = await reportService.getTotalDailySavingsWithdrawal();
+  const { startDate, endDateParam } = req.query;
+  const totalWithdrawals = await reportService.getTotalDailySavingsWithdrawal(startDate, endDateParam);
   res.status(httpStatus.OK).json(totalWithdrawals);
 });
 
