@@ -12,6 +12,11 @@ const packageSchema = mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     startDate: {
       type: String,
       required: true,
@@ -31,6 +36,10 @@ const packageSchema = mongoose.Schema(
     totalContribution: {
       type: Number,
       required: true,
+    },
+    totalCount: {
+      type: Number,
+      default: 0,
     },
   },
   {

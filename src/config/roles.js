@@ -49,6 +49,7 @@ const superAdminPermissions = [
   'updateBranch',
   'addStaffToBranch',
   'assignManager',
+  'reports',
 ];
 
 const allRoles = {

@@ -12,8 +12,8 @@ const getUserByAccountNumber = catchAsync(async (req, res) => {
 
 const makeCustomerDeposit = catchAsync(async (req, res) => {
   const depositInput = req.body;
-  const operatorId = req.user._id;
-  const result = await accountTransactionService.makeCustomerDeposit({ ...depositInput, operatorId });
+  const userReps = req.user._id;
+  const result = await accountTransactionService.makeCustomerDeposit({ ...depositInput, userReps });
   res.status(httpStatus.OK).json(result);
 });
 
@@ -64,8 +64,8 @@ const getAccountBalance = catchAsync(async (req, res) => {
 
 const makeCustomerWithdrawal = catchAsync(async (req, res) => {
   const depositInput = req.body;
-  const operatorId = req.user._id;
-  const result = await accountTransactionService.makeCustomerWithdrawal({ ...depositInput, operatorId });
+  const userReps = req.user._id;
+  const result = await accountTransactionService.makeCustomerWithdrawal({ ...depositInput, userReps });
   res.status(httpStatus.OK).json(result);
 });
 

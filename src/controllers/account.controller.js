@@ -1,11 +1,11 @@
 const httpStatus = require('http-status');
 const { accountService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
+const pick = require('../utils/pick');
 
 const createAccount = catchAsync(async (req, res) => {
-  const { userId, accountType, branchId } = req.body;
   const createdBy = req.user._id;
-  const account = await accountService.createAccount({ userId, accountType, branchId }, createdBy);
+  const account = await accountService.createAccount({ ...req.body }, createdBy);
   res.status(httpStatus.CREATED).json(account);
 });
 
@@ -29,9 +29,23 @@ const getUserAccount = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(account);
 });
 
+const getAllAccounts = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['name', 'accountNumber']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const result = await accountService.getAllAccounts(filter, options);
+  res.send(result);
+});
+
+const deletAccount = catchAsync(async (req, res) => {
+  await accountService.deletAccount(req.params.userId);
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
 module.exports = {
   createAccount,
   assignBranch,
   assignManager,
   getUserAccount,
+  getAllAccounts,
+  deletAccount,
 };

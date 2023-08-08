@@ -41,7 +41,7 @@ const makeCustomerDeposit = async (depositInput) => {
         {
           accountNumber: depositInput.accountNumber,
           amount: depositInput.amount,
-          operatorId: depositInput.operatorId,
+          userReps: depositInput.userReps,
           date: transactionDate,
           direction: 'inflow',
           narration: depositInput.narration,
@@ -187,7 +187,7 @@ const makeCustomerWithdrawal = async (withdrawalInput) => {
         {
           accountNumber: withdrawalInput.accountNumber,
           amount: withdrawalInput.amount,
-          operatorId: withdrawalInput.operatorId,
+          userReps: withdrawalInput.userReps,
           date: transactionDate,
           direction: 'outflow',
           narration: withdrawalInput.narration,
@@ -233,7 +233,6 @@ const makeCustomerWithdrawal = async (withdrawalInput) => {
  */
 const getAccountTransactions = async (accountNumber, page, limit) => {
   const skip = (page - 1) * limit;
-  // Assuming AccountTransaction model has a field called "accountNumber" to link transactions to accounts
   const transactions = await AccountTransaction.find({ accountNumber }).skip(skip).limit(limit).sort({ date: 'desc' });
   return transactions;
 };

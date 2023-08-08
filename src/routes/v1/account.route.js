@@ -7,11 +7,15 @@ const accountingController = require('../../controllers/Accounting.controller');
 
 const router = express.Router();
 
-router.route('/').post(auth('manageAccounts'), validate(accountValidation.createAccount), accountController.createAccount);
+router
+  .route('/')
+  .post(auth('manageAccounts'), validate(accountValidation.createAccount), accountController.createAccount)
+  .get(auth('manageAccounts'), validate(accountValidation.getAllAccounts), accountController.getAllAccounts);
 
 router
   .route('/:userId')
-  .get(auth('getUserAccount'), validate(accountValidation.getUserAccount), accountController.getUserAccount);
+  .get(auth('getUserAccount'), validate(accountValidation.getUserAccount), accountController.getUserAccount)
+  .delete(auth('manageAccounts'), validate(accountValidation.deletAccount), accountController.deletAccount);
 
 router
   .route('/:accountId/assign-branch')

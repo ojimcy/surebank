@@ -18,7 +18,7 @@ const contributionSchema = mongoose.Schema(
       required: true,
     },
     date: {
-      type: String,
+      type: Number,
       required: true,
     },
     amount: {
@@ -28,6 +28,12 @@ const contributionSchema = mongoose.Schema(
     count: {
       type: Number,
       required: true,
+    },
+    totalCount: {
+      type: Number,
+    },
+    narration: {
+      type: String,
     },
   },
   {

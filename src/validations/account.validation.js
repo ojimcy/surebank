@@ -4,9 +4,10 @@ const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 
 const createAccount = {
   body: Joi.object().keys({
-    userId: Joi.string().required().custom(objectId),
+    email: Joi.string().required().email(),
     accountType: Joi.string().required(),
     branchId: Joi.string().required().custom(objectId),
+    accountManagerName: Joi.string(),
   }),
 };
 
@@ -62,7 +63,7 @@ const makeCustomerDeposit = {
   body: Joi.object().keys({
     accountNumber: Joi.string().required(),
     amount: Joi.number().required(),
-    operatorId: Joi.string().required(),
+    userReps: Joi.string().required(),
     narration: Joi.string().required(),
   }),
 };
@@ -70,6 +71,28 @@ const makeCustomerDeposit = {
 const getUserAccount = {
   params: Joi.object().keys({
     userId: Joi.string().required().custom(objectId),
+  }),
+};
+
+const getAllAccounts = {
+  query: Joi.object().keys({
+    accountNumber: Joi.number(),
+    name: Joi.string(),
+    sortBy: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
+const deletAccount = {
+  params: Joi.object().keys({
+    userId: Joi.string().custom(objectId),
+  }),
+};
+
+const getAccountManager = {
+  query: Joi.object().keys({
+    accountNumber: Joi.string(),
   }),
 };
 
@@ -82,4 +105,7 @@ module.exports = {
   computeDailySummary,
   makeCustomerDeposit,
   getUserAccount,
+  getAllAccounts,
+  deletAccount,
+  getAccountManager,
 };

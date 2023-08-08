@@ -12,7 +12,7 @@ const createDailySavingsPackage = {
 
 const saveDailyContribution = {
   query: Joi.object().keys({
-    branchId: Joi.string().required().custom(objectId),
+    packageId: Joi.string().required().custom(objectId),
   }),
   body: Joi.object().keys({
     amount: Joi.number().required(),
@@ -32,6 +32,14 @@ const makeDailySavingsWithdrawal = {
 const getUserDailySavingsPackage = {
   query: Joi.object().keys({
     userId: Joi.string().required().custom(objectId),
+    accountNumber: Joi.string().required(),
+  }),
+};
+
+const getUserSavingsActivities = {
+  query: Joi.object().keys({
+    userId: Joi.string().required().custom(objectId),
+    accountNumber: Joi.string().required(),
   }),
 };
 
@@ -40,4 +48,5 @@ module.exports = {
   saveDailyContribution,
   makeDailySavingsWithdrawal,
   getUserDailySavingsPackage,
+  getUserSavingsActivities,
 };

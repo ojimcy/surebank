@@ -21,8 +21,8 @@ const createDailySavingsPackage = catchAsync(async (req, res) => {
 const saveDailyContribution = catchAsync(async (req, res) => {
   const contributionInput = req.body;
   const userReps = req.user._id;
-  const branchId = req.query;
-  const result = await dailySavingsService.saveDailyContribution({ ...contributionInput, userReps, branchId });
+  const packageId = req.query;
+  const result = await dailySavingsService.saveDailyContribution({ ...contributionInput, userReps, packageId });
   res.status(httpStatus.OK).json(result);
 });
 
@@ -34,8 +34,8 @@ const makeDailySavingsWithdrawal = catchAsync(async (req, res) => {
 });
 
 const getUserDailySavingsPackage = catchAsync(async (req, res) => {
-  const { userId } = req.query;
-  const userPackage = await dailySavingsService.getUserDailySavingsPackage(userId);
+  const { userId, accountNumber } = req.query;
+  const userPackage = await dailySavingsService.getUserDailySavingsPackage(userId, accountNumber);
 
   if (!userPackage) {
     return res.status(httpStatus.NOT_FOUND).json({ message: 'User does not have an active daily savings package' });
@@ -44,9 +44,30 @@ const getUserDailySavingsPackage = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(userPackage);
 });
 
+const getUserSavingsActivities = catchAsync(async (req, res) => {
+  const { userId, accountNumber } = req.query;
+
+  // Fetch user's daily savings package
+  const userPackage = await dailySavingsService.getUserDailySavingsPackage(userId, accountNumber);
+  const narration = 'Daily contribution withdrawal';
+  if (!userPackage) {
+    return res.status(httpStatus.NOT_FOUND).json({ message: 'User does not have an active daily savings package' });
+  }
+
+  // Fetch all contributions and withdrawals for the user's package
+  const contributions = await dailySavingsService.getDailySavingsContributions(userPackage._id);
+  const withdrawals = await dailySavingsService.getDailySavingsWithdrawals(accountNumber, narration);
+
+  // Combine contributions and withdrawals into a single array and sort by date
+  const savingsActivities = [...contributions, ...withdrawals].sort((a, b) => b.date - a.date);
+
+  res.status(httpStatus.OK).json(savingsActivities);
+});
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
   makeDailySavingsWithdrawal,
   getUserDailySavingsPackage,
+  getUserSavingsActivities,
 };
