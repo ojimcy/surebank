@@ -49,6 +49,9 @@ const getAllStaff = catchAsync(async (req, res) => {
   if (result.error) {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, result.error);
   }
+  const staffIds = result.map((staff) => staff.staffId);
+  const users = await User.find({ _id: { $in: staffIds } });
+  res.send(users);
 });
 const getStaffInBranch = catchAsync(async (req, res) => {
   const { branchId } = req.params;
@@ -66,8 +69,7 @@ const getStaffInBranch = catchAsync(async (req, res) => {
 });
 
 const updateBranchStaff = catchAsync(async (req, res) => {
-  const { branchId } = req.params;
-  const { staffId } = req.query;
+  const { staffId, branchId } = req.query;
   const branchStaff = branchService.updateBranchStaff(staffId, branchId);
   res.send(branchStaff);
 });
