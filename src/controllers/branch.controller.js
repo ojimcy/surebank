@@ -42,7 +42,14 @@ const addStaffToBranch = catchAsync(async (req, res) => {
   const branchStaff = await branchService.addStaffToBranch(branchId, staffId);
   res.send(branchStaff);
 });
-
+const getAllStaff = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['staffId', 'isCurrent']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const result = await branchService.getAllStaffService(filter, options);
+  if (result.error) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, result.error);
+  }
+});
 const getStaffInBranch = catchAsync(async (req, res) => {
   const { branchId } = req.params;
   const filter = pick(req.query, ['staffId', 'isCurrent']);
@@ -76,6 +83,7 @@ module.exports = {
   getBranches,
   updateBranchManager,
   addStaffToBranch,
+  getAllStaff,
   getStaffInBranch,
   updateBranchStaff,
   updateBranch,
