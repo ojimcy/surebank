@@ -1,5 +1,7 @@
-const { Ledger, DailySummary } = require('../models');
+const httpStatus = require('http-status');
+const { Ledger, DailySummary, Expenditure } = require('../models');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
+const ApiError = require('../utils/ApiError');
 
 /**
  * Add a ledger entry
@@ -96,9 +98,89 @@ const getDailySummary = async (filter, options) => {
   return dailySummary;
 };
 
+/**
+ * Create a new expenditure
+ * @param {Object} expenditureInput - Expenditure input data
+ * @returns {Promise<Object>} The created expenditure object
+ */
+const createExpenditure = async (expenditureInput) => {
+  const createdExpenditure = await Expenditure.create(expenditureInput);
+  return createdExpenditure;
+};
+
+/**
+ * Get paginated expenditures over a date range
+ * @param {Date} startDate - Start date for the range
+ * @param {Date} endDate - End date for the range (optional)
+ * @param {number} page - Page number for pagination
+ * @param {number} limit - Number of items per page
+ * @returns {Promise<Object>} Paginated expenditures within the date range
+ */
+const getExpendituresByDateRange = async (startDate, endDate, page, limit) => {
+  const options = {
+    page,
+    limit,
+    sort: { date: 'desc' }, // Sort by date in descending order
+  };
+
+  // Construct the query based on whether endDate is provided or not
+  const query = { date: { $gte: startDate } };
+  if (endDate) {
+    query.date.$lte = endDate;
+  }
+
+  const paginatedExpenditures = await Expenditure.paginate(query, options);
+  return paginatedExpenditures;
+};
+
+/**
+ * Get a single expenditure by its ID
+ * @param {string} expenditureId - ID of the expenditure
+ * @returns {Promise<Object>} The found expenditure object
+ */
+const getExpenditureById = async (expenditureId) => {
+  const expenditure = await Expenditure.findById(expenditureId).populate('userReps', 'firstName lastName');
+  return expenditure;
+};
+
+/**
+ * Update expenditure
+ * @param {ObjectId} expenditureId
+ * @param {Object} updateBody
+ * @returns {Promise<Expenditure>}
+ */
+const updateExpenditure = async (expenditureId, updateBody) => {
+  const expenditure = await getExpenditureById(expenditureId);
+  if (!expenditure) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Expenditure not found');
+  }
+  Object.assign(expenditure, updateBody);
+  await expenditure.save();
+  return expenditure;
+};
+
+/**
+ * Delete expenditure by id
+ * @param {ObjectId} expenditureId
+ * @returns {Promise<Expenditure>}
+ */
+const deleteExpenditure = async (expenditureId) => {
+  const expenditure = await getExpenditureById(expenditureId);
+  if (!expenditure) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Expenditure not found');
+  }
+  await expenditure.remove();
+  return expenditure;
+};
+
 module.exports = {
   addLedgerEntry,
   getLedgerEntries,
   computeDailySummary,
   getDailySummary,
+  createExpenditure,
+  getExpendituresByDateRange,
+  getExpenditureById,
+  updateExpenditure,
+  deleteExpenditure,
 };

@@ -12,3 +12,4 @@ module.exports.storeValidation = require('./store.validation');
 module.exports.brandValidation = require('./brand.validation');
 module.exports.cartValidation = require('./cart.validation');
 module.exports.salesValidation = require('./sales.validation');
+module.exports.expenditureValidation = require('./expenditure.validation');

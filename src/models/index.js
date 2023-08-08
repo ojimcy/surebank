@@ -24,3 +24,4 @@ module.exports.Cart = require('./cart.model');
 module.exports.CartItem = require('./cartItem.model');
 module.exports.Sales = require('./sales.model');
 module.exports.SalesItem = require('./salesItem.model');
+module.exports.Expenditure = require('./expenditure.model');
