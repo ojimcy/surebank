@@ -11,7 +11,7 @@ router
   .post(auth('manageBranch'), validate(branchValidation.createBranch), branchController.createBranch)
   .get(auth('getBranches'), validate(branchValidation.getBranches), branchController.getBranches);
 
-router.route('/staff').get(auth('getAllStaff'), validate(branchValidation.getAllStaff), branchController.getAllStaff);
+router.route('/staff').get(auth('getAllStaff'), branchController.getAllStaff);
 
 router
   .route('/:branchId')
