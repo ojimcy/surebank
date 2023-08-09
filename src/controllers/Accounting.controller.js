@@ -79,19 +79,15 @@ const getExpendituresByDateRange = catchAsync(async (req, res) => {
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
 
-  // Convert date strings to actual Date objects
-  const startDateObject = new Date(startDate);
-  const endDateObject = endDate ? new Date(endDate) : undefined;
-
   // Call the service function to get paginated expenditures within the date range
-  const paginatedExpenditures = await accountingService.getExpendituresByDateRange(
-    startDateObject,
-    endDateObject,
-    page,
-    limit
-  );
+  const paginatedExpenditures = await accountingService.getExpendituresByDateRange(startDate, endDate, page, limit);
 
   res.status(httpStatus.OK).json(paginatedExpenditures);
+});
+
+const getTotalExpenditure = catchAsync(async (req, res) => {
+  const totalExpenditure = await accountingService.getTotalExpenditure();
+  res.status(httpStatus.OK).json({ totalExpenditure });
 });
 
 const getExpenditureById = catchAsync(async (req, res) => {
@@ -117,6 +113,11 @@ const deleteExpenditure = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
+const getSumOfFirstContributions = catchAsync(async (req, res) => {
+  const result = await accountingService.getSumOfFirstContributions();
+  res.status(httpStatus.OK).json({ result });
+});
+
 module.exports = {
   ledgerEntry,
   getLedgerEntries,
@@ -124,7 +125,9 @@ module.exports = {
   getDailySummary,
   createExpenditure,
   getExpendituresByDateRange,
+  getTotalExpenditure,
   getExpenditureById,
   updateExpenditure,
   deleteExpenditure,
+  getSumOfFirstContributions,
 };

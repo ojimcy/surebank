@@ -131,6 +131,20 @@ const deleteAccount = async (userId) => {
   return account;
 };
 
+/**
+ * Update an account
+ * @param {string} accountId - Account ID
+ * @param {Object} updateBody - Updated account data
+ * @returns {Promise<Account>} Updated account
+ */
+const updateAccount = async (accountId, updateBody) => {
+  const account = await Account.findByIdAndUpdate(accountId, updateBody, { new: true });
+  if (!account) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
+  }
+  return account;
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -139,4 +153,5 @@ module.exports = {
   getUserAccount,
   getAllAccounts,
   deleteAccount,
+  updateAccount,
 };

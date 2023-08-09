@@ -51,6 +51,7 @@ const superAdminPermissions = [
   'addStaffToBranch',
   'assignManager',
   'reports',
+  'accounting',
 ];
 
 const allRoles = {

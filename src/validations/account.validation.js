@@ -84,7 +84,7 @@ const getAllAccounts = {
   }),
 };
 
-const deletAccount = {
+const deleteAccount = {
   params: Joi.object().keys({
     userId: Joi.string().custom(objectId),
   }),
@@ -93,6 +93,16 @@ const deletAccount = {
 const getAccountManager = {
   query: Joi.object().keys({
     accountNumber: Joi.string(),
+  }),
+};
+
+const updateAccount = {
+  body: Joi.object().keys({
+    firstName: Joi.string(),
+    lastName: Joi.string(),
+    accountType: Joi.string(),
+    branchId: Joi.string().custom(objectId),
+    accountManagerId: Joi.string(),
   }),
 };
 
@@ -106,6 +116,7 @@ module.exports = {
   makeCustomerDeposit,
   getUserAccount,
   getAllAccounts,
-  deletAccount,
+  deleteAccount,
   getAccountManager,
+  updateAccount,
 };

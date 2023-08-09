@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Ledger, DailySummary, Expenditure } = require('../models');
+const { Ledger, DailySummary, Expenditure, Package } = require('../models');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 const ApiError = require('../utils/ApiError');
 
@@ -110,7 +110,7 @@ const createExpenditure = async (expenditureInput) => {
 
 /**
  * Get paginated expenditures over a date range
- * @param {Date} startDate - Start date for the range
+ * @param {Date} startDate - Start date for the range (optional)
  * @param {Date} endDate - End date for the range (optional)
  * @param {number} page - Page number for pagination
  * @param {number} limit - Number of items per page
@@ -123,14 +123,44 @@ const getExpendituresByDateRange = async (startDate, endDate, page, limit) => {
     sort: { date: 'desc' }, // Sort by date in descending order
   };
 
-  // Construct the query based on whether endDate is provided or not
-  const query = { date: { $gte: startDate } };
-  if (endDate) {
-    query.date.$lte = endDate;
+  const query = {};
+
+  if (startDate && endDate) {
+    // If both startDate and endDate are provided, get expenditures within the date range
+    query.date = { $gte: startDate, $lte: endDate };
+  } else if (startDate) {
+    // If only startDate is provided, get expenditures starting from the startDate
+    query.date = { $gte: startDate };
+  } else if (endDate) {
+    // If only endDate is provided, get expenditures up to the endDate
+    query.date = { $lte: endDate };
   }
 
   const paginatedExpenditures = await Expenditure.paginate(query, options);
   return paginatedExpenditures;
+};
+
+/**
+ * Get the totalExpenditure from all expenditures
+ * @returns {Promise<number>} The totalExpenditure
+ */
+const getTotalExpenditure = async () => {
+  const totalExpenditure = await Expenditure.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalExpenditure: {
+          $sum: '$amount',
+        },
+      },
+    },
+  ]);
+
+  if (totalExpenditure.length > 0) {
+    return totalExpenditure[0].totalExpenditure;
+  }
+
+  return 0;
 };
 
 /**
@@ -173,6 +203,34 @@ const deleteExpenditure = async (expenditureId) => {
   return expenditure;
 };
 
+/**
+ * Get the sum of all first contributions (amounts that have been charged)
+ * @returns {Promise<number>} The sum of all first contributions
+ */
+const getSumOfFirstContributions = async () => {
+  const firstContributions = await Package.aggregate([
+    {
+      $match: {
+        hasBeenCharged: true,
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalFirstContributions: {
+          $sum: '$amountPerDay',
+        },
+      },
+    },
+  ]);
+
+  if (firstContributions.length > 0) {
+    return firstContributions[0].totalFirstContributions;
+  }
+
+  return 0;
+};
+
 module.exports = {
   addLedgerEntry,
   getLedgerEntries,
@@ -180,7 +238,9 @@ module.exports = {
   getDailySummary,
   createExpenditure,
   getExpendituresByDateRange,
+  getTotalExpenditure,
   getExpenditureById,
   updateExpenditure,
   deleteExpenditure,
+  getSumOfFirstContributions,
 };

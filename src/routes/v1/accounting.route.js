@@ -25,6 +25,8 @@ router
     accountingController.getExpendituresByDateRange
   );
 
+router.route('/expenditure/total').get(auth('manageExpenditure'), accountingController.getTotalExpenditure);
+
 router
   .route('/expenditure/:expenditureId')
   .get(auth('manageExpenditure'), validate(accountingValidation.getExpenditureById), accountingController.getExpenditureById)
@@ -34,5 +36,7 @@ router
     validate(accountingValidation.deleteExpenditure),
     accountingController.deleteExpenditure
   );
+
+router.route('/contibution-incomes').get(auth('accounting'), accountingController.getSumOfFirstContributions);
 
 module.exports = router;
