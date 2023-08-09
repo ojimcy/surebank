@@ -7,27 +7,27 @@ const pick = require('../utils/pick');
 const createAccount = catchAsync(async (req, res) => {
   const createdBy = req.user._id;
   const account = await accountService.createAccount({ ...req.body }, createdBy);
-  res.status(httpStatus.CREATED).json(account);
+  res.status(httpStatus.CREATED).send(account);
 });
 
 const assignBranch = catchAsync(async (req, res) => {
   const { accountId } = req.params;
   const { branchId } = req.body;
   const account = await accountService.assignBranch(accountId, branchId);
-  res.status(httpStatus.OK).json(account);
+  res.status(httpStatus.OK).send(account);
 });
 
 const assignManager = catchAsync(async (req, res) => {
   const { accountId } = req.params;
   const { managerId } = req.body;
   const account = await accountService.assignManager(accountId, managerId);
-  res.status(httpStatus.OK).json(account);
+  res.status(httpStatus.OK).send(account);
 });
 
 const getUserAccount = catchAsync(async (req, res) => {
   const { userId } = req.params;
   const account = await accountService.getUserAccount(userId);
-  res.status(httpStatus.OK).json(account);
+  res.status(httpStatus.OK).send(account);
 });
 
 const getAllAccounts = catchAsync(async (req, res) => {
@@ -43,16 +43,14 @@ const getAccountInBranch = catchAsync(async (req, res) => {
 
   const branchCustomerAccounts = await accountService.getAccountsInBranch(branchId, filter, options);
 
-  // const accountIds = customerAccount.map((account) => account.accountId);
-
-  // Use the staffIds to fetch the corresponding user details from the User collection.
-  // const users = await User.find({ _id: { $in: accountIds } });
-
   res.send(branchCustomerAccounts);
 });
-const deletAccount = catchAsync(async (req, res) => {
-  await accountService.deletAccount(req.params.userId);
-  res.status(httpStatus.NO_CONTENT).send();
+// const deletAccount = catchAsync(async (req, res) => {
+//   await accountService.deletAccount(req.params.userId);
+//   res.status(httpStatus.NO_CONTENT).send();
+const deleteAccount = catchAsync(async (req, res) => {
+  await accountService.deleteAccount(req.params.userId);
+  res.status(httpStatus.OK).status(httpStatus.NO_CONTENT).send();
 });
 
 module.exports = {
@@ -61,6 +59,5 @@ module.exports = {
   assignManager,
   getUserAccount,
   getAllAccounts,
-  getAccountInBranch,
-  deletAccount,
+  deleteAccount,
 };

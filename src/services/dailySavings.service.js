@@ -71,6 +71,10 @@ const saveDailyContribution = async (contributionInput) => {
   // Calculate the new total count by adding contributionDaysCount to the existing value
   const totalCount = userPackage.totalCount + contributionDaysCount;
 
+  if (totalCount > 31) {
+    throw new ApiError(400, 'Total contribution count cannot exceed 31');
+  }
+
   const newContribution = await Contribution.create({
     userReps: contributionInput.userReps,
     amount: contributionInput.amount,
@@ -128,20 +132,20 @@ const saveDailyContribution = async (contributionInput) => {
       totalContribution: 0,
       totalCount: 0,
     });
+  } else {
+    const transactionDate = new Date().getTime();
+
+    const contributionTransaction = await AccountTransaction.create({
+      accountNumber: contributionInput.accountNumber,
+      amount: contributionInput.amount,
+      userReps: contributionInput.userReps,
+      date: transactionDate,
+      direction: 'inflow',
+      narration: 'Daily contribution',
+    });
+
+    return { newContribution, contributionTransaction };
   }
-
-  const transactionDate = new Date().getTime();
-
-  const contributionTransaction = await AccountTransaction.create({
-    accountNumber: contributionInput.accountNumber,
-    amount: contributionInput.amount,
-    userReps: contributionInput.userReps,
-    date: transactionDate,
-    direction: 'inflow',
-    narration: 'Daily contribution',
-  });
-
-  return { newContribution, contributionTransaction };
 };
 
 /**

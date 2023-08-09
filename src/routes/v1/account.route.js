@@ -19,7 +19,11 @@ router
 router
   .route('/:userId')
   .get(auth('getUserAccount'), validate(accountValidation.getUserAccount), accountController.getUserAccount)
-  .delete(auth('manageAccounts'), validate(accountValidation.deletAccount), accountController.deletAccount);
+  .delete(auth('manageAccounts'), validate(accountValidation.deleteAccount), accountController.deleteAccount);
+
+router
+  .route('/:accountId')
+  .patch(auth('manageAccounts'), validate(accountValidation.updateAccount), accountController.updateAccount);
 
 router
   .route('/:accountId/assign-branch')

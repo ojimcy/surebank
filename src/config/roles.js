@@ -40,6 +40,7 @@ const adminPermissions = [
   'productCatalogue',
   'manageBrand',
   'manageProductRequest',
+  'manageExpenditure',
 ];
 
 const superAdminPermissions = [
@@ -52,6 +53,7 @@ const superAdminPermissions = [
   'getAllStaff',
   'getAccountInBranch',
   'reports',
+  'accounting',
 ];
 
 const allRoles = {
