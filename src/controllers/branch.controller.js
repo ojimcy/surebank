@@ -69,8 +69,8 @@ const getStaffInBranch = catchAsync(async (req, res) => {
 });
 
 const updateBranchStaff = catchAsync(async (req, res) => {
-  const { staffId, branchId } = req.query;
-  const branchStaff = branchService.updateBranchStaff(staffId, branchId);
+  const { staffId, branchId } = req.body;
+  const branchStaff = branchService.updateBranchStaffService(staffId, branchId);
   res.send(branchStaff);
 });
 

@@ -11,7 +11,10 @@ router
   .post(auth('manageBranch'), validate(branchValidation.createBranch), branchController.createBranch)
   .get(auth('getBranches'), validate(branchValidation.getBranches), branchController.getBranches);
 
-router.route('/staff').get(auth('getAllStaff'), branchController.getAllStaff);
+router
+  .route('/staff')
+  .get(auth('getAllStaff'), validate('getAllStaff'), branchController.getAllStaff)
+  .patch(auth('updateBranchStaff'), validate(branchValidation.updateBranchStaff), branchController.updateBranchStaff);
 
 router
   .route('/:branchId')
@@ -22,8 +25,7 @@ router
 router
   .route('/:branchId/staff')
   .post(auth('updateBranchStaff'), validate(branchValidation.addStaffToBranch), branchController.addStaffToBranch)
-  .get(auth('getStaffInBranch'), validate(branchValidation.getStaffInBranch), branchController.getStaffInBranch)
-  .patch(auth('updateBranchStaff'), validate(branchValidation.updateBranchStaff), branchController.updateBranchStaff);
+  .get(auth('getStaffInBranch'), validate(branchValidation.getStaffInBranch), branchController.getStaffInBranch);
 
 router
   .route('/:branchId/change-manager')
