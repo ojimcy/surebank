@@ -118,12 +118,12 @@ const getAllAccounts = async (filter, options) => {
 };
 
 /**
- * Delete user by id
- * @param {ObjectId} userId
- * @returns {Promise<User>}
+ * Delete an account by account ID
+ * @param {string} accountId - Account ID
+ * @returns {Promise<Account>} Deleted account
  */
-const deleteAccount = async (userId) => {
-  const account = await getUserAccount(userId).lean();
+const deleteAccount = async (accountId) => {
+  const account = await Account.findById(accountId);
   if (!account) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
   }
@@ -145,6 +145,26 @@ const updateAccount = async (accountId, updateBody) => {
   return account;
 };
 
+/**
+ * Get account by id
+ * @param {ObjectId} id
+ * @returns {Promise<Account>}
+ */
+const getAccountById = async (id) => {
+  return Account.findById(id)
+    .populate([
+      {
+        path: 'accountManagerId',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'branchId',
+        select: 'name',
+      },
+    ])
+    .lean();
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -154,4 +174,5 @@ module.exports = {
   getAllAccounts,
   deleteAccount,
   updateAccount,
+  getAccountById,
 };

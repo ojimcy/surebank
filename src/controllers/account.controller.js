@@ -2,6 +2,7 @@ const httpStatus = require('http-status');
 const { accountService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 const pick = require('../utils/pick');
+const ApiError = require('../utils/ApiError');
 
 const createAccount = catchAsync(async (req, res) => {
   const createdBy = req.user._id;
@@ -47,6 +48,14 @@ const updateAccount = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(account);
 });
 
+const getAccount = catchAsync(async (req, res) => {
+  const account = await accountService.getAccountById(req.params.accountId);
+  if (!account) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Accountnot found');
+  }
+  res.send(account);
+});
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -55,4 +64,5 @@ module.exports = {
   getAllAccounts,
   deleteAccount,
   updateAccount,
+  getAccount,
 };

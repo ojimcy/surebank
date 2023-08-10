@@ -18,7 +18,8 @@ router
   .delete(auth('manageAccounts'), validate(accountValidation.deleteAccount), accountController.deleteAccount);
 
 router
-  .route('/:accountId')
+  .route('/:accountId/details')
+  .get(auth('manageAccounts'), validate(accountValidation.getAccount), accountController.getAccount)
   .patch(auth('manageAccounts'), validate(accountValidation.updateAccount), accountController.updateAccount);
 
 router

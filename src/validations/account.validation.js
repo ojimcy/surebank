@@ -7,6 +7,7 @@ const createAccount = {
     email: Joi.string().required().email(),
     accountType: Joi.string().required(),
     branchId: Joi.string().required().custom(objectId),
+    createdBy: Joi.string().custom(objectId),
     accountManagerName: Joi.string(),
   }),
 };
@@ -98,11 +99,17 @@ const getAccountManager = {
 
 const updateAccount = {
   body: Joi.object().keys({
-    firstName: Joi.string(),
-    lastName: Joi.string(),
-    accountType: Joi.string(),
-    branchId: Joi.string().custom(objectId),
-    accountManagerId: Joi.string(),
+    firstName: Joi.string().optional(),
+    lastName: Joi.string().optional(),
+    accountType: Joi.string().optional(),
+    branchId: Joi.string().optional().custom(objectId),
+    accountManagerId: Joi.string().optional(),
+  }),
+};
+
+const getAccount = {
+  params: Joi.object().keys({
+    accountId: Joi.string().custom(objectId),
   }),
 };
 
@@ -119,4 +126,5 @@ module.exports = {
   deleteAccount,
   getAccountManager,
   updateAccount,
+  getAccount,
 };
