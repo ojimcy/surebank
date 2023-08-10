@@ -88,6 +88,11 @@ const getAccountInBranch = {
     branchId: Joi.string().custom(objectId),
   }),
 };
+const getAccountsByStaff = {
+  params: Joi.object().keys({
+    staffId: Joi.string().custom(objectId),
+  }),
+};
 
 const deleteAccount = {
   params: Joi.object().keys({
@@ -122,6 +127,7 @@ module.exports = {
   getUserAccount,
   getAllAccounts,
   getAccountInBranch,
+  getAccountsByStaff,
   deleteAccount,
   getAccountManager,
   updateAccount,

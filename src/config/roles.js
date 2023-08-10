@@ -52,6 +52,7 @@ const superAdminPermissions = [
   'assignManager',
   'getAllStaff',
   'getAccountInBranch',
+  'getAccountsByStaff',
   'reports',
   'accounting',
 ];

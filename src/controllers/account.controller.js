@@ -45,12 +45,25 @@ const getAccountInBranch = catchAsync(async (req, res) => {
 
   res.send(branchCustomerAccounts);
 });
-// const deletAccount = catchAsync(async (req, res) => {
-//   await accountService.deletAccount(req.params.userId);
-//   res.status(httpStatus.NO_CONTENT).send();
+const getAccountsByStaff = catchAsync(async (req, res) => {
+  const { staffId } = req.params;
+  const filter = pick(req.query, ['staffId', 'isCurrent']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+  const staffCustomerAccounts = await accountService.getAccountsByStaff(staffId, filter, options);
+
+  res.send(staffCustomerAccounts);
+});
+
 const deleteAccount = catchAsync(async (req, res) => {
   await accountService.deleteAccount(req.params.userId);
   res.status(httpStatus.OK).status(httpStatus.NO_CONTENT).send();
+});
+
+const updateAccount = catchAsync(async (req, res) => {
+  const { accountId } = req.params;
+  const account = await accountService.updateAccount(accountId, req.body);
+  res.status(httpStatus.OK).json(account);
 });
 
 module.exports = {
@@ -59,5 +72,8 @@ module.exports = {
   assignManager,
   getUserAccount,
   getAllAccounts,
+  getAccountInBranch,
+  getAccountsByStaff,
   deleteAccount,
+  updateAccount,
 };
