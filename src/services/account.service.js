@@ -116,7 +116,40 @@ const getAllAccounts = async (filter, options) => {
   });
   return accounts;
 };
+/**
+ * Get accounts in branch with pagination
+ * @param {Object} branchId
+ * @param {Object} filter - Mongo filter
+ * @param {Object} options - Query options
+ * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<{ staffIds: Object, totalCounts: number, error: string|null }>}
+ */
+const getAccountsInBranch = async (branchId, filter, options) => {
+  const { limit = 10, page = 1, sortBy } = options;
+  const skip = (page - 1) * limit;
 
+  const branchAccount = await Account.find({ branchId }).skip(skip).limit(limit).sort(sortBy);
+  return branchAccount;
+};
+/**
+ * Get accounts in branch with pagination
+ * @param {Object} branchId
+ * @param {Object} filter - Mongo filter
+ * @param {Object} options - Query options
+ * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<{ staffIds: Object, totalCounts: number, error: string|null }>}
+ */
+const getAccountsByStaff = async (staffId, filter, options) => {
+  const { limit = 10, page = 1, sortBy } = options;
+  const skip = (page - 1) * limit;
+
+  const staffAccount = await Account.find({ accountManagerId: staffId }).skip(skip).limit(limit).sort(sortBy);
+  return staffAccount;
+};
 /**
  * Delete an account by account ID
  * @param {string} accountId - Account ID
@@ -172,6 +205,8 @@ module.exports = {
   getUserAccountNumber,
   getUserAccount,
   getAllAccounts,
+  getAccountsInBranch,
+  getAccountsByStaff,
   deleteAccount,
   updateAccount,
   getAccountById,

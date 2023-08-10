@@ -84,6 +84,16 @@ const getAllAccounts = {
     page: Joi.number().integer(),
   }),
 };
+const getAccountInBranch = {
+  params: Joi.object().keys({
+    branchId: Joi.string().custom(objectId),
+  }),
+};
+const getAccountsByStaff = {
+  params: Joi.object().keys({
+    staffId: Joi.string().custom(objectId),
+  }),
+};
 
 const deleteAccount = {
   params: Joi.object().keys({
@@ -123,6 +133,8 @@ module.exports = {
   makeCustomerDeposit,
   getUserAccount,
   getAllAccounts,
+  getAccountInBranch,
+  getAccountsByStaff,
   deleteAccount,
   getAccountManager,
   updateAccount,

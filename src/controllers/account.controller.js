@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const { accountService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
+const { User } = require('../models');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 
@@ -36,6 +37,24 @@ const getAllAccounts = catchAsync(async (req, res) => {
   const result = await accountService.getAllAccounts(filter, options);
   res.send(result);
 });
+const getAccountInBranch = catchAsync(async (req, res) => {
+  const { branchId } = req.params;
+  const filter = pick(req.query, ['staffId', 'isCurrent']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+  const branchCustomerAccounts = await accountService.getAccountsInBranch(branchId, filter, options);
+
+  res.send(branchCustomerAccounts);
+});
+const getAccountsByStaff = catchAsync(async (req, res) => {
+  const { staffId } = req.params;
+  const filter = pick(req.query, ['staffId', 'isCurrent']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+  const staffCustomerAccounts = await accountService.getAccountsByStaff(staffId, filter, options);
+
+  res.send(staffCustomerAccounts);
+});
 
 const deleteAccount = catchAsync(async (req, res) => {
   await accountService.deleteAccount(req.params.userId);
@@ -62,6 +81,8 @@ module.exports = {
   assignManager,
   getUserAccount,
   getAllAccounts,
+  getAccountInBranch,
+  getAccountsByStaff,
   deleteAccount,
   updateAccount,
   getAccount,

@@ -50,6 +50,9 @@ const superAdminPermissions = [
   'updateBranch',
   'addStaffToBranch',
   'assignManager',
+  'getAllStaff',
+  'getAccountInBranch',
+  'getAccountsByStaff',
   'reports',
   'accounting',
 ];

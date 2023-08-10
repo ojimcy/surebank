@@ -62,13 +62,13 @@ const getStaffInBranch = {
 };
 
 const updateBranchStaff = {
-  params: Joi.object().keys({
-    branchId: Joi.string().required().custom(objectId),
-  }),
-  query: Joi.object().keys({
-    staffId: Joi.string().required().custom(objectId),
-  }),
+  // params: Joi.object().keys({
+  // }),
+  // query: Joi.object().keys({
+  // }),
   body: Joi.object().keys({
+    branchId: Joi.string().required().custom(objectId),
+    staffId: Joi.string().required().custom(objectId),
     isCurrent: Joi.boolean(),
   }),
 };

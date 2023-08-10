@@ -13,6 +13,14 @@ router
   .get(auth('manageAccounts'), validate(accountValidation.getAllAccounts), accountController.getAllAccounts);
 
 router
+  .route('/:branchId/branchaccounts')
+  .get(auth('manageAccounts'), validate(accountValidation.getAccountInBranch), accountController.getAccountInBranch);
+
+router
+  .route('/:staffId/staffaccounts')
+  .get(auth('manageAccounts'), validate(accountValidation.getAccountsByStaff), accountController.getAccountsByStaff);
+
+router
   .route('/:userId')
   .get(auth('getUserAccount'), validate(accountValidation.getUserAccount), accountController.getUserAccount)
   .delete(auth('manageAccounts'), validate(accountValidation.deleteAccount), accountController.deleteAccount);
