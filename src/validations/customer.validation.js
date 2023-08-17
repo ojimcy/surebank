@@ -30,8 +30,19 @@ const makeWithdrawal = {
   }),
 };
 
+const getCustomersByUserReps = {
+  query: Joi.object().keys({
+    status: Joi.string(),
+    sortBy: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+    userReps: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   createCustomer,
   makeDeposit,
   makeWithdrawal,
+  getCustomersByUserReps,
 };

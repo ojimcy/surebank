@@ -11,6 +11,14 @@ router
   .post(auth('manageCustomer'), validate(customerValidation.createCustomer), customerController.createCustomer);
 
 router
+  .route('/my-clients')
+  .get(
+    auth('manageCustomer'),
+    validate(customerValidation.getCustomersByUserReps),
+    customerController.getCustomersByUserReps
+  );
+
+router
   .route('/transactions/deposit')
   .post(auth('makeDeposit'), validate(customerValidation.makeDeposit), customerController.makeDeposit);
 

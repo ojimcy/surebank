@@ -1,7 +1,6 @@
 const httpStatus = require('http-status');
 const { accountService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
-const { User } = require('../models');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 

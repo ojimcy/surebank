@@ -173,8 +173,25 @@ const makeWithdrawal = async (withdrawalInput, userId, userReps) => {
   }
 };
 
+/**
+ * Get user reps customers
+ * @param {Object} branchId
+ * @param {Object} filter - Mongo filter
+ * @param {Object} options - Query options
+ * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<GetUserepsCustomer>}
+ */
+
+const getCustomersByUserReps = async (userReps, filter, options) => {
+  const staffAccount = await Account.paginate({ accountManagerId: userReps }, filter, options);
+  return staffAccount;
+};
+
 module.exports = {
   createCustomer,
   makeDeposit,
   makeWithdrawal,
+  getCustomersByUserReps,
 };

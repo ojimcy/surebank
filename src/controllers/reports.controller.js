@@ -26,8 +26,16 @@ const getPackageReport = catchAsync(async (req, res) => {
   });
 });
 
+const getTotalContributionsByUserReps = catchAsync(async (req, res) => {
+  const { userReps } = req.params;
+  const { startDate, endDateParam } = req.query;
+  const totalContributions = await reportService.getTotalContributionsByUserReps(userReps, startDate, endDateParam);
+  res.status(httpStatus.OK).json(totalContributions);
+});
+
 module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
   getPackageReport,
+  getTotalContributionsByUserReps,
 };

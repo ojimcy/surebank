@@ -85,7 +85,18 @@ const getUserAccountNumber = async (userId) => {
  * @returns {Promise<Account>} User's account details
  */
 const getUserAccount = async (userId) => {
-  const account = await Account.findOne({ userId }).populate('accountManagerId', 'firstName lastName').lean();
+  const account = await Account.findOne({ userId })
+    .populate([
+      {
+        path: 'accountManagerId',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'branchId',
+        select: 'name',
+      },
+    ])
+    .lean();
   if (!account) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User does not have an account');
   }
@@ -116,6 +127,7 @@ const getAllAccounts = async (filter, options) => {
   });
   return accounts;
 };
+
 /**
  * Get accounts in branch with pagination
  * @param {Object} branchId
@@ -126,6 +138,7 @@ const getAllAccounts = async (filter, options) => {
  * @param {number} [options.page] - Current page (default = 1)
  * @returns {Promise<{ staffIds: Object, totalCounts: number, error: string|null }>}
  */
+
 const getAccountsInBranch = async (branchId, filter, options) => {
   const { limit = 10, page = 1, sortBy } = options;
   const skip = (page - 1) * limit;
@@ -133,6 +146,7 @@ const getAccountsInBranch = async (branchId, filter, options) => {
   const branchAccount = await Account.find({ branchId }).skip(skip).limit(limit).sort(sortBy);
   return branchAccount;
 };
+
 /**
  * Get accounts in branch with pagination
  * @param {Object} branchId
@@ -143,6 +157,7 @@ const getAccountsInBranch = async (branchId, filter, options) => {
  * @param {number} [options.page] - Current page (default = 1)
  * @returns {Promise<{ staffIds: Object, totalCounts: number, error: string|null }>}
  */
+
 const getAccountsByStaff = async (staffId, filter, options) => {
   const { limit = 10, page = 1, sortBy } = options;
   const skip = (page - 1) * limit;
@@ -150,6 +165,7 @@ const getAccountsByStaff = async (staffId, filter, options) => {
   const staffAccount = await Account.find({ accountManagerId: staffId }).skip(skip).limit(limit).sort(sortBy);
   return staffAccount;
 };
+
 /**
  * Delete an account by account ID
  * @param {string} accountId - Account ID

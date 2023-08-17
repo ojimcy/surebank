@@ -12,7 +12,7 @@ const ledgerEntry = catchAsync(async (req, res, next) => {
   if (addEntryInput.error) {
     return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, addEntryInput.error));
   }
-  res.send(addEntryInput);
+  res.status(httpStatus.NO_CONTENT).send(addEntryInput);
 });
 
 const getLedgerEntries = catchAsync(async (req, res, next) => {
@@ -27,7 +27,7 @@ const getLedgerEntries = catchAsync(async (req, res, next) => {
   if (result.error) {
     return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, result.error));
   }
-  res.send(result);
+  res.status(httpStatus.NO_CONTENT).send(result);
 });
 
 const computeDailySummary = catchAsync(async (req, res, next) => {
@@ -37,7 +37,7 @@ const computeDailySummary = catchAsync(async (req, res, next) => {
   if (getDailySummary.error) {
     return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, getDailySummary.error));
   }
-  res.send(getDailySummary);
+  res.status(httpStatus.NO_CONTENT).send(getDailySummary);
 });
 
 const getDailySummary = catchAsync(async (req, res, next) => {
@@ -52,7 +52,7 @@ const getDailySummary = catchAsync(async (req, res, next) => {
   if (result.error) {
     return next(new ApiError(httpStatus.INTERNAL_SERVER_ERROR, result.error));
   }
-  res.send(result);
+  res.status(httpStatus.NO_CONTENT).send(result);
 });
 
 const createExpenditure = catchAsync(async (req, res) => {
@@ -68,7 +68,7 @@ const createExpenditure = catchAsync(async (req, res) => {
     userReps,
   });
 
-  res.status(httpStatus.CREATED).json(createdExpenditure);
+  res.status(httpStatus.CREATED).send(createdExpenditure);
 });
 
 const getExpendituresByDateRange = catchAsync(async (req, res) => {
@@ -82,12 +82,12 @@ const getExpendituresByDateRange = catchAsync(async (req, res) => {
   // Call the service function to get paginated expenditures within the date range
   const paginatedExpenditures = await accountingService.getExpendituresByDateRange(startDate, endDate, page, limit);
 
-  res.status(httpStatus.OK).json(paginatedExpenditures);
+  res.status(httpStatus.OK).send(paginatedExpenditures);
 });
 
 const getTotalExpenditure = catchAsync(async (req, res) => {
   const totalExpenditure = await accountingService.getTotalExpenditure();
-  res.status(httpStatus.OK).json({ totalExpenditure });
+  res.status(httpStatus.OK).json(totalExpenditure);
 });
 
 const getExpenditureById = catchAsync(async (req, res) => {
@@ -100,12 +100,12 @@ const getExpenditureById = catchAsync(async (req, res) => {
     return res.status(httpStatus.NOT_FOUND).json({ message: 'Expenditure not found' });
   }
 
-  res.status(httpStatus.OK).json(expenditure);
+  res.status(httpStatus.OK).send(expenditure);
 });
 
 const updateExpenditure = catchAsync(async (req, res) => {
   const expenditure = await accountingService.updateExpenditure(req.params.expenditureId, req.body);
-  res.send(expenditure);
+  res.status(httpStatus.NO_CONTENT).send(expenditure);
 });
 
 const deleteExpenditure = catchAsync(async (req, res) => {
@@ -115,7 +115,7 @@ const deleteExpenditure = catchAsync(async (req, res) => {
 
 const getSumOfFirstContributions = catchAsync(async (req, res) => {
   const result = await accountingService.getSumOfFirstContributions();
-  res.status(httpStatus.OK).json({ result });
+  res.status(httpStatus.OK).json(result);
 });
 
 module.exports = {

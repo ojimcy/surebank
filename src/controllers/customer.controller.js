@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const { customerService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
+const pick = require('../utils/pick');
 
 const createCustomer = catchAsync(async (req, res) => {
   const createdBy = req.user._id;
@@ -26,8 +27,17 @@ const makeWithdrawal = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(result);
 });
 
+const getCustomersByUserReps = catchAsync(async (req, res) => {
+  const { userReps } = req.query;
+  const filter = pick(req.query, [`name`, 'status']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const result = await customerService.getCustomersByUserReps(userReps, filter, options);
+  res.status(httpStatus.OK).send(result);
+});
+
 module.exports = {
   createCustomer,
   makeDeposit,
   makeWithdrawal,
+  getCustomersByUserReps,
 };

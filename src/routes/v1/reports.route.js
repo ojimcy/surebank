@@ -17,4 +17,12 @@ router
   .route('/packages')
   .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getPackageReport);
 
+router
+  .route('/total-contributions/:userReps')
+  .get(
+    auth('reports'),
+    validate(reportsValidation.getTotalContributionsByUserReps),
+    reportsController.getTotalContributionsByUserReps
+  );
+
 module.exports = router;
