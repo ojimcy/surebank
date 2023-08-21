@@ -118,6 +118,13 @@ const getSumOfFirstContributions = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(result);
 });
 
+const getExpendituresByUserReps = catchAsync(async (req, res) => {
+  const userRepsId = req.user._id;
+  const { page, limit } = req.query;
+  const paginatedExpenditures = await accountingService.getExpendituresByUserReps(userRepsId, page, limit);
+  res.status(httpStatus.OK).send(paginatedExpenditures);
+});
+
 module.exports = {
   ledgerEntry,
   getLedgerEntries,
@@ -130,4 +137,5 @@ module.exports = {
   updateExpenditure,
   deleteExpenditure,
   getSumOfFirstContributions,
+  getExpendituresByUserReps,
 };

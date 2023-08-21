@@ -226,6 +226,173 @@ const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam
   }
 };
 
+/**
+ * Retrieves my total contributions
+ *
+ * @param {string} userReps - The ID of the user representative.
+ * @param {Date} startDate - The start date of the range.
+ * @param {Date} endDateParam - The end date of the range.
+ * @returns {Promise<Object>} An object containing the contributions per day and the sum total of all contributions.
+ * @throws {ApiError} If there is an error retrieving the total contributions by day.
+ */
+const getMyTotalContributions = async (userReps, startDate, endDateParam, limit = 10) => {
+  try {
+    let dateFilter = {};
+
+    if (startDate && endDateParam) {
+      dateFilter = { date: { $gte: startDate, $lte: endDateParam } };
+    } else if (startDate) {
+      dateFilter = { date: { $gte: startDate } };
+    } else if (endDateParam) {
+      dateFilter = { date: { $lte: endDateParam } };
+    }
+
+    // Get the total contributions for each day by the specified user representative using aggregation within the date range
+    const contributionsPerDay = await Contribution.aggregate([
+      {
+        $match: {
+          userReps,
+          ...dateFilter,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: { $toDate: '$date' } },
+            month: { $month: { $toDate: '$date' } },
+            day: { $dayOfMonth: { $toDate: '$date' } },
+          },
+          total: { $sum: '$amount' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: {
+            $dateFromParts: {
+              year: '$_id.year',
+              month: '$_id.month',
+              day: '$_id.day',
+            },
+          },
+          total: 1,
+        },
+      },
+      { $sort: { date: -1 } },
+      { $limit: parseInt(limit, 10) },
+    ]);
+    // Calculate the sum total of all contributions
+    const allContributions = await Contribution.aggregate([
+      {
+        $match: {
+          userReps,
+          ...dateFilter,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' },
+        },
+      },
+    ]);
+    const sumTotal = allContributions.length > 0 ? allContributions[0].total : 0;
+
+    return { contributionsPerDay, sumTotal };
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total contributions by user representative: ${error.message}`);
+  }
+};
+
+/**
+ * Retrieves my total daily savings withdrawals
+ *
+ * @param {string} userReps - The ID of the user representative.
+ * @param {Date} startDate - The start date of the range.
+ * @param {Date} endDateParam - The end date of the range.
+ * @param {number} limit - The maximum number of records to return.
+ * @returns {Promise<Array>} Array of objects representing the total daily savings withdrawals for each day.
+ * Each object has the following fields:
+ * - date: The date for which the total withdrawals were calculated.
+ * - total: The total amount of savings withdrawals made on that day.
+ * @throws {ApiError} If there is an error retrieving the total daily withdrawals.
+ */
+const getMyDsWithdrawals = async (userReps, startDate, endDateParam, limit = 10) => {
+  try {
+    // Set the endDate to the current date if not provided
+    let endDate = endDateParam;
+    if (!endDate) {
+      endDate = new Date().getTime();
+    }
+
+    // Create a match object to filter based on userReps and date range
+    const match = {
+      userReps,
+      direction: 'inflow',
+      narration: 'Daily contribution withdrawal',
+    };
+
+    // Apply date filtering if both startDate and endDate are provided
+    if (startDate && endDateParam) {
+      match.date = { $gte: startDate, $lte: endDate };
+    }
+
+    // Get the total daily savings withdrawals using aggregation
+    const totalWithdrawals = await AccountTransaction.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: {
+            year: { $year: { $toDate: '$date' } },
+            month: { $month: { $toDate: '$date' } },
+            day: { $dayOfMonth: { $toDate: '$date' } },
+          },
+          total: { $sum: '$amount' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: {
+            $dateFromParts: {
+              year: '$_id.year',
+              month: '$_id.month',
+              day: '$_id.day',
+            },
+          },
+          total: 1,
+        },
+      },
+      { $sort: { date: -1 } },
+      { $limit: parseInt(limit, 10) },
+    ]);
+
+    return totalWithdrawals;
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total daily withdrawals by day: ${error.message}`);
+  }
+};
+
+/**
+ * Get total number of open packages for a specific user representative
+ * @param {string} userReps - The ID of the user representative.
+ * @returns {Promise<number>} Total number of open packages for the user representative.
+ */
+const getTotalOpenPackagesForUserReps = async (userReps) => {
+  const totalOpenPackages = await Package.countDocuments({ userReps, status: 'open' });
+  return totalOpenPackages;
+};
+
+/**
+ * Get total number of closed packages for a specific user representative
+ * @param {string} userReps - The ID of the user representative.
+ * @returns {Promise<number>} Total number of closed packages for the user representative.
+ */
+const getTotalClosedPackagesForUserReps = async (userReps) => {
+  const totalClosedPackages = await Package.countDocuments({ userReps, status: 'closed' });
+  return totalClosedPackages;
+};
+
 module.exports = {
   getTotalContributionsByDay,
   getTotalDailySavingsWithdrawal,
@@ -233,4 +400,8 @@ module.exports = {
   getTotalOpenPackages,
   getTotalClosedPackages,
   getTotalContributionsByUserReps,
+  getMyTotalContributions,
+  getMyDsWithdrawals,
+  getTotalOpenPackagesForUserReps,
+  getTotalClosedPackagesForUserReps,
 };

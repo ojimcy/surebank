@@ -78,6 +78,13 @@ const deleteExpenditure = {
   }),
 };
 
+const getExpendituresByUserReps = {
+  query: Joi.object().keys({
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
 module.exports = {
   ledgerEntry,
   getLedgerEntries,
@@ -88,4 +95,5 @@ module.exports = {
   getExpenditureById,
   updateExpenditure,
   deleteExpenditure,
+  getExpendituresByUserReps,
 };

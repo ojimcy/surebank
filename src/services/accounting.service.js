@@ -231,6 +231,26 @@ const getSumOfFirstContributions = async () => {
   return 0;
 };
 
+/**
+ * Get paginated expenditures by userReps
+ * @param {string} userRepsId - ID of the userReps
+ * @param {number} page - Page number for pagination
+ * @param {number} limit - Number of items per page
+ * @returns {Promise<Object>} Paginated expenditures for the userReps
+ */
+const getExpendituresByUserReps = async (userRepsId, page, limit) => {
+  const options = {
+    page,
+    limit,
+    sort: { date: 'desc' },
+  };
+
+  const query = { userReps: userRepsId };
+
+  const paginatedExpenditures = await Expenditure.paginate(query, options);
+  return paginatedExpenditures;
+};
+
 module.exports = {
   addLedgerEntry,
   getLedgerEntries,
@@ -243,4 +263,5 @@ module.exports = {
   updateExpenditure,
   deleteExpenditure,
   getSumOfFirstContributions,
+  getExpendituresByUserReps,
 };

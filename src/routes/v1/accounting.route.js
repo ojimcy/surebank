@@ -26,6 +26,7 @@ router
   );
 
 router.route('/expenditure/total').get(auth('manageExpenditure'), accountingController.getTotalExpenditure);
+router.route('/expenditure/user-reps').get(auth('manageExpenditure'), accountingController.getExpendituresByUserReps);
 
 router
   .route('/expenditure/:expenditureId')

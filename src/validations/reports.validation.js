@@ -18,4 +18,11 @@ const getTotalContributionsByUserReps = {
   }),
 };
 
-module.exports = { getTotalContributions, getTotalContributionsByUserReps };
+const getMyTotalContributions = {
+  query: Joi.object().keys({
+    startDate: Joi.number(),
+    endDateParam: Joi.number(),
+  }),
+};
+
+module.exports = { getTotalContributions, getTotalContributionsByUserReps, getMyTotalContributions };
