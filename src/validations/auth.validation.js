@@ -9,13 +9,14 @@ const register = {
     lastName: Joi.string().required(),
     address: Joi.string().required(),
     phoneNumber: Joi.string().required(),
+    username: Joi.string().required(),
     branch: Joi.string(),
   }),
 };
 
 const login = {
   body: Joi.object().keys({
-    email: Joi.string().required(),
+    emailOrUsername: Joi.string().required(),
     password: Joi.string().required(),
     otp: Joi.string(),
   }),
