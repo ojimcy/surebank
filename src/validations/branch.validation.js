@@ -25,6 +25,7 @@ const getBranch = {
     branchId: Joi.string().custom(objectId),
   }),
 };
+
 const updateBranch = {
   params: Joi.object().keys({
     branchId: Joi.string().custom(objectId),

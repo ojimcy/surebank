@@ -43,10 +43,20 @@ const getUserSavingsActivities = {
   }),
 };
 
+const getDsWithdrawals = {
+  query: Joi.object().keys({
+    userReps: Joi.string().optional().custom(objectId),
+    branchId: Joi.string().optional().custom(objectId),
+    startDate: Joi.number().optional(),
+    endDate: Joi.number().optional(),
+  }),
+};
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
   makeDailySavingsWithdrawal,
   getUserDailySavingsPackage,
   getUserSavingsActivities,
+  getDsWithdrawals,
 };

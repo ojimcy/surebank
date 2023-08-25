@@ -43,4 +43,8 @@ router
     dailySavingsController.getUserSavingsActivities
   );
 
+router
+  .route('/withdrawals')
+  .get(auth('userPackage'), validate(dailySavingsValidation.getDsWithdrawals), dailySavingsController.getDsWithdrawals);
+
 module.exports = router;

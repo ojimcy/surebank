@@ -64,10 +64,18 @@ const getUserSavingsActivities = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(savingsActivities);
 });
 
+const getDsWithdrawals = catchAsync(async (req, res) => {
+  const { startDate, endDate, branchId, userReps } = req.query;
+  const activities = await dailySavingsService.getDsWithdrawals(startDate, endDate, branchId, userReps);
+
+  res.status(httpStatus.OK).json(activities);
+});
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
   makeDailySavingsWithdrawal,
   getUserDailySavingsPackage,
   getUserSavingsActivities,
+  getDsWithdrawals,
 };
