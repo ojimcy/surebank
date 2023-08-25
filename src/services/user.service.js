@@ -11,9 +11,6 @@ const createUser = async (userBody) => {
   if (await User.isEmailTaken(userBody.email)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
-  if (await User.isUsernameTaken(userBody.username)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Username already taken');
-  }
   const referralCode = Math.floor(100000 + Math.random() * 900000);
   const user = { ...userBody, referralCode };
   return User.create(user);
@@ -51,20 +48,6 @@ const getUserByEmail = async (email) => {
   return User.findOne({ email });
 };
 
-const getUserByEmailOrUsername = async (emailOrUsername) => {
-  const userByEmail = await User.findOne({ email: emailOrUsername });
-  const userByUsername = await User.findOne({ username: emailOrUsername });
-
-  if (userByEmail) {
-    return userByEmail;
-  }
-  if (userByUsername) {
-    return userByUsername;
-  }
-
-  return null;
-};
-
 /**
  * Update user by id
  * @param {ObjectId} userId
@@ -78,9 +61,6 @@ const updateUserById = async (userId, updateBody) => {
   }
   if (updateBody.email && (await User.isEmailTaken(updateBody.email, userId))) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
-  }
-  if (updateBody.username && (await User.isUsernameTaken(updateBody.username, userId))) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Username already taken');
   }
   Object.assign(user, updateBody);
   await user.save();
@@ -114,18 +94,25 @@ const updateProfile = async (userId, updateData) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
-  const fieldsToUpdate = ['email', 'firstName', 'lastName', 'address', 'phoneNumber'];
-
-  fieldsToUpdate.forEach(async (field) => {
-    if (field === 'email' && updateData.email) {
-      if (await User.isEmailTaken(updateData.email, userId)) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
-      }
-      user.email = updateData.email;
-    } else if (updateData[field]) {
-      user[field] = updateData[field];
+  if (updateData.email) {
+    // Check if the new email is already taken by another user
+    if (await User.isEmailTaken(updateData.email, userId)) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
     }
-  });
+    user.email = updateData.email;
+  }
+  if (updateData.firstName) {
+    user.firstName = updateData.firstName;
+  }
+  if (updateData.lastName) {
+    user.lastName = updateData.lastName;
+  }
+  if (updateData.address) {
+    user.address = updateData.address;
+  }
+  if (updateData.phoneNumber) {
+    user.phoneNumber = updateData.phoneNumber;
+  }
 
   await user.save();
   return user;
@@ -136,7 +123,6 @@ module.exports = {
   queryUsers,
   getUserById,
   getUserByEmail,
-  getUserByEmailOrUsername,
   updateUserById,
   deleteUserById,
   updateProfile,

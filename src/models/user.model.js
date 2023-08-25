@@ -32,7 +32,7 @@ const userSchema = mongoose.Schema(
     },
     email: {
       type: String,
-      required: false,
+      required: true,
       unique: true,
       trim: true,
       lowercase: true,
@@ -55,12 +55,6 @@ const userSchema = mongoose.Schema(
       private: true, // used by the toJSON plugin
     },
     phoneNumber: {
-      type: String,
-      required: false,
-      trim: true,
-      minlength: 4,
-    },
-    username: {
       type: String,
       required: false,
       trim: true,
@@ -107,28 +101,6 @@ userSchema.plugin(paginate);
  */
 userSchema.statics.isEmailTaken = async function (email, excludeUserId) {
   const user = await this.findOne({ email, _id: { $ne: excludeUserId } });
-  return !!user;
-};
-
-/**
- * Check if phone number is taken
- * @param {string} phoneNumber - The user's phoneNumber
- * @param {ObjectId} [excludeUserId] - The id of the user to be excluded
- * @returns {Promise<boolean>}
- */
-userSchema.statics.isPhoneNumberTaken = async function (phoneNumber, excludeUserId) {
-  const user = await this.findOne({ phoneNumber, _id: { $ne: excludeUserId } });
-  return !!user;
-};
-
-/**
- * Check if username is taken
- * @param {string} username - The user's username
- * @param {ObjectId} [excludeUserId] - The id of the user to be excluded
- * @returns {Promise<boolean>}
- */
-userSchema.statics.isUsernameTaken = async function (username, excludeUserId) {
-  const user = await this.findOne({ username, _id: { $ne: excludeUserId } });
   return !!user;
 };
 

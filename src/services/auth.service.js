@@ -7,16 +7,15 @@ const ApiError = require('../utils/ApiError');
 const { tokenTypes } = require('../config/tokens');
 
 /**
- * Login with username and password
+ * Login with email and password
  * @param {string} email
  * @param {string} password
  * @returns {Promise<User>}
  */
-const loginUserWithEmailOrUsernameAndPassword = async (emailOrUsername, password, otp) => {
-  const user = await userService.getUserByEmailOrUsername(emailOrUsername);
-
+const loginUserWithEmailAndPassword = async (email, password, otp) => {
+  const user = await userService.getUserByEmail(email);
   if (!user || !(await user.isPasswordMatch(password))) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email/username or password');
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
   }
 
   if (user.isTwoFactorAuthEnabled) {
@@ -105,7 +104,7 @@ const verifyEmail = async (verifyEmailToken) => {
 };
 
 module.exports = {
-  loginUserWithEmailOrUsernameAndPassword,
+  loginUserWithEmailAndPassword,
   logout,
   refreshAuth,
   resetPassword,
