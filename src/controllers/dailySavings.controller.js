@@ -5,17 +5,17 @@ const catchAsync = require('../utils/catchAsync');
 const createDailySavingsPackage = catchAsync(async (req, res) => {
   const dailyInput = req.body;
   const startDate = new Date().getTime();
-  const userReps = req.user._id;
+  const createdBy = req.user._id;
   const totalContribution = 0;
   const status = 'open';
   const createdPackage = await dailySavingsService.createDailySavingsPackage({
     ...dailyInput,
     startDate,
-    userReps,
+    createdBy,
     totalContribution,
     status,
   });
-  res.status(httpStatus.OK).send(createdPackage);
+  res.status(httpStatus.OK).json(createdPackage);
 });
 
 const saveDailyContribution = catchAsync(async (req, res) => {
@@ -33,35 +33,21 @@ const makeDailySavingsWithdrawal = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(withdrawalDetails);
 });
 
-const getUserDailySavingsPackage = catchAsync(async (req, res) => {
+const getDailySavingsPackageById = catchAsync(async (req, res) => {
+  const { packageId } = req.params;
+  const userPackage = await dailySavingsService.getDailySavingsPackageById(packageId);
+  res.status(httpStatus.OK).send(userPackage);
+});
+
+const getUserDailySavingsPackages = catchAsync(async (req, res) => {
   const { userId, accountNumber } = req.query;
-  const userPackage = await dailySavingsService.getUserDailySavingsPackage(userId, accountNumber);
+  const userPackage = await dailySavingsService.getUserDailySavingsPackages(userId, accountNumber);
 
   if (!userPackage) {
     return res.status(httpStatus.NOT_FOUND).json({ message: 'User does not have an active daily savings package' });
   }
 
   res.status(httpStatus.OK).json(userPackage);
-});
-
-const getUserSavingsActivities = catchAsync(async (req, res) => {
-  const { userId, accountNumber } = req.query;
-
-  // Fetch user's daily savings package
-  const userPackage = await dailySavingsService.getUserDailySavingsPackage(userId, accountNumber);
-  const narration = 'Daily contribution withdrawal';
-  if (!userPackage) {
-    return res.status(httpStatus.NOT_FOUND).json({ message: 'User does not have an active daily savings package' });
-  }
-
-  // Fetch all contributions and withdrawals for the user's package
-  const contributions = await dailySavingsService.getDailySavingsContributions(userPackage._id);
-  const withdrawals = await dailySavingsService.getDailySavingsWithdrawals(accountNumber, narration);
-
-  // Combine contributions and withdrawals into a single array and sort by date
-  const savingsActivities = [...contributions, ...withdrawals].sort((a, b) => b.date - a.date);
-
-  res.status(httpStatus.OK).json(savingsActivities);
 });
 
 const getDsWithdrawals = catchAsync(async (req, res) => {
@@ -75,7 +61,7 @@ module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
   makeDailySavingsWithdrawal,
-  getUserDailySavingsPackage,
-  getUserSavingsActivities,
+  getUserDailySavingsPackages,
   getDsWithdrawals,
+  getDailySavingsPackageById,
 };

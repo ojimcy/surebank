@@ -233,7 +233,11 @@ const makeCustomerWithdrawal = async (withdrawalInput) => {
  */
 const getAccountTransactions = async (accountNumber, page, limit) => {
   const skip = (page - 1) * limit;
-  const transactions = await AccountTransaction.find({ accountNumber }).skip(skip).limit(limit).sort({ date: 'desc' });
+  const transactions = await AccountTransaction.find({ accountNumber })
+    .populate('userReps', 'firstName lastName')
+    .skip(skip)
+    .limit(limit)
+    .sort({ date: 'desc' });
   return transactions;
 };
 

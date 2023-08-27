@@ -15,6 +15,10 @@ const userPermissions = [
   'accountTransactions',
   'getUserAccount',
   'userPackage',
+  'createAccount',
+  'createDsPackage',
+  'getPackage',
+  'manageContributions',
 ];
 
 const userRepsPermissions = [

@@ -9,20 +9,20 @@ const router = express.Router();
 router
   .route('/package')
   .post(
-    auth('manageSavings'),
+    auth('createDsPackage'),
     validate(dailySavingsValidation.createDailySavingsPackage),
     dailySavingsController.createDailySavingsPackage
   )
   .get(
     auth('userPackage'),
-    validate(dailySavingsValidation.getUserDailySavingsPackage),
-    dailySavingsController.getUserDailySavingsPackage
+    validate(dailySavingsValidation.getUserDailySavingsPackages),
+    dailySavingsController.getUserDailySavingsPackages
   );
 
 router
   .route('/make-contribution')
   .post(
-    auth('manageSavings'),
+    auth('manageContributions'),
     validate(dailySavingsValidation.saveDailyContribution),
     dailySavingsController.saveDailyContribution
   );
@@ -30,21 +30,21 @@ router
 router
   .route('/withdraw')
   .post(
-    auth('manageSavings'),
+    auth('manageContributions'),
     validate(dailySavingsValidation.makeDailySavingsWithdrawal),
     dailySavingsController.makeDailySavingsWithdrawal
   );
 
 router
-  .route('/activities')
-  .get(
-    auth('userPackage'),
-    validate(dailySavingsValidation.getUserSavingsActivities),
-    dailySavingsController.getUserSavingsActivities
-  );
-
-router
   .route('/withdrawals')
   .get(auth('userPackage'), validate(dailySavingsValidation.getDsWithdrawals), dailySavingsController.getDsWithdrawals);
+
+router
+  .route('/package/:packageId')
+  .get(
+    auth('getPackage'),
+    validate(dailySavingsValidation.getDailySavingsPackageById),
+    dailySavingsController.getDailySavingsPackageById
+  );
 
 module.exports = router;

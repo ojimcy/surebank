@@ -18,6 +18,7 @@ const createDailySavingsPackage = async (dailyInput) => {
   const userPackageExist = await Package.findOne({
     accountNumber: dailyInput.accountNumber,
     status: 'open',
+    target: dailyInput.target,
   });
 
   if (userPackageExist) {
@@ -46,6 +47,7 @@ const saveDailyContribution = async (contributionInput) => {
   const userPackage = await Package.findOne({
     accountNumber: contributionInput.accountNumber,
     status: 'open',
+    target: contributionInput.target,
   });
 
   if (!userPackage) {
@@ -53,7 +55,7 @@ const saveDailyContribution = async (contributionInput) => {
   }
 
   if (contributionInput.amount % userPackage.amountPerDay !== 0) {
-    throw new ApiError(400, `Amount is not valid for ${userPackage.amountPerDay} daily savings`);
+    throw new ApiError(400, `Amount is not valid for ${userPackage.amountPerDay} daily savings package`);
   }
 
   const userPackageId = userPackage._id;
@@ -83,7 +85,7 @@ const saveDailyContribution = async (contributionInput) => {
     count: contributionDaysCount,
     totalCount,
     date: currentDate,
-    narration: 'Daily contribution',
+    narration: `Daily contribution`,
   });
 
   userPackage.totalContribution += contributionInput.amount;
@@ -141,7 +143,7 @@ const saveDailyContribution = async (contributionInput) => {
       userReps: contributionInput.userReps,
       date: transactionDate,
       direction: 'inflow',
-      narration: 'Daily contribution',
+      narration: `Daily contribution for ${contributionInput.target}`,
     });
 
     return { newContribution, contributionTransaction };
@@ -162,6 +164,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
       {
         accountNumber: withdrawal.accountNumber,
         status: 'open',
+        target: withdrawal.target,
       },
       null,
       { session }
@@ -187,7 +190,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
       accountNumber: withdrawal.accountNumber,
       amount: withdrawal.amount,
       userReps: withdrawal.userReps,
-      narration: 'Daily contribution withdrawal',
+      narration: `Daily contribution withdrawal from ${withdrawal.target}`,
     };
 
     await makeCustomerDeposit(withdrawalDetails, session);
@@ -208,18 +211,30 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
 };
 
 /**
- * Get the user's daily savings package
- * @param {string} userId - User ID
- * @returns {Promise<Object>} User's daily savings package
+ * Get a single daily savings package by ID
+ * @param {string} packageId - Package ID
+ * @returns {Promise<Object>} Daily savings package
  */
-const getUserDailySavingsPackage = async (userId, accountNumber) => {
-  const userPackage = await Package.findOne({
+const getDailySavingsPackageById = async (packageId) => {
+  const userPackage = await Package.findById(packageId).populate('userId', 'firstName lastName');
+  if (!userPackage) {
+    throw new ApiError(404, 'Daily savings package not found');
+  }
+  return userPackage;
+};
+
+/**
+ * Get the user's daily savings packages
+ * @param {string} userId - User ID
+ * @returns {Promise<Array>} Array of user's daily savings packages
+ */
+const getUserDailySavingsPackages = async (userId) => {
+  const userPackages = await Package.find({
     userId,
-    accountNumber,
     status: 'open',
   });
 
-  return userPackage;
+  return userPackages;
 };
 
 /**
@@ -307,8 +322,9 @@ module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
   makeDailySavingsWithdrawal,
-  getUserDailySavingsPackage,
+  getUserDailySavingsPackages,
   getDailySavingsContributions,
   getDailySavingsWithdrawals,
   getDsWithdrawals,
+  getDailySavingsPackageById,
 };
