@@ -59,6 +59,7 @@ const createExpenditure = catchAsync(async (req, res) => {
   const { amount, reason } = req.body;
   const date = new Date().getTime();
   const userReps = req.user._id;
+  const branchAdmin = req.user._id;
 
   // Create the expenditure using the expenditure service
   const createdExpenditure = await accountingService.createExpenditure({
@@ -66,6 +67,7 @@ const createExpenditure = catchAsync(async (req, res) => {
     amount,
     reason,
     userReps,
+    branchAdmin,
   });
 
   res.status(httpStatus.CREATED).send(createdExpenditure);
@@ -87,6 +89,11 @@ const getExpendituresByDateRange = catchAsync(async (req, res) => {
 
 const getTotalExpenditure = catchAsync(async (req, res) => {
   const totalExpenditure = await accountingService.getTotalExpenditure();
+  res.status(httpStatus.OK).json(totalExpenditure);
+});
+const getBranchTotalExpenditure = catchAsync(async (req, res) => {
+  const branchAdmin = req.user._id;
+  const totalExpenditure = await accountingService.getBranchTotalExpenditure(branchAdmin);
   res.status(httpStatus.OK).json(totalExpenditure);
 });
 
@@ -117,6 +124,11 @@ const getSumOfFirstContributions = catchAsync(async (req, res) => {
   const result = await accountingService.getSumOfFirstContributions();
   res.status(httpStatus.OK).json(result);
 });
+const getBranchSumOfFirstContributions = catchAsync(async (req, res) => {
+  const branchAdmin = req.user._id;
+  const result = await accountingService.getBranchSumOfFirstContributions(branchAdmin);
+  res.status(httpStatus.OK).json(result);
+});
 
 module.exports = {
   ledgerEntry,
@@ -126,8 +138,10 @@ module.exports = {
   createExpenditure,
   getExpendituresByDateRange,
   getTotalExpenditure,
+  getBranchTotalExpenditure,
   getExpenditureById,
   updateExpenditure,
   deleteExpenditure,
   getSumOfFirstContributions,
+  getBranchSumOfFirstContributions,
 };

@@ -35,13 +35,14 @@ const makeCustomerDeposit = async (depositInput) => {
     }
 
     const transactionDate = new Date().getTime();
-
+    const branch = await Account.findOne({ accountNumber: depositInput.accountNumber });
     const customerDeposit = await AccountTransaction.create(
       [
         {
           accountNumber: depositInput.accountNumber,
           amount: depositInput.amount,
           userReps: depositInput.userReps,
+          branchId: branch.branchId,
           date: transactionDate,
           direction: 'inflow',
           narration: depositInput.narration,
@@ -182,12 +183,15 @@ const makeCustomerWithdrawal = async (withdrawalInput) => {
       throw new ApiError(500, 'Insufficient balance');
     }
     const transactionDate = new Date().getTime();
+    const branch = await Account.findOne({ accountNumber: withdrawalInput.accountNumber });
+
     const customerWithdrawal = await AccountTransaction.create(
       [
         {
           accountNumber: withdrawalInput.accountNumber,
           amount: withdrawalInput.amount,
           userReps: withdrawalInput.userReps,
+          branchId: branch.branchId,
           date: transactionDate,
           direction: 'outflow',
           narration: withdrawalInput.narration,

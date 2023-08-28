@@ -1,5 +1,5 @@
 const { startSession } = require('mongoose');
-const { Package, Contribution, AccountTransaction } = require('../models');
+const { Package, Contribution, AccountTransaction, Account } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
@@ -23,10 +23,11 @@ const createDailySavingsPackage = async (dailyInput) => {
   if (userPackageExist) {
     throw new ApiError(400, 'Customer has an active package running');
   }
-
+  const branch = await Account.findOne({ accountNumber: dailyInput.accountNumber });
   const createdPackage = await Package.create({
     ...dailyInput,
     userId: confirmAccountNumber._id,
+    branchId: branch.branchId,
   });
 
   return createdPackage;
@@ -74,10 +75,11 @@ const saveDailyContribution = async (contributionInput) => {
   if (totalCount > 31) {
     throw new ApiError(400, 'Total contribution count cannot exceed 31');
   }
-
+  const branch = await Account.findOne({ accountNumber: contributionInput.accountNumber });
   const newContribution = await Contribution.create({
     userReps: contributionInput.userReps,
     amount: contributionInput.amount,
+    branchId: branch.branchId,
     accountNumber: contributionInput.accountNumber,
     packageId: userPackageId,
     count: contributionDaysCount,
@@ -101,7 +103,7 @@ const saveDailyContribution = async (contributionInput) => {
       narration: 'Daily contribution',
       amount: userPackage.amountPerDay,
       userId: userPackage.userReps,
-      branchId: contributionInput.branchId,
+      branchId: branch.branchId,
     };
     await addLedgerEntry(addLedgerEntryInput);
   }
@@ -139,6 +141,7 @@ const saveDailyContribution = async (contributionInput) => {
       accountNumber: contributionInput.accountNumber,
       amount: contributionInput.amount,
       userReps: contributionInput.userReps,
+      branchId: branch.branchId,
       date: transactionDate,
       direction: 'inflow',
       narration: 'Daily contribution',
@@ -176,9 +179,9 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
     }
 
     const balanceAfterWithdrawal = userPackage.totalContribution - withdrawal.amount;
-
+    // console.log(balanceAfterWithdrawal);
     await Package.findOneAndUpdate(
-      { accountNumber: withdrawal.accountNumber },
+      { accountNumber: withdrawal.accountNumber, status: 'open' },
       { totalContribution: balanceAfterWithdrawal },
       { session }
     );
@@ -193,7 +196,11 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
     await makeCustomerDeposit(withdrawalDetails, session);
 
     if (balanceAfterWithdrawal === 0) {
-      await Package.findOneAndUpdate({ accountNumber: withdrawal.accountNumber }, { status: 'closed' }, { session });
+      await Package.findOneAndUpdate(
+        { accountNumber: withdrawal.accountNumber, status: 'open' },
+        { status: 'closed' },
+        { session }
+      );
     }
 
     await session.commitTransaction();

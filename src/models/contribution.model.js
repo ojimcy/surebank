@@ -12,6 +12,11 @@ const contributionSchema = mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    branchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Branch',
+      required: true,
+    },
     packageId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Package',

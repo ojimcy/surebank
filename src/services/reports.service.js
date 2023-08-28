@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Contribution, AccountTransaction, Package } = require('../models');
+const { Contribution, AccountTransaction, Package, Account, BranchStaff } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -67,6 +67,72 @@ const getTotalContributionsByDay = async (startDate, endDateParam, limit = 10) =
     throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total contributions by day: ${error.message}`);
   }
 };
+const getBranchTotalContributionsByDay = async (startDate, endDateParam, branchAdmin, limit = 10) => {
+  try {
+    // Set the endDate to the current date if not provided
+    let endDate = endDateParam;
+    if (!endDate) {
+      endDate = new Date().getTime();
+    }
+    const branch = await BranchStaff.findOne({ staffId: branchAdmin });
+    const branchId = branch.branchId;
+    const matchStage = {
+      date: { $gte: startDate, $lte: endDate },
+      branchId: branchId, // Add the branchId filter
+    };
+
+    // Get the total contributions for each day using aggregation within the date range and branchId
+    const contributionsPerDay = await Contribution.aggregate([
+      {
+        $match: matchStage,
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: { $toDate: '$date' } },
+            month: { $month: { $toDate: '$date' } },
+            day: { $dayOfMonth: { $toDate: '$date' } },
+          },
+          total: { $sum: '$amount' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: {
+            $dateFromParts: {
+              year: '$_id.year',
+              month: '$_id.month',
+              day: '$_id.day',
+            },
+          },
+          total: 1,
+        },
+      },
+      { $sort: { date: -1 } },
+      { $limit: parseInt(limit, 10) },
+    ]);
+
+    // Calculate the sum total of all contributions for the specified branchId
+    const allContributions = await Contribution.aggregate([
+      {
+        $match: { branchId: branchId },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' },
+        },
+      },
+    ]);
+
+    const sumTotal = allContributions.length > 0 ? allContributions[0].total : 0;
+
+    return { contributionsPerDay, sumTotal };
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total contributions by day: ${error.message}`);
+  }
+};
 
 /**
  * Retrieves the total daily savings withdrawals made each day.
@@ -124,6 +190,57 @@ const getTotalDailySavingsWithdrawal = async (startDate, endDateParam, limit = 1
     throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total daily withdrawals by day: ${error.message}`);
   }
 };
+const getBranchTotalDailySavingsWithdrawal = async (startDate, endDateParam, branchAdmin, limit = 10) => {
+  try {
+    // Set the endDate to the current date if not provided
+    let endDate = endDateParam;
+    if (!endDate) {
+      endDate = new Date().getTime();
+    }
+    const branch = await BranchStaff.findOne({ staffId: branchAdmin });
+    const branchId = branch.branchId;
+    // Get the total daily savings withdrawals for each day using aggregation
+    const totalWithdrawals = await AccountTransaction.aggregate([
+      {
+        $match: {
+          date: { $gte: startDate, $lte: endDate },
+          branchId: branchId,
+          direction: 'inflow',
+          narration: 'Daily contribution withdrawal',
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: { $toDate: '$date' } },
+            month: { $month: { $toDate: '$date' } },
+            day: { $dayOfMonth: { $toDate: '$date' } },
+          },
+          total: { $sum: '$amount' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: {
+            $dateFromParts: {
+              year: '$_id.year',
+              month: '$_id.month',
+              day: '$_id.day',
+            },
+          },
+          total: 1,
+        },
+      },
+      { $sort: { date: -1 } },
+      { $limit: parseInt(limit, 10) },
+    ]);
+
+    return totalWithdrawals;
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total daily withdrawals by day: ${error.message}`);
+  }
+};
 
 /**
  * Get total number of packages
@@ -142,6 +259,12 @@ const getTotalOpenPackages = async () => {
   const totalOpenPackages = await Package.countDocuments({ status: 'open' });
   return totalOpenPackages;
 };
+const getBranchTotalOpenPackages = async (branchAdmin) => {
+  const branch = await BranchStaff.findOne({ staffId: branchAdmin });
+  // console.log(branch.branchId);
+  const totalOpenPackages = await Package.countDocuments({ status: 'open', branchId: branch.branchId });
+  return totalOpenPackages;
+};
 
 /**
  * Get total number of closed packages
@@ -149,6 +272,11 @@ const getTotalOpenPackages = async () => {
  */
 const getTotalClosedPackages = async () => {
   const totalClosedPackages = await Package.countDocuments({ status: 'closed' });
+  return totalClosedPackages;
+};
+const getBranchTotalClosedPackages = async (branchAdmin) => {
+  const branch = await BranchStaff.findOne({ staffId: branchAdmin });
+  const totalClosedPackages = await Package.countDocuments({ status: 'closed', branchId: branch.branchId });
   return totalClosedPackages;
 };
 
@@ -228,9 +356,13 @@ const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam
 
 module.exports = {
   getTotalContributionsByDay,
+  getBranchTotalContributionsByDay,
   getTotalDailySavingsWithdrawal,
+  getBranchTotalDailySavingsWithdrawal,
   getTotalPackages,
   getTotalOpenPackages,
+  getBranchTotalOpenPackages,
   getTotalClosedPackages,
+  getBranchTotalClosedPackages,
   getTotalContributionsByUserReps,
 };

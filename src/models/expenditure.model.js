@@ -16,6 +16,11 @@ const expenditureSchema = mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    branchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Branch',
+      required: true,
+    },
     reason: {
       type: String,
       required: true,
