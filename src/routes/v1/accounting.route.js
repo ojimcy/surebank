@@ -27,6 +27,8 @@ router
 
 router.route('/expenditure/total').get(auth('manageExpenditure'), accountingController.getTotalExpenditure);
 router.route('/expenditure/user-reps').get(auth('manageExpenditure'), accountingController.getExpendituresByUserReps);
+router.route('/expenditure/total/admin').get(auth('manageExpenditure'), accountingController.getBranchTotalExpenditure);
+router.route('/expenditure/total/supperadmin').get(auth('manageExpenditure'), accountingController.getTotalExpenditure);
 
 router
   .route('/expenditure/:expenditureId')
@@ -38,6 +40,7 @@ router
     accountingController.deleteExpenditure
   );
 
-router.route('/contibution-incomes').get(auth('accounting'), accountingController.getSumOfFirstContributions);
+router.route('/contibution-incomes/admin').get(auth('accounting'), accountingController.getBranchSumOfFirstContributions);
+router.route('/contibution-incomes/supperadmin').get(auth('accounting'), accountingController.getSumOfFirstContributions);
 
 module.exports = router;

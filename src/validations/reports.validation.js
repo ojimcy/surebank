@@ -5,6 +5,7 @@ const getTotalContributions = {
   query: Joi.object().keys({
     startDate: Joi.number(),
     endDateParam: Joi.number(),
+    // branchId: Joi.string().required().custom(objectId),
   }),
 };
 
