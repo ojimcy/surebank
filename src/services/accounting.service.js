@@ -105,7 +105,7 @@ const getDailySummary = async (filter, options) => {
  */
 const createExpenditure = async (expenditureInput) => {
   const branch = await BranchStaff.findOne({ staffId: expenditureInput.branchAdmin });
-  const branchId = branch.branchId;
+  const { branchId } = branch;
   const createdExpenditure = await Expenditure.create({ ...expenditureInput, branchId });
   return createdExpenditure;
 };
