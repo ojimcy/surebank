@@ -28,11 +28,22 @@ router
   .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getPackageReport);
 
 router
+  .route('/user-reps/total-contributions')
+  .get(auth('getReports'), validate(reportsValidation.getMyTotalContributions), reportsController.getMyTotalContributions);
+
+router
+  .route('/user-reps/total-savings-withdrawal')
+  .get(auth('getReports'), validate(reportsValidation.getMyTotalContributions), reportsController.getMyDsWithdrawals);
+
+router
+  .route('/user-reps/packages')
+  .get(auth('getReports'), validate(reportsValidation.getTotalContributions), reportsController.getPackageReportForUserRep);
+
+router
   .route('/total-contributions/:userReps')
   .get(
     auth('reports'),
     validate(reportsValidation.getTotalContributionsByUserReps),
     reportsController.getTotalContributionsByUserReps
   );
-
 module.exports = router;

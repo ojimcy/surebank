@@ -10,6 +10,11 @@ const packageSchema = mongoose.Schema(
     userReps: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+      required: false,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
     },
     branchId: {
@@ -43,6 +48,14 @@ const packageSchema = mongoose.Schema(
       required: true,
     },
     totalCount: {
+      type: Number,
+      default: 0,
+    },
+    target: {
+      type: String,
+      default: 0,
+    },
+    targetAmount: {
       type: Number,
       default: 0,
     },

@@ -50,6 +50,30 @@ const getTotalContributionsByUserReps = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(totalContributions);
 });
 
+const getMyTotalContributions = catchAsync(async (req, res) => {
+  const userReps = req.user._id;
+  const { startDate, endDateParam } = req.query;
+  const totalContributions = await reportService.getMyTotalContributions(userReps, startDate, endDateParam);
+  res.status(httpStatus.OK).json(totalContributions);
+});
+
+const getMyDsWithdrawals = catchAsync(async (req, res) => {
+  const userReps = req.user._id;
+  const { startDate, endDateParam } = req.query;
+  const totalWithdrawals = await reportService.getMyDsWithdrawals(userReps, startDate, endDateParam);
+  res.status(httpStatus.OK).json(totalWithdrawals);
+});
+
+const getPackageReportForUserRep = catchAsync(async (req, res) => {
+  const totalOpenPackages = await reportService.getTotalOpenPackagesForUserReps();
+  const totalClosedPackages = await reportService.getTotalClosedPackagesForUserReps();
+
+  res.status(httpStatus.OK).json({
+    totalOpenPackages,
+    totalClosedPackages,
+  });
+});
+
 module.exports = {
   getTotalContributions,
   getBranchTotalContributions,
@@ -57,4 +81,7 @@ module.exports = {
   getBranchDailySavingsWithdrawals,
   getPackageReport,
   getTotalContributionsByUserReps,
+  getMyTotalContributions,
+  getMyDsWithdrawals,
+  getPackageReportForUserRep,
 };

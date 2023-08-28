@@ -28,6 +28,10 @@ router
 router.route('/expenditure/total/admin').get(auth('manageExpenditure'), accountingController.getBranchTotalExpenditure);
 router.route('/expenditure/total/supperadmin').get(auth('manageExpenditure'), accountingController.getTotalExpenditure);
 
+router.route('/expenditure/total').get(auth('manageExpenditure'), accountingController.getTotalExpenditure);
+router.route('/expenditure/user-reps').get(auth('manageExpenditure'), accountingController.getExpendituresByUserReps);
+
+
 router
   .route('/expenditure/:expenditureId')
   .get(auth('manageExpenditure'), validate(accountingValidation.getExpenditureById), accountingController.getExpenditureById)

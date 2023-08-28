@@ -42,6 +42,7 @@ const addStaffToBranch = catchAsync(async (req, res) => {
   const branchStaff = await branchService.addStaffToBranch(branchId, staffId);
   res.send(branchStaff);
 });
+
 const getAllStaff = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['staffId', 'isCurrent']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
@@ -53,6 +54,7 @@ const getAllStaff = catchAsync(async (req, res) => {
   const users = await User.find({ _id: { $in: staffIds } });
   res.send(users);
 });
+
 const getStaffInBranch = catchAsync(async (req, res) => {
   const { branchId } = req.params;
   const filter = pick(req.query, ['staffId', 'isCurrent']);

@@ -9,7 +9,7 @@ const router = express.Router();
 
 router
   .route('/')
-  .post(auth('manageAccounts'), validate(accountValidation.createAccount), accountController.createAccount)
+  .post(auth('createAccount'), validate(accountValidation.createAccount), accountController.createAccount)
   .get(auth('manageAccounts'), validate(accountValidation.getAllAccounts), accountController.getAllAccounts);
 
 router

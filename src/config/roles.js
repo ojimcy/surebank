@@ -6,11 +6,7 @@ const userPermissions = [
   'viewRoles',
   'getPermission',
   'updateProfile',
-  'makeDeposit',
-  'makeWithdrawal',
-  'manageSavings',
   'request',
-  'manageMerchantAdmin',
   'productRequest',
   'getProducts',
   'manageCart',
@@ -19,9 +15,13 @@ const userPermissions = [
   'accountTransactions',
   'getUserAccount',
   'userPackage',
+  'createAccount',
+  'createDsPackage',
+  'getPackage',
+  'manageContributions',
 ];
 
-const adminPermissions = [
+const userRepsPermissions = [
   ...userPermissions,
   'manageUsers',
   'deleteUser',
@@ -31,6 +31,7 @@ const adminPermissions = [
   'updateBranchStaff',
   'manageAccounts',
   'manageSummary',
+  'manageSavings',
   'manageCustomerTransaction',
   'manageRoles',
   'manageCustomer',
@@ -41,7 +42,11 @@ const adminPermissions = [
   'manageBrand',
   'manageProductRequest',
   'manageExpenditure',
+  'getReports',
+  'manageMerchantAdmin',
 ];
+
+const adminPermissions = [...userRepsPermissions, 'makeDeposit', 'makeWithdrawal'];
 
 const superAdminPermissions = [
   ...adminPermissions,
@@ -61,6 +66,7 @@ const allRoles = {
   user: userPermissions,
   superAdmin: superAdminPermissions,
   admin: adminPermissions,
+  userReps: userRepsPermissions,
 };
 
 const roles = Object.keys(allRoles);
