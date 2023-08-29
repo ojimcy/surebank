@@ -146,7 +146,7 @@ const saveDailyContribution = async (contributionInput) => {
       branchId: branch.branchId,
       date: transactionDate,
       direction: 'inflow',
-      narration: `Daily contribution for ${contributionInput.target}`,
+      narration: `Daily contribution`,
     });
 
     return { newContribution, contributionTransaction };
@@ -193,7 +193,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
       accountNumber: withdrawal.accountNumber,
       amount: withdrawal.amount,
       userReps: withdrawal.userReps,
-      narration: `Daily contribution withdrawal from ${withdrawal.target}`,
+      narration: `Daily contribution withdrawal}`,
     };
 
     await makeCustomerDeposit(withdrawalDetails, session);
