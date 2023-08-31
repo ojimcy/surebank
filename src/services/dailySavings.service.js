@@ -182,9 +182,9 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
     }
 
     const balanceAfterWithdrawal = userPackage.totalContribution - withdrawal.amount;
-    // console.log(balanceAfterWithdrawal);
+
     await Package.findOneAndUpdate(
-      { accountNumber: withdrawal.accountNumber, status: 'open' },
+      { accountNumber: withdrawal.accountNumber, status: 'open', target: withdrawal.target },
       { totalContribution: balanceAfterWithdrawal },
       { session }
     );
@@ -193,7 +193,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
       accountNumber: withdrawal.accountNumber,
       amount: withdrawal.amount,
       userReps: withdrawal.userReps,
-      narration: `Daily contribution withdrawal}`,
+      narration: `Daily contribution withdrawal`,
     };
 
     await makeCustomerDeposit(withdrawalDetails, session);

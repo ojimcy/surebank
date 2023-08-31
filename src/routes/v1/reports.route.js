@@ -6,21 +6,11 @@ const reportsController = require('../../controllers/reports.controller');
 
 const router = express.Router();
 router
-  .route('/total-contributions/admin')
-  .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getBranchTotalContributions);
-router
-  .route('/total-contributions/supperadmin')
+  .route('/total-contributions')
   .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getTotalContributions);
 
 router
-  .route('/total-savings-withdrawal/admin')
-  .get(
-    auth('reports'),
-    validate(reportsValidation.getTotalContributions),
-    reportsController.getBranchDailySavingsWithdrawals
-  );
-router
-  .route('/total-savings-withdrawal/supperadmin')
+  .route('/total-savings-withdrawal')
   .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getDailySavingsWithdrawals);
 
 router

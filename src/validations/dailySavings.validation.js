@@ -24,11 +24,12 @@ const saveDailyContribution = {
 
 const makeDailySavingsWithdrawal = {
   query: Joi.object().keys({
-    body: Joi.object().keys({
-      accountNumber: Joi.string().required(),
-      amount: Joi.number().required(),
-      target: Joi.string().required(),
-    }),
+    packageId: Joi.string().required().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    accountNumber: Joi.string().required(),
+    amount: Joi.number().required(),
+    target: Joi.string().required(),
   }),
 };
 
