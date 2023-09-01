@@ -274,57 +274,6 @@ const getDailySavingsWithdrawals = async (accountNumber, narration) => {
   }
 };
 
-/**
- * Get ds withdrawals within a date range
- * @param {Date} [startDate] - Start date of the range
- * @param {Date} [endDate] - End date of the range
- * @param {string} [branchId] - Optional branch ID to filter by
- * @param {string} [userId] - Optional user ID to filter by
- * @returns {Promise<Array>} Array of ds withdrawals
- */
-const getDsWithdrawals = async (startDate, endDate, branchId, userReps) => {
-  try {
-    const query = {};
-
-    if (startDate && endDate) {
-      query.date = { $gte: startDate, $lte: endDate };
-    }
-
-    if (startDate) {
-      query.date = { $gte: startDate };
-    }
-    if (endDate) {
-      query.date = { $lte: endDate };
-    }
-
-    if (branchId) {
-      query.branchId = branchId;
-    }
-
-    if (userReps) {
-      query.userReps = userReps;
-    }
-
-    query.narration = 'Daily contribution withdrawal';
-    const withdrawals = await AccountTransaction.find(query)
-      .populate([
-        {
-          path: 'userReps',
-          select: 'firstName lastName',
-        },
-        {
-          path: 'branchId',
-          select: 'name',
-        },
-      ])
-      .sort({ date: -1 })
-      .lean();
-    return withdrawals;
-  } catch (error) {
-    throw new ApiError('Failed to fetch ds withdrawals', error);
-  }
-};
-
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
@@ -332,6 +281,5 @@ module.exports = {
   getUserDailySavingsPackages,
   getDailySavingsContributions,
   getDailySavingsWithdrawals,
-  getDsWithdrawals,
   getDailySavingsPackageById,
 };

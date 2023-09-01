@@ -79,6 +79,12 @@ const getAccountTransactions = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(transactions);
 });
 
+const getCustomerwithdrawals = catchAsync(async (req, res) => {
+  const { startDate, endDate, branchId, userReps } = req.query;
+  const result = await accountTransactionService.getCustomerwithdrawals(startDate, endDate, branchId, userReps);
+  res.status(httpStatus.OK).json(result);
+});
+
 module.exports = {
   makeCustomerDeposit,
   updateAccountStatus,
@@ -90,4 +96,5 @@ module.exports = {
   getAccountBalance,
   makeCustomerWithdrawal,
   getAccountTransactions,
+  getCustomerwithdrawals,
 };

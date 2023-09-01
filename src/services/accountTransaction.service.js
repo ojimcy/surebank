@@ -29,8 +29,8 @@ const makeCustomerDeposit = async (depositInput) => {
   session.startTransaction();
 
   try {
-    const confirmAccountNumber = await getUserByAccountNumber(depositInput.accountNumber);
-    if (!confirmAccountNumber) {
+    const getAccount = await getUserByAccountNumber(depositInput.accountNumber);
+    if (!getAccount) {
       throw new ApiError(404, 'Account number does not exist.');
     }
 
@@ -173,8 +173,8 @@ const makeCustomerWithdrawal = async (withdrawalInput) => {
   session.startTransaction();
 
   try {
-    const confirmAccountNumber = await getUserByAccountNumber(withdrawalInput.accountNumber);
-    if (!confirmAccountNumber) {
+    const getAccount = await getUserByAccountNumber(withdrawalInput.accountNumber);
+    if (!getAccount) {
       throw new ApiError(404, 'Account number does not exist.');
     }
     const accountBalance = await getAccountBalance(withdrawalInput.accountNumber);
@@ -245,6 +245,62 @@ const getAccountTransactions = async (accountNumber, page, limit) => {
   return transactions;
 };
 
+/**
+ * Get customer withdrawals within a date range
+ * @param {Date} [startDate] - Start date of the range
+ * @param {Date} [endDate] - End date of the range
+ * @param {string} [branchId] - Optional branch ID to filter by
+ * @param {string} [userReps] - Optional userReps to filter by
+ * @returns {Promise<Array>} Array of ds withdrawals
+ */
+const getCustomerwithdrawals = async (startDate, endDate, branchId, userReps, accountNumber) => {
+  try {
+    const query = {};
+
+    if (startDate && endDate) {
+      query.date = { $gte: startDate, $lte: endDate };
+    }
+
+    if (startDate) {
+      query.date = { $gte: startDate };
+    }
+    if (endDate) {
+      query.date = { $lte: endDate };
+    }
+
+    if (branchId) {
+      query.branchId = branchId;
+    }
+
+    if (userReps) {
+      query.userReps = userReps;
+    }
+
+    if (accountNumber) {
+      query.accountNumber = accountNumber;
+    }
+
+    query.direction = 'outflow';
+    const withdrawals = await AccountTransaction.find(query)
+      .populate([
+        {
+          path: 'userReps',
+          select: 'firstName lastName',
+        },
+        {
+          path: 'branchId',
+          select: 'name',
+        },
+      ])
+      .sort({ date: -1 })
+      .lean();
+
+    return withdrawals;
+  } catch (error) {
+    throw new ApiError('Failed to fetch customer withdrawals', error);
+  }
+};
+
 module.exports = {
   getUserByAccountNumber,
   makeCustomerDeposit,
@@ -256,4 +312,5 @@ module.exports = {
   getAccountBalance,
   makeCustomerWithdrawal,
   getAccountTransactions,
+  getCustomerwithdrawals,
 };

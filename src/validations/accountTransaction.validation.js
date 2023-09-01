@@ -43,6 +43,16 @@ const getUserByAccountNumber = {
   }),
 };
 
+const getCustomerwithdrawals = {
+  query: Joi.object().keys({
+    userReps: Joi.string().optional().custom(objectId),
+    branchId: Joi.string().optional().custom(objectId),
+    startDate: Joi.number().optional(),
+    endDate: Joi.number().optional(),
+    accountNumber: Joi.number().optional(),
+  }),
+};
+
 module.exports = {
   makeCustomerDeposit,
   getAvailableBalance,
@@ -50,4 +60,5 @@ module.exports = {
   makeCustomerWithdrawal,
   getAccountTransactions,
   getUserByAccountNumber,
+  getCustomerwithdrawals,
 };

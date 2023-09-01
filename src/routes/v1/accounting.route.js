@@ -40,7 +40,7 @@ router
     accountingController.deleteExpenditure
   );
 
-router.route('/contibution-incomes/admin').get(auth('accounting'), accountingController.getBranchSumOfFirstContributions);
-router.route('/contibution-incomes/supperadmin').get(auth('accounting'), accountingController.getSumOfFirstContributions);
+router.route('/contribution-incomes/admin').get(auth('accounting'), accountingController.getBranchSumOfFirstContributions);
+router.route('/contribution-incomes/supperadmin').get(auth('accounting'), accountingController.getSumOfFirstContributions);
 
 module.exports = router;

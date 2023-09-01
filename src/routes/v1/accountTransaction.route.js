@@ -46,4 +46,12 @@ router
     accountTransactionController.makeCustomerWithdrawal
   );
 
+router
+  .route('/withdrawals')
+  .get(
+    auth('getCustomerWithdrawals'),
+    validate(accountTransactionValidation.getCustomerwithdrawals),
+    accountTransactionController.getCustomerwithdrawals
+  );
+
 module.exports = router;

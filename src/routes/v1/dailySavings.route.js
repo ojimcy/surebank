@@ -36,10 +36,6 @@ router
   );
 
 router
-  .route('/withdrawals')
-  .get(auth('userPackage'), validate(dailySavingsValidation.getDsWithdrawals), dailySavingsController.getDsWithdrawals);
-
-router
   .route('/package/:packageId')
   .get(
     auth('getPackage'),

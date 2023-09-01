@@ -19,6 +19,7 @@ const userPermissions = [
   'createDsPackage',
   'getPackage',
   'manageContributions',
+  'getCustomerWithdrawals',
 ];
 
 const userRepsPermissions = [
