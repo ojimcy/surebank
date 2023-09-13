@@ -4,6 +4,20 @@ const { Account, User, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
+ * Helper function to find a branch by account number
+ * @param {string} accountNumber - Account number
+ * @param {Object} session - Mongoose session
+ * @returns {Promise<Object>} Branch details
+ */
+const findBranchByAccountNumber = async (accountNumber, session) => {
+  const branch = await Account.findOne({ accountNumber }).session(session);
+  if (!branch) {
+    throw new ApiError(404, 'Account number does not exist.');
+  }
+  return branch;
+};
+
+/**
  * Get user and account details by account number
  * @param {string} accountNumber - Account number
  * @returns {Promise<Object>} Result of the operation
@@ -22,20 +36,16 @@ const getUserByAccountNumber = async (accountNumber) => {
  * Make a deposit for a customer
  * @param {Object} depositInput - Deposit input
  * @param {Object} session - Mongoose session
- * @returns {Promise<Object>} Result of the operation
+ * @returns {Promise<Object>} Deposit result
  */
 const makeCustomerDeposit = async (depositInput) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const getAccount = await getUserByAccountNumber(depositInput.accountNumber);
-    if (!getAccount) {
-      throw new ApiError(404, 'Account number does not exist.');
-    }
+    const branch = await findBranchByAccountNumber(depositInput.accountNumber, session);
 
     const transactionDate = new Date().getTime();
-    const branch = await Account.findOne({ accountNumber: depositInput.accountNumber });
     const customerDeposit = await AccountTransaction.create(
       [
         {
@@ -163,48 +173,186 @@ const getAccountBalance = async (accountNumber) => {
 };
 
 /**
- * Make withdrawal for a customer
- * @param {Object} depositInput - Withdrawal input
+ * Make withdrawal Request
+ * @param {string} accountNumber - Account number
+ * @param {number} amount - Amount to request
+ * @param {string} userReps - User making the request
  * @param {Object} session - Mongoose session
  * @returns {Promise<Object>} Result of the operation
  */
-const makeCustomerWithdrawal = async (withdrawalInput) => {
+const makeWithdrawalRequest = async (accountNumber, amount, createdBy, narration) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const getAccount = await getUserByAccountNumber(withdrawalInput.accountNumber);
-    if (!getAccount) {
+    const account = await Account.findOne({ accountNumber }).session(session);
+    if (!account) {
       throw new ApiError(404, 'Account number does not exist.');
     }
-    const accountBalance = await getAccountBalance(withdrawalInput.accountNumber);
 
-    if (accountBalance < withdrawalInput.amount) {
-      throw new ApiError(500, 'Insufficient balance');
+    if (account.availableBalance < amount) {
+      throw new ApiError(400, 'Insufficient balance to request cash.');
     }
-    const transactionDate = new Date().getTime();
-    const branch = await Account.findOne({ accountNumber: withdrawalInput.accountNumber });
 
-    const customerWithdrawal = await AccountTransaction.create(
+    const transactionDate = new Date().getTime();
+    const branch = await Account.findOne({ accountNumber }).session(session);
+
+    // Create withdrawal request transaction
+    const withdrawalRequest = await AccountTransaction.create(
       [
         {
-          accountNumber: withdrawalInput.accountNumber,
-          amount: withdrawalInput.amount,
-          userReps: withdrawalInput.userReps,
+          accountNumber,
+          amount,
+          createdBy,
+          userReps: account.accountManagerId,
           branchId: branch.branchId,
           date: transactionDate,
-          direction: 'outflow',
-          narration: withdrawalInput.narration,
+          direction: 'pending',
+          narration: narration || 'Fund withdrawal',
         },
       ],
       { session }
     );
+
+    await session.commitTransaction();
+
+    return {
+      withdrawalRequest,
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+/**
+ * Get all withdrawal requests within a date range
+ * @param {Date} [startDate] - Start date of the range
+ * @param {Date} [endDate] - End date of the range
+ * @param {string} [branchId] - Optional branch ID to filter by
+ * @param {string} [userReps] - Optional userReps to filter by
+ * @returns {Promise<Array>} Array of ds withdrawals
+ */
+const getAllWithdrawalRequests = async (startDate, endDate, branchId, userReps) => {
+  try {
+    const query = {};
+    // Optional date range filtering
+    if (startDate && endDate) {
+      query.date = { $gte: startDate, $lte: endDate };
+    } else if (startDate) {
+      query.date = { $gte: startDate };
+    } else if (endDate) {
+      query.date = { $lte: endDate };
+    }
+
+    // Optional branch filtering
+    if (branchId) {
+      query.branchId = branchId;
+    }
+
+    // Optional userReps filtering
+    if (userReps) {
+      query.userReps = userReps;
+    }
+    query.direction = 'pending';
+    query.narration = 'Fund withdrawal';
+    const withdrawalRequests = await AccountTransaction.find(query)
+      .populate([
+        {
+          path: 'userReps',
+          select: 'firstName lastName',
+        },
+        {
+          path: 'accountManagerId',
+          select: 'firstName lastName',
+        },
+        {
+          path: 'branchId',
+          select: 'name',
+        },
+      ])
+      .sort({ date: -1 })
+      .lean();
+
+    return withdrawalRequests;
+  } catch (error) {
+    throw new ApiError('Failed to fetch withdrawal requests', error);
+  }
+};
+
+/**
+ * Get a specific withdrawal request by ID
+ * @param {string} requestId - Request ID
+ * @returns {Promise<Object>} Withdrawal request details
+ */
+const getWithdrawalRequestById = async (requestId) => {
+  const request = await AccountTransaction.findById(requestId);
+  return request;
+};
+
+/**
+ * Make withdrawal for a customer
+ * @param {string} requestId - Withdrawal request ID
+ * @param {string} userReps - User fulfilling the request
+ * @param {Object} session - Mongoose session
+ * @returns {Promise<Object>} Result of the operation
+ */
+const makeCustomerWithdrawal = async (requestId, userReps) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const withdrawalRequest = await getWithdrawalRequestById(requestId).session(session);
+
+    if (!withdrawalRequest) {
+      throw new ApiError(404, 'Withdrawal request does not exist.');
+    }
+
+    if (withdrawalRequest.direction !== 'outflow' || withdrawalRequest.narration !== 'pending') {
+      throw new ApiError(400, 'Invalid withdrawal request.');
+    }
+
+    const { accountNumber } = withdrawalRequest;
+    const { amount } = withdrawalRequest;
+    const { narration } = withdrawalRequest;
+    const accountBalance = await getAccountBalance(accountNumber);
+
+    if (accountBalance < amount) {
+      throw new ApiError(500, 'Insufficient balance to fulfill the request.');
+    }
+
+    const transactionDate = new Date().getTime();
+    const branch = await findBranchByAccountNumber(accountNumber, session);
+
+    // Create a new transaction to represent the fulfilled withdrawal
+    const fulfilledWithdrawal = await AccountTransaction.create(
+      {
+        accountNumber,
+        amount,
+        userReps,
+        branchId: branch.branchId,
+        date: transactionDate,
+        direction: 'outflow',
+        narration,
+      },
+      { session }
+    );
+
+    // Update the withdrawal request
+    withdrawalRequest.narration = 'fulfilled';
+    withdrawalRequest.userReps = userReps;
+    await withdrawalRequest.save({ session });
+
+    // Deduct the withdrawn amount from the account
     const updatedBalance = await Account.findOneAndUpdate(
-      { accountNumber: withdrawalInput.accountNumber },
+      { accountNumber },
       {
         $inc: {
-          availableBalance: -withdrawalInput.amount,
-          ledgerBalance: -withdrawalInput.amount,
+          availableBalance: -amount,
+          ledgerBalance: -amount,
         },
       },
       {
@@ -219,7 +367,7 @@ const makeCustomerWithdrawal = async (withdrawalInput) => {
 
     return {
       accountBalance: updatedBalance.availableBalance,
-      withdrawalDetail: customerWithdrawal,
+      fulfilledWithdrawal,
     };
   } catch (error) {
     await session.abortTransaction();
@@ -313,4 +461,7 @@ module.exports = {
   makeCustomerWithdrawal,
   getAccountTransactions,
   getCustomerwithdrawals,
+  makeWithdrawalRequest,
+  getAllWithdrawalRequests,
+  getWithdrawalRequestById,
 };

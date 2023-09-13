@@ -20,6 +20,7 @@ const userPermissions = [
   'getPackage',
   'manageContributions',
   'getCustomerWithdrawals',
+  'requestCash',
 ];
 
 const userRepsPermissions = [

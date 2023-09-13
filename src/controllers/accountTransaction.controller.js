@@ -63,9 +63,9 @@ const getAccountBalance = catchAsync(async (req, res) => {
 });
 
 const makeCustomerWithdrawal = catchAsync(async (req, res) => {
-  const depositInput = req.body;
+  const requestId = req.query;
   const userReps = req.user._id;
-  const result = await accountTransactionService.makeCustomerWithdrawal({ ...depositInput, userReps });
+  const result = await accountTransactionService.makeCustomerWithdrawal({ requestId, userReps });
   res.status(httpStatus.OK).json(result);
 });
 
@@ -85,6 +85,28 @@ const getCustomerwithdrawals = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(result);
 });
 
+const makeWithdrawalRequest = catchAsync(async (req, res) => {
+  const { accountNumber, amount } = req.body;
+  const createdBy = req.user._id;
+  const result = await accountTransactionService.makeWithdrawalRequest(accountNumber, amount, createdBy);
+  res.status(httpStatus.OK).json(result);
+});
+
+const getAllWithdrawalRequests = catchAsync(async (req, res) => {
+  const { startDate, endDate, branchId, userReps } = req.query;
+  const result = await accountTransactionService.getAllWithdrawalRequests(startDate, endDate, branchId, userReps);
+  res.status(httpStatus.OK).json(result);
+});
+
+const getWithdrawalRequestById = catchAsync(async (req, res) => {
+  const { requestId } = req.params;
+  const cashRequest = await accountTransactionService.getWithdrawalRequestById(requestId);
+  if (!cashRequest) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Cash request not found');
+  }
+  res.status(httpStatus.OK).json(cashRequest);
+});
+
 module.exports = {
   makeCustomerDeposit,
   updateAccountStatus,
@@ -97,4 +119,7 @@ module.exports = {
   makeCustomerWithdrawal,
   getAccountTransactions,
   getCustomerwithdrawals,
+  makeWithdrawalRequest,
+  getAllWithdrawalRequests,
+  getWithdrawalRequestById,
 };

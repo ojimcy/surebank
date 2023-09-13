@@ -22,10 +22,8 @@ const getAccountBalance = {
 };
 
 const makeCustomerWithdrawal = {
-  body: Joi.object().keys({
-    accountNumber: Joi.string().required(),
-    amount: Joi.number().required(),
-    narration: Joi.string().required(),
+  query: Joi.object().keys({
+    requestId: Joi.string().required(),
   }),
 };
 
@@ -53,6 +51,22 @@ const getCustomerwithdrawals = {
   }),
 };
 
+const makeWithdrawalRequest = {
+  body: Joi.object().keys({
+    accountNumber: Joi.string().required(),
+    amount: Joi.number().required(),
+  }),
+};
+
+const getAllWithdrawalRequests = {
+  query: Joi.object().keys({
+    userReps: Joi.string().optional().custom(objectId),
+    branchId: Joi.string().optional().custom(objectId),
+    startDate: Joi.number().optional(),
+    endDate: Joi.number().optional(),
+  }),
+};
+
 module.exports = {
   makeCustomerDeposit,
   getAvailableBalance,
@@ -61,4 +75,6 @@ module.exports = {
   getAccountTransactions,
   getUserByAccountNumber,
   getCustomerwithdrawals,
+  makeWithdrawalRequest,
+  getAllWithdrawalRequests,
 };
