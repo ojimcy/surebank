@@ -67,4 +67,12 @@ router
     accountTransactionController.getAllWithdrawalRequests
   );
 
+router
+  .route('/withdraw/cash/:requestId')
+  .get(
+    auth('requestCash'),
+    validate(accountTransactionValidation.getWithdrawalRequestById),
+    accountTransactionController.getWithdrawalRequestById
+  );
+
 module.exports = router;

@@ -38,6 +38,10 @@ const accountTransactionSchema = mongoose.Schema(
       ref: 'User',
       required: false,
     },
+    reasons: {
+      type: String,
+      required: false,
+    },
   },
   {
     timestamps: true,

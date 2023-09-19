@@ -67,6 +67,12 @@ const getAllWithdrawalRequests = {
   }),
 };
 
+const getWithdrawalRequestById = {
+  params: Joi.object().keys({
+    requestId: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   makeCustomerDeposit,
   getAvailableBalance,
@@ -77,4 +83,5 @@ module.exports = {
   getCustomerwithdrawals,
   makeWithdrawalRequest,
   getAllWithdrawalRequests,
+  getWithdrawalRequestById,
 };

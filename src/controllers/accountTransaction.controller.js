@@ -63,9 +63,9 @@ const getAccountBalance = catchAsync(async (req, res) => {
 });
 
 const makeCustomerWithdrawal = catchAsync(async (req, res) => {
-  const requestId = req.query;
+  const { requestId } = req.query;
   const userReps = req.user._id;
-  const result = await accountTransactionService.makeCustomerWithdrawal({ requestId, userReps });
+  const result = await accountTransactionService.makeCustomerWithdrawal(requestId, userReps);
   res.status(httpStatus.OK).json(result);
 });
 
