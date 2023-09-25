@@ -46,6 +46,7 @@ const userRepsPermissions = [
   'manageExpenditure',
   'getReports',
   'manageMerchantAdmin',
+  'rejectWithdrawalRequests',
 ];
 
 const adminPermissions = [...userRepsPermissions, 'makeDeposit', 'makeWithdrawal'];

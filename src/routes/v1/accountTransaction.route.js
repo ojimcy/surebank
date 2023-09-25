@@ -73,6 +73,11 @@ router
     auth('requestCash'),
     validate(accountTransactionValidation.getWithdrawalRequestById),
     accountTransactionController.getWithdrawalRequestById
+  )
+  .post(
+    auth('rejectWithdrawalRequests'),
+    validate(accountTransactionValidation.rejectWithdrawalRequest),
+    accountTransactionController.rejectWithdrawalRequest
   );
 
 module.exports = router;

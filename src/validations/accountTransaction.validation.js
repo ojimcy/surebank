@@ -58,6 +58,15 @@ const makeWithdrawalRequest = {
   }),
 };
 
+const rejectWithdrawalRequest = {
+  params: Joi.object().keys({
+    requestId: Joi.string().required(),
+  }),
+  body: Joi.object().keys({
+    narration: Joi.string().required(),
+  }),
+};
+
 const getAllWithdrawalRequests = {
   query: Joi.object().keys({
     userReps: Joi.string().optional().custom(objectId),
@@ -82,6 +91,7 @@ module.exports = {
   getUserByAccountNumber,
   getCustomerwithdrawals,
   makeWithdrawalRequest,
+  rejectWithdrawalRequest,
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
 };

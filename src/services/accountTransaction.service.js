@@ -180,7 +180,7 @@ const getAccountBalance = async (accountNumber) => {
  * @param {Object} session - Mongoose session
  * @returns {Promise<Object>} Result of the operation
  */
-const makeWithdrawalRequest = async (accountNumber, amount, createdBy, narration) => {
+const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -208,7 +208,7 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy, narration
           branchId: branch.branchId,
           date: transactionDate,
           direction: 'pending',
-          narration: narration || 'Request Cash',
+          narration: 'Request Cash',
         },
       ],
       { session }
@@ -258,7 +258,7 @@ const getAllWithdrawalRequests = async (startDate, endDate, branchId, userReps) 
       query.userReps = userReps;
     }
     query.direction = 'pending';
-    query.narration = 'Fund withdrawal';
+    query.narration = 'Request Cash';
     const withdrawalRequests = await AccountTransaction.find(query)
       .populate([
         {
@@ -304,8 +304,7 @@ const getWithdrawalRequestById = async (requestId) => {
         select: 'name',
       },
     ])
-    .sort({ date: -1 })
-    .lean();
+    .sort({ date: -1 });
   return request;
 };
 
@@ -325,7 +324,7 @@ const makeCustomerWithdrawal = async (requestId) => {
     if (!withdrawalRequest) {
       throw new ApiError(404, 'Withdrawal request does not exist.');
     }
-    if (withdrawalRequest.direction !== 'pending' || withdrawalRequest.narration !== 'Fund withdrawal') {
+    if (withdrawalRequest.direction !== 'pending' || withdrawalRequest.narration !== 'Request Cash') {
       throw new ApiError(400, 'Invalid withdrawal request.');
     }
     const { accountNumber } = withdrawalRequest;
@@ -386,6 +385,23 @@ const makeCustomerWithdrawal = async (requestId) => {
     session.endSession();
     throw error;
   }
+};
+
+/**
+ * Reject a withdrawal request
+ * @param {string} requestId - Withdrawal request ID
+ * @returns {Promise<Object>} Result of the operation
+ */
+const rejectWithdrawalRequest = async (requestId, narration) => {
+  const withdrawalRequest = await getWithdrawalRequestById(requestId);
+  if (!withdrawalRequest) {
+    throw new ApiError(404, 'Withdrawal request does not exist.');
+  }
+  withdrawalRequest.narration = narration;
+  withdrawalRequest.direction = 'rejected';
+  await withdrawalRequest.save();
+
+  return withdrawalRequest;
 };
 
 /**
@@ -474,6 +490,7 @@ module.exports = {
   getAccountTransactions,
   getCustomerwithdrawals,
   makeWithdrawalRequest,
+  rejectWithdrawalRequest,
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
 };

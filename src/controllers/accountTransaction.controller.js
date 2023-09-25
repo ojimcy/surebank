@@ -92,6 +92,13 @@ const makeWithdrawalRequest = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(result);
 });
 
+const rejectWithdrawalRequest = catchAsync(async (req, res) => {
+  const { requestId } = req.params;
+  const { narration } = req.body;
+  const result = await accountTransactionService.rejectWithdrawalRequest(requestId, narration);
+  res.status(httpStatus.OK).json(result);
+});
+
 const getAllWithdrawalRequests = catchAsync(async (req, res) => {
   const { startDate, endDate, branchId, userReps } = req.query;
   const result = await accountTransactionService.getAllWithdrawalRequests(startDate, endDate, branchId, userReps);
@@ -120,6 +127,7 @@ module.exports = {
   getAccountTransactions,
   getCustomerwithdrawals,
   makeWithdrawalRequest,
+  rejectWithdrawalRequest,
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
 };
