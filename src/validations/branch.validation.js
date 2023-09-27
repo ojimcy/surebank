@@ -71,10 +71,6 @@ const getStaffInBranch = {
 };
 
 const updateBranchStaff = {
-  // params: Joi.object().keys({
-  // }),
-  // query: Joi.object().keys({
-  // }),
   body: Joi.object().keys({
     branchId: Joi.string().required().custom(objectId),
     staffId: Joi.string().required().custom(objectId),

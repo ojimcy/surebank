@@ -43,7 +43,6 @@ const userRepsPermissions = [
   'manageExpenditure',
   'getReports',
   'manageMerchantAdmin',
-  'getAllStaff',
 ];
 
 const managerPermissions = [
@@ -56,6 +55,7 @@ const managerPermissions = [
   'getAccountInBranch',
   'getAccountsByStaff',
   'getStaffInBranch',
+  'getAllStaff',
 ];
 
 const adminPermissions = [

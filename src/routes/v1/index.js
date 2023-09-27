@@ -19,6 +19,7 @@ const brandRoute = require('./brand.route');
 const cartRoute = require('./cart.route');
 const salesRoute = require('./sales.route');
 const reportsRoute = require('./reports.route');
+const expenditureRoute = require('./expenditure.route');
 
 const router = express.Router();
 
@@ -94,6 +95,10 @@ const defaultRoutes = [
   {
     path: '/reports',
     route: reportsRoute,
+  },
+  {
+    path: '/expenditure',
+    route: expenditureRoute,
   },
 ];
 

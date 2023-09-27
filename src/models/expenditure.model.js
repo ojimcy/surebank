@@ -11,7 +11,7 @@ const expenditureSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
-    userReps: {
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
@@ -29,6 +29,10 @@ const expenditureSchema = mongoose.Schema(
       type: String,
       required: true,
       default: 'pending',
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
     },
   },
   {

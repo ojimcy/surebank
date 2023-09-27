@@ -5,16 +5,15 @@ const { accountingService, expenditureService } = require('../services');
 const createExpenditure = catchAsync(async (req, res) => {
   const { amount, reason } = req.body;
   const date = new Date().getTime();
-  const userReps = req.user._id;
-  const branchAdmin = req.user._id;
+  const createdBy = req.user._id;
 
   // Create the expenditure using the expenditure service
   const createdExpenditure = await expenditureService.createExpenditure({
     date,
     amount,
     reason,
-    userReps,
-    branchAdmin,
+    createdBy,
+    status: 'pending',
   });
 
   res.status(httpStatus.CREATED).send(createdExpenditure);
@@ -74,6 +73,15 @@ const getExpendituresByUserReps = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(paginatedExpenditures);
 });
 
+const approveExpenditure = catchAsync(async (req, res) => {
+  const { expenditureId } = req.params;
+  const approvedBy = req.user._id;
+
+  const updatedExpenditure = await accountingService.approveExpenditure(expenditureId, approvedBy);
+
+  res.status(httpStatus.OK).send(updatedExpenditure);
+});
+
 module.exports = {
   createExpenditure,
   getExpendituresByDateRange,
@@ -83,4 +91,5 @@ module.exports = {
   updateExpenditure,
   deleteExpenditure,
   getExpendituresByUserReps,
+  approveExpenditure,
 };

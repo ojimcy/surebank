@@ -131,9 +131,23 @@ const getAllStaffService = async (filter, options) => {
   const { limit = 10, page = 1, sortBy } = options;
   const skip = (page - 1) * limit;
 
-  const branchStaff = await BranchStaff.find({}).skip(skip).limit(limit).sort(sortBy);
+  const branchStaff = await BranchStaff.find({})
+    .populate([
+      {
+        path: 'staffId',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'branchId',
+        select: 'name',
+      },
+    ])
+    .skip(skip)
+    .limit(limit)
+    .sort(sortBy);
   return branchStaff;
 };
+
 /**
  * Get staff in branch with pagination
  * @param {Object} branchId
@@ -213,6 +227,19 @@ const getBranchByName = async (name) => {
   return Branch.findOne({ name: name.toLowerCase() });
 };
 
+/**
+ * Delete staff by ID
+ * @param {string} staffId - ID of the staff to delete
+ * @returns {Promise<void>}
+ */
+const deleteStaffById = async (staffId) => {
+  const staff = await BranchStaff.findById(staffId);
+  if (!staff) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Staff not found');
+  }
+  await staff.remove();
+};
+
 module.exports = {
   createBranch,
   getBranchById,
@@ -226,8 +253,7 @@ module.exports = {
   deleteBranchById,
   deleteBranchStaffById,
   deleteAllBranchStaffById,
-  // updateBranchStaff,
-  // deleteBranch,
   getBranchByEmail,
   getBranchByName,
+  deleteStaffById,
 };

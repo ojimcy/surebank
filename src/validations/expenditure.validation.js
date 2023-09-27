@@ -46,6 +46,12 @@ const getExpendituresByUserReps = {
   }),
 };
 
+const approveExpenditure = {
+  params: Joi.object().keys({
+    expenditureId: Joi.string().custom(objectId),
+  }),
+};
+
 module.exports = {
   createExpenditure,
   getExpendituresByDateRange,
@@ -53,4 +59,5 @@ module.exports = {
   updateExpenditure,
   deleteExpenditure,
   getExpendituresByUserReps,
+  approveExpenditure,
 };

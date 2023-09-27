@@ -9,6 +9,15 @@ const ApiError = require('../utils/ApiError');
  */
 const createExpenditure = async (expenditureInput) => {
   const branch = await BranchStaff.findOne({ staffId: expenditureInput.branchAdmin });
+
+  if (!branch) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Branch not found for the given branchAdmin');
+  }
+  // Check if branch has a valid branchId before destructuring
+  if (!branch.branchId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Branch does not have a valid branchId');
+  }
+
   const { branchId } = branch;
   const createdExpenditure = await Expenditure.create({ ...expenditureInput, branchId });
   return createdExpenditure;
@@ -100,7 +109,7 @@ const getBranchTotalExpenditure = async (branchAdmin) => {
  * @returns {Promise<Object>} The found expenditure object
  */
 const getExpenditureById = async (expenditureId) => {
-  const expenditure = await Expenditure.findById(expenditureId).populate('userReps', 'firstName lastName');
+  const expenditure = await Expenditure.findById(expenditureId).populate('createdBy', 'firstName lastName');
   return expenditure;
 };
 
@@ -154,6 +163,26 @@ const getExpendituresByUserReps = async (userRepsId, page, limit) => {
   return paginatedExpenditures;
 };
 
+/**
+ * Approve an expenditure
+ * @param {string} expenditureId - ID of the expenditure to be approved
+ * @param {string} approvedBy - ID of the user who is approving the expenditure
+ * @returns {Promise<Object>} The updated expenditure object
+ */
+const approveExpenditure = async (expenditureId, approvedBy) => {
+  const expenditure = await getExpenditureById(expenditureId);
+  if (!expenditure) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Expenditure not found');
+  }
+
+  // Update the expenditure fields
+  expenditure.status = 'approved';
+  expenditure.approvedBy = approvedBy;
+
+  await expenditure.save();
+  return expenditure;
+};
+
 module.exports = {
   createExpenditure,
   getExpendituresByDateRange,
@@ -163,4 +192,5 @@ module.exports = {
   updateExpenditure,
   deleteExpenditure,
   getExpendituresByUserReps,
+  approveExpenditure,
 };

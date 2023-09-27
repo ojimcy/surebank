@@ -53,12 +53,7 @@ const getAllStaff = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['staffId', 'isCurrent']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await branchService.getAllStaffService(filter, options);
-  if (result.error) {
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, result.error);
-  }
-  const staffIds = result.map((staff) => staff.staffId);
-  const users = await User.find({ _id: { $in: staffIds } });
-  res.send(users);
+  res.send(result);
 });
 
 const getStaffInBranch = catchAsync(async (req, res) => {
@@ -87,6 +82,13 @@ const deleteBranch = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
+const deleteStaff = catchAsync(async (req, res) => {
+  const { staffId } = req.params;
+  await branchService.deleteStaffById(staffId);
+
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
 module.exports = {
   createBranch,
   getBranch,
@@ -99,4 +101,5 @@ module.exports = {
   updateBranchStaff,
   updateBranch,
   deleteBranch,
+  deleteStaff,
 };
