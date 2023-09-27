@@ -2,7 +2,9 @@ const express = require('express');
 const auth = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const accountingValidation = require('../../validations/accounting.validation');
-const accountingController = require('../../controllers/Accounting.controller');
+const expenditureValidation = require('../../validations/expenditure.validation');
+const accountingController = require('../../controllers/accounting.controller');
+const expenditureController = require('../../controllers/expenditure.controller');
 
 const router = express.Router();
 
@@ -18,26 +20,38 @@ router
 
 router
   .route('/expenditure')
-  .post(auth('manageExpenditure'), validate(accountingValidation.createExpenditure), accountingController.createExpenditure)
+  .post(
+    auth('manageExpenditure'),
+    validate(expenditureValidation.createExpenditure),
+    expenditureController.createExpenditure
+  )
   .get(
     auth('manageExpenditure'),
-    validate(accountingValidation.getExpendituresByDateRange),
-    accountingController.getExpendituresByDateRange
+    validate(expenditureValidation.getExpendituresByDateRange),
+    expenditureController.getExpendituresByDateRange
   );
 
-router.route('/expenditure/total').get(auth('manageExpenditure'), accountingController.getTotalExpenditure);
-router.route('/expenditure/user-reps').get(auth('manageExpenditure'), accountingController.getExpendituresByUserReps);
-router.route('/expenditure/total/admin').get(auth('manageExpenditure'), accountingController.getBranchTotalExpenditure);
-router.route('/expenditure/total/supperadmin').get(auth('manageExpenditure'), accountingController.getTotalExpenditure);
+router.route('/expenditure/total').get(auth('manageExpenditure'), expenditureController.getTotalExpenditure);
+router.route('/expenditure/user-reps').get(auth('manageExpenditure'), expenditureController.getExpendituresByUserReps);
+router.route('/expenditure/total/admin').get(auth('manageExpenditure'), expenditureController.getBranchTotalExpenditure);
+router.route('/expenditure/total/supperadmin').get(auth('manageExpenditure'), expenditureController.getTotalExpenditure);
 
 router
   .route('/expenditure/:expenditureId')
-  .get(auth('manageExpenditure'), validate(accountingValidation.getExpenditureById), accountingController.getExpenditureById)
-  .patch(auth('manageExpenditure'), validate(accountingValidation.updateExpenditure), accountingController.updateExpenditure)
+  .get(
+    auth('manageExpenditure'),
+    validate(expenditureValidation.getExpenditureById),
+    expenditureController.getExpenditureById
+  )
+  .patch(
+    auth('manageExpenditure'),
+    validate(expenditureValidation.updateExpenditure),
+    expenditureController.updateExpenditure
+  )
   .delete(
     auth('manageExpenditure'),
-    validate(accountingValidation.deleteExpenditure),
-    accountingController.deleteExpenditure
+    validate(expenditureValidation.deleteExpenditure),
+    expenditureController.deleteExpenditure
   );
 
 router.route('/contribution-incomes/admin').get(auth('accounting'), accountingController.getBranchSumOfFirstContributions);

@@ -3,7 +3,7 @@ const auth = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const accountValidation = require('../../validations/account.validation');
 const accountController = require('../../controllers/account.controller');
-const accountingController = require('../../controllers/Accounting.controller');
+const accountingController = require('../../controllers/accounting.controller');
 
 const router = express.Router();
 
