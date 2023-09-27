@@ -37,6 +37,7 @@ const getTotalExpenditure = catchAsync(async (req, res) => {
   const totalExpenditure = await expenditureService.getTotalExpenditure();
   res.status(httpStatus.OK).json(totalExpenditure);
 });
+
 const getBranchTotalExpenditure = catchAsync(async (req, res) => {
   const branchAdmin = req.user._id;
   const totalExpenditure = await expenditureService.getBranchTotalExpenditure(branchAdmin);
@@ -77,7 +78,17 @@ const approveExpenditure = catchAsync(async (req, res) => {
   const { expenditureId } = req.params;
   const approvedBy = req.user._id;
 
-  const updatedExpenditure = await accountingService.approveExpenditure(expenditureId, approvedBy);
+  const updatedExpenditure = await expenditureService.approveExpenditure(expenditureId, approvedBy);
+
+  res.status(httpStatus.OK).send(updatedExpenditure);
+});
+
+const rejectExpenditure = catchAsync(async (req, res) => {
+  const { expenditureId } = req.params;
+  const rejectedBy = req.user._id;
+  const { reasonForRejection } = req.body;
+
+  const updatedExpenditure = await expenditureService.rejectExpenditure(expenditureId, rejectedBy, reasonForRejection);
 
   res.status(httpStatus.OK).send(updatedExpenditure);
 });
@@ -92,4 +103,5 @@ module.exports = {
   deleteExpenditure,
   getExpendituresByUserReps,
   approveExpenditure,
+  rejectExpenditure,
 };

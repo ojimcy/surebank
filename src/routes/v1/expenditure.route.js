@@ -36,15 +36,26 @@ router
     validate(expenditureValidation.updateExpenditure),
     expenditureController.updateExpenditure
   )
-  .post(
-    auth('manageExpenditure'),
-    validate(expenditureValidation.approveExpenditure),
-    expenditureController.approveExpenditure
-  )
   .delete(
     auth('manageExpenditure'),
     validate(expenditureValidation.deleteExpenditure),
     expenditureController.deleteExpenditure
+  );
+
+router
+  .route('/:expenditureId/approve')
+  .post(
+    auth('approveExpenditure'),
+    validate(expenditureValidation.approveExpenditure),
+    expenditureController.approveExpenditure
+  );
+
+router
+  .route('/:expenditureId/reject')
+  .post(
+    auth('rejectExpenditure'),
+    validate(expenditureValidation.rejectExpenditure),
+    expenditureController.rejectExpenditure
   );
 
 module.exports = router;

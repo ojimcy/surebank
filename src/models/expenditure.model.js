@@ -30,7 +30,14 @@ const expenditureSchema = mongoose.Schema(
       required: true,
       default: 'pending',
     },
+    reasonForRejection: {
+      type: String,
+    },
     approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    rejectedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },

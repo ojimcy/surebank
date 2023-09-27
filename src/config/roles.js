@@ -56,6 +56,8 @@ const managerPermissions = [
   'getAccountsByStaff',
   'getStaffInBranch',
   'getAllStaff',
+  'rejectExpenditure',
+  'approveExpenditure',
 ];
 
 const adminPermissions = [

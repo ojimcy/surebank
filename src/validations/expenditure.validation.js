@@ -51,6 +51,14 @@ const approveExpenditure = {
     expenditureId: Joi.string().custom(objectId),
   }),
 };
+const rejectExpenditure = {
+  params: Joi.object().keys({
+    expenditureId: Joi.string().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    reasonForRejection: Joi.string().required(),
+  }),
+};
 
 module.exports = {
   createExpenditure,
@@ -60,4 +68,5 @@ module.exports = {
   deleteExpenditure,
   getExpendituresByUserReps,
   approveExpenditure,
+  rejectExpenditure,
 };

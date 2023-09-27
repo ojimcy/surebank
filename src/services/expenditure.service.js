@@ -8,10 +8,9 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<Object>} The created expenditure object
  */
 const createExpenditure = async (expenditureInput) => {
-  const branch = await BranchStaff.findOne({ staffId: expenditureInput.branchAdmin });
-
+  const branch = await BranchStaff.findOne({ staffId: expenditureInput.createdBy });
   if (!branch) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Branch not found for the given branchAdmin');
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Branch not found for the given admin');
   }
   // Check if branch has a valid branchId before destructuring
   if (!branch.branchId) {
@@ -183,6 +182,25 @@ const approveExpenditure = async (expenditureId, approvedBy) => {
   return expenditure;
 };
 
+/**
+ * Reject an expenditure
+ * @param {string} expenditureId - ID of the expenditure to be rejected
+ * @param {string} rejectedBy - ID of the user who is rejecting the expenditure
+ * @param {string} reasonForRejection - Reason for rejecting the expenditure
+ * @returns {Promise<Object>} The updated expenditure object
+ */
+const rejectExpenditure = async (expenditureId, rejectedBy, reasonForRejection) => {
+  const expenditure = await Expenditure.findById(expenditureId);
+  if (!expenditure) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Expenditure not found');
+  }
+  expenditure.status = 'rejected';
+  expenditure.rejectedBy = rejectedBy;
+  expenditure.reasonForRejection = reasonForRejection;
+  await expenditure.save();
+  return expenditure;
+};
+
 module.exports = {
   createExpenditure,
   getExpendituresByDateRange,
@@ -193,4 +211,5 @@ module.exports = {
   deleteExpenditure,
   getExpendituresByUserReps,
   approveExpenditure,
+  rejectExpenditure,
 };
