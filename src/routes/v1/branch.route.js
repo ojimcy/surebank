@@ -14,6 +14,7 @@ router
 router
   .route('/staff')
   .get(auth('getAllStaff'), validate('getAllStaff'), branchController.getAllStaff)
+  .post(auth('updateBranchStaff'), validate(branchValidation.createStaff), branchController.createStaff)
   .patch(auth('updateBranchStaff'), validate(branchValidation.updateBranchStaff), branchController.updateBranchStaff);
 
 router

@@ -41,7 +41,7 @@ router
 router
   .route('/withdraw')
   .post(
-    auth('manageCustomerTransaction'),
+    auth('approveWithdrawals'),
     validate(accountTransactionValidation.makeCustomerWithdrawal),
     accountTransactionController.makeCustomerWithdrawal
   );

@@ -28,9 +28,6 @@ const userRepsPermissions = [
   'manageUsers',
   'deleteUser',
   'getUsers',
-  'manageBranch',
-  'getStaffInBranch',
-  'updateBranchStaff',
   'manageAccounts',
   'manageSummary',
   'manageSavings',
@@ -46,30 +43,46 @@ const userRepsPermissions = [
   'manageExpenditure',
   'getReports',
   'manageMerchantAdmin',
-  'rejectWithdrawalRequests',
+  'getAllStaff',
 ];
 
-const adminPermissions = [...userRepsPermissions, 'makeDeposit', 'makeWithdrawal'];
+const managerPermissions = [
+  ...userRepsPermissions,
+  'createUserReps',
+  'createAccessCode',
+  'approveWithdrawals',
+  'approveExpensis',
+  'addStaffToBranch',
+  'getAccountInBranch',
+  'getAccountsByStaff',
+  'getStaffInBranch',
+];
+
+const adminPermissions = [
+  ...managerPermissions,
+  'makeDeposit',
+  'makeWithdrawal',
+  'rejectWithdrawalRequests',
+  'manageBranch',
+  'updateBranchStaff',
+  'updateBranch',
+];
 
 const superAdminPermissions = [
   ...adminPermissions,
   'createAdmin',
   'updateBranchManager',
-  'updateBranch',
-  'addStaffToBranch',
   'assignManager',
-  'getAllStaff',
-  'getAccountInBranch',
-  'getAccountsByStaff',
   'reports',
   'accounting',
 ];
 
 const allRoles = {
   user: userPermissions,
-  superAdmin: superAdminPermissions,
-  admin: adminPermissions,
   userReps: userRepsPermissions,
+  admin: adminPermissions,
+  manager: managerPermissions,
+  superAdmin: superAdminPermissions,
 };
 
 const roles = Object.keys(allRoles);

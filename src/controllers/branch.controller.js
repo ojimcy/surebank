@@ -43,6 +43,12 @@ const addStaffToBranch = catchAsync(async (req, res) => {
   res.send(branchStaff);
 });
 
+const createStaff = catchAsync(async (req, res) => {
+  const { staffId, branchId } = req.body;
+  const branchStaff = await branchService.addStaffToBranch(branchId, staffId);
+  res.send(branchStaff);
+});
+
 const getAllStaff = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['staffId', 'isCurrent']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
@@ -87,6 +93,7 @@ module.exports = {
   getBranches,
   updateBranchManager,
   addStaffToBranch,
+  createStaff,
   getAllStaff,
   getStaffInBranch,
   updateBranchStaff,

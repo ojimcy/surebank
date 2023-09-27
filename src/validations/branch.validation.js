@@ -5,7 +5,7 @@ const createBranch = {
   body: Joi.object().keys({
     name: Joi.string().required(),
     address: Joi.string().required(),
-    phone: Joi.string().required(),
+    phoneNumber: Joi.string().required(),
     email: Joi.string().required().email(),
     manager: Joi.string().required(),
   }),
@@ -51,6 +51,14 @@ const addStaffToBranch = {
   }),
 };
 
+const createStaff = {
+  body: Joi.object().keys({
+    branchId: Joi.string().required().custom(objectId),
+    staffId: Joi.string().required().custom(objectId),
+    isCurrent: Joi.boolean(),
+  }),
+};
+
 const getStaffInBranch = {
   params: Joi.object().keys({
     branchId: Joi.string().required().custom(objectId),
@@ -90,4 +98,5 @@ module.exports = {
   getStaffInBranch,
   updateBranchStaff,
   deleteBranch,
+  createStaff,
 };

@@ -15,7 +15,8 @@ const staffSchema = mongoose.Schema(
     },
     isCurrent: {
       type: Boolean,
-      // required: true,
+      required: true,
+      default: true,
     },
   },
   {

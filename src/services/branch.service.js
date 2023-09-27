@@ -41,6 +41,7 @@ const queryBranches = async (filter, options) => {
 const getBranchStaffById = async (id) => {
   return BranchStaff.findOne({ staffId: id });
 };
+
 /**
  * Get branch by id
  * @param {ObjectId} id
@@ -51,7 +52,7 @@ const getBranchById = async (id) => {
 };
 
 const getBranchByEmail = async (email) => {
-  return Branch.findOne({ email: email });
+  return Branch.findOne({ email });
 };
 
 /**
@@ -155,8 +156,8 @@ const updateBranchStaffService = async (staffId, branchId) => {
   try {
     // console.log(branchId, staffId);
     const updatedBranchStaff = await BranchStaff.findOneAndUpdate(
-      { staffId: staffId },
-      { branchId: branchId },
+      { staffId },
+      { branchId },
       // { isCurrent: false },
       { new: true, useFindAndModify: false }
     );
@@ -199,7 +200,7 @@ const deleteBranchStaffById = async (branchStaffId) => {
  * @returns {Promise<Branch>}
  */
 const deleteAllBranchStaffById = async (branchId) => {
-  const branch = await BranchStaff.deleteMany({ branchId: branchId });
+  const branch = await BranchStaff.deleteMany({ branchId });
   return branch;
 };
 
