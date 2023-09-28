@@ -58,16 +58,20 @@ const managerPermissions = [
   'getAllStaff',
   'rejectExpenditure',
   'approveExpenditure',
+  'makeDeposit',
+  'makeWithdrawal',
+  'rejectWithdrawalRequests',
+  'updateUser',
+  'deleteUser',
 ];
 
 const adminPermissions = [
   ...managerPermissions,
-  'makeDeposit',
-  'makeWithdrawal',
-  'rejectWithdrawalRequests',
   'manageBranch',
   'updateBranchStaff',
   'updateBranch',
+  'managerManager',
+  'manageVendors',
 ];
 
 const superAdminPermissions = [
