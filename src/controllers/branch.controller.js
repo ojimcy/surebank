@@ -4,6 +4,7 @@ const { branchService } = require('../services');
 const ApiError = require('../utils/ApiError');
 const pick = require('../utils/pick');
 const { User } = require('../models');
+const { getUserById } = require('../services/user.service');
 
 const createBranch = catchAsync(async (req, res) => {
   const branch = await branchService.createBranch(req.body);
@@ -44,8 +45,10 @@ const addStaffToBranch = catchAsync(async (req, res) => {
 });
 
 const createStaff = catchAsync(async (req, res) => {
-  const { staffId, branchId } = req.body;
-  const branchStaff = await branchService.addStaffToBranch(branchId, staffId);
+  const { staffId, branchId, role } = req.body;
+  const assigningUser = await getUserById(req.user._id);
+  const assigningUserRole = assigningUser.role;
+  const branchStaff = await branchService.addStaffToBranch(branchId, staffId, role, assigningUserRole);
   res.send(branchStaff);
 });
 
@@ -89,6 +92,20 @@ const deleteStaff = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
+const updateStaffRole = catchAsync(async (req, res) => {
+  const { userId, role } = req.body;
+
+  // Get the role of the user making the request
+  const assigningUser = await getUserById(req.user._id);
+  const assigningUserRole = assigningUser.role;
+  try {
+    const updatedUser = await branchService.updateStaffRole(userId, role, assigningUserRole);
+    res.status(httpStatus.OK).send(updatedUser);
+  } catch (error) {
+    throw new ApiError(httpStatus.BAD_REQUEST, error.message);
+  }
+});
+
 module.exports = {
   createBranch,
   getBranch,
@@ -102,4 +119,5 @@ module.exports = {
   updateBranch,
   deleteBranch,
   deleteStaff,
+  updateStaffRole,
 };

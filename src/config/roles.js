@@ -63,6 +63,7 @@ const managerPermissions = [
   'rejectWithdrawalRequests',
   'updateUser',
   'deleteUser',
+  'manageStaff',
 ];
 
 const adminPermissions = [

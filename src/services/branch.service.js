@@ -1,6 +1,8 @@
+const mongoose = require('mongoose');
 const httpStatus = require('http-status');
-const { Branch, BranchStaff } = require('../models');
+const { Branch, BranchStaff, User } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { roles } = require('../config/roles');
 
 /**
  * Create a Branch
@@ -70,9 +72,6 @@ const updateBranchById = async (branchId, updateBody) => {
   if (checkEmail && checkEmail._id === branchId) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
-  // if (updateBody.email && (await Branch.isEmailTaken(updateBody.email, branchId))) {
-  //   throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
-  // }
   Object.assign(branch, updateBody);
   await branch.save();
   return branch;
@@ -95,26 +94,75 @@ const updateBranchManager = async (branchId, manager) => {
 };
 
 /**
+ * Check if a role is lower or equal in hierarchy to another role
+ * @param {string} roleToCheck - Role to check
+ * @param {string} comparedRole - Role to compare against
+ * @returns {boolean}
+ */
+const isRoleLowerOrEqual = (roleToCheck, comparedRole) => {
+  const roleHierarchy = ['userReps', 'manager', 'admin', 'superAdmin'];
+  const indexToCheck = roleHierarchy.indexOf(roleToCheck);
+  const indexCompared = roleHierarchy.indexOf(comparedRole);
+  return indexToCheck >= 0 && indexCompared >= 0 && indexToCheck <= indexCompared;
+};
+
+/**
+ * Update the role of a staff member
+ * @param {string} userId - User ID
+ * @param {string} newRole - New role to assign
+ * @param {string} assigningUserRole - Role of the user assigning the new role
+ * @returns {Promise<User>}
+ * @returns {Promise<User>}
+ */
+const updateStaffRole = async (userId, newRole, assigningUserRole) => {
+  // Check if the new role is a valid role
+  if (!roles.includes(newRole)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid role');
+  }
+  // Check if the assigning user has the authority to assign this role
+  if (!isRoleLowerOrEqual(newRole, assigningUserRole)) {
+    throw new ApiError(httpStatus.FORBIDDEN, "You don't have permissions to assign this role");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  user.role = newRole;
+  await user.save();
+  return user;
+};
+
+/**
  * Create branch staff
  * @param {string} branchId
  * @param {string} staffId
  * @returns {Promise<BranchStaff>}
  */
-const addStaffToBranch = async (branchId, staffId) => {
-  const checkStaff = await BranchStaff.findOne({
-    staffId,
-  });
+const addStaffToBranch = async (branchId, staffId, newRole, assigningUserRole) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  if (checkStaff) {
-    throw new ApiError('Staff already belongs to a branch');
+  try {
+    const checkStaff = await BranchStaff.findOne({ staffId });
+    if (checkStaff) {
+      throw new ApiError('Staff already belongs to a branch');
+    }
+
+    const branchStaff = await BranchStaff.create([{ branchId, staffId, isCurrent: true }], { session });
+
+    await updateStaffRole(staffId, newRole, assigningUserRole);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return branchStaff;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
-
-  const branchStaff = await BranchStaff.create({
-    branchId,
-    staffId,
-    isCurrent: true,
-  });
-  return branchStaff;
 };
 
 /**
@@ -135,7 +183,7 @@ const getAllStaffService = async (filter, options) => {
     .populate([
       {
         path: 'staffId',
-        select: 'firstName lastName',
+        select: 'firstName lastName role',
       },
       {
         path: 'branchId',
@@ -195,6 +243,7 @@ const deleteBranchById = async (branchId) => {
   await branch.remove();
   return branch;
 };
+
 /**
  * Delete branch staff by id
  * @param {ObjectId} branchId
@@ -208,6 +257,7 @@ const deleteBranchStaffById = async (branchStaffId) => {
   await branch.remove();
   return branch;
 };
+
 /**
  * Delete branch staff by id
  * @param {ObjectId} branchId
@@ -256,4 +306,5 @@ module.exports = {
   getBranchByEmail,
   getBranchByName,
   deleteStaffById,
+  updateStaffRole,
 };

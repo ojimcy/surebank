@@ -56,6 +56,7 @@ const createStaff = {
     branchId: Joi.string().required().custom(objectId),
     staffId: Joi.string().required().custom(objectId),
     isCurrent: Joi.boolean(),
+    role: Joi.string().optional(),
   }),
 };
 
@@ -84,6 +85,13 @@ const deleteBranch = {
   }),
 };
 
+const updateStaffRole = {
+  body: Joi.object().keys({
+    userId: Joi.string().required().custom(objectId),
+    role: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   createBranch,
   getBranches,
@@ -95,4 +103,5 @@ module.exports = {
   updateBranchStaff,
   deleteBranch,
   createStaff,
+  updateStaffRole,
 };

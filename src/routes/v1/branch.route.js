@@ -18,6 +18,10 @@ router
   .patch(auth('updateBranchStaff'), validate(branchValidation.updateBranchStaff), branchController.updateBranchStaff);
 
 router
+  .route('/staff/role')
+  .patch(auth('manageStaff'), validate(branchValidation.updateStaffRole), branchController.updateStaffRole);
+
+router
   .route('/:branchId')
   .get(auth('getBranches'), validate(branchValidation.getBranch), branchController.getBranch)
   .patch(auth('updateBranch'), validate(branchValidation.updateBranch), branchController.updateBranch)
