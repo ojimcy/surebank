@@ -20,6 +20,7 @@ const cartRoute = require('./cart.route');
 const salesRoute = require('./sales.route');
 const reportsRoute = require('./reports.route');
 const expenditureRoute = require('./expenditure.route');
+const staffRoute = require('./staff.route');
 
 const router = express.Router();
 
@@ -99,6 +100,10 @@ const defaultRoutes = [
   {
     path: '/expenditure',
     route: expenditureRoute,
+  },
+  {
+    path: '/staff',
+    route: staffRoute,
   },
 ];
 

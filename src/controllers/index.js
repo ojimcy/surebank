@@ -10,3 +10,4 @@ module.exports.storeController = require('./store.controller');
 module.exports.brandController = require('./brand.controller');
 module.exports.salesController = require('./sales.contoller');
 module.exports.reportsContoller = require('./reports.controller');
+module.exports.staffContoller = require('./staff.controller');
