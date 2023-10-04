@@ -393,6 +393,80 @@ const getTotalClosedPackagesForUserReps = async (userReps) => {
   return totalClosedPackages;
 };
 
+/**
+ * Retrieves the total contributions made by a specific user representative (userReps)
+ * each day within a given date range.
+ *
+ * @param {string} branchId - The ID of the branch.
+ * @param {Date} startDate - The start date of the range.
+ * @param {Date} endDateParam - The end date of the range.
+ * @returns {Promise<Object>} An object containing the contributions per day and the sum total of all contributions.
+ * @throws {ApiError} If there is an error retrieving the total contributions by day.
+ */
+const getContributionsByDayForBranch = async (branchId, startDate, endDateParam, limit = 10) => {
+  try {
+    // Set the endDate to the current date if not provided
+    let endDate = endDateParam;
+    if (!endDate) {
+      endDate = new Date().getTime();
+    }
+    // Get the total contributions for each day for branch using aggregation within the date range
+    const contributionsPerDay = await Contribution.aggregate([
+      {
+        $match: {
+          date: { $gte: startDate, $lte: endDate },
+          branchId,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: { $toDate: '$date' } },
+            month: { $month: { $toDate: '$date' } },
+            day: { $dayOfMonth: { $toDate: '$date' } },
+          },
+          total: { $sum: '$amount' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: {
+            $dateFromParts: {
+              year: '$_id.year',
+              month: '$_id.month',
+              day: '$_id.day',
+            },
+          },
+          total: 1,
+        },
+      },
+      { $sort: { date: -1 } },
+      { $limit: parseInt(limit, 10) },
+    ]);
+    // Calculate the sum total of all contributions
+    const allContributions = await Contribution.aggregate([
+      {
+        $match: {
+          date: { $gte: startDate, $lte: endDate },
+          branchId,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' },
+        },
+      },
+    ]);
+    const sumTotal = allContributions.length > 0 ? allContributions[0].total : 0;
+
+    return { contributionsPerDay, sumTotal };
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total contributions by branch: ${error.message}`);
+  }
+};
+
 module.exports = {
   getTotalContributionsByDay,
   getTotalDailySavingsWithdrawal,
@@ -404,4 +478,5 @@ module.exports = {
   getMyDsWithdrawals,
   getTotalOpenPackagesForUserReps,
   getTotalClosedPackagesForUserReps,
+  getContributionsByDayForBranch,
 };

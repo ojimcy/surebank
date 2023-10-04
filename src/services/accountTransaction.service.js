@@ -266,6 +266,10 @@ const getAllWithdrawalRequests = async (startDate, endDate, branchId, userReps) 
           select: 'firstName lastName',
         },
         {
+          path: 'createdBy',
+          select: 'firstName lastName',
+        },
+        {
           path: 'accountManagerId',
           select: 'firstName lastName',
         },
@@ -414,7 +418,16 @@ const rejectWithdrawalRequest = async (requestId, narration) => {
 const getAccountTransactions = async (accountNumber, page, limit) => {
   const skip = (page - 1) * limit;
   const transactions = await AccountTransaction.find({ accountNumber })
-    .populate('userReps', 'firstName lastName')
+    .populate([
+      {
+        path: 'createdBy',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'userReps',
+        select: 'firstName lastName',
+      },
+    ])
     .skip(skip)
     .limit(limit)
     .sort({ date: 'desc' });

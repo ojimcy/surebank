@@ -36,4 +36,9 @@ router
     validate(reportsValidation.getTotalContributionsByUserReps),
     reportsController.getTotalContributionsByUserReps
   );
+
+router
+  .route('/:branchId/total-contributions')
+  .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getContributionsByDayForBranch);
+
 module.exports = router;

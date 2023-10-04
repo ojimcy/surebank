@@ -79,7 +79,7 @@ const saveDailyContribution = async (contributionInput) => {
   }
   const branch = await Account.findOne({ accountNumber: contributionInput.accountNumber });
   const newContribution = await Contribution.create({
-    userReps: contributionInput.userReps,
+    createdBy: contributionInput.createdBy,
     amount: contributionInput.amount,
     branchId: branch.branchId,
     accountNumber: contributionInput.accountNumber,

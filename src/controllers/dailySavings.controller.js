@@ -20,9 +20,9 @@ const createDailySavingsPackage = catchAsync(async (req, res) => {
 
 const saveDailyContribution = catchAsync(async (req, res) => {
   const contributionInput = req.body;
-  const userReps = req.user._id;
+  const createdBy = req.user._id;
   const packageId = req.query;
-  const result = await dailySavingsService.saveDailyContribution({ ...contributionInput, userReps, packageId });
+  const result = await dailySavingsService.saveDailyContribution({ ...contributionInput, createdBy, packageId });
   res.status(httpStatus.OK).json(result);
 });
 

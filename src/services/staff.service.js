@@ -130,7 +130,20 @@ const getStaffInBranch = async (branchId, filter, options) => {
   const { limit = 10, page = 1, sortBy } = options;
   const skip = (page - 1) * limit;
 
-  const branchStaff = await BranchStaff.find({ branchId }).skip(skip).limit(limit).sort(sortBy);
+  const branchStaff = await BranchStaff.find({ branchId })
+    .populate([
+      {
+        path: 'staffId',
+        select: 'firstName lastName role',
+      },
+      {
+        path: 'branchId',
+        select: 'name',
+      },
+    ])
+    .skip(skip)
+    .limit(limit)
+    .sort(sortBy);
   return branchStaff;
 };
 

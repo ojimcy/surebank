@@ -57,6 +57,13 @@ const getPackageReportForUserRep = catchAsync(async (req, res) => {
   });
 });
 
+const getContributionsByDayForBranch = catchAsync(async (req, res) => {
+  const { branchId } = req.params;
+  const { startDate, endDateParam } = req.query;
+  const totalContributions = await reportService.getContributionsByDayForBranch(branchId, startDate, endDateParam);
+  res.status(httpStatus.OK).json(totalContributions);
+});
+
 module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
@@ -65,4 +72,5 @@ module.exports = {
   getMyTotalContributions,
   getMyDsWithdrawals,
   getPackageReportForUserRep,
+  getContributionsByDayForBranch,
 };

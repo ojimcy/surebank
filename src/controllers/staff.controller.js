@@ -3,7 +3,6 @@ const catchAsync = require('../utils/catchAsync');
 const { staffService } = require('../services');
 const ApiError = require('../utils/ApiError');
 const pick = require('../utils/pick');
-const { User } = require('../models');
 const { getUserById } = require('../services/user.service');
 
 const addStaffToBranch = catchAsync(async (req, res) => {
@@ -33,14 +32,8 @@ const getStaffInBranch = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['staffId', 'isCurrent']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
 
-  const staffMembers = await staffService.getStaffInBranch(branchId, filter, options);
-
-  const staffIds = staffMembers.map((staff) => staff.staffId);
-
-  // Use the staffIds to fetch the corresponding user details from the User collection.
-  const users = await User.find({ _id: { $in: staffIds } });
-
-  res.send(users);
+  const result = await staffService.getStaffInBranch(branchId, filter, options);
+  res.send(result);
 });
 
 const updateBranchStaff = catchAsync(async (req, res) => {
