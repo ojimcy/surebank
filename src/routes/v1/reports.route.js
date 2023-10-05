@@ -23,7 +23,11 @@ router
 
 router
   .route('/user-reps/total-savings-withdrawal')
-  .get(auth('getReports'), validate(reportsValidation.getMyTotalContributions), reportsController.getMyDsWithdrawals);
+  .get(
+    auth('getTotalWithdrawals'),
+    validate(reportsValidation.getMyTotalContributions),
+    reportsController.getMyDsWithdrawals
+  );
 
 router
   .route('/user-reps/packages')

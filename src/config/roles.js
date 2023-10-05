@@ -21,6 +21,7 @@ const userPermissions = [
   'manageContributions',
   'getCustomerWithdrawals',
   'requestCash',
+  'getTotalWithdrawals',
 ];
 
 const userRepsPermissions = [
