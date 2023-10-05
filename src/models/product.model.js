@@ -42,6 +42,9 @@ const productSchema = mongoose.Schema(
     reviewComment: {
       type: String,
     },
+    currentPrice: { type: Number, required: true },
+    originalPrice: { type: Number, required: true },
+    isOutOfStock: { type: Boolean },
   },
   {
     timestamps: true,

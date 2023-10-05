@@ -8,8 +8,8 @@ const { getMerchantByUserId } = require('./merchant.service');
  * @param {Object} requestData - Request data
  * @returns {Promise<Object>} Result of the operation
  */
-const createProductRequest = async (requestData, userId) => {
-  const merchant = await getMerchantByUserId(userId);
+const createProductRequest = async (requestData, merchantId) => {
+  const merchant = await getMerchantByUserId(merchantId);
 
   // Check that the Merchant document was found
   if (!merchant) {
