@@ -42,4 +42,9 @@ router
     productController.createProductCatalogue
   );
 
+router
+  .route('/collections')
+  .post(auth('manageProduct'), validate(productValidation.addProductToCollection), productController.addProductToCollection)
+  .get(validate(productValidation.getProductsByCollectionSlug), productController.getProductsByCollectionSlug);
+
 module.exports = router;

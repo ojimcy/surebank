@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { ProductRequest, Product, ProductCatalogue } = require('../models');
+const { ProductRequest, Product, ProductCatalogue, ProductCollection, Collection } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getMerchantByUserId } = require('./merchant.service');
 
@@ -237,6 +237,45 @@ const deleteProduct = async (productId, merchantId) => {
   return product;
 };
 
+const addProductToCollection = async (productId, collectionId) => {
+  // Check if the product and collection exist
+  const product = await Product.findById(productId);
+  const collection = await Collection.findById(collectionId);
+
+  if (!product || !collection) {
+    throw new ApiError(404, 'Product or collection not found');
+  }
+
+  // Check if the product is already in the collection
+  const productInCollection = await ProductCollection.findOne({
+    productId,
+    collectionId,
+  });
+
+  if (productInCollection) {
+    throw new ApiError(400, 'Product is already in the collection');
+  }
+
+  const productCollection = new ProductCollection({ productId, collectionId });
+  await productCollection.save();
+
+  // Update the product's collections
+  product.collections.push(collectionId);
+  await product.save();
+
+  return productCollection;
+};
+
+const getProductsByCollectionSlug = async (collectionSlug) => {
+  const collection = await Collection.findOne({ slug: collectionSlug });
+  if (!collection) {
+    throw new ApiError(404, 'Collection not found');
+  }
+
+  const products = await Product.find({ collections: collection._id });
+  return products;
+};
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
@@ -248,4 +287,6 @@ module.exports = {
   viewProduct,
   updateProduct,
   deleteProduct,
+  addProductToCollection,
+  getProductsByCollectionSlug,
 };

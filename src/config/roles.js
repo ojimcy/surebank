@@ -24,7 +24,7 @@ const userPermissions = [
   'getTotalWithdrawals',
 ];
 
-const vendorPermissions = [...userPermissions];
+const vendorPermissions = [...userPermissions, 'manageProduct'];
 
 const userRepsPermissions = [
   ...vendorPermissions,
@@ -42,7 +42,6 @@ const userRepsPermissions = [
   'manageCategory',
   'productCatalogue',
   'manageBrand',
-  'manageProductRequest',
   'manageExpenditure',
   'getReports',
   'manageMerchantAdmin',
@@ -64,6 +63,7 @@ const managerPermissions = [
   'makeDeposit',
   'makeWithdrawal',
   'rejectWithdrawalRequests',
+  'manageProductRequest',
   'updateUser',
   'deleteUser',
   'manageStaff',

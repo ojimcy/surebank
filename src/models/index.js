@@ -28,3 +28,4 @@ module.exports.Expenditure = require('./expenditure.model');
 module.exports.Banner = require('./banner.model');
 module.exports.Promotion = require('./promotion.model');
 module.exports.Collection = require('./collections.model');
+module.exports.ProductCollection = require('./productCollection.model');

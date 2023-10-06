@@ -112,6 +112,19 @@ const deleteProduct = {
   }),
 };
 
+const addProductToCollection = {
+  query: Joi.object().keys({
+    productId: Joi.string().required().custom(objectId),
+    collectionId: Joi.string().required().custom(objectId),
+  }),
+};
+
+const getProductsByCollectionSlug = {
+  query: Joi.object().keys({
+    collectionSlug: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
@@ -123,4 +136,6 @@ module.exports = {
   viewProduct,
   deleteProduct,
   updateProduct,
+  addProductToCollection,
+  getProductsByCollectionSlug,
 };

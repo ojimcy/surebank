@@ -39,6 +39,12 @@ const productSchema = mongoose.Schema(
       default: 'pending',
       required: true,
     },
+    collections: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Collection',
+      },
+    ],
   },
   {
     timestamps: true,
