@@ -22,6 +22,7 @@ const userPermissions = [
   'getCustomerWithdrawals',
   'requestCash',
   'getTotalWithdrawals',
+  'stores',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];
@@ -39,7 +40,6 @@ const userRepsPermissions = [
   'manageCustomer',
   'merchantRequest',
   'managePermission',
-  'manageCategory',
   'productCatalogue',
   'manageBrand',
   'manageExpenditure',
@@ -78,6 +78,8 @@ const adminPermissions = [
   'manageVendors',
   'managePromotion',
   'manageCollection',
+  'manageCategory',
+  'manageBrand',
 ];
 
 const superAdminPermissions = [

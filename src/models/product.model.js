@@ -45,6 +45,62 @@ const productSchema = mongoose.Schema(
         ref: 'Collection',
       },
     ],
+    originalPrice: {
+      type: Number,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    reviews: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        rating: Number,
+        reviewText: String,
+        date: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    reviewCounts: {
+      type: Number,
+    },
+    variations: [
+      {
+        name: String,
+        values: [String],
+      },
+    ],
+    shipping: {
+      weight: Number,
+      dimensions: {
+        length: Number,
+        width: Number,
+        height: Number,
+      },
+    },
+    stock: {
+      quantity: Number,
+      minQuantity: Number,
+    },
+    discount: {
+      type: Number,
+      startDate: Date,
+      endDate: Date,
+    },
+    tags: [String],
+
+    slug: {
+      type: String,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
   },
   {
     timestamps: true,

@@ -142,11 +142,22 @@ const approveProductRequest = async (requestId) => {
     status: 'approved',
     name: productRequest.name,
     description: productRequest.description,
-    image: productRequest.image,
     longDescription: productRequest.longDescription,
+    image: productRequest.image,
     barcode: productRequest.barcode || '',
     categoryId: productRequest.categoryId,
     merchantId: productRequest.merchantId,
+    collections: productRequest.collections,
+    originalPrice: productRequest.originalPrice,
+    price: productRequest.price,
+    reviews: productRequest.reviews,
+    reviewCounts: productRequest.reviewCounts,
+    variations: productRequest.variations,
+    shipping: productRequest.shipping,
+    stock: productRequest.stock,
+    discount: productRequest.discount,
+    tags: productRequest.tags,
+    slug: productRequest.slug,
   });
 
   // Save the new product document
@@ -195,16 +206,11 @@ const viewProduct = async (filter, options) => {
  * @param {Object} updateData - The updated data for the product
  * @returns {Promise<Object>} The updated product
  */
-const updateProduct = async (productId, merchantId, updateData) => {
+const updateProduct = async (productId, updateData) => {
   // Check if the product exists
   const product = await Product.findById(productId);
   if (!product) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
-  }
-
-  // Check if the product request belongs to the requesting merchant
-  if (product.merchantId.toString() !== merchantId) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Access denied');
   }
 
   Object.assign(product, updateData);

@@ -64,10 +64,9 @@ const viewProduct = catchAsync(async (req, res) => {
 
 const updateProduct = catchAsync(async (req, res) => {
   const { productId } = req.params;
-  const { merchantId } = req.query;
   const updateData = req.body;
 
-  const updatedProduct = await productService.updateProduct(productId, merchantId, updateData);
+  const updatedProduct = await productService.updateProduct(productId, updateData);
 
   res.status(httpStatus.OK).send(updatedProduct);
 });

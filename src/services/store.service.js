@@ -12,8 +12,15 @@ const createCategory = async (categoryData) => {
   if (existingCategory) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Category with the same name already exists');
   }
-
   return Category.create(categoryData);
+};
+
+/**
+ * Get all categories
+ * @returns {Promise<Array>} List of categories
+ */
+const getCategories = async () => {
+  return Category.find();
 };
 
 /**
@@ -30,7 +37,17 @@ const createBrand = async (brandData) => {
   return Brand.create(brandData);
 };
 
+/**
+ * Get all brands
+ * @returns {Promise<Array>} List of brands
+ */
+const getBrands = async () => {
+  return Brand.find();
+};
+
 module.exports = {
   createCategory,
+  getCategories,
   createBrand,
+  getBrands,
 };
