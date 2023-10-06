@@ -7,7 +7,7 @@ const productRequestSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    image: {
+    description: {
       type: String,
       required: true,
     },
@@ -15,11 +15,7 @@ const productRequestSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    description: {
-      type: String,
-      required: true,
-    },
-    barcode: {
+    image: {
       type: String,
       required: true,
     },

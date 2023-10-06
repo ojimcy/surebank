@@ -9,19 +9,21 @@ const categorySchema = mongoose.Schema(
     },
     description: {
       type: String,
-      required: true,
     },
-    longDescription: {
-      type: String,
-      required: true,
+    parentCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
     },
     image: {
       type: String,
       required: true,
     },
-    permalink: {
+    slug: {
       type: String,
       required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
     },
   },
   {

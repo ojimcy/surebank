@@ -6,7 +6,7 @@ const pick = require('../utils/pick');
 const createProductRequest = catchAsync(async (req, res) => {
   const requestData = req.body;
   const merchantId = req.user._id;
-  const productRequest = await productService.createProductRequest({ ...requestData }, merchantId);
+  const productRequest = await productService.createProductRequest(requestData, merchantId);
   res.status(httpStatus.CREATED).send(productRequest);
 });
 

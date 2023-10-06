@@ -7,7 +7,7 @@ const createProductRequest = {
     description: Joi.string().required(),
     longDescription: Joi.string().required(),
     image: Joi.string().required(),
-    barcode: Joi.string().required(),
+    barcode: Joi.string().optional(),
     categoryId: Joi.string().required().custom(objectId),
   }),
 };

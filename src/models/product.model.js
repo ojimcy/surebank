@@ -21,7 +21,7 @@ const productSchema = mongoose.Schema(
     },
     barcode: {
       type: String,
-      required: true,
+      required: false,
     },
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -39,12 +39,6 @@ const productSchema = mongoose.Schema(
       default: 'pending',
       required: true,
     },
-    reviewComment: {
-      type: String,
-    },
-    currentPrice: { type: Number, required: true },
-    originalPrice: { type: Number, required: true },
-    isOutOfStock: { type: Boolean },
   },
   {
     timestamps: true,

@@ -10,23 +10,20 @@ const { getMerchantByUserId } = require('./merchant.service');
  */
 const createProductRequest = async (requestData, merchantId) => {
   const merchant = await getMerchantByUserId(merchantId);
-
   // Check that the Merchant document was found
   if (!merchant) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Merchant not found');
   }
-  const checkRequest = await ProductRequest.findOne({
-    name: { $regex: `^${requestData.name}$`, $options: 'i' },
-  });
-  const checkProduct = await Product.findOne({
-    name: { $regex: `^${requestData.name}$`, $options: 'i' },
-  });
-
-  if (checkProduct || checkRequest) {
-    throw new ApiError(`Product with the name ${requestData.name} already exist or requested`);
+  // Check if a product request with the same name already exists
+  const existingProductRequest = await ProductRequest.findOne({ name: requestData.name });
+  const existingProduct = await Product.findOne({ name: requestData.name });
+  if (existingProductRequest || existingProduct) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Product request with the same name already exists');
   }
 
-  return ProductRequest.create({ ...requestData, merchantId: merchant._id });
+  // Create the product request
+  const productRequest = await ProductRequest.create({ ...requestData, merchantId });
+  return productRequest;
 };
 
 /**
@@ -147,7 +144,7 @@ const approveProductRequest = async (requestId) => {
     description: productRequest.description,
     image: productRequest.image,
     longDescription: productRequest.longDescription,
-    barcode: productRequest.barcode,
+    barcode: productRequest.barcode || '',
     categoryId: productRequest.categoryId,
     merchantId: productRequest.merchantId,
   });
