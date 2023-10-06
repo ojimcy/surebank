@@ -24,8 +24,10 @@ const userPermissions = [
   'getTotalWithdrawals',
 ];
 
+const vendorPermissions = [...userPermissions];
+
 const userRepsPermissions = [
-  ...userPermissions,
+  ...vendorPermissions,
   'manageUsers',
   'deleteUser',
   'getUsers',
@@ -74,6 +76,8 @@ const adminPermissions = [
   'updateBranch',
   'managerManager',
   'manageVendors',
+  'managePromotion',
+  'manageCollection',
 ];
 
 const superAdminPermissions = [
@@ -87,6 +91,7 @@ const superAdminPermissions = [
 
 const allRoles = {
   user: userPermissions,
+  vendor: vendorPermissions,
   userReps: userRepsPermissions,
   admin: adminPermissions,
   manager: managerPermissions,

@@ -12,3 +12,4 @@ module.exports.salesController = require('./sales.contoller');
 module.exports.reportsContoller = require('./reports.controller');
 module.exports.staffContoller = require('./staff.controller');
 module.exports.promotionsContoller = require('./promotions.controller');
+module.exports.collectionContoller = require('./collections.controller');

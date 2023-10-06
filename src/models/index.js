@@ -27,3 +27,4 @@ module.exports.SalesItem = require('./salesItem.model');
 module.exports.Expenditure = require('./expenditure.model');
 module.exports.Banner = require('./banner.model');
 module.exports.Promotion = require('./promotion.model');
+module.exports.Collection = require('./collections.model');

@@ -15,3 +15,4 @@ module.exports.salesValidation = require('./sales.validation');
 module.exports.expenditureValidation = require('./expenditure.validation');
 module.exports.staffValidation = require('./staff.validation');
 module.exports.promotionsValidation = require('./promotions.validation');
+module.exports.collectionValidation = require('./collections.validation');

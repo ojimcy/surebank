@@ -21,6 +21,7 @@ const salesRoute = require('./sales.route');
 const reportsRoute = require('./reports.route');
 const expenditureRoute = require('./expenditure.route');
 const staffRoute = require('./staff.route');
+const collectionRoute = require('./collections.route');
 
 const router = express.Router();
 
@@ -104,6 +105,10 @@ const defaultRoutes = [
   {
     path: '/staff',
     route: staffRoute,
+  },
+  {
+    path: '/collections',
+    route: collectionRoute,
   },
 ];
 

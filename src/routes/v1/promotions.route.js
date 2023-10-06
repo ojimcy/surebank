@@ -10,13 +10,13 @@ router.route('/promotions').get(auth('promotions'), promotionsController.getProm
 
 router
   .route('/banner')
-  .post(auth('createPromotions'), validate(promotionsValidation.promotions), promotionsController.createBanner);
+  .post(auth('managePromotion'), validate(promotionsValidation.promotions), promotionsController.createBanner);
 
 router
   .route('/promotions')
-  .post(auth('createPromotions'), validate(promotionsValidation.promotions), promotionsController.createPromotionSlide);
+  .post(auth('managePromotion'), validate(promotionsValidation.promotions), promotionsController.createPromotionSlide);
 
-router.route('/banner/:bannerId').post(auth('createPromotions'), promotionsController.disableBanner);
-router.route('/promotions/:slideId').post(auth('createPromotions'), promotionsController.disablePromotionSlide);
+router.route('/banner/:bannerId').post(auth('managePromotion'), promotionsController.disableBanner);
+router.route('/promotions/:slideId').post(auth('managePromotion'), promotionsController.disablePromotionSlide);
 
 module.exports = router;
