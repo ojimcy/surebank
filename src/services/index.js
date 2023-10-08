@@ -20,3 +20,4 @@ module.exports.expenditureService = require('./expenditure.service');
 module.exports.staffService = require('./staff.service');
 module.exports.promotionsService = require('./promotions.service');
 module.exports.collectionsService = require('./collections.service');
+module.exports.fileUploadService = require('./fileUpload.service');

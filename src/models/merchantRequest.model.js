@@ -27,6 +27,12 @@ const merchantRequestSchema = mongoose.Schema(
     website: {
       type: String,
     },
+    description: {
+      type: String,
+    },
+    logo: {
+      type: String,
+    },
     status: {
       type: String,
       enum: ['pending', 'approved', 'denied', 'cancelled'],

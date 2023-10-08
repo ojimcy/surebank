@@ -8,6 +8,8 @@ const createMerchantRequest = {
     storePhoneNumber: Joi.string().required(),
     email: Joi.string().required().email(),
     website: Joi.string().optional(),
+    logo: Joi.string().optional(),
+    description: Joi.string().optional(),
   }),
 };
 

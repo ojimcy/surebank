@@ -22,6 +22,7 @@ const reportsRoute = require('./reports.route');
 const expenditureRoute = require('./expenditure.route');
 const staffRoute = require('./staff.route');
 const collectionRoute = require('./collections.route');
+const fileUploadRoute = require('./fileUpload.route');
 
 const router = express.Router();
 
@@ -109,6 +110,10 @@ const defaultRoutes = [
   {
     path: '/collections',
     route: collectionRoute,
+  },
+  {
+    path: '/upload',
+    route: fileUploadRoute,
   },
 ];
 

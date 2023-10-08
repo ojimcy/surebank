@@ -7,14 +7,7 @@ const productSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    image: {
-      type: String,
-      required: true,
-    },
-    longDescription: {
-      type: String,
-      required: true,
-    },
+    images: [{ type: String, required: true }],
     description: {
       type: String,
       required: true,
@@ -28,10 +21,19 @@ const productSchema = mongoose.Schema(
       required: true,
       ref: 'Category',
     },
+    subCategoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+    },
     merchantId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: 'Merchant',
+    },
+    brand: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'Brand',
     },
     status: {
       type: String,
@@ -39,12 +41,6 @@ const productSchema = mongoose.Schema(
       default: 'pending',
       required: true,
     },
-    collections: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Collection',
-      },
-    ],
     originalPrice: {
       type: Number,
       required: true,
@@ -67,7 +63,8 @@ const productSchema = mongoose.Schema(
         },
       },
     ],
-    reviewCounts: {
+    features: [{ type: String }],
+    ratings: {
       type: Number,
     },
     variations: [
