@@ -6,7 +6,10 @@ const brandController = require('../../controllers/brand.controller');
 
 const router = express.Router();
 
-router.route('/').post(auth('manageBrand'), validate(brandValidation.createBrand), brandController.createBrand);
+router
+  .route('/')
+  .post(auth('manageBrand'), validate(brandValidation.createBrand), brandController.createBrand)
+  .get(auth('manageBrand'), validate(brandValidation.viewBrands), brandController.viewBrands);
 
 router
   .route('/:brandId')

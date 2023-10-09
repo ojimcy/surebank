@@ -21,7 +21,7 @@ const branchSchema = mongoose.Schema(
     },
     email: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
       trim: true,
       lowercase: true,
@@ -33,7 +33,7 @@ const branchSchema = mongoose.Schema(
     },
     manager: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
   },

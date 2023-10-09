@@ -41,7 +41,7 @@ const productSchema = mongoose.Schema(
       default: 'pending',
       required: true,
     },
-    originalPrice: {
+    salePrice: {
       type: Number,
       required: true,
     },
@@ -64,6 +64,9 @@ const productSchema = mongoose.Schema(
       },
     ],
     features: [{ type: String }],
+    inventory: {
+      type: Number,
+    },
     ratings: {
       type: Number,
     },
@@ -81,10 +84,6 @@ const productSchema = mongoose.Schema(
         height: Number,
       },
     },
-    stock: {
-      quantity: Number,
-      minQuantity: Number,
-    },
     discount: {
       type: Number,
       startDate: Date,
@@ -97,6 +96,12 @@ const productSchema = mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
+    },
+    isFeatured: {
+      type: Boolean,
+    },
+    isOutOfStock: {
+      type: Boolean,
     },
   },
   {

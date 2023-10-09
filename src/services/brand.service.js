@@ -16,6 +16,20 @@ const createBrand = async (brandData) => {
 };
 
 /**
+ * View brands requests with pagination
+ * @param {Object} filter - Mongo filter
+ * @param {Object} options - Query options
+ * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<Object>} Object containing brands requests and pagination information
+ */
+const viewBrands = async (filter, options) => {
+  const brands = await Brand.paginate(filter, options);
+  return brands;
+};
+
+/**
  * Delete a brand by ID
  * @param {string} brandId - Brand ID
  * @returns {Promise<Object>} The deleted brand
@@ -44,6 +58,7 @@ const updateBrand = async (brandId, updateData) => {
 
 module.exports = {
   createBrand,
+  viewBrands,
   deleteBrand,
   updateBrand,
 };

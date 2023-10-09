@@ -6,8 +6,8 @@ const createBranch = {
     name: Joi.string().required(),
     address: Joi.string().required(),
     phoneNumber: Joi.string().required(),
-    email: Joi.string().required().email(),
-    manager: Joi.string().required(),
+    email: Joi.string().optional().email(),
+    manager: Joi.string().optional(),
   }),
 };
 

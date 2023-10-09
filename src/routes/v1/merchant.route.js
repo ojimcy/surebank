@@ -9,13 +9,13 @@ const router = express.Router();
 router.route('/').get(auth('merchantRequest'), validate(merchantValidation.getMerchants), merchantController.getMerchants);
 
 router
-  .route('/:merchatnId')
-  .get(auth('merchantRequest'), validate(merchantValidation.getMerchant), merchantController.getMerchant);
-
-router
-  .route('/request')
+  .route('/requests')
   .post(auth('request'), validate(merchantValidation.createMerchantRequest), merchantController.createMerchantRequest)
   .get(auth('merchantRequest'), validate(merchantValidation.viewRequests), merchantController.viewRequests);
+
+router
+  .route('/:merchatnId')
+  .get(auth('merchantRequest'), validate(merchantValidation.getMerchant), merchantController.getMerchant);
 
 router
   .route('/:requestId/request')
@@ -30,7 +30,7 @@ router
   .get(auth('merchantRequest'), validate(merchantValidation.viewRequests), merchantController.getCancelledRequests);
 
 router
-  .route('/:requestId/deny')
+  .route('/:requestId/reject')
   .post(auth('merchantRequest'), validate(merchantValidation.denyRequest), merchantController.denyMerchantRequest);
 
 router

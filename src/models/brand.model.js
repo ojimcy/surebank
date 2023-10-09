@@ -10,6 +10,12 @@ const brandSchema = mongoose.Schema(
     },
   },
   {
+    logo: {
+      type: String,
+      required: false,
+    },
+  },
+  {
     timestamps: true,
   }
 );

@@ -11,11 +11,7 @@ const productRequestSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    longDescription: {
-      type: String,
-      required: true,
-    },
-    image: {
+    images: {
       type: String,
       required: true,
     },
@@ -29,14 +25,42 @@ const productRequestSchema = mongoose.Schema(
       required: true,
       ref: 'Merchant',
     },
+    brand: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'Brand',
+    },
     status: {
       type: String,
       enum: ['pending', 'approved', 'denied', 'cancel'],
       default: 'pending',
       required: true,
     },
-    reviewComment: {
+    salePrice: {
+      type: Number,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    features: [{ type: String }],
+    variants: [{ type: String }],
+    inventory: {
+      type: Number,
+    },
+    discount: {
+      type: Number,
+      startDate: Date,
+      endDate: Date,
+    },
+    tags: [String],
+
+    slug: {
       type: String,
+      unique: true,
+      trim: true,
+      lowercase: true,
     },
   },
   {

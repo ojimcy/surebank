@@ -3,6 +3,7 @@ const Joi = require('joi');
 const createBrand = {
   body: Joi.object().keys({
     name: Joi.string().required(),
+    logo: Joi.string().optional(),
   }),
 };
 
