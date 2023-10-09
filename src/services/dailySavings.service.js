@@ -78,6 +78,7 @@ const saveDailyContribution = async (contributionInput) => {
     throw new ApiError(400, 'Total contribution count cannot exceed 31');
   }
   const branch = await Account.findOne({ accountNumber: contributionInput.accountNumber });
+
   const newContribution = await Contribution.create({
     createdBy: contributionInput.createdBy,
     amount: contributionInput.amount,
@@ -104,7 +105,7 @@ const saveDailyContribution = async (contributionInput) => {
       date: currentDate,
       narration: 'Daily contribution',
       amount: userPackage.amountPerDay,
-      userId: userPackage.userReps,
+      userId: userPackage.createdBy,
       branchId: branch.branchId,
     };
     await addLedgerEntry(addLedgerEntryInput);
@@ -124,7 +125,7 @@ const saveDailyContribution = async (contributionInput) => {
     const depositDetail = {
       accountNumber: contributionInput.accountNumber,
       amount: userPackage.totalContribution,
-      userReps: userPackage.userReps,
+      createdBy: userPackage.createdBy,
       narration,
     };
 
@@ -142,7 +143,7 @@ const saveDailyContribution = async (contributionInput) => {
     const contributionTransaction = await AccountTransaction.create({
       accountNumber: contributionInput.accountNumber,
       amount: contributionInput.amount,
-      userReps: contributionInput.userReps,
+      createdBy: contributionInput.createdBy,
       branchId: branch.branchId,
       date: transactionDate,
       direction: 'inflow',
@@ -192,7 +193,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
     const withdrawalDetails = {
       accountNumber: withdrawal.accountNumber,
       amount: withdrawal.amount,
-      userReps: withdrawal.userReps,
+      createdBy: withdrawal.createdBy,
       narration: `Daily contribution withdrawal`,
     };
 
@@ -251,7 +252,7 @@ const getUserDailySavingsPackages = async (userId) => {
  */
 const getDailySavingsContributions = async (packageId) => {
   try {
-    return await Contribution.find({ packageId }).populate('userReps', 'firstName lastName').lean();
+    return await Contribution.find({ packageId }).populate('createdBy', 'firstName lastName').lean();
   } catch (error) {
     throw new ApiError('Failed to get contributions for the package', error);
   }
@@ -266,7 +267,7 @@ const getDailySavingsContributions = async (packageId) => {
 const getDailySavingsWithdrawals = async (accountNumber, narration) => {
   try {
     const withdrawals = await AccountTransaction.find({ accountNumber, narration })
-      .populate('userReps', 'firstName lastName')
+      .populate('createdBy', 'firstName lastName')
       .lean();
     return withdrawals;
   } catch (error) {

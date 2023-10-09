@@ -12,8 +12,8 @@ const getUserByAccountNumber = catchAsync(async (req, res) => {
 
 const makeCustomerDeposit = catchAsync(async (req, res) => {
   const depositInput = req.body;
-  const userReps = req.user._id;
-  const result = await accountTransactionService.makeCustomerDeposit({ ...depositInput, userReps });
+  const createdBy = req.user._id;
+  const result = await accountTransactionService.makeCustomerDeposit({ ...depositInput, createdBy });
   res.status(httpStatus.OK).json(result);
 });
 
@@ -64,8 +64,8 @@ const getAccountBalance = catchAsync(async (req, res) => {
 
 const makeCustomerWithdrawal = catchAsync(async (req, res) => {
   const { requestId } = req.query;
-  const userReps = req.user._id;
-  const result = await accountTransactionService.makeCustomerWithdrawal(requestId, userReps);
+  const createdBy = req.user._id;
+  const result = await accountTransactionService.makeCustomerWithdrawal(requestId, createdBy);
   res.status(httpStatus.OK).json(result);
 });
 
@@ -100,8 +100,8 @@ const rejectWithdrawalRequest = catchAsync(async (req, res) => {
 });
 
 const getAllWithdrawalRequests = catchAsync(async (req, res) => {
-  const { startDate, endDate, branchId, userReps } = req.query;
-  const result = await accountTransactionService.getAllWithdrawalRequests(startDate, endDate, branchId, userReps);
+  const { startDate, endDate, branchId, createdBy } = req.query;
+  const result = await accountTransactionService.getAllWithdrawalRequests(startDate, endDate, branchId, createdBy);
   res.status(httpStatus.OK).json(result);
 });
 

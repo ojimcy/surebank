@@ -51,7 +51,7 @@ const makeCustomerDeposit = async (depositInput) => {
         {
           accountNumber: depositInput.accountNumber,
           amount: depositInput.amount,
-          userReps: depositInput.userReps,
+          createdBy: depositInput.createdBy,
           branchId: branch.branchId,
           date: transactionDate,
           direction: 'inflow',
@@ -233,10 +233,10 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
  * @param {Date} [startDate] - Start date of the range
  * @param {Date} [endDate] - End date of the range
  * @param {string} [branchId] - Optional branch ID to filter by
- * @param {string} [userReps] - Optional userReps to filter by
+ * @param {string} [createdBy] - Optional createdBy to filter by
  * @returns {Promise<Array>} Array of ds withdrawals
  */
-const getAllWithdrawalRequests = async (startDate, endDate, branchId, userReps) => {
+const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy) => {
   try {
     const query = {};
     // Optional date range filtering
@@ -253,16 +253,16 @@ const getAllWithdrawalRequests = async (startDate, endDate, branchId, userReps) 
       query.branchId = branchId;
     }
 
-    // Optional userReps filtering
-    if (userReps) {
-      query.userReps = userReps;
+    // Optional createdBy filtering
+    if (createdBy) {
+      query.createdBy = createdBy;
     }
     query.direction = 'pending';
     query.narration = 'Request Cash';
     const withdrawalRequests = await AccountTransaction.find(query)
       .populate([
         {
-          path: 'userReps',
+          path: 'createdBy',
           select: 'firstName lastName',
         },
         {
@@ -315,7 +315,7 @@ const getWithdrawalRequestById = async (requestId) => {
 /**
  * Make withdrawal for a customer
  * @param {string} requestId - Withdrawal request ID
- * @param {string} userReps - User fulfilling the request
+ * @param {string} createdBy - User fulfilling the request
  * @param {Object} session - Mongoose session
  * @returns {Promise<Object>} Result of the operation
  */
@@ -333,7 +333,7 @@ const makeCustomerWithdrawal = async (requestId) => {
     }
     const { accountNumber } = withdrawalRequest;
     const { amount } = withdrawalRequest;
-    const { userReps } = withdrawalRequest;
+    const { createdBy } = withdrawalRequest;
     const accountBalance = await getAccountBalance(accountNumber);
 
     if (accountBalance < amount) {
@@ -345,7 +345,7 @@ const makeCustomerWithdrawal = async (requestId) => {
     const fulfilledWithdrawal = await AccountTransaction.create(
       [
         {
-          userReps: withdrawalRequest.userReps,
+          createdBy: withdrawalRequest.createdBy,
           branchId: withdrawalRequest.branchId,
           narration: withdrawalRequest.narration,
           direction: 'outflow',
@@ -358,7 +358,7 @@ const makeCustomerWithdrawal = async (requestId) => {
     );
     // Update the withdrawal request
     withdrawalRequest.narration = 'fulfilled';
-    withdrawalRequest.userReps = userReps;
+    withdrawalRequest.createdBy = createdBy;
     await withdrawalRequest.save();
 
     // Deduct the withdrawn amount from the account
@@ -420,11 +420,11 @@ const getAccountTransactions = async (accountNumber, page, limit) => {
   const transactions = await AccountTransaction.find({ accountNumber })
     .populate([
       {
-        path: 'createdBy',
+        path: 'userReps',
         select: 'firstName lastName',
       },
       {
-        path: 'userReps',
+        path: 'createdBy',
         select: 'firstName lastName',
       },
     ])
@@ -439,10 +439,10 @@ const getAccountTransactions = async (accountNumber, page, limit) => {
  * @param {Date} [startDate] - Start date of the range
  * @param {Date} [endDate] - End date of the range
  * @param {string} [branchId] - Optional branch ID to filter by
- * @param {string} [userReps] - Optional userReps to filter by
+ * @param {string} [createdBy] - Optional createdBy to filter by
  * @returns {Promise<Array>} Array of ds withdrawals
  */
-const getCustomerwithdrawals = async (startDate, endDate, branchId, userReps, accountNumber) => {
+const getCustomerwithdrawals = async (startDate, endDate, branchId, createdBy, accountNumber) => {
   try {
     const query = {};
 
@@ -461,8 +461,8 @@ const getCustomerwithdrawals = async (startDate, endDate, branchId, userReps, ac
       query.branchId = branchId;
     }
 
-    if (userReps) {
-      query.userReps = userReps;
+    if (createdBy) {
+      query.createdBy = createdBy;
     }
 
     if (accountNumber) {
@@ -473,7 +473,7 @@ const getCustomerwithdrawals = async (startDate, endDate, branchId, userReps, ac
     const withdrawals = await AccountTransaction.find(query)
       .populate([
         {
-          path: 'userReps',
+          path: 'createdBy',
           select: 'firstName lastName',
         },
         {

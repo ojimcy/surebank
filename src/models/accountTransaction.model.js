@@ -31,7 +31,7 @@ const accountTransactionSchema = mongoose.Schema(
     userReps: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
