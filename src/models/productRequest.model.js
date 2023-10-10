@@ -11,10 +11,12 @@ const productRequestSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    images: {
-      type: String,
-      required: true,
-    },
+    images: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
@@ -36,7 +38,7 @@ const productRequestSchema = mongoose.Schema(
       default: 'pending',
       required: true,
     },
-    salePrice: {
+    salesPrice: {
       type: Number,
       required: true,
     },

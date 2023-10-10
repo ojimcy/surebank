@@ -41,7 +41,7 @@ const productSchema = mongoose.Schema(
       default: 'pending',
       required: true,
     },
-    salePrice: {
+    salesPrice: {
       type: Number,
       required: true,
     },
@@ -99,9 +99,15 @@ const productSchema = mongoose.Schema(
     },
     isFeatured: {
       type: Boolean,
+      default: false,
     },
     isOutOfStock: {
       type: Boolean,
+      default: false,
+    },
+    isSbAvailable: {
+      type: Boolean,
+      default: true,
     },
   },
   {

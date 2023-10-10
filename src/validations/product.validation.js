@@ -5,7 +5,7 @@ const createProductRequest = {
   body: Joi.object().keys({
     name: Joi.string().required(),
     description: Joi.string().required(),
-    images: Joi.string().required(),
+    images: Joi.array().required(),
     barcode: Joi.string().optional(),
     categoryId: Joi.string().required().custom(objectId),
     subCategoryId: Joi.string().optional().custom(objectId),

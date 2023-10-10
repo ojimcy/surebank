@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const httpStatus = require('http-status');
-const { Account, User, AccountTransaction } = require('../models');
+const { Account, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -27,9 +27,7 @@ const getUserByAccountNumber = async (accountNumber) => {
   if (!accountDetail) {
     throw new Error('Account number does not exist');
   }
-  const { userId } = accountDetail;
-  const userDetail = await User.findById(userId);
-  return userDetail;
+  return accountDetail;
 };
 
 /**

@@ -119,11 +119,11 @@ const makeWithdrawal = async (withdrawalInput, userId, userReps) => {
   session.startTransaction();
 
   try {
-    const confirmAccountNumber = await getUserByAccountNumber(withdrawalInput.accountNumber);
-    if (!confirmAccountNumber) {
+    const userAccount = await getUserByAccountNumber(withdrawalInput.accountNumber);
+    if (!userAccount) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Account number does not exist.');
     }
-    if (confirmAccountNumber._id.toString() !== userId) {
+    if (userAccount.userId.toString() !== userId) {
       throw new ApiError(httpStatus.NOT_FOUND, "You can't make this transaction");
     }
     const accountBalance = await getAccountBalance(withdrawalInput.accountNumber);
