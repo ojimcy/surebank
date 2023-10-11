@@ -8,7 +8,7 @@ const sbPackageSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'Products',
+    ref: 'Product',
   },
   targetAmount: {
     type: Number,

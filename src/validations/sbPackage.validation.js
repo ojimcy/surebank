@@ -34,8 +34,22 @@ const makeSbWithdrawal = {
   }),
 };
 
+const getPackageById = {
+  params: Joi.object().keys({
+    packageId: Joi.string().required().custom(objectId),
+  }),
+};
+
+const getUserSbPackages = {
+  query: Joi.object().keys({
+    userId: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
   makeSbWithdrawal,
+  getPackageById,
+  getUserSbPackages,
 };

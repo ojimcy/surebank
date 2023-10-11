@@ -8,7 +8,8 @@ const router = express.Router();
 
 router
   .route('/package')
-  .post(auth('createPackage'), validate(sbPackageValidation.createSbPackage), sbPackageController.createSbPackage);
+  .post(auth('createPackage'), validate(sbPackageValidation.createSbPackage), sbPackageController.createSbPackage)
+  .get(auth('userPackage'), validate(sbPackageValidation.getUserSbPackages), sbPackageController.getUserSbPackages);
 
 router
   .route('/make-contribution')
@@ -21,5 +22,9 @@ router
 router
   .route('/withdraw')
   .post(auth('sbWithdrawal'), validate(sbPackageValidation.makeSbWithdrawal), sbPackageController.makeSbWithdrawal);
+
+router
+  .route('/package/:packageId')
+  .get(auth('getPackage'), validate(sbPackageValidation.getPackageById), sbPackageController.getPackageById);
 
 module.exports = router;

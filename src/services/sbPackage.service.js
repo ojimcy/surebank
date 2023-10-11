@@ -172,7 +172,7 @@ const makeSbWithdrawal = async (withdrawal) => {
     );
 
     if (!userPackage) {
-      throw new ApiError(404, 'User does not have an active daily savings package');
+      throw new ApiError(404, 'User does not have an active Package');
     }
 
     if (userPackage.totalContribution < withdrawal.amount) {
@@ -215,8 +215,40 @@ const makeSbWithdrawal = async (withdrawal) => {
   }
 };
 
+/**
+ * Get a single Package by ID
+ * @param {string} packageId - Package ID
+ * @returns {Promise<Object>} Package
+ */
+const getPackageById = async (packageId) => {
+  const userPackage = await SbPackage.findById(packageId).populate({
+    path: 'product',
+    select: ['name', 'images', 'price', 'salesPrice'],
+  });
+  if (!userPackage) {
+    throw new ApiError(404, 'Package not found!!!');
+  }
+  return userPackage;
+};
+
+/**
+ * Get the user's daily savings packages
+ * @param {string} userId - User ID
+ * @returns {Promise<Array>} Array of user's daily savings packages
+ */
+const getUserSbPackages = async (userId) => {
+  const userPackages = await SbPackage.find({
+    userId,
+    status: 'open',
+  });
+
+  return userPackages;
+};
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
   makeSbWithdrawal,
+  getPackageById,
+  getUserSbPackages,
 };

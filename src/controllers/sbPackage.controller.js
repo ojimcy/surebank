@@ -25,8 +25,22 @@ const makeSbWithdrawal = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(withdrawalDetails);
 });
 
+const getPackageById = catchAsync(async (req, res) => {
+  const { packageId } = req.params;
+  const userPackage = await sbPackageService.getPackageById(packageId);
+  res.status(httpStatus.OK).json(userPackage);
+});
+
+const getUserSbPackages = catchAsync(async (req, res) => {
+  const { userId } = req.query;
+  const userPackage = await sbPackageService.getUserSbPackages(userId);
+  res.status(httpStatus.OK).json(userPackage);
+});
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
   makeSbWithdrawal,
+  getPackageById,
+  getUserSbPackages,
 };
