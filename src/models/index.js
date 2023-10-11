@@ -30,3 +30,4 @@ module.exports.Promotion = require('./promotion.model');
 module.exports.Collection = require('./collections.model');
 module.exports.ProductCollection = require('./productCollection.model');
 module.exports.FileUpload = require('./fileUpload.model');
+module.exports.SbPackage = require('./sbPackage.model');

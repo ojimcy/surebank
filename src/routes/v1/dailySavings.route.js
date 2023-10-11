@@ -9,7 +9,7 @@ const router = express.Router();
 router
   .route('/package')
   .post(
-    auth('createDsPackage'),
+    auth('createPackage'),
     validate(dailySavingsValidation.createDailySavingsPackage),
     dailySavingsController.createDailySavingsPackage
   )

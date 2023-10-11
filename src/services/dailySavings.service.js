@@ -11,8 +11,8 @@ const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
  * @returns {Promise<Object>} Result of the operation
  */
 const createDailySavingsPackage = async (dailyInput) => {
-  const confirmAccountNumber = await getUserByAccountNumber(dailyInput.accountNumber);
-  if (!confirmAccountNumber) {
+  const userAccount = await getUserByAccountNumber(dailyInput.accountNumber);
+  if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
   const userPackageExist = await Package.findOne({
@@ -27,7 +27,7 @@ const createDailySavingsPackage = async (dailyInput) => {
   const branch = await Account.findOne({ accountNumber: dailyInput.accountNumber });
   const createdPackage = await Package.create({
     ...dailyInput,
-    userId: confirmAccountNumber._id,
+    userId: userAccount.userId,
     branchId: branch.branchId,
   });
 
@@ -40,8 +40,8 @@ const createDailySavingsPackage = async (dailyInput) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const saveDailyContribution = async (contributionInput) => {
-  const confirmAccountNumber = await getUserByAccountNumber(contributionInput.accountNumber);
-  if (!confirmAccountNumber) {
+  const userAccount = await getUserByAccountNumber(contributionInput.accountNumber);
+  if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
 
@@ -224,7 +224,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
  * @returns {Promise<Object>} Daily savings package
  */
 const getDailySavingsPackageById = async (packageId) => {
-  const userPackage = await Package.findById(packageId).populate('userId', 'firstName lastName');
+  const userPackage = await Package.findById(packageId);
   if (!userPackage) {
     throw new ApiError(404, 'Daily savings package not found');
   }

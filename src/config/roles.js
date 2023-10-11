@@ -16,13 +16,14 @@ const userPermissions = [
   'getUserAccount',
   'userPackage',
   'createAccount',
-  'createDsPackage',
+  'createPackage',
   'getPackage',
   'manageContributions',
   'getCustomerWithdrawals',
   'requestCash',
   'getTotalWithdrawals',
   'stores',
+  'makeContribution',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];
@@ -67,6 +68,7 @@ const managerPermissions = [
   'updateUser',
   'deleteUser',
   'manageStaff',
+  'sbWithdrawal',
 ];
 
 const adminPermissions = [

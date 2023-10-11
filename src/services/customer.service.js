@@ -62,8 +62,8 @@ const makeDeposit = async (depositInput) => {
   session.startTransaction();
 
   try {
-    const confirmAccountNumber = await getUserByAccountNumber(depositInput.accountNumber);
-    if (!confirmAccountNumber) {
+    const userAccount = await getUserByAccountNumber(depositInput.accountNumber);
+    if (!userAccount) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Account number does not exist.');
     }
 

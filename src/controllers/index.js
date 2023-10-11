@@ -14,3 +14,4 @@ module.exports.staffContoller = require('./staff.controller');
 module.exports.promotionsContoller = require('./promotions.controller');
 module.exports.collectionContoller = require('./collections.controller');
 module.exports.fileUploadContoller = require('./fileUpload.controller');
+module.exports.sbPackageContoller = require('./sbPackage.controller');

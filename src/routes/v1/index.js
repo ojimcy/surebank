@@ -23,6 +23,7 @@ const expenditureRoute = require('./expenditure.route');
 const staffRoute = require('./staff.route');
 const collectionRoute = require('./collections.route');
 const fileUploadRoute = require('./fileUpload.route');
+const sbPackageRoute = require('./sbPackage.route');
 
 const router = express.Router();
 
@@ -114,6 +115,10 @@ const defaultRoutes = [
   {
     path: '/upload',
     route: fileUploadRoute,
+  },
+  {
+    path: '/daily-savings/sb',
+    route: sbPackageRoute,
   },
 ];
 
