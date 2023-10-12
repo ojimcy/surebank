@@ -20,6 +20,8 @@ const makeDailyContribution = {
   }),
   body: Joi.object().keys({
     amount: Joi.number().required(),
+    accountNumber: Joi.number().required(),
+    product: Joi.string().required().custom(objectId),
   }),
 };
 

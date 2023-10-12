@@ -33,6 +33,7 @@ const createSbPackage = async (sbPackageData) => {
 
   const savingsBuyingPackage = await SbPackage.create({
     ...sbPackageData,
+    userId: userAccount.userId,
     targetAmount: product.price,
     image: product.images[0],
     amountPerDay,
@@ -42,11 +43,28 @@ const createSbPackage = async (sbPackageData) => {
   return savingsBuyingPackage;
 };
 
-const makeDailyContribution = async (contributionInput, packageId) => {
-  const userPackage = await SbPackage.findOne({ _id: packageId, status: 'open' });
-  if (!userPackage) {
-    throw new ApiError(400, 'Customer does not have an active package');
+/**
+ * Make daily contribution
+ * @param {Object} contributionInput - Contribution input
+ * @returns {Promise<Object>} Result of the operation
+ */
+
+const makeDailyContribution = async (contributionInput) => {
+  const userAccount = await getUserByAccountNumber(contributionInput.accountNumber);
+  if (!userAccount) {
+    throw new ApiError(404, 'Account number does not exist.');
   }
+  console.log(userAccount);
+  const userPackage = await SbPackage.findOne({
+    accountNumber: contributionInput.accountNumber,
+    status: 'open',
+    product: contributionInput.product,
+  });
+
+  if (!userPackage) {
+    throw new ApiError(409, 'Customer does not have an active package');
+  }
+
   const userPackageId = userPackage._id;
   const contributionDaysCount = contributionInput.amount / userPackage.amountPerDay;
   const currentDate = new Date().getTime();
@@ -60,11 +78,11 @@ const makeDailyContribution = async (contributionInput, packageId) => {
     throw new ApiError(403, 'This package has been closed');
   }
 
+  // Calculate the new total count by adding contributionDaysCount to the existing value
   const totalCount = userPackage.totalCount + contributionDaysCount;
-  const totalContribution = userPackage.totalContribution + contributionInput.amount;
 
-  if (totalContribution > userPackage.targetAmount) {
-    throw new ApiError(400, 'Total contribution cannot exceed the target amount');
+  if (totalCount > 31) {
+    throw new ApiError(400, 'Total contribution count cannot exceed 31');
   }
 
   const branch = await Account.findOne({
@@ -83,10 +101,10 @@ const makeDailyContribution = async (contributionInput, packageId) => {
     narration: `SB Daily contribution`,
   });
 
-  userPackage.totalContribution = totalContribution;
+  userPackage.totalContribution = contributionInput.amount;
 
   if (!userPackage.hasBeenCharged) {
-    userPackage.totalContribution -= amountPerDay;
+    userPackage.totalContribution -= userPackage.amountPerDay;
 
     await SbPackage.findByIdAndUpdate(userPackageId, {
       hasBeenCharged: true,

@@ -10,6 +10,11 @@ const sbPackageSchema = new mongoose.Schema({
     required: true,
     ref: 'Product',
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
   targetAmount: {
     type: Number,
     required: true,
@@ -38,7 +43,7 @@ const sbPackageSchema = new mongoose.Schema({
   },
   totalContribution: {
     type: Number,
-    required: true,
+    required: false,
   },
   totalCount: {
     type: Number,

@@ -13,7 +13,7 @@ const makeDailyContribution = catchAsync(async (req, res) => {
   const contributionInput = req.body;
   const createdBy = req.user._id;
   const packageId = req.query;
-  const result = await sbPackageService.makeDailyContribution({ ...contributionInput, packageId, createdBy });
+  const result = await sbPackageService.makeDailyContribution({ ...contributionInput, createdBy, packageId });
   res.status(httpStatus.OK).json(result);
 });
 

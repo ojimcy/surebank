@@ -44,7 +44,6 @@ const saveDailyContribution = async (contributionInput) => {
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
-
   const userPackage = await Package.findOne({
     accountNumber: contributionInput.accountNumber,
     status: 'open',
@@ -77,6 +76,7 @@ const saveDailyContribution = async (contributionInput) => {
   if (totalCount > 31) {
     throw new ApiError(400, 'Total contribution count cannot exceed 31');
   }
+
   const branch = await Account.findOne({ accountNumber: contributionInput.accountNumber });
 
   const newContribution = await Contribution.create({
