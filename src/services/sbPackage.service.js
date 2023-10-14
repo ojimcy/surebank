@@ -35,7 +35,7 @@ const createSbPackage = async (sbPackageData) => {
     ...sbPackageData,
     userId: userAccount.userId,
     targetAmount: product.price,
-    image: product.images[0],
+    image: product.images[1],
     amountPerDay,
     startDate,
   });
@@ -54,7 +54,6 @@ const makeDailyContribution = async (contributionInput) => {
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
-  console.log(userAccount);
   const userPackage = await SbPackage.findOne({
     accountNumber: contributionInput.accountNumber,
     status: 'open',
@@ -258,6 +257,9 @@ const getUserSbPackages = async (userId) => {
   const userPackages = await SbPackage.find({
     userId,
     status: 'open',
+  }).populate({
+    path: 'product',
+    select: ['name', 'images', 'price', 'salesPrice'],
   });
 
   return userPackages;

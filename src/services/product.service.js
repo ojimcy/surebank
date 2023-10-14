@@ -186,17 +186,26 @@ const rejectProduct = async (requestId, reviewComment) => {
 };
 
 /**
- * View product with pagination
+ * View products with pagination
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
  * @param {number} [options.page] - Current page (default = 1)
- * @returns {Promise<Object>} Object containing product and pagination information
+ * @returns {Promise<Object>} Object containing products and pagination information
  */
-const viewProduct = async (filter, options) => {
+const viewProducts = async (filter, options) => {
   const product = await Product.paginate(filter, options);
   return product;
+};
+
+/**
+ * Get product by id
+ * @param {ObjectId} id
+ * @returns {Promise<Product>}
+ */
+const getProductById = async (id) => {
+  return Product.findById(id);
 };
 
 /**
@@ -290,7 +299,8 @@ module.exports = {
   createProductCatalogue,
   approveProductRequest,
   rejectProduct,
-  viewProduct,
+  viewProducts,
+  getProductById,
   updateProduct,
   deleteProduct,
   addProductToCollection,

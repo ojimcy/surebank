@@ -86,13 +86,19 @@ const rejectProduct = {
   }),
 };
 
-const viewProduct = {
+const viewProducts = {
   query: Joi.object().keys({
     name: Joi.string(),
     role: Joi.string(),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
+  }),
+};
+
+const viewProduct = {
+  params: Joi.object().keys({
+    productId: Joi.string().required().custom(objectId),
   }),
 };
 
@@ -152,6 +158,7 @@ module.exports = {
   createProductCatalogue,
   approveProductRequest,
   rejectProduct,
+  viewProducts,
   viewProduct,
   deleteProduct,
   updateProduct,

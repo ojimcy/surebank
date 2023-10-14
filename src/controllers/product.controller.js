@@ -55,11 +55,16 @@ const rejectProduct = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(updatedRequest);
 });
 
-const viewProduct = catchAsync(async (req, res) => {
+const viewProducts = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['name', 'role']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  const result = await productService.viewProduct(filter, options);
+  const result = await productService.viewProducts(filter, options);
   res.status(httpStatus.OK).send(result);
+});
+
+const viewProduct = catchAsync(async (req, res) => {
+  const product = await productService.getProductById(req.params.productId);
+  res.status(httpStatus.OK).send(product);
 });
 
 const updateProduct = catchAsync(async (req, res) => {
@@ -102,6 +107,7 @@ module.exports = {
   createProductCatalogue,
   approveProductRequest,
   rejectProduct,
+  viewProducts,
   viewProduct,
   updateProduct,
   deleteProduct,

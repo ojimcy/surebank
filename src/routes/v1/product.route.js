@@ -5,10 +5,11 @@ const productValidation = require('../../validations/product.validation');
 const productController = require('../../controllers/product.controller');
 
 const router = express.Router();
-router.route('/').get(auth('getProducts'), validate(productValidation.viewProduct), productController.viewProduct);
+router.route('/').get(auth('getProducts'), validate(productValidation.viewProducts), productController.viewProducts);
 
 router
   .route('/:productId')
+  .get(auth('getProducts'), validate(productValidation.viewProduct), productController.viewProduct)
   .patch(auth('manageProduct'), validate(productValidation.updateProduct), productController.updateProduct)
   .delete(auth('manageProduct'), validate(productValidation.deleteProduct), productController.deleteProduct);
 
