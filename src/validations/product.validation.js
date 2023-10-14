@@ -5,18 +5,14 @@ const createProductRequest = {
   body: Joi.object().keys({
     name: Joi.string().required(),
     description: Joi.string().required(),
-    images: Joi.array().required(),
     barcode: Joi.string().optional(),
     categoryId: Joi.string().required().custom(objectId),
     subCategoryId: Joi.string().optional().custom(objectId),
     brand: Joi.string().required().custom(objectId),
-    salesPrice: Joi.number().required(),
-    price: Joi.number().required(),
     features: Joi.string().optional(),
     variations: Joi.string().optional(),
     shipping: Joi.string().optional(),
     inventory: Joi.string().optional(),
-    discount: Joi.number().optional(),
     tags: Joi.string().optional(),
     slug: Joi.string().optional(),
   }),
@@ -60,14 +56,13 @@ const createProductCatalogue = {
   body: Joi.object().keys({
     productId: Joi.string().required().custom(objectId),
     merchantId: Joi.string().required().custom(objectId),
-    image: Joi.string().required(),
-    title: Joi.string().required(),
+    featuredImage: Joi.string().required(),
+    images: Joi.string().required(),
+    name: Joi.string().required(),
     description: Joi.string().required(),
-    costPrice: Joi.number().required(),
-    originalPrice: Joi.number().required(),
+    salesPrice: Joi.number().required(),
     price: Joi.number().required(),
     quantity: Joi.number().required(),
-    text: Joi.string().required(),
   }),
 };
 
@@ -82,7 +77,7 @@ const rejectProduct = {
     requestId: Joi.string().custom(objectId),
   }),
   body: Joi.object().keys({
-    reviewComment: Joi.string().required(),
+    reasonForRejection: Joi.string().required(),
   }),
 };
 

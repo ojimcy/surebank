@@ -11,21 +11,17 @@ const productRequestSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    images: [
-      {
-        type: String,
-        required: true,
-      },
-    ],
+    reasonForRejection: {
+      type: String,
+    },
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: 'Category',
     },
-    merchantId: {
+    subCategoryId: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: 'Merchant',
+      ref: 'Category',
     },
     brand: {
       type: mongoose.Schema.Types.ObjectId,
@@ -36,14 +32,6 @@ const productRequestSchema = mongoose.Schema(
       type: String,
       enum: ['pending', 'approved', 'denied', 'cancel'],
       default: 'pending',
-      required: true,
-    },
-    salesPrice: {
-      type: Number,
-      required: true,
-    },
-    price: {
-      type: Number,
       required: true,
     },
     features: [{ type: String }],

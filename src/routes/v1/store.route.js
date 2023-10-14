@@ -7,13 +7,13 @@ const storeController = require('../../controllers/store.controller');
 const router = express.Router();
 
 router
-  .route('/category')
+  .route('/categories')
   .post(auth('manageCategory'), validate(storeValidation.createCategory), storeController.createCategory)
   .get(storeController.getCategories);
 
 router
-  .route('/brand')
+  .route('/brands')
   .post(auth('manageBrands'), validate(storeValidation.createCategory), storeController.createBrand)
-  .get(storeController.getCategories);
+  .get(storeController.getBrands);
 
 module.exports = router;

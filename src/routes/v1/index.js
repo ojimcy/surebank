@@ -73,11 +73,11 @@ const defaultRoutes = [
     route: dailySavingsRoute,
   },
   {
-    path: '/merchant',
+    path: '/merchants',
     route: merchantRoute,
   },
   {
-    path: '/product',
+    path: '/products',
     route: productRoute,
   },
   {

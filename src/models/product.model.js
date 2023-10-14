@@ -24,11 +24,6 @@ const productSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',
     },
-    merchantId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: 'Merchant',
-    },
     brand: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
@@ -74,11 +69,6 @@ const productSchema = mongoose.Schema(
         width: Number,
         height: Number,
       },
-    },
-    discount: {
-      type: Number,
-      startDate: Date,
-      endDate: Date,
     },
     tags: [String],
 

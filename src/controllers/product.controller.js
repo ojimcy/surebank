@@ -50,8 +50,8 @@ const approveProductRequest = catchAsync(async (req, res) => {
 
 const rejectProduct = catchAsync(async (req, res) => {
   const { requestId } = req.params;
-  const { reviewComment } = req.body;
-  const updatedRequest = await productService.rejectProduct(requestId, reviewComment);
+  const { reasonForRejection } = req.body;
+  const updatedRequest = await productService.rejectProduct(requestId, reasonForRejection);
   res.status(httpStatus.OK).json(updatedRequest);
 });
 

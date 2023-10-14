@@ -142,20 +142,16 @@ const approveProductRequest = async (requestId) => {
     status: 'approved',
     name: productRequest.name,
     description: productRequest.description,
-    images: productRequest.images,
     barcode: productRequest.barcode || '',
     categoryId: productRequest.categoryId,
     subCategoryId: productRequest.subCategoryId,
     brand: productRequest.brand,
     merchantId: productRequest.merchantId,
     collections: productRequest.collections,
-    salesPrice: productRequest.salesPrice,
-    price: productRequest.price,
     variations: productRequest.variations,
     features: productRequest.features,
     shipping: productRequest.shipping,
     stock: productRequest.stock,
-    discount: productRequest.discount,
     tags: productRequest.tags,
     slug: productRequest.slug,
   });
@@ -171,7 +167,7 @@ const approveProductRequest = async (requestId) => {
  * @param {ObjectId} requestId - ID of the product request to be rejected
  * @returns {Promise<Object>} Result of the operation
  */
-const rejectProduct = async (requestId, reviewComment) => {
+const rejectProduct = async (requestId, reasonForRejection) => {
   const productRequest = await ProductRequest.findById(requestId);
   if (!productRequest) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product request not found');
@@ -179,7 +175,7 @@ const rejectProduct = async (requestId, reviewComment) => {
 
   const updatedRequest = await ProductRequest.findByIdAndUpdate(
     requestId,
-    { status: 'denied', reviewComment },
+    { status: 'rejected', reasonForRejection },
     { new: true }
   );
   return updatedRequest;
