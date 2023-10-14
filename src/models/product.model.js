@@ -7,7 +7,6 @@ const productSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    images: [{ type: String, required: true }],
     description: {
       type: String,
       required: true,
@@ -39,14 +38,6 @@ const productSchema = mongoose.Schema(
       type: String,
       enum: ['pending', 'approved', 'denied', 'cancel'],
       default: 'pending',
-      required: true,
-    },
-    salesPrice: {
-      type: Number,
-      required: true,
-    },
-    price: {
-      type: Number,
       required: true,
     },
     reviews: [

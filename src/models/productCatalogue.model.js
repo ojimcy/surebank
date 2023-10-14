@@ -13,10 +13,11 @@ const productCatalogueSchema = mongoose.Schema(
       required: true,
       ref: 'Merchant',
     },
-    image: {
+    featuredImage: {
       type: String,
       required: true,
     },
+    images: [{ type: String, required: true }],
     title: {
       type: String,
       required: true,
