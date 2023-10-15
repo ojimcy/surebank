@@ -8,7 +8,7 @@ const handleFileUpload = catchAsync(async (req, res) => {
 
   const { originalname, filename } = req.file;
 
-  const filePath = `/uploads/${filename}`; // Adjust the base URL accordingly
+  const filePath = `/uploads/${filename}`;
 
   await uploadFile(originalname, filename, filePath);
 

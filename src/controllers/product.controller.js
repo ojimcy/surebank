@@ -11,7 +11,7 @@ const createProductRequest = catchAsync(async (req, res) => {
 });
 
 const viewProductRequests = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['status', 'role']);
+  const filter = pick(req.query, ['name', 'slug']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await productService.viewProductRequests(filter, options);
   res.status(httpStatus.OK).send(result);
@@ -38,7 +38,8 @@ const deleteProductRequest = catchAsync(async (req, res) => {
 
 const createProductCatalogue = catchAsync(async (req, res) => {
   const productData = req.body;
-  const productCatalogue = await productService.createProductCatalogue(productData);
+  const userId = req.user._id;
+  const productCatalogue = await productService.createProductCatalogue(productData, userId);
   res.status(httpStatus.CREATED).send(productCatalogue);
 });
 
@@ -99,6 +100,32 @@ const getProductsByCollectionSlug = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(products);
 });
 
+const getProductCatalogue = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['title', 'slug']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const result = await productService.getProductCatalogue(filter, options);
+  res.status(httpStatus.OK).send(result);
+});
+
+const viewMyProductCatalogue = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const product = await productService.viewMyProductCatalogue(userId);
+  res.status(httpStatus.OK).send(product);
+});
+
+const deleteProductCatalogue = catchAsync(async (req, res) => {
+  const { productId } = req.params;
+  const userId = req.user._id;
+  const deletedProduct = await productService.deleteProductCatalogue(productId, userId);
+
+  res.status(httpStatus.OK).send(deletedProduct);
+});
+
+const viewProductCatalogue = catchAsync(async (req, res) => {
+  const product = await productService.getProductCatalogueById(req.params.productId);
+  res.status(httpStatus.OK).send(product);
+});
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
@@ -113,4 +140,8 @@ module.exports = {
   deleteProduct,
   addProductToCollection,
   getProductsByCollectionSlug,
+  getProductCatalogue,
+  viewMyProductCatalogue,
+  deleteProductCatalogue,
+  viewProductCatalogue,
 };

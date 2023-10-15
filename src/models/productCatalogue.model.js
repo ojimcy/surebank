@@ -13,20 +13,20 @@ const productCatalogueSchema = mongoose.Schema(
       required: true,
       ref: 'Merchant',
     },
+    title: {
+      type: String,
+      required: true,
+    },
     featuredImage: {
       type: String,
       required: true,
     },
     images: [{ type: String, required: true }],
-    title: {
-      type: String,
-      required: true,
-    },
     description: {
       type: String,
       required: true,
     },
-    originalPrice: {
+    salesPrice: {
       type: Number,
       required: true,
     },
@@ -62,23 +62,18 @@ const productCatalogueSchema = mongoose.Schema(
         height: Number,
       },
     },
-    stock: {
-      quantity: Number,
-      minQuantity: Number,
+    quantity: {
+      type: Number,
+      required: true,
     },
+
     discount: {
       type: Number,
       startDate: Date,
       endDate: Date,
     },
-    tags: [String],
 
-    slug: {
-      type: String,
-      unique: true,
-      trim: true,
-      lowercase: true,
-    },
+    tags: [String],
   },
   {
     timestamps: true,

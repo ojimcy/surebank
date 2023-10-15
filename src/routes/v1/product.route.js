@@ -8,6 +8,28 @@ const router = express.Router();
 router.route('/').get(auth('getProducts'), validate(productValidation.viewProducts), productController.viewProducts);
 
 router
+  .route('/catalogue')
+  .get(auth('productCatalogue'), validate(productValidation.viewProducts), productController.getProductCatalogue)
+  .post(
+    auth('productCatalogue'),
+    validate(productValidation.createProductCatalogue),
+    productController.createProductCatalogue
+  );
+
+router
+  .route('/catalogue/my')
+  .get(auth('productCatalogue'), validate(productValidation.viewProducts), productController.viewMyProductCatalogue);
+
+router
+  .route('/catalogue/:productId')
+  .delete(
+    auth('productCatalogue'),
+    validate(productValidation.deleteProductCatalogue),
+    productController.deleteProductCatalogue
+  )
+  .get(auth('productCatalogue'), validate(productValidation.viewProduct), productController.viewProductCatalogue);
+
+router
   .route('/request')
   .post(auth('productRequest'), validate(productValidation.createProductRequest), productController.createProductRequest)
   .get(auth('productRequest'), validate(productValidation.viewProductRequests), productController.viewProductRequests);
@@ -34,14 +56,6 @@ router
 router
   .route('/request/:requestId/reject')
   .post(auth('manageProductRequest'), validate(productValidation.rejectProduct), productController.rejectProduct);
-
-router
-  .route('/cat/create')
-  .post(
-    auth('productCatalogue'),
-    validate(productValidation.createProductCatalogue),
-    productController.createProductCatalogue
-  );
 
 router
   .route('/collections')

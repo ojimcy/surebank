@@ -95,21 +95,30 @@ const deleteProductRequest = async (requestId, merchantId) => {
  * @param {Object} productData - Product catalogue data
  * @returns {Promise<Object>} Result of the operation
  */
-const createProductCatalogue = async (productData) => {
+const createProductCatalogue = async (productData, userId) => {
   // Check if the product exists and is available
   const product = await Product.findById(productData.productId);
-  if (!product || product.quantity === 0) {
+  if (!product) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Product not found or not available');
   }
 
+  // get merchant id
+  const merchant = await getMerchantByUserId(userId);
+  if (!merchant) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Merchant not found, please apply');
+  }
+
   // Check if the title is unique
-  const existingProductCatalogue = await ProductCatalogue.findOne({ title: productData.title });
+  const existingProductCatalogue = await ProductCatalogue.findOne({
+    title: productData.title,
+    merchantId: merchant._id,
+  });
   if (existingProductCatalogue) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Product with the same title already exists in the catalogue');
   }
 
   // Create the product catalogue entry
-  const productCatalogue = await ProductCatalogue.create(productData);
+  const productCatalogue = await ProductCatalogue.create({ ...productData, merchantId: merchant._id });
 
   return productCatalogue;
 };
@@ -201,7 +210,11 @@ const viewProducts = async (filter, options) => {
  * @returns {Promise<Product>}
  */
 const getProductById = async (id) => {
-  return Product.findById(id);
+  const product = await Product.findById(id);
+  if (!product) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
+  }
+  return product;
 };
 
 /**
@@ -287,6 +300,55 @@ const getProductsByCollectionSlug = async (collectionSlug) => {
   return products;
 };
 
+const getProductCatalogue = async (filter, options) => {
+  const product = await ProductCatalogue.paginate(filter, options);
+  return product;
+};
+
+const viewMyProductCatalogue = async (userId) => {
+  const merchant = await getMerchantByUserId(userId);
+  const products = await ProductCatalogue.find({ merchantId: merchant._id }).populate([
+    {
+      path: 'productId',
+      select: 'name',
+    },
+    {
+      path: 'merchantId',
+      select: 'storeName',
+    },
+  ]);
+  return products;
+};
+
+const deleteProductCatalogue = async (productId, userId) => {
+  const merchant = await getMerchantByUserId(userId);
+  const merchantId = merchant._id;
+
+  // Check if the product exists
+  const product = await ProductCatalogue.findById(productId);
+  if (!product) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
+  }
+
+  // Check if the product belongs to the requesting merchant
+  if (product.merchantId.toString() !== merchantId.toString()) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Access denied');
+  }
+
+  // Delete the product
+  await ProductCatalogue.findByIdAndRemove(productId);
+
+  return product;
+};
+
+const getProductCatalogueById = async (id) => {
+  const product = await ProductCatalogue.findById(id);
+  if (!product) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
+  }
+  return product;
+};
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
@@ -301,4 +363,8 @@ module.exports = {
   deleteProduct,
   addProductToCollection,
   getProductsByCollectionSlug,
+  getProductCatalogue,
+  viewMyProductCatalogue,
+  deleteProductCatalogue,
+  getProductCatalogueById,
 };

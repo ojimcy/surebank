@@ -55,14 +55,14 @@ const deleteProductRequest = {
 const createProductCatalogue = {
   body: Joi.object().keys({
     productId: Joi.string().required().custom(objectId),
-    merchantId: Joi.string().required().custom(objectId),
     featuredImage: Joi.string().required(),
     images: Joi.string().required(),
-    name: Joi.string().required(),
+    title: Joi.string().required(),
     description: Joi.string().required(),
     salesPrice: Joi.number().required(),
     price: Joi.number().required(),
     quantity: Joi.number().required(),
+    discount: Joi.number().optional(),
   }),
 };
 
@@ -145,6 +145,12 @@ const getProductsByCollectionSlug = {
   }),
 };
 
+const deleteProductCatalogue = {
+  params: Joi.object().keys({
+    productId: Joi.string().custom(objectId),
+  }),
+};
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
@@ -159,4 +165,5 @@ module.exports = {
   updateProduct,
   addProductToCollection,
   getProductsByCollectionSlug,
+  deleteProductCatalogue,
 };
