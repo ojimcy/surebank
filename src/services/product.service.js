@@ -210,7 +210,11 @@ const viewProducts = async (filter, options) => {
  * @returns {Promise<Product>}
  */
 const getProductById = async (id) => {
-  const product = await Product.findById(id);
+  const product = await Product.findById(id).populate([
+    { path: 'categoryId', select: 'name' },
+    { path: 'subCategoryId', select: 'name' },
+    { path: 'brand', select: 'name' },
+  ]);
   if (!product) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
   }
@@ -290,7 +294,7 @@ const addProductToCollection = async (productId, collectionId) => {
   return productCollection;
 };
 
-const getProductsByCollectionSlug = async (collectionSlug) => {
+const getProductsBySlug = async (collectionSlug) => {
   const collection = await Collection.findOne({ slug: collectionSlug });
   if (!collection) {
     throw new ApiError(404, 'Collection not found');
@@ -310,7 +314,7 @@ const viewMyProductCatalogue = async (userId) => {
   const products = await ProductCatalogue.find({ merchantId: merchant._id }).populate([
     {
       path: 'productId',
-      select: 'name',
+      model: 'Product',
     },
     {
       path: 'merchantId',
@@ -342,11 +346,22 @@ const deleteProductCatalogue = async (productId, userId) => {
 };
 
 const getProductCatalogueById = async (id) => {
-  const product = await ProductCatalogue.findById(id);
+  const product = await ProductCatalogue.findById(id).populate([
+    {
+      path: 'merchantId',
+      select: 'storeName',
+    },
+  ]);
   if (!product) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
   }
   return product;
+};
+
+const getProductsByIds = async (payload) => {
+  const ids = payload.split('&').map((id) => id.split('=')[1]);
+  const products = await Product.find({ id: { $in: ids } });
+  return products;
 };
 
 module.exports = {
@@ -362,9 +377,10 @@ module.exports = {
   updateProduct,
   deleteProduct,
   addProductToCollection,
-  getProductsByCollectionSlug,
+  getProductsBySlug,
   getProductCatalogue,
   viewMyProductCatalogue,
   deleteProductCatalogue,
   getProductCatalogueById,
+  getProductsByIds,
 };

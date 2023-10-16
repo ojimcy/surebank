@@ -93,10 +93,10 @@ const addProductToCollection = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(productCollection);
 });
 
-const getProductsByCollectionSlug = catchAsync(async (req, res) => {
+const getProductsBySlug = catchAsync(async (req, res) => {
   const { collectionSlug } = req.query;
 
-  const products = await productService.getProductsByCollectionSlug(collectionSlug);
+  const products = await productService.getProductsBySlug(collectionSlug);
   res.status(httpStatus.OK).send(products);
 });
 
@@ -126,6 +126,12 @@ const viewProductCatalogue = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(product);
 });
 
+const getProductsByIds = catchAsync(async (req, res) => {
+  const { payload } = req.query;
+  const products = await productService.getProductsByIds(payload);
+  res.status(httpStatus.OK).send(products);
+});
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
@@ -139,9 +145,10 @@ module.exports = {
   updateProduct,
   deleteProduct,
   addProductToCollection,
-  getProductsByCollectionSlug,
+  getProductsBySlug,
   getProductCatalogue,
   viewMyProductCatalogue,
   deleteProductCatalogue,
   viewProductCatalogue,
+  getProductsByIds,
 };

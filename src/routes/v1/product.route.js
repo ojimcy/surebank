@@ -8,6 +8,10 @@ const router = express.Router();
 router.route('/').get(auth('getProducts'), validate(productValidation.viewProducts), productController.viewProducts);
 
 router
+  .route('/ids')
+  .get(auth('getProducts'), validate(productValidation.getProductsByIds), productController.getProductsByIds);
+
+router
   .route('/catalogue')
   .get(auth('productCatalogue'), validate(productValidation.viewProducts), productController.getProductCatalogue)
   .post(
@@ -60,6 +64,6 @@ router
 router
   .route('/collections')
   .post(auth('manageProduct'), validate(productValidation.addProductToCollection), productController.addProductToCollection)
-  .get(validate(productValidation.getProductsByCollectionSlug), productController.getProductsByCollectionSlug);
+  .get(validate(productValidation.getProductsBySlug), productController.getProductsBySlug);
 
 module.exports = router;

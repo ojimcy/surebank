@@ -139,7 +139,7 @@ const addProductToCollection = {
   }),
 };
 
-const getProductsByCollectionSlug = {
+const getProductsBySlug = {
   query: Joi.object().keys({
     collectionSlug: Joi.string().required(),
   }),
@@ -148,6 +148,12 @@ const getProductsByCollectionSlug = {
 const deleteProductCatalogue = {
   params: Joi.object().keys({
     productId: Joi.string().custom(objectId),
+  }),
+};
+
+const getProductsByIds = {
+  query: Joi.object().keys({
+    id_in: Joi.array().items(Joi.string().custom(objectId)).single(),
   }),
 };
 
@@ -164,6 +170,7 @@ module.exports = {
   deleteProduct,
   updateProduct,
   addProductToCollection,
-  getProductsByCollectionSlug,
+  getProductsBySlug,
   deleteProductCatalogue,
+  getProductsByIds,
 };
