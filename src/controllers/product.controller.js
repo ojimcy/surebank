@@ -77,6 +77,15 @@ const updateProduct = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(updatedProduct);
 });
 
+const updateProductCatalogue = catchAsync(async (req, res) => {
+  const { productCatalogueId } = req.params;
+  const updateData = req.body;
+
+  const updatedProduct = await productService.updateProductCatalogue(productCatalogueId, updateData);
+
+  res.status(httpStatus.OK).send(updatedProduct);
+});
+
 const deleteProduct = catchAsync(async (req, res) => {
   const { productId } = req.params;
   const { merchantId } = req.query;
@@ -143,6 +152,7 @@ module.exports = {
   viewProducts,
   viewProduct,
   updateProduct,
+  updateProductCatalogue,
   deleteProduct,
   addProductToCollection,
   getProductsBySlug,

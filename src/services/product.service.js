@@ -242,6 +242,26 @@ const updateProduct = async (productId, updateData) => {
 };
 
 /**
+ * Update product
+ * @param {string} productCataloguId - The ID of the product catalogue to update
+ * @param {string} merchantId - The ID of the  merchant
+ * @param {Object} updateData - The updated data for the product
+ * @returns {Promise<Object>} The updated product
+ */
+const updateProductCatalogue = async (productCataloguId, updateData) => {
+  // Check if the product exists
+  const product = await ProductCatalogue.findById(productCataloguId);
+  if (!product) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
+  }
+
+  Object.assign(product, updateData);
+  await product.save();
+
+  return product;
+};
+
+/**
  * Delete product
  * @param {string} Id - The ID of the product  to delete
  * @param {string} merchantId - The ID of the merchant
@@ -375,6 +395,7 @@ module.exports = {
   viewProducts,
   getProductById,
   updateProduct,
+  updateProductCatalogue,
   deleteProduct,
   addProductToCollection,
   getProductsBySlug,

@@ -57,12 +57,19 @@ const createProductCatalogue = {
     productId: Joi.string().required().custom(objectId),
     featuredImage: Joi.string().required(),
     images: Joi.string().required(),
-    title: Joi.string().required(),
+    name: Joi.string().required(),
     description: Joi.string().required(),
     salesPrice: Joi.number().required(),
     price: Joi.number().required(),
     quantity: Joi.number().required(),
     discount: Joi.number().optional(),
+    brand: Joi.string().optional().custom(objectId),
+    features: Joi.string().optional(),
+    variations: Joi.string().optional(),
+    shipping: Joi.string().optional(),
+    inventory: Joi.string().optional(),
+    tags: Joi.string().optional(),
+    slug: Joi.string().optional(),
   }),
 };
 
@@ -98,6 +105,32 @@ const viewProduct = {
 };
 
 const updateProduct = {
+  params: Joi.object().keys({
+    productId: Joi.string().required().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    name: Joi.string().optional(),
+    description: Joi.string().optional(),
+    images: Joi.string().optional(),
+    barcode: Joi.string().optional(),
+    categoryId: Joi.string().optional().custom(objectId),
+    subCategoryId: Joi.string().optional().custom(objectId),
+    brand: Joi.string().optional().custom(objectId),
+    originalPrice: Joi.number().optional(),
+    price: Joi.number().optional(),
+    reviews: Joi.string().optional(),
+    features: Joi.string().optional(),
+    ratings: Joi.string().optional(),
+    variations: Joi.string().optional(),
+    shipping: Joi.string().optional(),
+    stock: Joi.string().optional(),
+    discount: Joi.number().optional(),
+    tags: Joi.string().optional(),
+    slug: Joi.string().optional(),
+  }),
+};
+
+const updateProductCatalogue = {
   params: Joi.object().keys({
     productId: Joi.string().required().custom(objectId),
   }),
@@ -169,6 +202,7 @@ module.exports = {
   viewProduct,
   deleteProduct,
   updateProduct,
+  updateProductCatalogue,
   addProductToCollection,
   getProductsBySlug,
   deleteProductCatalogue,
