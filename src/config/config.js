@@ -56,6 +56,7 @@ module.exports = {
       useCreateIndex: true,
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      useFindAndModify: false,
     },
   },
   bscNode: envVars.SMART_CHAIN_NODE,

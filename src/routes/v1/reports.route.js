@@ -17,6 +17,10 @@ router
   .route('/packages')
   .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getPackageReport);
 
+router.route('/packages/sb/charged').get(auth('reports'), reportsController.getChargedSbPackages);
+
+router.route('/packages/charged').get(auth('reports'), reportsController.getChargedPackages);
+
 router
   .route('/user-reps/total-contributions')
   .get(auth('getReports'), validate(reportsValidation.getMyTotalContributions), reportsController.getMyTotalContributions);

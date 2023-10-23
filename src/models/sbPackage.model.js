@@ -8,7 +8,7 @@ const sbPackageSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'Product',
+    ref: 'ProductCatalogue',
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -41,9 +41,13 @@ const sbPackageSchema = new mongoose.Schema({
     enum: ['open', 'closed'],
     default: 'open',
   },
+  hasBeenCharged: {
+    type: Boolean,
+    default: false,
+  },
   totalContribution: {
     type: Number,
-    required: false,
+    default: 0,
   },
   totalCount: {
     type: Number,

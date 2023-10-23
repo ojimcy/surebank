@@ -26,7 +26,8 @@ const assignManager = catchAsync(async (req, res) => {
 
 const getUserAccount = catchAsync(async (req, res) => {
   const { userId } = req.params;
-  const account = await accountService.getUserAccount(userId);
+  const { accountType } = req.query;
+  const account = await accountService.getUserAccounts(userId, accountType);
   res.status(httpStatus.OK).send(account);
 });
 
@@ -36,6 +37,7 @@ const getAllAccounts = catchAsync(async (req, res) => {
   const result = await accountService.getAllAccounts(filter, options);
   res.send(result);
 });
+
 const getAccountInBranch = catchAsync(async (req, res) => {
   const { branchId } = req.params;
   const filter = pick(req.query, ['staffId', 'isCurrent']);

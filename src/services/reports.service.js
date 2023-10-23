@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Contribution, AccountTransaction, Package } = require('../models');
+const { Contribution, AccountTransaction, Package, SbPackage } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -467,6 +467,21 @@ const getContributionsByDayForBranch = async (branchId, startDate, endDateParam,
   }
 };
 
+const getChargedPackages = async () => {
+  const packages = await Package.find({ hasBeenCharged: true }).populate('userId', 'firstName lastName');
+
+  // Calculate the sum of amountPerDay
+  const totalAmountPerDay = packages.reduce((sum, dsPackage) => sum + dsPackage.amountPerDay, 0);
+  return { packages, totalAmountPerDay };
+};
+
+const getChargedSbPackages = async () => {
+  const packages = await SbPackage.find({ hasBeenCharged: true }).populate('userId', 'firstName lastName');
+  // Calculate the sum of amountPerDay
+  const totalAmountPerDay = packages.reduce((sum, sbPackage) => sum + sbPackage.amountPerDay, 0);
+  return { packages, totalAmountPerDay };
+};
+
 module.exports = {
   getTotalContributionsByDay,
   getTotalDailySavingsWithdrawal,
@@ -479,4 +494,6 @@ module.exports = {
   getTotalOpenPackagesForUserReps,
   getTotalClosedPackagesForUserReps,
   getContributionsByDayForBranch,
+  getChargedPackages,
+  getChargedSbPackages,
 };

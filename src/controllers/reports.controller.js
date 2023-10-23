@@ -64,6 +64,16 @@ const getContributionsByDayForBranch = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(totalContributions);
 });
 
+const getChargedPackages = catchAsync(async (req, res) => {
+  const chargedPackages = await reportService.getChargedPackages();
+  res.status(httpStatus.OK).json(chargedPackages);
+});
+
+const getChargedSbPackages = catchAsync(async (req, res) => {
+  const chargedPackages = await reportService.getChargedSbPackages();
+  res.status(httpStatus.OK).json(chargedPackages);
+});
+
 module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
@@ -73,4 +83,6 @@ module.exports = {
   getMyDsWithdrawals,
   getPackageReportForUserRep,
   getContributionsByDayForBranch,
+  getChargedPackages,
+  getChargedSbPackages,
 };

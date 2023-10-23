@@ -67,25 +67,18 @@ const assignManager = async (accountId, managerId) => {
 };
 
 /**
- * Retrieve user's account number
+ * Retrieve account details for a specific user, optionally filtered by account type
  * @param {string} userId - User ID
- * @returns {Promise<string>} User's account number
+ * @param {string} [accountType] - Account type to filter (optional)
+ * @returns {Promise<Account[]>} User's account details
  */
-const getUserAccountNumber = async (userId) => {
-  const account = await Account.findOne({ userId });
-  if (!account) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User does not have an account');
+const getUserAccounts = async (userId, accountType) => {
+  const query = { userId };
+  if (accountType) {
+    query.accountType = accountType;
   }
-  return account.accountNumber;
-};
 
-/**
- * Retrieve account details for a specific user
- * @param {string} userId - User ID
- * @returns {Promise<Account>} User's account details
- */
-const getUserAccount = async (userId) => {
-  const account = await Account.findOne({ userId })
+  const accounts = await Account.find(query)
     .populate([
       {
         path: 'accountManagerId',
@@ -97,10 +90,12 @@ const getUserAccount = async (userId) => {
       },
     ])
     .lean();
-  if (!account) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User does not have an account');
+
+  if (!accounts || accounts.length === 0) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User does not have any accounts');
   }
-  return account;
+
+  return accounts;
 };
 
 /**
@@ -218,8 +213,7 @@ module.exports = {
   createAccount,
   assignBranch,
   assignManager,
-  getUserAccountNumber,
-  getUserAccount,
+  getUserAccounts,
   getAllAccounts,
   getAccountsInBranch,
   getAccountsByStaff,

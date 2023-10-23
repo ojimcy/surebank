@@ -1,6 +1,6 @@
 const { startSession } = require('mongoose');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
-const { Product, SbPackage, Account, Contribution, AccountTransaction } = require('../models');
+const { SbPackage, Account, Contribution, AccountTransaction, ProductCatalogue } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
@@ -10,6 +10,10 @@ const createSbPackage = async (sbPackageData) => {
 
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
+  }
+
+  if (userAccount.accountType !== 'sb') {
+    throw new ApiError(400, 'Customer account is not an SB account!');
   }
 
   const userPackageExist = await SbPackage.findOne({
@@ -22,12 +26,10 @@ const createSbPackage = async (sbPackageData) => {
     throw new ApiError(400, 'Customer has an active package running');
   }
 
-  const product = await Product.findById(sbPackageData.product);
-
-  if (!product || !product.isSbAvailable) {
+  const product = await ProductCatalogue.findById(sbPackageData.product);
+  if (!product) {
     throw new ApiError(400, 'The selected product is not available for Savings-Buying');
   }
-
   const amountPerDay = parseFloat((product.price / 31).toFixed(2));
   const startDate = new Date().getTime();
 
@@ -35,7 +37,7 @@ const createSbPackage = async (sbPackageData) => {
     ...sbPackageData,
     userId: userAccount.userId,
     targetAmount: product.price,
-    image: product.images[1],
+    image: product.featuredImage,
     amountPerDay,
     startDate,
   });
@@ -44,16 +46,17 @@ const createSbPackage = async (sbPackageData) => {
 };
 
 /**
- * Make daily contribution
+ * Make daily contribution for Savings-Buying (SB) packages
  * @param {Object} contributionInput - Contribution input
  * @returns {Promise<Object>} Result of the operation
  */
-
-const makeDailyContribution = async (contributionInput) => {
+const makeSBDailyContribution = async (contributionInput) => {
   const userAccount = await getUserByAccountNumber(contributionInput.accountNumber);
+
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
+
   const userPackage = await SbPackage.findOne({
     accountNumber: contributionInput.accountNumber,
     status: 'open',
@@ -61,7 +64,7 @@ const makeDailyContribution = async (contributionInput) => {
   });
 
   if (!userPackage) {
-    throw new ApiError(409, 'Customer does not have an active package');
+    throw new ApiError(409, 'Customer does not have an active SB package');
   }
 
   const userPackageId = userPackage._id;
@@ -74,7 +77,7 @@ const makeDailyContribution = async (contributionInput) => {
   }
 
   if (userPackage.status === 'closed') {
-    throw new ApiError(403, 'This package has been closed');
+    throw new ApiError(403, 'This SB package has been closed');
   }
 
   // Calculate the new total count by adding contributionDaysCount to the existing value
@@ -97,12 +100,14 @@ const makeDailyContribution = async (contributionInput) => {
     count: contributionDaysCount,
     totalCount,
     date: currentDate,
-    narration: `SB Daily contribution`,
+    narration: 'SB Daily contribution',
   });
 
-  userPackage.totalContribution = contributionInput.amount;
+  // Accumulate the contribution amount to the totalContribution
+  userPackage.totalContribution += contributionInput.amount;
 
-  if (!userPackage.hasBeenCharged) {
+  if (userPackage.hasBeenCharged === false) {
+    // Deduct the daily amount from totalContribution
     userPackage.totalContribution -= userPackage.amountPerDay;
 
     await SbPackage.findByIdAndUpdate(userPackageId, {
@@ -122,10 +127,12 @@ const makeDailyContribution = async (contributionInput) => {
     await addLedgerEntry(addLedgerEntryInput);
   }
 
+  // Update the totalContribution field in the SB package
   await SbPackage.findByIdAndUpdate(userPackageId, {
     totalContribution: userPackage.totalContribution,
   });
 
+  // Update the totalCount field in the SB package
   await SbPackage.findByIdAndUpdate(userPackageId, {
     $set: {
       totalCount,
@@ -133,6 +140,7 @@ const makeDailyContribution = async (contributionInput) => {
   });
 
   if (totalCount === 31) {
+    // If the user has contributed 31 times, create a deposit and close the package
     const narration = 'Total contribution';
     const depositDetail = {
       accountNumber: contributionInput.accountNumber,
@@ -143,12 +151,14 @@ const makeDailyContribution = async (contributionInput) => {
 
     await makeCustomerDeposit(depositDetail);
 
+    // Close the SB package and reset totalContribution and totalCount to 0
     await SbPackage.findByIdAndUpdate(userPackageId, {
       status: 'closed',
       totalContribution: 0,
       totalCount: 0,
     });
   } else {
+    // If the user has not contributed 31 times, create a contribution transaction
     const transactionDate = new Date().getTime();
 
     const contributionTransaction = await AccountTransaction.create({
@@ -158,7 +168,7 @@ const makeDailyContribution = async (contributionInput) => {
       branchId: branch.branchId,
       date: transactionDate,
       direction: 'inflow',
-      narration: `SB Daily contribution`,
+      narration: 'SB Daily contribution',
     });
 
     return {
@@ -259,7 +269,6 @@ const getUserSbPackages = async (userId) => {
     status: 'open',
   }).populate({
     path: 'product',
-    select: ['name', 'images', 'price', 'salesPrice'],
   });
 
   return userPackages;
@@ -267,7 +276,7 @@ const getUserSbPackages = async (userId) => {
 
 module.exports = {
   createSbPackage,
-  makeDailyContribution,
+  makeSBDailyContribution,
   makeSbWithdrawal,
   getPackageById,
   getUserSbPackages,
