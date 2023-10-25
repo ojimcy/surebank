@@ -274,10 +274,60 @@ const getUserSbPackages = async (userId) => {
   return userPackages;
 };
 
+/**
+ * Merge two SB packages.
+ * @param {string} packageFromId - ID of the package to transfer from.
+ * @param {string} packageToId - ID of the package to transfer to.
+ * @returns {Promise<void>}
+ */
+const mergeSbPackages = async (packageFromId, packageToId) => {
+  const session = await startSession();
+  session.startTransaction();
+
+  try {
+    const sourcePackage = await SbPackage.findById(packageFromId)
+      .populate({
+        path: 'product',
+      })
+      .session(session);
+    const destinationPackage = await SbPackage.findById(packageToId)
+      .populate({
+        path: 'product',
+      })
+      .session(session);
+    if (!sourcePackage || !destinationPackage) {
+      throw new ApiError(404, 'One or both packages not found.');
+    }
+
+    if (sourcePackage.status === 'closed' || destinationPackage.status === 'closed') {
+      throw new ApiError(400, 'One or both packages are already closed.');
+    }
+
+    destinationPackage.totalContribution += sourcePackage.totalContribution;
+
+    const newProductPrice = destinationPackage.product.price - destinationPackage.totalContribution;
+    const newAmountPerDay = newProductPrice / (31 - destinationPackage.totalCount);
+    destinationPackage.amountPerDay = parseFloat(newAmountPerDay.toFixed(2));
+
+    sourcePackage.status = 'closed';
+
+    await sourcePackage.save();
+    await destinationPackage.save();
+
+    await session.commitTransaction();
+    session.endSession();
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 module.exports = {
   createSbPackage,
   makeSBDailyContribution,
   makeSbWithdrawal,
   getPackageById,
   getUserSbPackages,
+  mergeSbPackages,
 };

@@ -37,10 +37,19 @@ const getUserSbPackages = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(userPackage);
 });
 
+const mergeSbPackages = catchAsync(async (req, res) => {
+  const { packageFromId, packageToId } = req.body;
+
+  const userPackage = await sbPackageService.mergeSbPackages(packageFromId, packageToId);
+
+  res.status(httpStatus.OK).json(userPackage);
+});
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
   makeSbWithdrawal,
   getPackageById,
   getUserSbPackages,
+  mergeSbPackages,
 };

@@ -48,10 +48,18 @@ const getUserSbPackages = {
   }),
 };
 
+const mergeSbPackages = {
+  body: Joi.object().keys({
+    packageFromId: Joi.string().required().custom(objectId),
+    packageToId: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
   makeSbWithdrawal,
   getPackageById,
   getUserSbPackages,
+  mergeSbPackages,
 };

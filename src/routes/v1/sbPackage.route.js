@@ -12,6 +12,10 @@ router
   .get(auth('userPackage'), validate(sbPackageValidation.getUserSbPackages), sbPackageController.getUserSbPackages);
 
 router
+  .route('/package/merge')
+  .post(auth('mergePackages'), validate(sbPackageValidation.mergeSbPackages), sbPackageController.mergeSbPackages);
+
+router
   .route('/make-contribution')
   .post(
     auth('makeContribution'),

@@ -24,6 +24,7 @@ const userPermissions = [
   'getTotalWithdrawals',
   'stores',
   'makeContribution',
+  'mergePackages',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];
