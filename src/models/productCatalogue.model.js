@@ -74,6 +74,18 @@ const productCatalogueSchema = mongoose.Schema(
     },
 
     tags: [String],
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+    isOutOfStock: {
+      type: Boolean,
+      default: true,
+    },
+    isSbAvailable: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
@@ -83,6 +95,17 @@ const productCatalogueSchema = mongoose.Schema(
 // add plugin that converts mongoose to json
 productCatalogueSchema.plugin(toJSON);
 productCatalogueSchema.plugin(paginate);
+
+// Define a pre-save middleware to update isOutOfStock
+productCatalogueSchema.pre('save', function (next) {
+  // Check if quantity is less than or equal to 0
+  if (this.quantity <= 0) {
+    this.isOutOfStock = true;
+  } else {
+    this.isOutOfStock = false;
+  }
+  next();
+});
 
 /**
  * @typedef ProductCatalogue

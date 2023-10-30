@@ -78,18 +78,6 @@ const productSchema = mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-    isFeatured: {
-      type: Boolean,
-      default: false,
-    },
-    isOutOfStock: {
-      type: Boolean,
-      default: false,
-    },
-    isSbAvailable: {
-      type: Boolean,
-      default: true,
-    },
   },
   {
     timestamps: true,

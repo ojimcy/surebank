@@ -31,6 +31,11 @@ router
     validate(productValidation.deleteProductCatalogue),
     productController.deleteProductCatalogue
   )
+  .patch(
+    auth('productCatalogue'),
+    validate(productValidation.updateProductCatalogue),
+    productController.updateProductCatalogue
+  )
   .get(auth('productCatalogue'), validate(productValidation.viewProduct), productController.viewProductCatalogue);
 
 router

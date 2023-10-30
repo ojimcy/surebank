@@ -160,7 +160,7 @@ const approveProductRequest = async (requestId) => {
     variations: productRequest.variations,
     features: productRequest.features,
     shipping: productRequest.shipping,
-    stock: productRequest.stock,
+    quantity: productRequest.quantity,
     tags: productRequest.tags,
     slug: productRequest.slug,
   });
@@ -243,14 +243,14 @@ const updateProduct = async (productId, updateData) => {
 
 /**
  * Update product
- * @param {string} productCataloguId - The ID of the product catalogue to update
+ * @param {string} productId - The ID of the product catalogue to update
  * @param {string} merchantId - The ID of the  merchant
  * @param {Object} updateData - The updated data for the product
  * @returns {Promise<Object>} The updated product
  */
-const updateProductCatalogue = async (productCataloguId, updateData) => {
+const updateProductCatalogue = async (productId, updateData) => {
   // Check if the product exists
-  const product = await ProductCatalogue.findById(productCataloguId);
+  const product = await ProductCatalogue.findById(productId);
   if (!product) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
   }
@@ -370,6 +370,9 @@ const getProductCatalogueById = async (id) => {
     {
       path: 'merchantId',
       select: 'storeName',
+    },
+    {
+      path: 'productId',
     },
   ]);
   if (!product) {
