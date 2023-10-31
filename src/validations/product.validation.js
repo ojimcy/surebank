@@ -10,7 +10,7 @@ const createProductRequest = {
     subCategoryId: Joi.string().optional().custom(objectId),
     brand: Joi.string().required().custom(objectId),
     features: Joi.string().optional(),
-    variations: Joi.string().optional(),
+    specifications: Joi.string().optional(),
     shipping: Joi.string().optional(),
     inventory: Joi.string().optional(),
     tags: Joi.string().optional(),
@@ -65,7 +65,7 @@ const createProductCatalogue = {
     discount: Joi.number().optional(),
     brand: Joi.string().optional().custom(objectId),
     features: Joi.string().optional(),
-    variations: Joi.string().optional(),
+    specifications: Joi.string().optional(),
     shipping: Joi.string().optional(),
     inventory: Joi.string().optional(),
     tags: Joi.string().optional(),
@@ -121,7 +121,7 @@ const updateProduct = {
     reviews: Joi.string().optional(),
     features: Joi.string().optional(),
     ratings: Joi.string().optional(),
-    variations: Joi.string().optional(),
+    specifications: Joi.string().optional(),
     shipping: Joi.string().optional(),
     quantity: Joi.string().optional(),
     discount: Joi.number().optional(),
@@ -148,7 +148,7 @@ const updateProductCatalogue = {
     reviews: Joi.string().optional(),
     features: Joi.string().optional(),
     ratings: Joi.string().optional(),
-    variations: Joi.array().optional(),
+    specifications: Joi.array().optional(),
     shipping: Joi.string().optional(),
     quantity: Joi.number().optional(),
     discount: Joi.number().optional(),
@@ -168,7 +168,7 @@ const deleteProduct = {
 
 const addProductToCollection = {
   query: Joi.object().keys({
-    productId: Joi.string().required().custom(objectId),
+    productCatalogueId: Joi.string().required().custom(objectId),
     collectionId: Joi.string().required().custom(objectId),
   }),
 };
@@ -187,7 +187,9 @@ const deleteProductCatalogue = {
 
 const getProductsByIds = {
   query: Joi.object().keys({
-    id_in: Joi.array().items(Joi.string().custom(objectId)).single(),
+    ids: Joi.array().items(Joi.string().custom(objectId)).single(),
+    _limit: Joi.number(),
+    title_contains: Joi.string(),
   }),
 };
 

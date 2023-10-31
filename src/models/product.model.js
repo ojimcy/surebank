@@ -56,7 +56,7 @@ const productSchema = mongoose.Schema(
     ratings: {
       type: Number,
     },
-    variations: [
+    specifications: [
       {
         name: String,
         values: [String],

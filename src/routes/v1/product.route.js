@@ -5,15 +5,13 @@ const productValidation = require('../../validations/product.validation');
 const productController = require('../../controllers/product.controller');
 
 const router = express.Router();
-router.route('/').get(auth('getProducts'), validate(productValidation.viewProducts), productController.viewProducts);
+router.route('/').get(validate(productValidation.viewProducts), productController.viewProducts);
 
-router
-  .route('/ids')
-  .get(auth('getProducts'), validate(productValidation.getProductsByIds), productController.getProductsByIds);
+router.route('/ids').get(validate(productValidation.getProductsByIds), productController.getProductsByIds);
 
 router
   .route('/catalogue')
-  .get(auth('productCatalogue'), validate(productValidation.viewProducts), productController.getProductCatalogue)
+  .get(validate(productValidation.viewProducts), productController.getProductCatalogue)
   .post(
     auth('productCatalogue'),
     validate(productValidation.createProductCatalogue),
@@ -23,6 +21,10 @@ router
 router
   .route('/catalogue/my')
   .get(auth('productCatalogue'), validate(productValidation.viewProducts), productController.viewMyProductCatalogue);
+
+router
+  .route('/catalogue/:productId/product')
+  .get(validate(productValidation.viewProduct), productController.getProductCatalogueByProductId);
 
 router
   .route('/catalogue/:productId')
@@ -36,7 +38,7 @@ router
     validate(productValidation.updateProductCatalogue),
     productController.updateProductCatalogue
   )
-  .get(auth('productCatalogue'), validate(productValidation.viewProduct), productController.viewProductCatalogue);
+  .get(validate(productValidation.viewProduct), productController.viewProductCatalogue);
 
 router
   .route('/request')
@@ -44,8 +46,13 @@ router
   .get(auth('productRequest'), validate(productValidation.viewProductRequests), productController.viewProductRequests);
 
 router
+  .route('/collections')
+  .post(auth('manageProduct'), validate(productValidation.addProductToCollection), productController.addProductToCollection)
+  .get(validate(productValidation.getProductsBySlug), productController.getProductsBySlug);
+
+router
   .route('/:productId')
-  .get(auth('getProducts'), validate(productValidation.viewProduct), productController.viewProduct)
+  .get(validate(productValidation.viewProduct), productController.viewProduct)
   .patch(auth('manageProduct'), validate(productValidation.updateProduct), productController.updateProduct)
   .delete(auth('manageProduct'), validate(productValidation.deleteProduct), productController.deleteProduct);
 
@@ -65,10 +72,5 @@ router
 router
   .route('/request/:requestId/reject')
   .post(auth('manageProductRequest'), validate(productValidation.rejectProduct), productController.rejectProduct);
-
-router
-  .route('/collections')
-  .post(auth('manageProduct'), validate(productValidation.addProductToCollection), productController.addProductToCollection)
-  .get(validate(productValidation.getProductsBySlug), productController.getProductsBySlug);
 
 module.exports = router;

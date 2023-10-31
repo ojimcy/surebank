@@ -95,9 +95,9 @@ const deleteProduct = catchAsync(async (req, res) => {
 });
 
 const addProductToCollection = catchAsync(async (req, res) => {
-  const { productId, collectionId } = req.query;
+  const { productCatalogueId, collectionId } = req.query;
 
-  const productCollection = await productService.addProductToCollection(productId, collectionId);
+  const productCollection = await productService.addProductToCollection(productCatalogueId, collectionId);
   res.status(httpStatus.OK).send(productCollection);
 });
 
@@ -135,9 +135,17 @@ const viewProductCatalogue = catchAsync(async (req, res) => {
 });
 
 const getProductsByIds = catchAsync(async (req, res) => {
-  const { payload } = req.query;
-  const products = await productService.getProductsByIds(payload);
+  const { ids } = req.query;
+  const titleContains = req.query.title_contains || null;
+  const limit = parseInt(req.query.limit, 10) || null;
+
+  const products = await productService.getProductsByIds(ids, titleContains, limit);
   res.status(httpStatus.OK).send(products);
+});
+
+const getProductCatalogueByProductId = catchAsync(async (req, res) => {
+  const product = await productService.getProductCatalogueByProductId(req.params.productId);
+  res.status(httpStatus.OK).send(product);
 });
 
 module.exports = {
@@ -160,4 +168,5 @@ module.exports = {
   deleteProductCatalogue,
   viewProductCatalogue,
   getProductsByIds,
+  getProductCatalogueByProductId,
 };

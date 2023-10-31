@@ -48,7 +48,11 @@ const productCatalogueSchema = mongoose.Schema(
         },
       },
     ],
-    variations: [
+    reviewCount: {
+      type: Number,
+      default: 0,
+    },
+    specifications: [
       {
         name: String,
         values: [String],

@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { ProductRequest, Product, ProductCatalogue, ProductCollection, Collection } = require('../models');
+const { ProductRequest, Product, ProductCatalogue, Collection } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getMerchantByUserId } = require('./merchant.service');
 
@@ -156,8 +156,7 @@ const approveProductRequest = async (requestId) => {
     subCategoryId: productRequest.subCategoryId,
     brand: productRequest.brand,
     merchantId: productRequest.merchantId,
-    collections: productRequest.collections,
-    variations: productRequest.variations,
+    specifications: productRequest.specifications,
     features: productRequest.features,
     shipping: productRequest.shipping,
     quantity: productRequest.quantity,
@@ -285,42 +284,52 @@ const deleteProduct = async (productId, merchantId) => {
   return product;
 };
 
-const addProductToCollection = async (productId, collectionId) => {
-  // Check if the product and collection exist
-  const product = await Product.findById(productId);
+/**
+ * Add a product to a collection.
+ * @param {string} collectionId - The ID of the collection.
+ * @param {string} productCatalogueId - The ID of the product to add.
+ * @returns {Promise<Object>} The updated collection.
+ */
+const addProductToCollection = async (productCatalogueId, collectionId) => {
+  // Find the collection by ID
   const collection = await Collection.findById(collectionId);
+  const product = await ProductCatalogue.find({ productId: productCatalogueId });
 
-  if (!product || !collection) {
-    throw new ApiError(404, 'Product or collection not found');
+  if (!collection) {
+    throw new Error('Collection not found');
+  }
+  if (!product) {
+    throw new Error('Product not found');
   }
 
   // Check if the product is already in the collection
-  const productInCollection = await ProductCollection.findOne({
-    productId,
-    collectionId,
-  });
-
-  if (productInCollection) {
-    throw new ApiError(400, 'Product is already in the collection');
+  if (collection.products.includes(productCatalogueId)) {
+    throw new Error('Product is already in the collection');
   }
 
-  const productCollection = new ProductCollection({ productId, collectionId });
-  await productCollection.save();
+  // Add the product to the collection
+  collection.products.push(productCatalogueId);
 
-  // Update the product's collections
-  product.collections.push(collectionId);
-  await product.save();
+  // Save the updated collection
+  await collection.save();
 
-  return productCollection;
+  return collection;
 };
 
+/**
+ * Get all products in a collection by its slug.
+ * @param {string} collectionSlug - The slug of the collection.
+ * @returns {Promise<Array>} Array of products in the collection.
+ */
 const getProductsBySlug = async (collectionSlug) => {
+  // Find the collection by its slug
   const collection = await Collection.findOne({ slug: collectionSlug });
   if (!collection) {
-    throw new ApiError(404, 'Collection not found');
+    throw new Error('Collection not found');
   }
+  // Retrieve all products associated with the collection
+  const products = await ProductCatalogue.find({ _id: { $in: collection.products } }).populate('merchantId', 'storeName');
 
-  const products = await Product.find({ collections: collection._id });
   return products;
 };
 
@@ -381,10 +390,24 @@ const getProductCatalogueById = async (id) => {
   return product;
 };
 
-const getProductsByIds = async (payload) => {
-  const ids = payload.split('&').map((id) => id.split('=')[1]);
-  const products = await Product.find({ id: { $in: ids } });
+const getProductsByIds = async (ids, titleContains, limit) => {
+  const query = { _id: { $in: ids } };
+
+  if (titleContains) {
+    query.name = { $regex: titleContains, $options: 'i' };
+  }
+
+  const products = await ProductCatalogue.find(query).limit(limit).exec();
+
   return products;
+};
+
+const getProductCatalogueByProductId = async (productId) => {
+  const product = await ProductCatalogue.find({ productId });
+  if (!product) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
+  }
+  return product;
 };
 
 module.exports = {
@@ -407,4 +430,5 @@ module.exports = {
   deleteProductCatalogue,
   getProductCatalogueById,
   getProductsByIds,
+  getProductCatalogueByProductId,
 };
