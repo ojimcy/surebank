@@ -22,3 +22,4 @@ module.exports.promotionsService = require('./promotions.service');
 module.exports.collectionsService = require('./collections.service');
 module.exports.fileUploadService = require('./fileUpload.service');
 module.exports.sbPackageService = require('./sbPackage.service');
+module.exports.orderService = require('./order.service');
