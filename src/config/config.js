@@ -37,6 +37,9 @@ const envVarsSchema = Joi.object()
     RELOADLY_TOPUPS_BASE_URL: Joi.string().description('Reloadly topups base URL'),
     SMS_API_TOKEN: Joi.string().description('API token for SMS provider'),
     SMS_SENDER: Joi.string().description('Sender name for SMS'),
+    CLOUDINARY_CLOUD_NAME: Joi.string().description('Cloudinary name'),
+    CLOUDINARY_API_KEY: Joi.string().description('Cloudinary api key'),
+    CLOUDINARY_API_SECRET: Joi.string().description('Cloudinary secrete'),
   })
   .unknown();
 
@@ -59,6 +62,10 @@ module.exports = {
       useFindAndModify: false,
     },
   },
+  cloudName: envVars.CLOUDINARY_CLOUD_NAME,
+  apiKey: envVars.CLOUDINARY_API_KEY,
+  apiSecret: envVars.CLOUDINARY_API_SECRET,
+
   bscNode: envVars.SMART_CHAIN_NODE,
   maticNode: envVars.MATIC_NODE,
   masterAddressPK: envVars.MASTER_ADDRESS_PK,

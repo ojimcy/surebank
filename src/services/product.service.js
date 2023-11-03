@@ -35,8 +35,11 @@ const createProductRequest = async (requestData, merchantId) => {
  * @param {number} [options.page] - Current page (default = 1)
  * @returns {Promise<Object>} Object containing product requests and pagination information
  */
-const viewProductRequests = async (filter, options) => {
-  const productRequests = await ProductRequest.paginate(filter, options);
+const viewProductRequests = async () => {
+  const productRequests = await ProductRequest.find().populate([
+    { path: 'categoryId', select: 'name' },
+    { path: 'brand', select: 'name' },
+  ]);
   return productRequests;
 };
 

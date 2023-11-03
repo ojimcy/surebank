@@ -11,9 +11,7 @@ const createProductRequest = catchAsync(async (req, res) => {
 });
 
 const viewProductRequests = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['name', 'slug']);
-  const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  const result = await productService.viewProductRequests(filter, options);
+  const result = await productService.viewProductRequests();
   res.status(httpStatus.OK).send(result);
 });
 

@@ -1,11 +1,9 @@
 const express = require('express');
 const upload = require('../../config/multer');
-const { handleFileUpload } = require('../../controllers/fileUpload.controller');
+const fileUploadContoller = require('../../controllers/fileUpload.controller');
 
 const router = express.Router();
 
-const auth = require('../../middlewares/auth');
-
-router.route('/').post(auth('uploadFile'), upload.single('fileToUpload'), handleFileUpload);
+router.route('/').post(upload.single('file'), fileUploadContoller.uploadFile);
 
 module.exports = router;

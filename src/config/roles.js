@@ -26,6 +26,7 @@ const userPermissions = [
   'makeContribution',
   'mergePackages',
   'order',
+  'uploadFile',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];
