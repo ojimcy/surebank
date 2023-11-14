@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 const httpStatus = require('http-status');
-const { Cart, CartItem } = require('../models');
+const { Cart, CartItem: CartItemModel } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -10,7 +10,8 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<Object>} The created cart
  */
 const initCart = async (userId, total) => {
-  const newCart = new Cart({
+  const CartModel = await Cart();
+  const newCart = new CartModel({
     userId,
     total,
   });
@@ -28,7 +29,8 @@ const initCart = async (userId, total) => {
  */
 const addToCart = async (userId, productCatalogueId, unitPrice, quantity) => {
   try {
-    let cart = await Cart.findOne({ userId });
+    const CartModel = await Cart();
+    let cart = await CartModel.findOne({ userId });
     if (!cart) {
       // Initialize Cart
       const subTotal = unitPrice * quantity;
@@ -38,7 +40,7 @@ const addToCart = async (userId, productCatalogueId, unitPrice, quantity) => {
     const subTotal = unitPrice * quantity;
     const cartId = cart._id;
 
-    const addItem = await CartItem.create({
+    const addItem = await CartItemModel.create({
       cartId,
       productCatalogueId,
       unitPrice,
@@ -62,11 +64,12 @@ const addToCart = async (userId, productCatalogueId, unitPrice, quantity) => {
  */
 const getCartItems = async (userId) => {
   try {
-    const cart = await Cart.findOne({ userId });
+    const CartModel = await Cart();
+    const cart = await CartModel.findOne({ userId });
     if (!cart) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Cart item not found');
     }
-    const cartItems = await CartItem.find({ cartId: cart._id });
+    const cartItems = await CartItemModel.find({ cartId: cart._id });
     return { cart, cartItems };
   } catch (error) {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error retrieving cart items');
@@ -81,11 +84,12 @@ const getCartItems = async (userId) => {
  */
 const removeCartItem = async (userId, productCatalogueId) => {
   try {
-    const cart = await Cart.findOne({ userId });
+    const CartModel = await Cart();
+    const cart = await CartModel.findOne({ userId });
     if (!cart) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Cart item not found');
     }
-    const cartItem = await CartItem.findOneAndRemove({
+    const cartItem = await CartItemModel.findOneAndRemove({
       productCatalogueId,
       cartId: cart._id,
     });
@@ -105,11 +109,12 @@ const removeCartItem = async (userId, productCatalogueId) => {
  */
 const clearCart = async (userId) => {
   try {
-    const cart = await Cart.findOne({ userId });
+    const CartModel = await Cart();
+    const cart = await CartModel.findOne({ userId });
     if (!cart) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Cart item not found');
     }
-    await CartItem.deleteMany({ cartId: cart._id });
+    await CartItemModel.deleteMany({ cartId: cart._id });
     const deletedCart = await cart.remove();
     return deletedCart;
   } catch (error) {

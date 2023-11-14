@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const categorySchema = mongoose.Schema(
   {
@@ -28,9 +29,18 @@ const categorySchema = mongoose.Schema(
 categorySchema.plugin(toJSON);
 categorySchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Category
+ * @returns Category
  */
-const Category = mongoose.model('Category', categorySchema);
+const Category = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Category', categorySchema);
+  }
+
+  return model;
+};
 
 module.exports = Category;

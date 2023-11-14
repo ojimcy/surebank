@@ -10,7 +10,8 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<Object>} Branch details
  */
 const findBranchByAccountNumber = async (accountNumber, session) => {
-  const branch = await Account.findOne({ accountNumber }).session(session);
+  const AccountModel = await Account();
+  const branch = await AccountModel.findOne({ accountNumber }).session(session);
   if (!branch) {
     throw new ApiError(404, 'Account number does not exist.');
   }
@@ -23,7 +24,8 @@ const findBranchByAccountNumber = async (accountNumber, session) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const getUserByAccountNumber = async (accountNumber) => {
-  const accountDetail = await Account.findOne({ accountNumber });
+  const AccountModel = await Account();
+  const accountDetail = await AccountModel.findOne({ accountNumber });
   if (!accountDetail) {
     throw new Error('Account number does not exist');
   }
@@ -37,6 +39,8 @@ const getUserByAccountNumber = async (accountNumber) => {
  * @returns {Promise<Object>} Deposit result
  */
 const makeCustomerDeposit = async (depositInput) => {
+  const AccountModel = await Account();
+  const AccountTransactionModel = await AccountTransaction();
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -44,7 +48,7 @@ const makeCustomerDeposit = async (depositInput) => {
     const branch = await findBranchByAccountNumber(depositInput.accountNumber, session);
 
     const transactionDate = new Date().getTime();
-    const customerDeposit = await AccountTransaction.create(
+    const customerDeposit = await AccountTransactionModel.create(
       [
         {
           accountNumber: depositInput.accountNumber,
@@ -59,7 +63,7 @@ const makeCustomerDeposit = async (depositInput) => {
       { session }
     );
 
-    const updatedBalance = await Account.findOneAndUpdate(
+    const updatedBalance = await AccountModel.findOneAndUpdate(
       { accountNumber: depositInput.accountNumber },
       {
         $inc: {
@@ -91,7 +95,8 @@ const makeCustomerDeposit = async (depositInput) => {
  * @returns {Promise<Account>} Updated account
  */
 const updateAccountStatus = async (accountId, status) => {
-  const account = await Account.findByIdAndUpdate(accountId, { $set: { status } }, { new: true });
+  const AccountModel = await Account();
+  const account = await AccountModel.findByIdAndUpdate(accountId, { $set: { status } }, { new: true });
   return account;
 };
 
@@ -102,7 +107,8 @@ const updateAccountStatus = async (accountId, status) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const putAmountOnHold = async (accountNumber, amount) => {
-  const updatedBalance = await Account.findOneAndUpdate(
+  const AccountModel = await Account();
+  const updatedBalance = await AccountModel.findOneAndUpdate(
     { accountNumber },
     { $inc: { availableBalance: -amount } },
     { new: true, runValidators: true }
@@ -118,14 +124,15 @@ const putAmountOnHold = async (accountNumber, amount) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const spendHeldAmount = async (accountNumber, amount) => {
-  const accountBalance = await Account.findOne({ accountNumber });
+  const AccountModel = await Account();
+  const accountBalance = await AccountModel.findOne({ accountNumber });
   const amountToBeSpent = accountBalance.ledgerBalance - accountBalance.availableBalance;
 
   if (amount > amountToBeSpent) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Amount is not made available');
   }
 
-  const updatedBalance = await Account.findOneAndUpdate(
+  const updatedBalance = await AccountModel.findOneAndUpdate(
     { accountNumber },
     { $inc: { ledgerBalance: -amount } },
     { new: true, runValidators: true }
@@ -141,7 +148,8 @@ const spendHeldAmount = async (accountNumber, amount) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const moveHeldAmountToAvailable = async (accountNumber, amount) => {
-  const updatedBalance = await Account.findOneAndUpdate(
+  const AccountModel = await Account();
+  const updatedBalance = await AccountModel.findOneAndUpdate(
     { accountNumber },
     { $inc: { availableBalance: amount } },
     { new: true, runValidators: true }
@@ -156,7 +164,8 @@ const moveHeldAmountToAvailable = async (accountNumber, amount) => {
  * @returns {Promise<Account>}
  */
 const getAvailableBalance = async (accountNumber) => {
-  const accountBalance = await Account.findOne({ accountNumber });
+  const AccountModel = await Account();
+  const accountBalance = await AccountModel.findOne({ accountNumber });
   return accountBalance.availableBalance;
 };
 
@@ -166,7 +175,8 @@ const getAvailableBalance = async (accountNumber) => {
  * @returns {Promise<Account>}
  */
 const getAccountBalance = async (accountNumber) => {
-  const accountBalance = await Account.findOne({ accountNumber });
+  const AccountModel = await Account();
+  const accountBalance = await AccountModel.findOne({ accountNumber });
   return accountBalance.ledgerBalance;
 };
 
@@ -179,11 +189,13 @@ const getAccountBalance = async (accountNumber) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
+  const AccountModel = await Account();
+  const AccountTransactionModel = await AccountTransaction();
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const account = await Account.findOne({ accountNumber }).session(session);
+    const account = await AccountModel.findOne({ accountNumber }).session(session);
     if (!account) {
       throw new ApiError(404, 'Account number does not exist.');
     }
@@ -193,10 +205,10 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
     }
 
     const transactionDate = new Date().getTime();
-    const branch = await Account.findOne({ accountNumber }).session(session);
+    const branch = await AccountModel.findOne({ accountNumber }).session(session);
 
     // Create withdrawal request transaction
-    const withdrawalRequest = await AccountTransaction.create(
+    const withdrawalRequest = await AccountTransactionModel.create(
       [
         {
           accountNumber,
@@ -235,6 +247,7 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
  * @returns {Promise<Array>} Array of ds withdrawals
  */
 const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy) => {
+  const AccountTransactionModel = await AccountTransaction();
   try {
     const query = {};
     // Optional date range filtering
@@ -257,7 +270,7 @@ const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy)
     }
     query.direction = 'pending';
     query.narration = 'Request Cash';
-    const withdrawalRequests = await AccountTransaction.find(query)
+    const withdrawalRequests = await AccountTransactionModel.find(query)
       .populate([
         {
           path: 'createdBy',
@@ -291,7 +304,8 @@ const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy)
  * @returns {Promise<Object>} Withdrawal request details
  */
 const getWithdrawalRequestById = async (requestId) => {
-  const request = await AccountTransaction.findById(requestId)
+  const AccountTransactionModel = await AccountTransaction();
+  const request = await AccountTransactionModel.findById(requestId)
     .populate([
       {
         path: 'createdBy',
@@ -318,6 +332,8 @@ const getWithdrawalRequestById = async (requestId) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const makeCustomerWithdrawal = async (requestId) => {
+  const AccountTransactionModel = await AccountTransaction();
+  const AccountModel = await Account();
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -340,7 +356,7 @@ const makeCustomerWithdrawal = async (requestId) => {
 
     const transactionDate = new Date().getTime();
     // Create a new transaction to represent the fulfilled withdrawal
-    const fulfilledWithdrawal = await AccountTransaction.create(
+    const fulfilledWithdrawal = await AccountTransactionModel.create(
       [
         {
           createdBy: withdrawalRequest.createdBy,
@@ -360,7 +376,7 @@ const makeCustomerWithdrawal = async (requestId) => {
     await withdrawalRequest.save();
 
     // Deduct the withdrawn amount from the account
-    const updatedBalance = await Account.findOneAndUpdate(
+    const updatedBalance = await AccountModel.findOneAndUpdate(
       { accountNumber },
       {
         $inc: {
@@ -414,8 +430,9 @@ const rejectWithdrawalRequest = async (requestId, narration) => {
  * @returns {Promise<Array>} Array of account transactions
  */
 const getAccountTransactions = async (accountNumber, page, limit) => {
+  const AccountTransactionModel = await AccountTransaction();
   const skip = (page - 1) * limit;
-  const transactions = await AccountTransaction.find({ accountNumber })
+  const transactions = await AccountTransactionModel.find({ accountNumber })
     .populate([
       {
         path: 'userReps',
@@ -441,6 +458,7 @@ const getAccountTransactions = async (accountNumber, page, limit) => {
  * @returns {Promise<Array>} Array of ds withdrawals
  */
 const getCustomerwithdrawals = async (startDate, endDate, branchId, createdBy, accountNumber) => {
+  const AccountTransactionModel = await AccountTransaction();
   try {
     const query = {};
 
@@ -468,7 +486,7 @@ const getCustomerwithdrawals = async (startDate, endDate, branchId, createdBy, a
     }
 
     query.direction = 'outflow';
-    const withdrawals = await AccountTransaction.find(query)
+    const withdrawals = await AccountTransactionModel.find(query)
       .populate([
         {
           path: 'createdBy',

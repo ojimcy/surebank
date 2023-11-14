@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const productCatalogueSchema = mongoose.Schema(
   {
@@ -84,9 +85,18 @@ const productCatalogueSchema = mongoose.Schema(
 productCatalogueSchema.plugin(toJSON);
 productCatalogueSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef ProductCatalogue
+ * @returns ProductCatalogue
  */
-const ProductCatalogue = mongoose.model('ProductCatalogue', productCatalogueSchema);
+const ProductCatalogue = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('ProductCatalogue', productCatalogueSchema);
+  }
+
+  return model;
+};
 
 module.exports = ProductCatalogue;

@@ -61,6 +61,7 @@
     "passport-jwt": "^4.0.0",
     "pm2": "^5.1.0",
     "qrcode": "^1.5.3",
+    "serverless-http": "^3.2.0",
     "swagger-jsdoc": "^6.0.8",
     "swagger-ui-express": "^4.1.6",
     "validator": "^13.0.0",
@@ -83,6 +84,7 @@
     "node-mocks-http": "^1.8.0",
     "nodemon": "^2.0.0",
     "prettier": "^2.0.5",
+    "serverless-offline": "^13.2.1",
     "supertest": "^6.0.1"
   }
 }

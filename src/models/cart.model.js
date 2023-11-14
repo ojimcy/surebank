@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const cartSchema = mongoose.Schema(
   {
@@ -22,9 +23,18 @@ const cartSchema = mongoose.Schema(
 cartSchema.plugin(toJSON);
 cartSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Cart
+ * @returns Cart
  */
-const Cart = mongoose.model('Cart', cartSchema);
+const Cart = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Cart', cartSchema);
+  }
+
+  return model;
+};
 
 module.exports = Cart;

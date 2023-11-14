@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const dailySummarySchema = mongoose.Schema(
   {
@@ -33,9 +34,18 @@ const dailySummarySchema = mongoose.Schema(
 dailySummarySchema.plugin(toJSON);
 dailySummarySchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef DailySummary
+ * @returns DailySummary
  */
-const DailySummary = mongoose.model('DailySummary', dailySummarySchema);
+const DailySummary = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('DailySummary', dailySummarySchema);
+  }
+
+  return model;
+};
 
 module.exports = DailySummary;

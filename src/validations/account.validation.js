@@ -9,6 +9,7 @@ const createAccount = {
     branchId: Joi.string().required().custom(objectId),
     createdBy: Joi.string().custom(objectId),
     accountManagerName: Joi.string(),
+    role: Joi.string(),
   }),
 };
 

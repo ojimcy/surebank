@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const packageSchema = mongoose.Schema(
   {
@@ -69,9 +70,18 @@ const packageSchema = mongoose.Schema(
 packageSchema.plugin(toJSON);
 packageSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Package
+ * @returns Package
  */
-const Package = mongoose.model('Package', packageSchema);
+const Package = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Package', packageSchema);
+  }
+
+  return model;
+};
 
 module.exports = Package;

@@ -10,7 +10,8 @@ const { roles } = require('../config/roles');
  * @returns {Promise<Branch>}
  */
 const getBranchStaffById = async (id) => {
-  return BranchStaff.findOne({ staffId: id });
+  const BranchStaffModel = await BranchStaff();
+  return BranchStaffModel.findOne({ staffId: id });
 };
 
 /**
@@ -35,6 +36,7 @@ const isRoleLowerOrEqual = (roleToCheck, comparedRole) => {
  * @returns {Promise<User>}
  */
 const updateStaffRole = async (userId, newRole, assigningUserRole) => {
+  const UserModel = await User();
   // Check if the new role is a valid role
   if (!roles.includes(newRole)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid role');
@@ -44,7 +46,7 @@ const updateStaffRole = async (userId, newRole, assigningUserRole) => {
     throw new ApiError(httpStatus.FORBIDDEN, "You don't have permissions to assign this role");
   }
 
-  const user = await User.findById(userId);
+  const user = await UserModel.findById(userId);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
@@ -61,16 +63,17 @@ const updateStaffRole = async (userId, newRole, assigningUserRole) => {
  * @returns {Promise<BranchStaff>}
  */
 const addStaffToBranch = async (branchId, staffId, newRole, assigningUserRole) => {
+  const BranchStaffModel = await BranchStaff();
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const checkStaff = await BranchStaff.findOne({ staffId });
+    const checkStaff = await BranchStaffModel.findOne({ staffId });
     if (checkStaff) {
       throw new ApiError('Staff already belongs to a branch');
     }
 
-    const branchStaff = await BranchStaff.create([{ branchId, staffId, isCurrent: true }], { session });
+    const branchStaff = await BranchStaffModel.create([{ branchId, staffId, isCurrent: true }], { session });
 
     await updateStaffRole(staffId, newRole, assigningUserRole);
 
@@ -96,10 +99,11 @@ const addStaffToBranch = async (branchId, staffId, newRole, assigningUserRole) =
  * @returns {Promise<{ staffIds: Object, totalCounts: number, error: string|null }>}
  */
 const getAllStaffService = async (filter, options) => {
+  const BranchStaffModel = await BranchStaff();
   const { limit = 10, page = 1, sortBy } = options;
   const skip = (page - 1) * limit;
 
-  const branchStaff = await BranchStaff.find({})
+  const branchStaff = await BranchStaffModel.find({})
     .populate([
       {
         path: 'staffId',
@@ -127,10 +131,11 @@ const getAllStaffService = async (filter, options) => {
  * @returns {Promise<{ staffIds: Object, totalCounts: number, error: string|null }>}
  */
 const getStaffInBranch = async (branchId, filter, options) => {
+  const BranchStaffModel = await BranchStaff();
   const { limit = 10, page = 1, sortBy } = options;
   const skip = (page - 1) * limit;
 
-  const branchStaff = await BranchStaff.find({ branchId })
+  const branchStaff = await BranchStaffModel.find({ branchId })
     .populate([
       {
         path: 'staffId',
@@ -149,8 +154,9 @@ const getStaffInBranch = async (branchId, filter, options) => {
 
 const updateBranchStaffService = async (staffId, branchId) => {
   try {
+    const BranchStaffModel = await BranchStaff();
     // console.log(branchId, staffId);
-    const updatedBranchStaff = await BranchStaff.findOneAndUpdate(
+    const updatedBranchStaff = await BranchStaffModel.findOneAndUpdate(
       { staffId },
       { branchId },
       // { isCurrent: false },
@@ -183,7 +189,8 @@ const deleteBranchStaffById = async (branchStaffId) => {
  * @returns {Promise<Branch>}
  */
 const deleteAllBranchStaffById = async (branchId) => {
-  const branch = await BranchStaff.deleteMany({ branchId });
+  const BranchStaffModel = await BranchStaff();
+  const branch = await BranchStaffModel.deleteMany({ branchId });
   return branch;
 };
 
@@ -193,7 +200,8 @@ const deleteAllBranchStaffById = async (branchId) => {
  * @returns {Promise<void>}
  */
 const deleteStaffById = async (staffId) => {
-  const staff = await BranchStaff.findById(staffId);
+  const BranchStaffModel = await BranchStaff();
+  const staff = await BranchStaffModel.findById(staffId);
   if (!staff) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Staff not found');
   }

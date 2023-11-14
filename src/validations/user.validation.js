@@ -10,6 +10,7 @@ const createUser = {
     address: Joi.string().required(),
     phoneNumber: Joi.string().required(),
     branchId: Joi.string().optional().custom(objectId),
+    role: Joi.string(),
   }),
 };
 

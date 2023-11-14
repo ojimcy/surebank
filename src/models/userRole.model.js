@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const userRoleSchema = mongoose.Schema(
   {
@@ -22,9 +23,18 @@ const userRoleSchema = mongoose.Schema(
 userRoleSchema.plugin(toJSON);
 userRoleSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef UserRoles
+ * @returns UserRoles
  */
-const UserRoles = mongoose.model('UserRoles', userRoleSchema);
+const UserRoles = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('UserRoles', userRoleSchema);
+  }
+
+  return model;
+};
 
 module.exports = UserRoles;

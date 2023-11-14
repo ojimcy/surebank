@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const saleSchema = mongoose.Schema(
   {
@@ -55,9 +56,18 @@ const saleSchema = mongoose.Schema(
 saleSchema.plugin(toJSON);
 saleSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Sales
+ * @returns Sales
  */
-const Sales = mongoose.model('Sales', saleSchema);
+const Sales = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Sales', saleSchema);
+  }
+
+  return model;
+};
 
 module.exports = Sales;

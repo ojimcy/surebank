@@ -6,13 +6,15 @@ const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransa
 const { addLedgerEntry } = require('./accounting.service');
 
 const createSbPackage = async (sbPackageData) => {
+  const ProductModel = await Product();
+  const SbPackageModel = await SbPackage();
   const userAccount = await getUserByAccountNumber(sbPackageData.accountNumber);
 
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
 
-  const userPackageExist = await SbPackage.findOne({
+  const userPackageExist = await SbPackageModel.findOne({
     accountNumber: sbPackageData.accountNumber,
     status: 'open',
     product: sbPackageData.product,
@@ -22,7 +24,7 @@ const createSbPackage = async (sbPackageData) => {
     throw new ApiError(400, 'Customer has an active package running');
   }
 
-  const product = await Product.findById(sbPackageData.product);
+  const product = await ProductModel.findById(sbPackageData.product);
 
   if (!product || !product.isSbAvailable) {
     throw new ApiError(400, 'The selected product is not available for Savings-Buying');
@@ -31,7 +33,7 @@ const createSbPackage = async (sbPackageData) => {
   const amountPerDay = parseFloat((product.price / 31).toFixed(2));
   const startDate = new Date().getTime();
 
-  const savingsBuyingPackage = await SbPackage.create({
+  const savingsBuyingPackage = await SbPackageModel.create({
     ...sbPackageData,
     userId: userAccount.userId,
     targetAmount: product.price,
@@ -50,11 +52,16 @@ const createSbPackage = async (sbPackageData) => {
  */
 
 const makeDailyContribution = async (contributionInput) => {
+  const AccountTransactionModel = await AccountTransaction();
+  const ContributionModel = await Contribution();
+  const AccountModel = await Account();
+  const SbPackageModel = await SbPackage();
+
   const userAccount = await getUserByAccountNumber(contributionInput.accountNumber);
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
-  const userPackage = await SbPackage.findOne({
+  const userPackage = await SbPackageModel.findOne({
     accountNumber: contributionInput.accountNumber,
     status: 'open',
     product: contributionInput.product,
@@ -84,11 +91,11 @@ const makeDailyContribution = async (contributionInput) => {
     throw new ApiError(400, 'Total contribution count cannot exceed 31');
   }
 
-  const branch = await Account.findOne({
+  const branch = await AccountModel.findOne({
     accountNumber: contributionInput.accountNumber,
   });
 
-  const newContribution = await Contribution.create({
+  const newContribution = await ContributionModel.create({
     createdBy: contributionInput.createdBy,
     amount: contributionInput.amount,
     branchId: branch.branchId,
@@ -105,7 +112,7 @@ const makeDailyContribution = async (contributionInput) => {
   if (!userPackage.hasBeenCharged) {
     userPackage.totalContribution -= userPackage.amountPerDay;
 
-    await SbPackage.findByIdAndUpdate(userPackageId, {
+    await SbPackageModel.findByIdAndUpdate(userPackageId, {
       hasBeenCharged: true,
     });
 
@@ -122,11 +129,11 @@ const makeDailyContribution = async (contributionInput) => {
     await addLedgerEntry(addLedgerEntryInput);
   }
 
-  await SbPackage.findByIdAndUpdate(userPackageId, {
+  await SbPackageModel.findByIdAndUpdate(userPackageId, {
     totalContribution: userPackage.totalContribution,
   });
 
-  await SbPackage.findByIdAndUpdate(userPackageId, {
+  await SbPackageModel.findByIdAndUpdate(userPackageId, {
     $set: {
       totalCount,
     },
@@ -143,7 +150,7 @@ const makeDailyContribution = async (contributionInput) => {
 
     await makeCustomerDeposit(depositDetail);
 
-    await SbPackage.findByIdAndUpdate(userPackageId, {
+    await SbPackageModel.findByIdAndUpdate(userPackageId, {
       status: 'closed',
       totalContribution: 0,
       totalCount: 0,
@@ -151,7 +158,7 @@ const makeDailyContribution = async (contributionInput) => {
   } else {
     const transactionDate = new Date().getTime();
 
-    const contributionTransaction = await AccountTransaction.create({
+    const contributionTransaction = await AccountTransactionModel.create({
       accountNumber: userPackage.accountNumber,
       amount: contributionInput.amount,
       createdBy: contributionInput.createdBy,
@@ -178,7 +185,8 @@ const makeSbWithdrawal = async (withdrawal) => {
   session.startTransaction();
 
   try {
-    const userPackage = await SbPackage.findOne(
+    const SbPackageModel = await SbPackage();
+    const userPackage = await SbPackageModel.findOne(
       {
         accountNumber: withdrawal.accountNumber,
         status: 'open',
@@ -198,7 +206,7 @@ const makeSbWithdrawal = async (withdrawal) => {
 
     const balanceAfterWithdrawal = userPackage.totalContribution - withdrawal.amount;
 
-    await SbPackage.findOneAndUpdate(
+    await SbPackageModel.findOneAndUpdate(
       { accountNumber: withdrawal.accountNumber, status: 'open', product: withdrawal.product },
       { totalContribution: balanceAfterWithdrawal },
       { session }
@@ -214,7 +222,7 @@ const makeSbWithdrawal = async (withdrawal) => {
     await makeCustomerDeposit(withdrawalDetails, session);
 
     if (balanceAfterWithdrawal === 0) {
-      await SbPackage.findOneAndUpdate(
+      await SbPackageModel.findOneAndUpdate(
         { accountNumber: withdrawal.accountNumber, status: 'open' },
         { status: 'closed' },
         { session }
@@ -238,7 +246,8 @@ const makeSbWithdrawal = async (withdrawal) => {
  * @returns {Promise<Object>} Package
  */
 const getPackageById = async (packageId) => {
-  const userPackage = await SbPackage.findById(packageId).populate({
+  const SbPackageModel = await SbPackage();
+  const userPackage = await SbPackageModel.findById(packageId).populate({
     path: 'product',
     select: ['name', 'images', 'price', 'salesPrice'],
   });
@@ -254,7 +263,8 @@ const getPackageById = async (packageId) => {
  * @returns {Promise<Array>} Array of user's daily savings packages
  */
 const getUserSbPackages = async (userId) => {
-  const userPackages = await SbPackage.find({
+  const SbPackageModel = await SbPackage();
+  const userPackages = await SbPackageModel.find({
     userId,
     status: 'open',
   }).populate({

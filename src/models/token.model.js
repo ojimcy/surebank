@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { toJSON } = require('./plugins');
 const { tokenTypes } = require('../config/tokens');
+const { getConnection } = require('./connection');
 
 const tokenSchema = mongoose.Schema(
   {
@@ -36,9 +37,18 @@ const tokenSchema = mongoose.Schema(
 // add plugin that converts mongoose to json
 tokenSchema.plugin(toJSON);
 
+let model = null;
+
 /**
- * @typedef Token
+ * @returns Token
  */
-const Token = mongoose.model('Token', tokenSchema);
+const Token = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Token', tokenSchema);
+  }
+
+  return model;
+};
 
 module.exports = Token;

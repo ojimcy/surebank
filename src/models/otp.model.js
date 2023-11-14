@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON } = require('./plugins');
+const { getConnection } = require('./connection');
 
 // create opt model with userId, otp, and expiry
 
@@ -23,6 +24,18 @@ const optSchema = mongoose.Schema({
 // add plugin that converts mongoose to json
 optSchema.plugin(toJSON);
 
-const Opt = mongoose.model('Opt', optSchema);
+let model = null;
+
+/**
+ * @returns Opt
+ */
+const Opt = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Opt', optSchema);
+  }
+
+  return model;
+};
 
 module.exports = Opt;

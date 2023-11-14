@@ -1,7 +1,8 @@
 const { FileUpload } = require('../models');
 
 const uploadFile = async (originalFileName, fileName, filePath) => {
-  const fileUpload = new FileUpload({
+  const FileUploadModel = await FileUpload();
+  const fileUpload = new FileUploadModel({
     originalFileName,
     fileName,
     filePath,

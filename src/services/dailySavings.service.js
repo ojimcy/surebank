@@ -11,11 +11,13 @@ const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
  * @returns {Promise<Object>} Result of the operation
  */
 const createDailySavingsPackage = async (dailyInput) => {
+  const PackageModel = await Package();
+  const AccountModel = await Account();
   const userAccount = await getUserByAccountNumber(dailyInput.accountNumber);
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
-  const userPackageExist = await Package.findOne({
+  const userPackageExist = await PackageModel.findOne({
     accountNumber: dailyInput.accountNumber,
     status: 'open',
     target: dailyInput.target,
@@ -24,8 +26,8 @@ const createDailySavingsPackage = async (dailyInput) => {
   if (userPackageExist) {
     throw new ApiError(400, 'Customer has an active package running');
   }
-  const branch = await Account.findOne({ accountNumber: dailyInput.accountNumber });
-  const createdPackage = await Package.create({
+  const branch = await AccountModel.findOne({ accountNumber: dailyInput.accountNumber });
+  const createdPackage = await PackageModel.create({
     ...dailyInput,
     userId: userAccount.userId,
     branchId: branch.branchId,
@@ -40,11 +42,15 @@ const createDailySavingsPackage = async (dailyInput) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const saveDailyContribution = async (contributionInput) => {
+  const PackageModel = await Package();
+  const ContributionModel = await Contribution();
+  const AccountModel = await Account();
+  const AccountTransactionModel = await AccountTransaction();
   const userAccount = await getUserByAccountNumber(contributionInput.accountNumber);
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
-  const userPackage = await Package.findOne({
+  const userPackage = await PackageModel.findOne({
     accountNumber: contributionInput.accountNumber,
     status: 'open',
     target: contributionInput.target,
@@ -77,9 +83,9 @@ const saveDailyContribution = async (contributionInput) => {
     throw new ApiError(400, 'Total contribution count cannot exceed 31');
   }
 
-  const branch = await Account.findOne({ accountNumber: contributionInput.accountNumber });
+  const branch = await AccountModel.findOne({ accountNumber: contributionInput.accountNumber });
 
-  const newContribution = await Contribution.create({
+  const newContribution = await ContributionModel.create({
     createdBy: contributionInput.createdBy,
     amount: contributionInput.amount,
     branchId: branch.branchId,
@@ -95,7 +101,7 @@ const saveDailyContribution = async (contributionInput) => {
 
   if (userPackage.hasBeenCharged === false) {
     userPackage.totalContribution -= userPackage.amountPerDay;
-    await Package.findByIdAndUpdate(userPackageId, {
+    await PackageModel.findByIdAndUpdate(userPackageId, {
       hasBeenCharged: true,
     });
 
@@ -111,12 +117,12 @@ const saveDailyContribution = async (contributionInput) => {
     await addLedgerEntry(addLedgerEntryInput);
   }
 
-  await Package.findByIdAndUpdate(userPackageId, {
+  await PackageModel.findByIdAndUpdate(userPackageId, {
     totalContribution: userPackage.totalContribution,
   });
 
   // Update the total contribution count in the Package model
-  await Package.findByIdAndUpdate(userPackageId, {
+  await PackageModel.findByIdAndUpdate(userPackageId, {
     $set: { totalCount }, // Update the totalCount field with the new value
   });
 
@@ -132,7 +138,7 @@ const saveDailyContribution = async (contributionInput) => {
     await makeCustomerDeposit(depositDetail);
 
     // Close the package and reset total contribution count to 0
-    await Package.findByIdAndUpdate(userPackageId, {
+    await PackageModel.findByIdAndUpdate(userPackageId, {
       status: 'closed',
       totalContribution: 0,
       totalCount: 0,
@@ -140,7 +146,7 @@ const saveDailyContribution = async (contributionInput) => {
   } else {
     const transactionDate = new Date().getTime();
 
-    const contributionTransaction = await AccountTransaction.create({
+    const contributionTransaction = await AccountTransactionModel.create({
       accountNumber: contributionInput.accountNumber,
       amount: contributionInput.amount,
       createdBy: contributionInput.createdBy,
@@ -160,11 +166,12 @@ const saveDailyContribution = async (contributionInput) => {
  * @returns {Promise<Object>} Withdrawal details
  */
 const makeDailySavingsWithdrawal = async (withdrawal) => {
+  const PackageModel = await Package();
   const session = await startSession();
   session.startTransaction();
 
   try {
-    const userPackage = await Package.findOne(
+    const userPackage = await PackageModel.findOne(
       {
         accountNumber: withdrawal.accountNumber,
         status: 'open',
@@ -184,7 +191,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
 
     const balanceAfterWithdrawal = userPackage.totalContribution - withdrawal.amount;
 
-    await Package.findOneAndUpdate(
+    await PackageModel.findOneAndUpdate(
       { accountNumber: withdrawal.accountNumber, status: 'open', target: withdrawal.target },
       { totalContribution: balanceAfterWithdrawal },
       { session }
@@ -200,7 +207,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
     await makeCustomerDeposit(withdrawalDetails, session);
 
     if (balanceAfterWithdrawal === 0) {
-      await Package.findOneAndUpdate(
+      await PackageModel.findOneAndUpdate(
         { accountNumber: withdrawal.accountNumber, status: 'open' },
         { status: 'closed' },
         { session }
@@ -224,7 +231,8 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
  * @returns {Promise<Object>} Daily savings package
  */
 const getDailySavingsPackageById = async (packageId) => {
-  const userPackage = await Package.findById(packageId);
+  const PackageModel = await Package();
+  const userPackage = await PackageModel.findById(packageId);
   if (!userPackage) {
     throw new ApiError(404, 'Daily savings package not found');
   }
@@ -237,7 +245,8 @@ const getDailySavingsPackageById = async (packageId) => {
  * @returns {Promise<Array>} Array of user's daily savings packages
  */
 const getUserDailySavingsPackages = async (userId) => {
-  const userPackages = await Package.find({
+  const PackageModel = await Package();
+  const userPackages = await PackageModel.find({
     userId,
     status: 'open',
   });
@@ -251,8 +260,9 @@ const getUserDailySavingsPackages = async (userId) => {
  * @returns {Promise<Array>} Array of contributions
  */
 const getDailySavingsContributions = async (packageId) => {
+  const ContributionModel = await Contribution();
   try {
-    return await Contribution.find({ packageId }).populate('createdBy', 'firstName lastName').lean();
+    return await ContributionModel.find({ packageId }).populate('createdBy', 'firstName lastName').lean();
   } catch (error) {
     throw new ApiError('Failed to get contributions for the package', error);
   }
@@ -266,7 +276,8 @@ const getDailySavingsContributions = async (packageId) => {
  */
 const getDailySavingsWithdrawals = async (accountNumber, narration) => {
   try {
-    const withdrawals = await AccountTransaction.find({ accountNumber, narration })
+    const AccountTransactionModel = await AccountTransaction();
+    const withdrawals = await AccountTransactionModel.find({ accountNumber, narration })
       .populate('createdBy', 'firstName lastName')
       .lean();
     return withdrawals;

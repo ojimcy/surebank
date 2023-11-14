@@ -8,12 +8,13 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<User>}
  */
 const createUser = async (userBody) => {
-  if (await User.isEmailTaken(userBody.email)) {
+  const userModel = await User();
+  if (await userModel.isEmailTaken(userBody.email)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
   const referralCode = Math.floor(100000 + Math.random() * 900000);
   const user = { ...userBody, referralCode };
-  return User.create(user);
+  return userModel.create(user);
 };
 
 /**
@@ -26,7 +27,8 @@ const createUser = async (userBody) => {
  * @returns {Promise<QueryResult>}
  */
 const queryUsers = async (filter, options) => {
-  const users = await User.paginate(filter, options);
+  const userModel = await User();
+  const users = await userModel.paginate(filter, options);
   return users;
 };
 
@@ -36,7 +38,8 @@ const queryUsers = async (filter, options) => {
  * @returns {Promise<User>}
  */
 const getUserById = async (id) => {
-  return User.findById(id);
+  const userModel = await User();
+  return userModel.findById(id);
 };
 
 /**
@@ -45,7 +48,8 @@ const getUserById = async (id) => {
  * @returns {Promise<User>}
  */
 const getUserByEmail = async (email) => {
-  return User.findOne({ email });
+  const userModel = await User();
+  return userModel.findOne({ email });
 };
 
 /**
@@ -55,11 +59,12 @@ const getUserByEmail = async (email) => {
  * @returns {Promise<User>}
  */
 const updateUserById = async (userId, updateBody) => {
+  const userModel = await User();
   const user = await getUserById(userId);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
-  if (updateBody.email && (await User.isEmailTaken(updateBody.email, userId))) {
+  if (updateBody.email && (await userModel.isEmailTaken(updateBody.email, userId))) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
   Object.assign(user, updateBody);
@@ -88,6 +93,7 @@ const deleteUserById = async (userId) => {
  * @returns {Promise<User>} Updated user profile
  */
 const updateProfile = async (userId, updateData) => {
+  const userModel = await User();
   const user = await getUserById(userId);
 
   if (!user) {
@@ -96,7 +102,7 @@ const updateProfile = async (userId, updateData) => {
 
   if (updateData.email) {
     // Check if the new email is already taken by another user
-    if (await User.isEmailTaken(updateData.email, userId)) {
+    if (await userModel.isEmailTaken(updateData.email, userId)) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
     }
     user.email = updateData.email;

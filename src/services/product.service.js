@@ -9,20 +9,22 @@ const { getMerchantByUserId } = require('./merchant.service');
  * @returns {Promise<Object>} Result of the operation
  */
 const createProductRequest = async (requestData, merchantId) => {
+  const ProductRequestModel = await ProductRequest();
+  const ProductModel = await Product();
   const merchant = await getMerchantByUserId(merchantId);
   // Check that the Merchant document was found
   if (!merchant) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Merchant not found');
   }
   // Check if a product request with the same name already exists
-  const existingProductRequest = await ProductRequest.findOne({ name: requestData.name });
-  const existingProduct = await Product.findOne({ name: requestData.name });
+  const existingProductRequest = await ProductRequestModel.findOne({ name: requestData.name });
+  const existingProduct = await ProductModel.findOne({ name: requestData.name });
   if (existingProductRequest || existingProduct) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Product request with the same name already exists');
   }
 
   // Create the product request
-  const productRequest = await ProductRequest.create({ ...requestData, merchantId });
+  const productRequest = await ProductRequestModel.create({ ...requestData, merchantId });
   return productRequest;
 };
 
@@ -36,7 +38,8 @@ const createProductRequest = async (requestData, merchantId) => {
  * @returns {Promise<Object>} Object containing product requests and pagination information
  */
 const viewProductRequests = async (filter, options) => {
-  const productRequests = await ProductRequest.paginate(filter, options);
+  const ProductRequestModel = await ProductRequest();
+  const productRequests = await ProductRequestModel.paginate(filter, options);
   return productRequests;
 };
 
@@ -48,8 +51,9 @@ const viewProductRequests = async (filter, options) => {
  * @returns {Promise<Object>} The updated product request
  */
 const updateProductRequest = async (requestId, merchantId, updateData) => {
+  const ProductRequestModel = await ProductRequest();
   // Check if the product request exists
-  const productRequest = await ProductRequest.findById(requestId);
+  const productRequest = await ProductRequestModel.findById(requestId);
   if (!productRequest) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product request not found');
   }
@@ -73,8 +77,9 @@ const updateProductRequest = async (requestId, merchantId, updateData) => {
  * @returns {Promise<Object>} The deleted product request
  */
 const deleteProductRequest = async (requestId, merchantId) => {
+  const ProductRequestModel = await ProductRequest();
   // Check if the product request exists
-  const productRequest = await ProductRequest.findById(requestId);
+  const productRequest = await ProductRequestModel.findById(requestId);
   if (!productRequest) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product request not found');
   }
@@ -85,7 +90,7 @@ const deleteProductRequest = async (requestId, merchantId) => {
   }
 
   // Delete the product request
-  await ProductRequest.findByIdAndRemove(requestId);
+  await ProductRequestModel.findByIdAndRemove(requestId);
 
   return productRequest;
 };
@@ -96,8 +101,10 @@ const deleteProductRequest = async (requestId, merchantId) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const createProductCatalogue = async (productData, userId) => {
+  const ProductModel = await Product();
+  const ProductCatalogueModel = await ProductCatalogue();
   // Check if the product exists and is available
-  const product = await Product.findById(productData.productId);
+  const product = await ProductModel.findById(productData.productId);
   if (!product) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Product not found or not available');
   }
@@ -109,7 +116,7 @@ const createProductCatalogue = async (productData, userId) => {
   }
 
   // Check if the title is unique
-  const existingProductCatalogue = await ProductCatalogue.findOne({
+  const existingProductCatalogue = await ProductCatalogueModel.findOne({
     title: productData.title,
     merchantId: merchant._id,
   });
@@ -118,7 +125,7 @@ const createProductCatalogue = async (productData, userId) => {
   }
 
   // Create the product catalogue entry
-  const productCatalogue = await ProductCatalogue.create({ ...productData, merchantId: merchant._id });
+  const productCatalogue = await ProductCatalogueModel.create({ ...productData, merchantId: merchant._id });
 
   return productCatalogue;
 };
@@ -129,12 +136,14 @@ const createProductCatalogue = async (productData, userId) => {
  * @returns {Promise<Object>} The created product
  */
 const approveProductRequest = async (requestId) => {
-  const productRequest = await ProductRequest.findById(requestId);
+  const ProductModel = await Product();
+  const ProductRequestModel = await ProductRequest();
+  const productRequest = await ProductRequestModel.findById(requestId);
   if (!productRequest) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product request not found');
   }
 
-  const existingProduct = await Product.findOne({
+  const existingProduct = await ProductModel.findOne({
     name: productRequest.name,
     merchantId: productRequest.merchantId,
   });
@@ -147,7 +156,7 @@ const approveProductRequest = async (requestId) => {
   await productRequest.save();
 
   // Create a new Product document using the product request data
-  const newProduct = new Product({
+  const newProduct = new ProductModel({
     status: 'approved',
     name: productRequest.name,
     description: productRequest.description,
@@ -177,12 +186,13 @@ const approveProductRequest = async (requestId) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const rejectProduct = async (requestId, reasonForRejection) => {
-  const productRequest = await ProductRequest.findById(requestId);
+  const ProductRequestModel = await ProductRequest();
+  const productRequest = await ProductRequestModel.findById(requestId);
   if (!productRequest) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product request not found');
   }
 
-  const updatedRequest = await ProductRequest.findByIdAndUpdate(
+  const updatedRequest = await ProductRequestModel.findByIdAndUpdate(
     requestId,
     { status: 'rejected', reasonForRejection },
     { new: true }
@@ -200,7 +210,8 @@ const rejectProduct = async (requestId, reasonForRejection) => {
  * @returns {Promise<Object>} Object containing products and pagination information
  */
 const viewProducts = async (filter, options) => {
-  const product = await Product.paginate(filter, options);
+  const ProductModel = await Product();
+  const product = await ProductModel.paginate(filter, options);
   return product;
 };
 
@@ -210,7 +221,8 @@ const viewProducts = async (filter, options) => {
  * @returns {Promise<Product>}
  */
 const getProductById = async (id) => {
-  const product = await Product.findById(id).populate([
+  const ProductModel = await Product();
+  const product = await ProductModel.findById(id).populate([
     { path: 'categoryId', select: 'name' },
     { path: 'subCategoryId', select: 'name' },
     { path: 'brand', select: 'name' },
@@ -229,8 +241,9 @@ const getProductById = async (id) => {
  * @returns {Promise<Object>} The updated product
  */
 const updateProduct = async (productId, updateData) => {
+  const ProductModel = await Product();
   // Check if the product exists
-  const product = await Product.findById(productId);
+  const product = await ProductModel.findById(productId);
   if (!product) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
   }
@@ -248,8 +261,9 @@ const updateProduct = async (productId, updateData) => {
  * @returns {Promise<Object>} The deleted product
  */
 const deleteProduct = async (productId, merchantId) => {
+  const ProductModel = await Product();
   // Check if the product exists
-  const product = await Product.findById(productId);
+  const product = await ProductModel.findById(productId);
   if (!product) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
   }
@@ -266,16 +280,19 @@ const deleteProduct = async (productId, merchantId) => {
 };
 
 const addProductToCollection = async (productId, collectionId) => {
+  const ProductModel = await Product();
+  const CollectionModel = await Collection();
+  const ProductCollectionModel = await ProductCollection();
   // Check if the product and collection exist
-  const product = await Product.findById(productId);
-  const collection = await Collection.findById(collectionId);
+  const product = await ProductModel.findById(productId);
+  const collection = await CollectionModel.findById(collectionId);
 
   if (!product || !collection) {
     throw new ApiError(404, 'Product or collection not found');
   }
 
   // Check if the product is already in the collection
-  const productInCollection = await ProductCollection.findOne({
+  const productInCollection = await ProductCollectionModel.findOne({
     productId,
     collectionId,
   });
@@ -284,7 +301,7 @@ const addProductToCollection = async (productId, collectionId) => {
     throw new ApiError(400, 'Product is already in the collection');
   }
 
-  const productCollection = new ProductCollection({ productId, collectionId });
+  const productCollection = new ProductCollectionModel({ productId, collectionId });
   await productCollection.save();
 
   // Update the product's collections
@@ -295,23 +312,27 @@ const addProductToCollection = async (productId, collectionId) => {
 };
 
 const getProductsBySlug = async (collectionSlug) => {
-  const collection = await Collection.findOne({ slug: collectionSlug });
+  const ProductModel = await Product();
+  const CollectionModel = await Collection();
+  const collection = await CollectionModel.findOne({ slug: collectionSlug });
   if (!collection) {
     throw new ApiError(404, 'Collection not found');
   }
 
-  const products = await Product.find({ collections: collection._id });
+  const products = await ProductModel.find({ collections: collection._id });
   return products;
 };
 
 const getProductCatalogue = async (filter, options) => {
-  const product = await ProductCatalogue.paginate(filter, options);
+  const ProductCatalogueModel = await ProductCatalogue();
+  const product = await ProductCatalogueModel.paginate(filter, options);
   return product;
 };
 
 const viewMyProductCatalogue = async (userId) => {
+  const ProductCatalogueModel = await ProductCatalogue();
   const merchant = await getMerchantByUserId(userId);
-  const products = await ProductCatalogue.find({ merchantId: merchant._id }).populate([
+  const products = await ProductCatalogueModel.find({ merchantId: merchant._id }).populate([
     {
       path: 'productId',
       model: 'Product',
@@ -325,11 +346,12 @@ const viewMyProductCatalogue = async (userId) => {
 };
 
 const deleteProductCatalogue = async (productId, userId) => {
+  const ProductCatalogueModel = await ProductCatalogue();
   const merchant = await getMerchantByUserId(userId);
   const merchantId = merchant._id;
 
   // Check if the product exists
-  const product = await ProductCatalogue.findById(productId);
+  const product = await ProductCatalogueModel.findById(productId);
   if (!product) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
   }
@@ -340,13 +362,14 @@ const deleteProductCatalogue = async (productId, userId) => {
   }
 
   // Delete the product
-  await ProductCatalogue.findByIdAndRemove(productId);
+  await ProductCatalogueModel.findByIdAndRemove(productId);
 
   return product;
 };
 
 const getProductCatalogueById = async (id) => {
-  const product = await ProductCatalogue.findById(id).populate([
+  const ProductCatalogueModel = await ProductCatalogue();
+  const product = await ProductCatalogueModel.findById(id).populate([
     {
       path: 'merchantId',
       select: 'storeName',
@@ -359,8 +382,9 @@ const getProductCatalogueById = async (id) => {
 };
 
 const getProductsByIds = async (payload) => {
+  const ProductModel = await Product();
   const ids = payload.split('&').map((id) => id.split('=')[1]);
-  const products = await Product.find({ id: { $in: ids } });
+  const products = await ProductModel.find({ id: { $in: ids } });
   return products;
 };
 

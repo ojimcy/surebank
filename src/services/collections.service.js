@@ -9,12 +9,13 @@ const ApiError = require('../utils/ApiError');
  * @throws {ApiError} If a collection with the same slug already exists
  */
 const createCollection = async (collectionData) => {
-  const existingCollection = await Collection.findOne({ slug: collectionData.slug });
+  const CollectionModel = await Collection();
+  const existingCollection = await CollectionModel.findOne({ slug: collectionData.slug });
   if (existingCollection) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Collection with the same slug already exists');
   }
 
-  const collection = await Collection.create(collectionData);
+  const collection = await CollectionModel.create(collectionData);
   return collection;
 };
 
@@ -23,7 +24,8 @@ const createCollection = async (collectionData) => {
  * @returns {Promise<Array>} Array of collections
  */
 const getAllCollections = async () => {
-  const collections = await Collection.find();
+  const CollectionModel = await Collection();
+  const collections = await CollectionModel.find();
   return collections;
 };
 
@@ -34,7 +36,8 @@ const getAllCollections = async () => {
  * @throws {ApiError} If the collection is not found
  */
 const getCollectionById = async (collectionId) => {
-  const collection = await Collection.findById(collectionId);
+  const CollectionModel = await Collection();
+  const collection = await CollectionModel.findById(collectionId);
   if (!collection) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Collection not found');
   }
@@ -49,7 +52,8 @@ const getCollectionById = async (collectionId) => {
  * @throws {ApiError} If the collection is not found
  */
 const updateCollectionById = async (collectionId, updateData) => {
-  const collection = await Collection.findByIdAndUpdate(collectionId, updateData, { new: true });
+  const CollectionModel = await Collection();
+  const collection = await CollectionModel.findByIdAndUpdate(collectionId, updateData, { new: true });
   if (!collection) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Collection not found');
   }
@@ -63,7 +67,8 @@ const updateCollectionById = async (collectionId, updateData) => {
  * @throws {ApiError} If the collection is not found
  */
 const deleteCollectionById = async (collectionId) => {
-  const collection = await Collection.findByIdAndRemove(collectionId);
+  const CollectionModel = await Collection();
+  const collection = await CollectionModel.findByIdAndRemove(collectionId);
   if (!collection) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Collection not found');
   }

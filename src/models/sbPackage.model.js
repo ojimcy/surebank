@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { getConnection } = require('./connection');
 
 const sbPackageSchema = new mongoose.Schema({
   accountNumber: {
@@ -51,6 +52,18 @@ const sbPackageSchema = new mongoose.Schema({
   },
 });
 
-const SbPackage = mongoose.model('SbPackage', sbPackageSchema);
+let model = null;
+
+/**
+ * @returns SbPackage
+ */
+const SbPackage = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('SbPackage', sbPackageSchema);
+  }
+
+  return model;
+};
 
 module.exports = SbPackage;

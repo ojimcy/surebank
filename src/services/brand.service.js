@@ -8,11 +8,12 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<Object>} Result of the operation
  */
 const createBrand = async (brandData) => {
-  const existingBrand = await Brand.findOne({ name: brandData.name });
+  const BrandModel = await Brand();
+  const existingBrand = await BrandModel.findOne({ name: brandData.name });
   if (existingBrand) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Brand with the same name already exists');
   }
-  return Brand.create(brandData);
+  return BrandModel.create(brandData);
 };
 
 /**
@@ -25,7 +26,8 @@ const createBrand = async (brandData) => {
  * @returns {Promise<Object>} Object containing brands requests and pagination information
  */
 const viewBrands = async (filter, options) => {
-  const brands = await Brand.paginate(filter, options);
+  const BrandModel = await Brand();
+  const brands = await BrandModel.paginate(filter, options);
   return brands;
 };
 
@@ -35,7 +37,8 @@ const viewBrands = async (filter, options) => {
  * @returns {Promise<Object>} The deleted brand
  */
 const deleteBrand = async (brandId) => {
-  const brand = await Brand.findByIdAndRemove(brandId);
+  const BrandModel = await Brand();
+  const brand = await BrandModel.findByIdAndRemove(brandId);
   if (!brand) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Brand not found');
   }
@@ -49,7 +52,8 @@ const deleteBrand = async (brandId) => {
  * @returns {Promise<Object>} The updated brand
  */
 const updateBrand = async (brandId, updateData) => {
-  const brand = await Brand.findByIdAndUpdate(brandId, updateData, { new: true });
+  const BrandModel = await Brand();
+  const brand = await BrandModel.findByIdAndUpdate(brandId, updateData, { new: true });
   if (!brand) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Brand not found');
   }

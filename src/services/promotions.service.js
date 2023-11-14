@@ -1,11 +1,13 @@
 const { Promotion, Banner } = require('../models');
 
 const createBanner = async (bannerData) => {
-  return Banner.create(bannerData);
+  const BannerModel = await Banner();
+  return BannerModel.create(bannerData);
 };
 
 const createPromotionSlide = async (promotionSlideData) => {
-  return Promotion.create(promotionSlideData);
+  const PromotionModel = await Promotion();
+  return PromotionModel.create(promotionSlideData);
 };
 
 /**
@@ -13,7 +15,8 @@ const createPromotionSlide = async (promotionSlideData) => {
  * @returns {Promise<Array>} Array of banners
  */
 const getAllBanners = async () => {
-  return Banner.find({ isActive: true });
+  const BannerModel = await Banner();
+  return BannerModel.find({ isActive: true });
 };
 
 /**
@@ -21,7 +24,8 @@ const getAllBanners = async () => {
  * @returns {Promise<Array>} Array of promotion slides
  */
 const getAllPromotionSlides = async () => {
-  return Promotion.find({ isActive: true });
+  const PromotionModel = await Promotion();
+  return PromotionModel.find({ isActive: true });
 };
 
 /**
@@ -30,7 +34,8 @@ const getAllPromotionSlides = async () => {
  * @returns {Promise<object>} Updated banner
  */
 const disableBanner = async (bannerId) => {
-  return Banner.findByIdAndUpdate(bannerId, { isActive: false }, { new: true });
+  const BannerModel = await Banner();
+  return BannerModel.findByIdAndUpdate(bannerId, { isActive: false }, { new: true });
 };
 
 /**
@@ -39,7 +44,8 @@ const disableBanner = async (bannerId) => {
  * @returns {Promise<object>} Updated promotion slide
  */
 const disablePromotionSlide = async (slideId) => {
-  return Promotion.findByIdAndUpdate(slideId, { isActive: false }, { new: true });
+  const PromotionModel = await Promotion();
+  return PromotionModel.findByIdAndUpdate(slideId, { isActive: false }, { new: true });
 };
 
 module.exports = {

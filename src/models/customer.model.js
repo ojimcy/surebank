@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const customerSchema = mongoose.Schema(
   {
@@ -51,9 +52,18 @@ const customerSchema = mongoose.Schema(
 customerSchema.plugin(toJSON);
 customerSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Customer
+ * @returns Customer
  */
-const Customer = mongoose.model('Customer', customerSchema);
+const Customer = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Customer', customerSchema);
+  }
+
+  return model;
+};
 
 module.exports = Customer;

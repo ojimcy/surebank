@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const bannerSchema = mongoose.Schema(
   {
@@ -24,6 +25,18 @@ const bannerSchema = mongoose.Schema(
 
 bannerSchema.plugin(toJSON);
 
-const Banner = mongoose.model('Banner', bannerSchema);
+let model = null;
+
+/**
+ * @returns Banner
+ */
+const Banner = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Banner', bannerSchema);
+  }
+
+  return model;
+};
 
 module.exports = Banner;

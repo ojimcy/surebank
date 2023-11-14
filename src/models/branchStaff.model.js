@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const staffSchema = mongoose.Schema(
   {
@@ -28,9 +29,18 @@ const staffSchema = mongoose.Schema(
 staffSchema.plugin(toJSON);
 staffSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef BranchStaff
+ * @returns BranchStaff
  */
-const BranchStaff = mongoose.model('BranchStaff', staffSchema);
+const BranchStaff = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('BranchStaff', staffSchema);
+  }
+
+  return model;
+};
 
 module.exports = BranchStaff;

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const branchSchema = mongoose.Schema(
   {
@@ -46,9 +47,18 @@ const branchSchema = mongoose.Schema(
 branchSchema.plugin(toJSON);
 branchSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Branch
+ * @returns Branch
  */
-const Branch = mongoose.model('Branch', branchSchema);
+const Branch = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Branch', branchSchema);
+  }
+
+  return model;
+};
 
 module.exports = Branch;

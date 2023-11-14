@@ -62,6 +62,8 @@ const makeDeposit = async (depositInput) => {
   session.startTransaction();
 
   try {
+    const AccountModel = await Account();
+    const AccountTransactionModel = await AccountTransaction();
     const userAccount = await getUserByAccountNumber(depositInput.accountNumber);
     if (!userAccount) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Account number does not exist.');
@@ -69,7 +71,7 @@ const makeDeposit = async (depositInput) => {
 
     const transactionDate = new Date().getTime();
 
-    const customerDeposit = await AccountTransaction.create(
+    const customerDeposit = await AccountTransactionModel.create(
       [
         {
           accountNumber: depositInput.accountNumber,
@@ -83,7 +85,7 @@ const makeDeposit = async (depositInput) => {
       { session }
     );
 
-    const updatedBalance = await Account.findOneAndUpdate(
+    const updatedBalance = await AccountModel.findOneAndUpdate(
       { accountNumber: depositInput.accountNumber },
       {
         $inc: {
@@ -119,6 +121,8 @@ const makeWithdrawal = async (withdrawalInput, userId, userReps) => {
   session.startTransaction();
 
   try {
+    const AccountModel = await Account();
+    const AccountTransactionModel = await AccountTransaction();
     const userAccount = await getUserByAccountNumber(withdrawalInput.accountNumber);
     if (!userAccount) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Account number does not exist.');
@@ -134,7 +138,7 @@ const makeWithdrawal = async (withdrawalInput, userId, userReps) => {
 
     const transactionDate = new Date().getTime();
 
-    const customerWithdrawal = await AccountTransaction.create(
+    const customerWithdrawal = await AccountTransactionModel.create(
       [
         {
           accountNumber: withdrawalInput.accountNumber,
@@ -148,7 +152,7 @@ const makeWithdrawal = async (withdrawalInput, userId, userReps) => {
       { session }
     );
 
-    const updatedBalance = await Account.findOneAndUpdate(
+    const updatedBalance = await AccountModel.findOneAndUpdate(
       { accountNumber: withdrawalInput.accountNumber },
       {
         $inc: {
@@ -185,7 +189,8 @@ const makeWithdrawal = async (withdrawalInput, userId, userReps) => {
  */
 
 const getCustomersByUserReps = async (userReps, filter, options) => {
-  const staffAccount = await Account.paginate({ accountManagerId: userReps }, filter, options);
+  const AccountModel = await Account();
+  const staffAccount = await AccountModel.paginate({ accountManagerId: userReps }, filter, options);
   return staffAccount;
 };
 

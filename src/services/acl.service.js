@@ -8,11 +8,12 @@ const { UserRoles, RolePermission, Role, Permission } = require('../models');
  * @returns {Promise<Object>} Result of the operation
  */
 const createRole = async (label, merchantRole) => {
-  const checkRole = await Role.findOne({ label });
+  const RoleModel = await Role();
+  const checkRole = await RoleModel.findOne({ label });
   if (checkRole) {
     throw new Error(`${label} role already exists`);
   } else {
-    const role = await Role.create({ label, merchantRole });
+    const role = await RoleModel.create({ label, merchantRole });
     return role;
   }
 };
@@ -27,7 +28,8 @@ const createRole = async (label, merchantRole) => {
  * @returns {Promise<QueryResult>}
  */
 const getRoles = async (filter, options) => {
-  const roles = await Role.paginate(filter, options);
+  const RoleModel = await Role();
+  const roles = await RoleModel.paginate(filter, options);
   return roles;
 };
 
@@ -37,7 +39,8 @@ const getRoles = async (filter, options) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const getRolesForUser = async (userId) => {
-  const userRoles = await UserRoles.find({ userId });
+  const UserRolesModel = await UserRoles();
+  const userRoles = await UserRolesModel.find({ userId });
   const roles = userRoles.map((item) => item.roleId);
   return roles;
 };
@@ -48,7 +51,8 @@ const getRolesForUser = async (userId) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const getUsersInRole = async (roleId) => {
-  const userRoles = await UserRoles.find({ roleId });
+  const UserRolesModel = await UserRoles();
+  const userRoles = await UserRolesModel.find({ roleId });
   const users = userRoles.map((item) => item.userId);
   return users;
 };
@@ -59,8 +63,9 @@ const getUsersInRole = async (roleId) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const getPermissionsForUser = async (userId) => {
+  const RolePermissionModel = await RolePermission();
   const rolesIds = await getRolesForUser(userId);
-  const rolePermissions = await RolePermission.find({ roleId: { $in: rolesIds } });
+  const rolePermissions = await RolePermissionModel.find({ roleId: { $in: rolesIds } });
   return rolePermissions;
 };
 
@@ -87,7 +92,8 @@ const hasAnyOfPermissions = async (permissionList, userId) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const getRolePermissions = async (roleId) => {
-  const rolePermissions = await RolePermission.find({ roleId });
+  const RolePermissionModel = await RolePermission();
+  const rolePermissions = await RolePermissionModel.find({ roleId });
   return rolePermissions;
 };
 
@@ -102,11 +108,12 @@ const permissions = async () => {
  * @returns {Promise<RolePermission>} Created role permission
  */
 const addPermissionToRole = async (permissionId, roleId) => {
-  const isAvailable = await RolePermission.findOne({ permissionId, roleId });
+  const RolePermissionModel = await RolePermission();
+  const isAvailable = await RolePermissionModel.findOne({ permissionId, roleId });
   if (isAvailable) {
     throw new Error('Role permission already exists');
   }
-  const rolePermission = await RolePermission.create({ permissionId, roleId });
+  const rolePermission = await RolePermissionModel.create({ permissionId, roleId });
   return rolePermission;
 };
 
@@ -117,11 +124,12 @@ const addPermissionToRole = async (permissionId, roleId) => {
  * @returns {Promise<UserRoles>} Created user role
  */
 const createUserRole = async (userId, roleId) => {
-  const checkRole = await UserRoles.findOne({ userId, roleId });
+  const UserRolesModel = await UserRoles();
+  const checkRole = await UserRolesModel.findOne({ userId, roleId });
   if (checkRole) {
     throw new Error('Role already exists for the user');
   }
-  const userRoles = await UserRoles.create({ userId, roleId });
+  const userRoles = await UserRolesModel.create({ userId, roleId });
   return userRoles;
 };
 
@@ -131,9 +139,12 @@ const createUserRole = async (userId, roleId) => {
  * @returns {Promise<void>} Empty promise
  */
 const deleteRole = async (roleId) => {
-  await Role.findByIdAndDelete(roleId);
-  await UserRoles.deleteMany({ roleId });
-  await RolePermission.deleteMany({ roleId });
+  const RoleModel = await Role();
+  const RolePermissionModel = await RolePermission();
+  const UserRolesModel = await UserRoles();
+  await RoleModel.findByIdAndDelete(roleId);
+  await UserRolesModel.deleteMany({ roleId });
+  await RolePermissionModel.deleteMany({ roleId });
 };
 
 /**
@@ -142,7 +153,8 @@ const deleteRole = async (roleId) => {
  * @returns {Promise<Role>} Role object
  */
 const getRoleById = async (roleId) => {
-  const role = await Role.findById(roleId);
+  const RoleModel = await Role();
+  const role = await RoleModel.findById(roleId);
   return role;
 };
 
@@ -153,7 +165,8 @@ const getRoleById = async (roleId) => {
  * @returns {Promise<void>} Empty promise
  */
 const deleteRolePermission = async (roleId, permissionId) => {
-  await RolePermission.findOneAndDelete({ roleId, permissionId });
+  const RolePermissionModel = await RolePermission();
+  await RolePermissionModel.findOneAndDelete({ roleId, permissionId });
 };
 
 /**
@@ -163,7 +176,8 @@ const deleteRolePermission = async (roleId, permissionId) => {
  * @returns {Promise<void>} Empty promise
  */
 const deleteUserFromRole = async (roleId, userId) => {
-  await UserRoles.findOneAndDelete({ roleId, userId });
+  const UserRolesModel = await UserRoles();
+  await UserRolesModel.findOneAndDelete({ roleId, userId });
 };
 
 /**
@@ -173,7 +187,8 @@ const deleteUserFromRole = async (roleId, userId) => {
  * @returns {Promise<Object>} Updated role
  */
 const updateRole = async (roleId, roleData) => {
-  const role = await Role.findByIdAndUpdate(roleId, roleData, { new: true });
+  const RoleModel = await Role();
+  const role = await RoleModel.findByIdAndUpdate(roleId, roleData, { new: true });
   return role;
 };
 
@@ -185,11 +200,12 @@ const updateRole = async (roleId, roleData) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const createPermission = async (label, merchantPermission, description) => {
-  const checkPermission = await Permission.findOne({ label });
+  const PermissionModel = await Permission();
+  const checkPermission = await PermissionModel.findOne({ label });
   if (checkPermission) {
     throw new Error(`${label} Permission already exists`);
   } else {
-    const permission = await Permission.create({ label, merchantPermission, description });
+    const permission = await PermissionModel.create({ label, merchantPermission, description });
     return permission;
   }
 };

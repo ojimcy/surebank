@@ -3,8 +3,7 @@ const QRCode = require('qrcode');
 const httpStatus = require('http-status');
 
 const ApiError = require('../utils/ApiError');
-const Otp = require('../models/otp.model');
-const User = require('../models/user.model');
+const { Otp, User } = require('../models');
 const { emailTemplates, sendEmail } = require('./email.service');
 
 /**
@@ -13,15 +12,17 @@ const { emailTemplates, sendEmail } = require('./email.service');
  * @returns {Promise<string>}
  */
 const sendOtp = async (userId, action = 'complete your action') => {
+  const OtpModel = await Otp();
+  const UserModel = await User();
   // delete all otps for this user
-  await Otp.deleteMany({ userId });
+  await OtpModel.deleteMany({ userId });
 
   // generate new otp
   const otp = Math.floor(100000 + Math.random() * 900000);
   const expiry = new Date();
   expiry.setMinutes(expiry.getMinutes() + 5);
-  const otpDoc = await Otp.create({ userId, otp, expiry });
-  const user = await User.findById(userId);
+  const otpDoc = await OtpModel.create({ userId, otp, expiry });
+  const user = await UserModel.findById(userId);
   await sendEmail(
     { to: user.email, subject: 'Defipay OTP', template: emailTemplates.OTP },
     { otp: otpDoc.otp, name: user.name, action }
@@ -37,7 +38,8 @@ const sendOtp = async (userId, action = 'complete your action') => {
  * @throws {ApiError}
  */
 const validateOtp = async (userId, otp) => {
-  const otpDoc = await Otp.findOne({ userId, otp, expiry: { $gt: new Date() } });
+  const OtpModel = await Otp();
+  const otpDoc = await OtpModel.findOne({ userId, otp, expiry: { $gt: new Date() } });
   if (!otpDoc) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Invalid OTP');
   }
@@ -60,7 +62,8 @@ const validateOtp = async (userId, otp) => {
  * @description This function will initialize 2FA for the user
  */
 const init2fa = async (userId) => {
-  const user = await User.findById(userId);
+  const UserModel = await User();
+  const user = await UserModel.findById(userId);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
@@ -70,7 +73,7 @@ const init2fa = async (userId) => {
   }
 
   const secret = authenticator.generateSecret();
-  await User.updateOne({ _id: userId }, { twoFactorAuthSecret: secret });
+  await UserModel.updateOne({ _id: userId }, { twoFactorAuthSecret: secret });
 
   await sendOtp(userId, 'enable 2FA');
 
@@ -92,7 +95,8 @@ const init2fa = async (userId) => {
  *
  */
 const verify2faCode = async (userId, twoFaCode) => {
-  const user = await User.findById(userId);
+  const UserModel = await User();
+  const user = await UserModel.findById(userId);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
@@ -117,8 +121,9 @@ const verify2faCode = async (userId, twoFaCode) => {
  *
  */
 const enable2fa = async (userId, otp, twoFaCode) => {
+  const UserModel = await User();
   await validateOtp(userId, otp);
-  const user = await User.findById(userId);
+  const user = await UserModel.findById(userId);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
@@ -132,7 +137,7 @@ const enable2fa = async (userId, otp, twoFaCode) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid 2FA code');
   }
 
-  await User.updateOne({ _id: userId }, { isTwoFactorAuthEnabled: true });
+  await UserModel.updateOne({ _id: userId }, { isTwoFactorAuthEnabled: true });
 };
 
 /**
@@ -146,9 +151,10 @@ const enable2fa = async (userId, otp, twoFaCode) => {
  *
  */
 const disable2fa = async (userId, otp, twoFaCode) => {
+  const UserModel = await User();
   await validateOtp(userId, otp);
 
-  const user = await User.findById(userId);
+  const user = await UserModel.findById(userId);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
@@ -162,7 +168,7 @@ const disable2fa = async (userId, otp, twoFaCode) => {
     throw new ApiError(httpStatus.BAD_REQUEST, '2FA not enabled');
   }
 
-  await User.updateOne({ _id: userId }, { isTwoFactorAuthEnabled: false });
+  await UserModel.updateOne({ _id: userId }, { isTwoFactorAuthEnabled: false });
 };
 
 module.exports = {

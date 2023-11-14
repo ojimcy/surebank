@@ -3,22 +3,26 @@ const Notification = require('../models/notification.model');
 const ApiError = require('../utils/ApiError');
 
 const createNotification = async (input) => {
-  const notification = await Notification.create(input);
+  const NotificationModel = await Notification();
+  const notification = await NotificationModel.create(input);
   return notification;
 };
 
 const getNotifications = async (userId, filter, options) => {
-  const notifications = await Notification.paginate({ userId, ...filter }, options);
+  const NotificationModel = await Notification();
+  const notifications = await NotificationModel.paginate({ userId, ...filter }, options);
   return notifications;
 };
 
 const getUnreadNotificationsCount = async (userId) => {
-  const count = await Notification.countDocuments({ userId, isRead: false });
+  const NotificationModel = await Notification();
+  const count = await NotificationModel.countDocuments({ userId, isRead: false });
   return count;
 };
 
 const markNotificationAsRead = async (userId, notificationId) => {
-  const notification = await Notification.findById(notificationId);
+  const NotificationModel = await Notification();
+  const notification = await NotificationModel.findById(notificationId);
   if (!notification) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Notification not found');
   }

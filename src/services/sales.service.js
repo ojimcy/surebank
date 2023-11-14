@@ -12,7 +12,8 @@ const { getMerchantByUserId } = require('./merchant.service');
  * @returns {Promise<boolean>} Indicates whether the product is available or not
  */
 const checkProductAvailability = async (productCatalogueId, quantityDemand) => {
-  const productCatalogue = await ProductCatalogue.findById(productCatalogueId);
+  const ProductCatalogueModel = await ProductCatalogue();
+  const productCatalogue = await ProductCatalogueModel.findById(productCatalogueId);
   if (productCatalogue) {
     const { quantity } = productCatalogue;
     return quantity >= quantityDemand;
@@ -26,7 +27,8 @@ const checkProductAvailability = async (productCatalogueId, quantityDemand) => {
  * @returns {Promise<ProductCatalogue>} The product catalogue
  */
 const getProductCatalogueById = async (productCatalogueId) => {
-  const productCatalogue = await ProductCatalogue.findById(productCatalogueId);
+  const ProductCatalogueModel = await ProductCatalogue();
+  const productCatalogue = await ProductCatalogueModel.findById(productCatalogueId);
   return productCatalogue;
 };
 
@@ -38,7 +40,8 @@ const getProductCatalogueById = async (productCatalogueId) => {
  * @returns {Promise<ProductCatalogue>} The updated product catalogue
  */
 const updateQuantity = async (productCatalogueId, quantity, session) => {
-  const updatedProductCatalogue = await ProductCatalogue.findByIdAndUpdate(
+  const ProductCatalogueModel = await ProductCatalogue();
+  const updatedProductCatalogue = await ProductCatalogueModel.findByIdAndUpdate(
     productCatalogueId,
     { quantity },
     { new: true, session }
@@ -56,21 +59,27 @@ const commitSale = async (userId, salesData) => {
   const session = await mongoose.startSession();
 
   try {
+    const SalesModel = await Sales();
+    const SalesItemModel = await SalesItem();
+    const LedgerModel = await Ledger();
+    const CartModel = await Cart();
+    const CartItemModel = await CartItem();
+
     session.startTransaction();
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await CartModel.findOne({ userId });
 
     if (!cart) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Cart not found');
     }
 
-    const cartItems = await CartItem.find({ cartId: cart._id });
+    const cartItems = await CartItemModel.find({ cartId: cart._id });
 
     if (cartItems.length === 0) {
       throw new ApiError(httpStatus.NOT_FOUND, 'No items in the cart');
     }
 
-    const sales = await Sales.create(
+    const sales = await SalesModel.create(
       [
         {
           ...salesData,
@@ -90,7 +99,7 @@ const commitSale = async (userId, salesData) => {
           throw new ApiError(httpStatus.BAD_REQUEST, 'Product not available');
         }
 
-        await SalesItem.create(
+        await SalesItemModel.create(
           [
             {
               salesId: sales[0]._id,
@@ -116,7 +125,7 @@ const commitSale = async (userId, salesData) => {
       date: new Date(),
     };
 
-    await Ledger.create([ledgerEntry], { session });
+    await LedgerModel.create([ledgerEntry], { session });
 
     await session.commitTransaction();
   } catch (error) {
@@ -128,15 +137,16 @@ const commitSale = async (userId, salesData) => {
 };
 
 const viewSales = async (userId, filters, pagination) => {
+  const SalesModel = await Sales();
   let baseQuery = {};
 
   // Check if the user is a salesRep
-  const salesRep = await Sales.findOne({ salesRepId: userId });
+  const salesRep = await SalesModel.findOne({ salesRepId: userId });
   if (salesRep) {
     baseQuery = { salesRepId: userId };
   } else {
     // Check if the user is a merchant
-    const merchant = await Sales.findOne({ merchantId: userId });
+    const merchant = await SalesModel.findOne({ merchantId: userId });
     if (merchant) {
       baseQuery = { merchantId: userId };
     } else {
@@ -164,7 +174,7 @@ const viewSales = async (userId, filters, pagination) => {
   };
 
   // Retrieve sales data based on the constructed query and options
-  const salesData = await Sales.paginate(query, options);
+  const salesData = await SalesModel.paginate(query, options);
 
   // Check if no sales data found
   if (salesData.totalDocs === 0) {
@@ -190,22 +200,25 @@ const cancelSale = async (salesId, userId) => {
   session.startTransaction();
 
   try {
-    const sale = await Sales.findById(salesId);
+    const ProductCatalogueModel = await ProductCatalogue();
+    const SalesItemModel = await SalesItem();
+    const SalesModel = await Sales();
+    const sale = await SalesModel.findById(salesId);
 
     // Check if the user is authorized to cancel the sale
     if (userId !== sale.userId.toString()) {
       throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized to cancel the sale');
     }
 
-    const updateSale = await Sales.findByIdAndUpdate(salesId, { status: PAYMENT_STATUS[1] }, { session });
+    const updateSale = await SalesModel.findByIdAndUpdate(salesId, { status: PAYMENT_STATUS[1] }, { session });
 
-    const saleItems = await SalesItem.find({ salesId });
+    const saleItems = await SalesItemModel.find({ salesId });
 
     await Promise.all(
       saleItems.map(async (item) => {
         const { quantity, productCatalogueId } = item;
-        const productCat = await ProductCatalogue.findById(productCatalogueId);
-        await ProductCatalogue.findByIdAndUpdate(
+        const productCat = await ProductCatalogueModel.findById(productCatalogueId);
+        await ProductCatalogueModel.findByIdAndUpdate(
           productCatalogueId,
           { quantity: quantity + productCat.quantity },
           { session }
@@ -230,17 +243,19 @@ const cancelSale = async (salesId, userId) => {
  * @returns {Promise<object>} The updated sale document
  */
 const updatePayment = async (salesId) => {
+  const SalesModel = await Sales();
+  const LedgerModel = await Ledger();
   const session = await mongoose.startSession();
   session.startTransaction();
 
-  const sales = await Sales.findById(salesId);
+  const sales = await SalesModel.findById(salesId);
   if (!sales) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Sale not found');
   }
 
   // Check if the sale status is "approved"
   if (sales.status !== PAYMENT_STATUS[2]) {
-    await Sales.findByIdAndUpdate(salesId, { status: PAYMENT_STATUS[0] }, { session });
+    await SalesModel.findByIdAndUpdate(salesId, { status: PAYMENT_STATUS[0] }, { session });
 
     const date = new Date().getTime();
     const amount = sales.total;
@@ -249,7 +264,7 @@ const updatePayment = async (salesId) => {
     const narration = sales.salesRepId;
     const { branchId } = sales;
 
-    const ledger = await Ledger.create(
+    const ledger = await LedgerModel.create(
       [
         {
           date,
@@ -270,13 +285,15 @@ const updatePayment = async (salesId) => {
 };
 
 const deleteSale = async (salesId) => {
+  const SalesModel = await Sales();
+  const SalesItemModel = await SalesItem();
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    await Sales.findByIdAndDelete({ _id: salesId }, { session });
+    await SalesModel.findByIdAndDelete({ _id: salesId }, { session });
 
-    await SalesItem.deleteMany({ salesId }, { session });
+    await SalesItemModel.deleteMany({ salesId }, { session });
 
     await session.commitTransaction();
     session.endSession();

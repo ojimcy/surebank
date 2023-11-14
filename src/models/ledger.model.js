@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const ledgerSchema = mongoose.Schema(
   {
@@ -45,9 +46,18 @@ const ledgerSchema = mongoose.Schema(
 ledgerSchema.plugin(toJSON);
 ledgerSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Ledger
+ * @returns Ledger
  */
-const Ledger = mongoose.model('Ledger', ledgerSchema);
+const Ledger = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Ledger', ledgerSchema);
+  }
+
+  return model;
+};
 
 module.exports = Ledger;

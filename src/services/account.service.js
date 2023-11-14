@@ -14,11 +14,12 @@ const { getUserByEmail } = require('./user.service');
  * @returns {Promise<Account>} Created account
  */
 const createAccount = async (accountData, createdBy) => {
+  const accountModel = await Account();
   const { email, accountType, branchId } = accountData;
   const user = await getUserByEmail(email);
   const userId = user._id;
   // Check if the user already has an account of the specified type
-  const existingAccount = await Account.findOne({ userId, accountType });
+  const existingAccount = await accountModel.findOne({ userId, accountType });
   if (existingAccount) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'User already has an account of the specified type');
   }
@@ -41,7 +42,7 @@ const createAccount = async (accountData, createdBy) => {
     status: 'active',
   };
 
-  return Account.create(account);
+  return accountModel.create(account);
 };
 
 /**
@@ -51,7 +52,8 @@ const createAccount = async (accountData, createdBy) => {
  * @returns {Promise<Account>} Updated account
  */
 const assignBranch = async (accountId, branchId) => {
-  const account = await Account.findByIdAndUpdate(accountId, { $set: { branchId } }, { new: true });
+  const accountModel = await Account();
+  const account = await accountModel.findByIdAndUpdate(accountId, { $set: { branchId } }, { new: true });
   return account;
 };
 
@@ -62,7 +64,8 @@ const assignBranch = async (accountId, branchId) => {
  * @returns {Promise<Account>} Updated account
  */
 const assignManager = async (accountId, managerId) => {
-  const account = await Account.findByIdAndUpdate(accountId, { $set: { accountManagerId: managerId } }, { new: true });
+  const accountModel = await Account();
+  const account = await accountModel.findByIdAndUpdate(accountId, { $set: { accountManagerId: managerId } }, { new: true });
   return account;
 };
 
@@ -72,7 +75,8 @@ const assignManager = async (accountId, managerId) => {
  * @returns {Promise<string>} User's account number
  */
 const getUserAccountNumber = async (userId) => {
-  const account = await Account.findOne({ userId });
+  const accountModel = await Account();
+  const account = await accountModel.findOne({ userId });
   if (!account) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User does not have an account');
   }
@@ -85,7 +89,9 @@ const getUserAccountNumber = async (userId) => {
  * @returns {Promise<Account>} User's account details
  */
 const getUserAccount = async (userId) => {
-  const account = await Account.findOne({ userId })
+  const accountModel = await Account();
+  const account = await accountModel
+    .findOne({ userId })
     .populate([
       {
         path: 'accountManagerId',
@@ -113,7 +119,8 @@ const getUserAccount = async (userId) => {
  * @returns {Promise<QueryResult>}
  */
 const getAllAccounts = async (filter, options) => {
-  const accounts = await Account.paginate(filter, options, {
+  const accountModel = await Account();
+  const accounts = await accountModel.paginate(filter, options, {
     populate: [
       {
         path: 'accountManagerId',
@@ -140,10 +147,11 @@ const getAllAccounts = async (filter, options) => {
  */
 
 const getAccountsInBranch = async (branchId, filter, options) => {
+  const accountModel = await Account();
   const { limit = 10, page = 1, sortBy } = options;
   const skip = (page - 1) * limit;
 
-  const branchAccount = await Account.find({ branchId }).skip(skip).limit(limit).sort(sortBy);
+  const branchAccount = await accountModel.find({ branchId }).skip(skip).limit(limit).sort(sortBy);
   return branchAccount;
 };
 
@@ -159,10 +167,11 @@ const getAccountsInBranch = async (branchId, filter, options) => {
  */
 
 const getAccountsByStaff = async (staffId, filter, options) => {
+  const accountModel = await Account();
   const { limit = 10, page = 1, sortBy } = options;
   const skip = (page - 1) * limit;
 
-  const staffAccount = await Account.find({ accountManagerId: staffId }).skip(skip).limit(limit).sort(sortBy);
+  const staffAccount = await accountModel.find({ accountManagerId: staffId }).skip(skip).limit(limit).sort(sortBy);
   return staffAccount;
 };
 
@@ -172,7 +181,8 @@ const getAccountsByStaff = async (staffId, filter, options) => {
  * @returns {Promise<Account>} Deleted account
  */
 const deleteAccount = async (accountId) => {
-  const account = await Account.findById(accountId);
+  const accountModel = await Account();
+  const account = await accountModel.findById(accountId);
   if (!account) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
   }
@@ -187,7 +197,8 @@ const deleteAccount = async (accountId) => {
  * @returns {Promise<Account>} Updated account
  */
 const updateAccount = async (accountId, updateBody) => {
-  const account = await Account.findByIdAndUpdate(accountId, updateBody, { new: true });
+  const accountModel = await Account();
+  const account = await accountModel.findByIdAndUpdate(accountId, updateBody, { new: true });
   if (!account) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
   }
@@ -200,7 +211,9 @@ const updateAccount = async (accountId, updateBody) => {
  * @returns {Promise<Account>}
  */
 const getAccountById = async (id) => {
-  return Account.findById(id)
+  const accountModel = await Account();
+  return accountModel
+    .findById(id)
     .populate([
       {
         path: 'accountManagerId',

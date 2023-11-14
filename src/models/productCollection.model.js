@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { getConnection } = require('./connection');
 
 const productCollectionSchema = new mongoose.Schema({
   productId: {
@@ -13,6 +14,18 @@ const productCollectionSchema = new mongoose.Schema({
   },
 });
 
-const ProductCollection = mongoose.model('ProductCollection', productCollectionSchema);
+let model = null;
+
+/**
+ * @returns ProductCollection
+ */
+const ProductCollection = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('ProductCollection', productCollectionSchema);
+  }
+
+  return model;
+};
 
 module.exports = ProductCollection;

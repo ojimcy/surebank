@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const notificationSchema = mongoose.Schema(
   {
@@ -47,16 +48,18 @@ const notificationSchema = mongoose.Schema(
 notificationSchema.plugin(toJSON);
 notificationSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Notification
- * @property {ObjectId} id
- * @property {string} title
- * @property {string} body
- * @property {string} image
- * @property {string} url
- * @property {boolean} isRead
- * @property {ObjectId} userId
+ * @returns Notification
  */
-const Notification = mongoose.model('Notification', notificationSchema);
+const Notification = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Notification', notificationSchema);
+  }
+
+  return model;
+};
 
 module.exports = Notification;

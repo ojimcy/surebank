@@ -8,11 +8,12 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<Object>} Result of the operation
  */
 const createCategory = async (categoryData) => {
-  const existingCategory = await Category.findOne({ name: categoryData.name });
+  const CategoryModel = await Category();
+  const existingCategory = await CategoryModel.findOne({ name: categoryData.name });
   if (existingCategory) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Category with the same name already exists');
   }
-  return Category.create(categoryData);
+  return CategoryModel.create(categoryData);
 };
 
 /**
@@ -20,7 +21,8 @@ const createCategory = async (categoryData) => {
  * @returns {Promise<Array>} List of categories
  */
 const getCategories = async () => {
-  return Category.find();
+  const CategoryModel = await Category();
+  return CategoryModel.find();
 };
 
 /**
@@ -29,12 +31,14 @@ const getCategories = async () => {
  * @returns {Promise<Object>} Result of the operation
  */
 const createBrand = async (brandData) => {
-  const existingBrand = await Category.findOne({ name: brandData.name });
+  const BrandModel = await Brand();
+  const CategoryModel = await Category();
+  const existingBrand = await CategoryModel.findOne({ name: brandData.name });
   if (existingBrand) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Brand with the same name already exists');
   }
 
-  return Brand.create(brandData);
+  return BrandModel.create(brandData);
 };
 
 /**
@@ -42,7 +46,8 @@ const createBrand = async (brandData) => {
  * @returns {Promise<Array>} List of brands
  */
 const getBrands = async () => {
-  return Brand.find();
+  const BrandModel = await Brand();
+  return BrandModel.find();
 };
 
 module.exports = {

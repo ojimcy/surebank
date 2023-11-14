@@ -8,6 +8,7 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<Object>} Result of the operation
  */
 const createMerchantRequest = async (requestData) => {
+  const MerchantRequestModel = await MerchantRequest();
   // Ensure that all required fields are present
   if (!requestData.storeName || !requestData.storeAddress || !requestData.storePhoneNumber || !requestData.email) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Missing required fields');
@@ -15,14 +16,14 @@ const createMerchantRequest = async (requestData) => {
 
   // Check if storeName already exists
   const { storeName } = requestData;
-  const existingMerchantRequest = await MerchantRequest.findOne({
+  const existingMerchantRequest = await MerchantRequestModel.findOne({
     storeName,
   });
   if (existingMerchantRequest) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Store name already exists');
   }
 
-  return MerchantRequest.create(requestData);
+  return MerchantRequestModel.create(requestData);
 };
 
 /**
@@ -35,7 +36,8 @@ const createMerchantRequest = async (requestData) => {
  * @returns {Promise<QueryResult>}
  */
 const viewRequests = async (filter, options) => {
-  const requests = await MerchantRequest.paginate(filter, options);
+  const MerchantRequestModel = await MerchantRequest();
+  const requests = await MerchantRequestModel.paginate(filter, options);
   return requests;
 };
 
@@ -45,7 +47,8 @@ const viewRequests = async (filter, options) => {
  * @returns {Promise<MerchantRequest>}
  */
 const viewRequest = async (id) => {
-  return MerchantRequest.findById(id);
+  const MerchantRequestModel = await MerchantRequest();
+  return MerchantRequestModel.findById(id);
 };
 
 /**
@@ -55,12 +58,17 @@ const viewRequest = async (id) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const cancelMerchantRequest = async (requestId, reasons) => {
+  const MerchantRequestModel = await MerchantRequest();
   const merchantRequest = await viewRequest(requestId);
   if (!merchantRequest) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Merchant request not found');
   }
 
-  const updatedRequest = await MerchantRequest.findByIdAndUpdate(requestId, { status: 'canceled', reasons }, { new: true });
+  const updatedRequest = await MerchantRequestModel.findByIdAndUpdate(
+    requestId,
+    { status: 'canceled', reasons },
+    { new: true }
+  );
   return updatedRequest;
 };
 
@@ -74,7 +82,8 @@ const cancelMerchantRequest = async (requestId, reasons) => {
  * @returns {Promise<Object>} Object containing cancelled merchant requests and pagination information
  */
 const getCancelledRequests = async (filter, options) => {
-  const cancelledRequests = await MerchantRequest.paginate({ status: 'cancel', ...filter }, options);
+  const MerchantRequestModel = await MerchantRequest();
+  const cancelledRequests = await MerchantRequestModel.paginate({ status: 'cancel', ...filter }, options);
   return cancelledRequests;
 };
 
@@ -85,12 +94,17 @@ const getCancelledRequests = async (filter, options) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const denyMerchantRequest = async (requestId, reasons) => {
+  const MerchantRequestModel = await MerchantRequest();
   const merchantRequest = await viewRequest(requestId);
   if (!merchantRequest) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Merchant request not found');
   }
 
-  const updatedRequest = await MerchantRequest.findByIdAndUpdate(requestId, { status: 'denied', reasons }, { new: true });
+  const updatedRequest = await MerchantRequestModel.findByIdAndUpdate(
+    requestId,
+    { status: 'denied', reasons },
+    { new: true }
+  );
   return updatedRequest;
 };
 
@@ -104,7 +118,8 @@ const denyMerchantRequest = async (requestId, reasons) => {
  * @returns {Promise<Object>} Object containing denied merchant requests and pagination information
  */
 const getDeniedRequests = async (filter, options) => {
-  const deniedRequests = await MerchantRequest.paginate({ status: 'denied', ...filter }, options);
+  const MerchantRequestModel = await MerchantRequest();
+  const deniedRequests = await MerchantRequestModel.paginate({ status: 'denied', ...filter }, options);
   return deniedRequests;
 };
 
@@ -114,12 +129,14 @@ const getDeniedRequests = async (filter, options) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const approveMerchantRequest = async (requestId) => {
+  const MerchantRequestModel = await MerchantRequest();
+  const MerchantModel = await Merchant();
   const merchantRequest = await viewRequest(requestId);
   if (!merchantRequest) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Merchant request not found');
   }
 
-  await MerchantRequest.findByIdAndUpdate(requestId, { status: 'approved' }, { new: true });
+  await MerchantRequestModel.findByIdAndUpdate(requestId, { status: 'approved' }, { new: true });
 
   // Create an entry in the Merchant model
   const merchantData = {
@@ -133,7 +150,7 @@ const approveMerchantRequest = async (requestId) => {
     status: 'approved',
   };
 
-  const merchant = await Merchant.create(merchantData);
+  const merchant = await MerchantModel.create(merchantData);
 
   return merchant;
 };
@@ -148,7 +165,8 @@ const approveMerchantRequest = async (requestId) => {
  * @returns {Promise<Object>} Object containing approved merchant requests and pagination information
  */
 const getApprovedRequests = async (filter, options) => {
-  const approvedRequests = await MerchantRequest.paginate({ status: 'approved', ...filter }, options);
+  const MerchantRequestModel = await MerchantRequest();
+  const approvedRequests = await MerchantRequestModel.paginate({ status: 'approved', ...filter }, options);
   return approvedRequests;
 };
 
@@ -162,7 +180,8 @@ const getApprovedRequests = async (filter, options) => {
  * @returns {Promise<QueryResult>}
  */
 const getMerchants = async (filter, options) => {
-  const merchants = await Merchant.paginate(filter, options);
+  const MerchantModel = await Merchant();
+  const merchants = await MerchantModel.paginate(filter, options);
   return merchants;
 };
 
@@ -172,11 +191,13 @@ const getMerchants = async (filter, options) => {
  * @returns {Promise<Merchant>}
  */
 const getMerchant = async (id) => {
-  return Merchant.findById(id);
+  const MerchantModel = await Merchant();
+  return MerchantModel.findById(id);
 };
 
 const getMerchantByUserId = async (userId) => {
-  const merchant = await Merchant.findOne({ userId });
+  const MerchantModel = await Merchant();
+  const merchant = await MerchantModel.findOne({ userId });
   return merchant;
 };
 
@@ -188,6 +209,7 @@ const getMerchantByUserId = async (userId) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const addMerchantAdmin = async (merchantId, userId, loggedInUserId, role) => {
+  const MerchantAdminModel = await MerchantAdmin();
   // Find the Merchant document that was created by the logged-in user
   const merchant = await getMerchant(merchantId);
 
@@ -202,14 +224,14 @@ const addMerchantAdmin = async (merchantId, userId, loggedInUserId, role) => {
   }
 
   // Check if the admin entry already exists
-  const existingAdmin = await MerchantAdmin.findOne({ merchantId, userId, role });
+  const existingAdmin = await MerchantAdminModel.findOne({ merchantId, userId, role });
 
   if (existingAdmin) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Duplicate entry');
   }
 
   // Create a new MerchantAdmin document
-  return MerchantAdmin.create({
+  return MerchantAdminModel.create({
     merchantId,
     userId,
     loggedInUserId,
@@ -225,6 +247,7 @@ const addMerchantAdmin = async (merchantId, userId, loggedInUserId, role) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const removeMerchantAdmin = async (merchantId, adminId, loggedInUserId) => {
+  const MerchantAdminModel = await MerchantAdmin();
   // Find the Merchant document that was created by the logged-in user
   const merchant = await getMerchant(merchantId);
 
@@ -239,7 +262,7 @@ const removeMerchantAdmin = async (merchantId, adminId, loggedInUserId) => {
   }
 
   // Find the MerchantAdmin document for the specified admin ID
-  const admin = await MerchantAdmin.findOne({ merchantId, userId: adminId });
+  const admin = await MerchantAdminModel.findOne({ merchantId, userId: adminId });
 
   // Check if the admin exists
   if (!admin) {
@@ -258,7 +281,8 @@ const removeMerchantAdmin = async (merchantId, adminId, loggedInUserId) => {
  * @returns {Promise<Merchant>}
  */
 const listMerchantAdmins = async (merchantId) => {
-  const merchantAdmins = await MerchantAdmin.find({ merchantId });
+  const MerchantAdminModel = await MerchantAdmin();
+  const merchantAdmins = await MerchantAdminModel.find({ merchantId });
   return merchantAdmins;
 };
 

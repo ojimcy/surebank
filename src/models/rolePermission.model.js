@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const rolePermissionSchema = mongoose.Schema(
   {
@@ -21,9 +22,18 @@ const rolePermissionSchema = mongoose.Schema(
 rolePermissionSchema.plugin(toJSON);
 rolePermissionSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef RolePermission
+ * @returns RolePermission
  */
-const RolePermission = mongoose.model('RolePermission', rolePermissionSchema);
+const RolePermission = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('RolePermission', rolePermissionSchema);
+  }
+
+  return model;
+};
 
 module.exports = RolePermission;

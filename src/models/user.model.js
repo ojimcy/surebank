@@ -3,6 +3,7 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const { toJSON, paginate } = require('./plugins');
 const { roles } = require('../config/roles');
+const { getConnection } = require('./connection');
 
 const userSchema = mongoose.Schema(
   {
@@ -122,9 +123,18 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+let model = null;
+
 /**
- * @typedef User
+ * @returns User
  */
-const User = mongoose.model('User', userSchema);
+const User = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('User', userSchema);
+  }
+
+  return model;
+};
 
 module.exports = User;

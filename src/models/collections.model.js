@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const collectionSchema = mongoose.Schema(
   {
@@ -38,9 +39,18 @@ const collectionSchema = mongoose.Schema(
 collectionSchema.plugin(toJSON);
 collectionSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Collection
+ * @returns Collection
  */
-const Collection = mongoose.model('Collection', collectionSchema);
+const Collection = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Collection', collectionSchema);
+  }
+
+  return model;
+};
 
 module.exports = Collection;

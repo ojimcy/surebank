@@ -8,14 +8,15 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<User>}
  */
 const createBranch = async (branchBody) => {
+  const BranchModel = await Branch();
   const { name } = branchBody;
-  const checkBranch = await Branch.findOne({ name: name.toLowerCase() });
+  const checkBranch = await BranchModel.findOne({ name: name.toLowerCase() });
 
   if (checkBranch) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Branch already exists');
   }
 
-  const branch = await Branch.create({ ...branchBody, name: name.toLowerCase() });
+  const branch = await BranchModel.create({ ...branchBody, name: name.toLowerCase() });
   return branch;
 };
 
@@ -29,7 +30,8 @@ const createBranch = async (branchBody) => {
  * @returns {Promise<QueryResult>}
  */
 const queryBranches = async (filter, options) => {
-  const branches = await Branch.paginate(filter, options);
+  const BranchModel = await Branch();
+  const branches = await BranchModel.paginate(filter, options);
   return branches;
 };
 
@@ -39,11 +41,13 @@ const queryBranches = async (filter, options) => {
  * @returns {Promise<Branch>}
  */
 const getBranchById = async (id) => {
-  return Branch.findById(id);
+  const BranchModel = await Branch();
+  return BranchModel.findById(id);
 };
 
 const getBranchByEmail = async (email) => {
-  return Branch.findOne({ email });
+  const BranchModel = await Branch();
+  return BranchModel.findOne({ email });
 };
 
 /**
@@ -73,7 +77,8 @@ const updateBranchById = async (branchId, updateBody) => {
  * @returns {Promise<Branch>}
  */
 const updateBranchManager = async (branchId, manager) => {
-  const updatedBranch = await Branch.findByIdAndUpdate(branchId, manager, { new: true });
+  const BranchModel = await Branch();
+  const updatedBranch = await BranchModel.findByIdAndUpdate(branchId, manager, { new: true });
 
   if (!updatedBranch) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Branch not found');
@@ -102,7 +107,8 @@ const deleteBranchById = async (branchId) => {
  * @returns {Promise<Branch>}
  */
 const getBranchByName = async (name) => {
-  return Branch.findOne({ name: name.toLowerCase() });
+  const BranchModel = await Branch();
+  return BranchModel.findOne({ name: name.toLowerCase() });
 };
 
 module.exports = {

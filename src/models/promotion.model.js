@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const promotionSchema = mongoose.Schema(
   {
@@ -24,6 +25,18 @@ const promotionSchema = mongoose.Schema(
 
 promotionSchema.plugin(toJSON);
 
-const Promotion = mongoose.model('Promotion', promotionSchema);
+let model = null;
+
+/**
+ * @returns Promotion
+ */
+const Promotion = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Promotion', promotionSchema);
+  }
+
+  return model;
+};
 
 module.exports = Promotion;

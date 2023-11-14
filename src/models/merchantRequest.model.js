@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const merchantRequestSchema = mongoose.Schema(
   {
@@ -53,9 +54,18 @@ const merchantRequestSchema = mongoose.Schema(
 merchantRequestSchema.plugin(toJSON);
 merchantRequestSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef MerchantRequest
+ * @returns MerchantRequest
  */
-const MerchantRequest = mongoose.model('MerchantRequest', merchantRequestSchema);
+const MerchantRequest = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('MerchantRequest', merchantRequestSchema);
+  }
+
+  return model;
+};
 
 module.exports = MerchantRequest;

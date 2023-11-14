@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const contributionSchema = mongoose.Schema(
   {
@@ -50,9 +51,18 @@ const contributionSchema = mongoose.Schema(
 contributionSchema.plugin(toJSON);
 contributionSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Contribution
+ * @returns Contribution
  */
-const Contribution = mongoose.model('Contribution', contributionSchema);
+const Contribution = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Contribution', contributionSchema);
+  }
+
+  return model;
+};
 
 module.exports = Contribution;

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const expenditureSchema = mongoose.Schema(
   {
@@ -51,9 +52,18 @@ const expenditureSchema = mongoose.Schema(
 expenditureSchema.plugin(toJSON);
 expenditureSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Expenditure
+ * @returns Expenditure
  */
-const Expenditure = mongoose.model('Expenditure', expenditureSchema);
+const Expenditure = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Expenditure', expenditureSchema);
+  }
+
+  return model;
+};
 
 module.exports = Expenditure;

@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Expenditure, BranchStaff } = require('../models');
+const { Expenditure, BranchStaff: BranchStaffModel } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -8,7 +8,8 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<Object>} The created expenditure object
  */
 const createExpenditure = async (expenditureInput) => {
-  const branch = await BranchStaff.findOne({ staffId: expenditureInput.createdBy });
+  const ExpenditureModel = await Expenditure();
+  const branch = await BranchStaffModel.findOne({ staffId: expenditureInput.createdBy });
   if (!branch) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Branch not found for the given admin');
   }
@@ -18,7 +19,7 @@ const createExpenditure = async (expenditureInput) => {
   }
 
   const { branchId } = branch;
-  const createdExpenditure = await Expenditure.create({ ...expenditureInput, branchId });
+  const createdExpenditure = await ExpenditureModel.create({ ...expenditureInput, branchId });
   return createdExpenditure;
 };
 
@@ -31,6 +32,7 @@ const createExpenditure = async (expenditureInput) => {
  * @returns {Promise<Object>} Paginated expenditures within the date range
  */
 const getExpendituresByDateRange = async (startDate, endDate, page, limit) => {
+  const ExpenditureModel = await Expenditure();
   const options = {
     page,
     limit,
@@ -50,7 +52,7 @@ const getExpendituresByDateRange = async (startDate, endDate, page, limit) => {
     query.date = { $lte: endDate };
   }
 
-  const paginatedExpenditures = await Expenditure.paginate(query, options);
+  const paginatedExpenditures = await ExpenditureModel.paginate(query, options);
   return paginatedExpenditures;
 };
 
@@ -59,7 +61,8 @@ const getExpendituresByDateRange = async (startDate, endDate, page, limit) => {
  * @returns {Promise<number>} The totalExpenditure
  */
 const getTotalExpenditure = async () => {
-  const totalExpenditure = await Expenditure.aggregate([
+  const ExpenditureModel = await Expenditure();
+  const totalExpenditure = await ExpenditureModel.aggregate([
     {
       $group: {
         _id: null,
@@ -78,8 +81,9 @@ const getTotalExpenditure = async () => {
 };
 
 const getBranchTotalExpenditure = async (branchAdmin) => {
-  const branch = await BranchStaff.findOne({ staffId: branchAdmin });
-  const totalExpenditure = await Expenditure.aggregate([
+  const ExpenditureModel = await Expenditure();
+  const branch = await BranchStaffModel.findOne({ staffId: branchAdmin });
+  const totalExpenditure = await ExpenditureModel.aggregate([
     {
       $match: {
         branchId: branch.branchId,
@@ -108,7 +112,8 @@ const getBranchTotalExpenditure = async (branchAdmin) => {
  * @returns {Promise<Object>} The found expenditure object
  */
 const getExpenditureById = async (expenditureId) => {
-  const expenditure = await Expenditure.findById(expenditureId).populate('createdBy', 'firstName lastName');
+  const ExpenditureModel = await Expenditure();
+  const expenditure = await ExpenditureModel.findById(expenditureId).populate('createdBy', 'firstName lastName');
   return expenditure;
 };
 
@@ -150,6 +155,7 @@ const deleteExpenditure = async (expenditureId) => {
  * @returns {Promise<Object>} Paginated expenditures for the userReps
  */
 const getExpendituresByUserReps = async (userRepsId, page, limit) => {
+  const ExpenditureModel = await Expenditure();
   const options = {
     page,
     limit,
@@ -158,7 +164,7 @@ const getExpendituresByUserReps = async (userRepsId, page, limit) => {
 
   const query = { userReps: userRepsId };
 
-  const paginatedExpenditures = await Expenditure.paginate(query, options);
+  const paginatedExpenditures = await ExpenditureModel.paginate(query, options);
   return paginatedExpenditures;
 };
 
@@ -190,7 +196,8 @@ const approveExpenditure = async (expenditureId, approvedBy) => {
  * @returns {Promise<Object>} The updated expenditure object
  */
 const rejectExpenditure = async (expenditureId, rejectedBy, reasonForRejection) => {
-  const expenditure = await Expenditure.findById(expenditureId);
+  const ExpenditureModel = await Expenditure();
+  const expenditure = await ExpenditureModel.findById(expenditureId);
   if (!expenditure) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Expenditure not found');
   }

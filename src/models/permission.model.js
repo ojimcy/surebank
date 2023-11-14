@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const permissionSchema = mongoose.Schema(
   {
@@ -25,9 +26,18 @@ const permissionSchema = mongoose.Schema(
 permissionSchema.plugin(toJSON);
 permissionSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef Permission
+ * @returns Permission
  */
-const Permission = mongoose.model('Permission', permissionSchema);
+const Permission = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('Permission', permissionSchema);
+  }
+
+  return model;
+};
 
 module.exports = Permission;

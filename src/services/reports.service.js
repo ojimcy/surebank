@@ -12,13 +12,14 @@ const ApiError = require('../utils/ApiError');
  */
 const getTotalContributionsByDay = async (startDate, endDateParam, limit = 10) => {
   try {
+    const ContributionModel = await Contribution();
     // Set the endDate to the current date if not provided
     let endDate = endDateParam;
     if (!endDate) {
       endDate = new Date().getTime();
     }
     // Get the total contributions for each day using aggregation within the date range
-    const contributionsPerDay = await Contribution.aggregate([
+    const contributionsPerDay = await ContributionModel.aggregate([
       {
         $match: {
           date: { $gte: startDate, $lte: endDate },
@@ -52,7 +53,7 @@ const getTotalContributionsByDay = async (startDate, endDateParam, limit = 10) =
     ]);
 
     // Calculate the sum total of all contributions
-    const allContributions = await Contribution.aggregate([
+    const allContributions = await ContributionModel.aggregate([
       {
         $group: {
           _id: null,
@@ -78,13 +79,14 @@ const getTotalContributionsByDay = async (startDate, endDateParam, limit = 10) =
  */
 const getTotalDailySavingsWithdrawal = async (startDate, endDateParam, limit = 10) => {
   try {
+    const AccountTransactionModel = await AccountTransaction();
     // Set the endDate to the current date if not provided
     let endDate = endDateParam;
     if (!endDate) {
       endDate = new Date().getTime();
     }
     // Get the total daily savings withdrawals for each day using aggregation
-    const totalWithdrawals = await AccountTransaction.aggregate([
+    const totalWithdrawals = await AccountTransactionModel.aggregate([
       {
         $match: {
           date: { $gte: startDate, $lte: endDate },
@@ -130,7 +132,8 @@ const getTotalDailySavingsWithdrawal = async (startDate, endDateParam, limit = 1
  * @returns {Promise<number>} Total number of packages
  */
 const getTotalPackages = async () => {
-  const totalPackages = await Package.countDocuments();
+  const PackageModel = await Package();
+  const totalPackages = await PackageModel.countDocuments();
   return totalPackages;
 };
 
@@ -139,7 +142,8 @@ const getTotalPackages = async () => {
  * @returns {Promise<number>} Total number of open packages
  */
 const getTotalOpenPackages = async () => {
-  const totalOpenPackages = await Package.countDocuments({ status: 'open' });
+  const PackageModel = await Package();
+  const totalOpenPackages = await PackageModel.countDocuments({ status: 'open' });
   return totalOpenPackages;
 };
 
@@ -148,7 +152,8 @@ const getTotalOpenPackages = async () => {
  * @returns {Promise<number>} Total number of closed packages
  */
 const getTotalClosedPackages = async () => {
-  const totalClosedPackages = await Package.countDocuments({ status: 'closed' });
+  const PackageModel = await Package();
+  const totalClosedPackages = await PackageModel.countDocuments({ status: 'closed' });
   return totalClosedPackages;
 };
 
@@ -164,13 +169,14 @@ const getTotalClosedPackages = async () => {
  */
 const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam, limit = 10) => {
   try {
+    const ContributionModel = await Contribution();
     // Set the endDate to the current date if not provided
     let endDate = endDateParam;
     if (!endDate) {
       endDate = new Date().getTime();
     }
     // Get the total contributions for each day by the specified user representative using aggregation within the date range
-    const contributionsPerDay = await Contribution.aggregate([
+    const contributionsPerDay = await ContributionModel.aggregate([
       {
         $match: {
           date: { $gte: startDate, $lte: endDate },
@@ -204,7 +210,7 @@ const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam
       { $limit: parseInt(limit, 10) },
     ]);
     // Calculate the sum total of all contributions
-    const allContributions = await Contribution.aggregate([
+    const allContributions = await ContributionModel.aggregate([
       {
         $match: {
           date: { $gte: startDate, $lte: endDate },
@@ -237,6 +243,7 @@ const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam
  */
 const getMyTotalContributions = async (userReps, startDate, endDateParam, limit = 10) => {
   try {
+    const ContributionModel = await Contribution();
     let dateFilter = {};
 
     if (startDate && endDateParam) {
@@ -248,7 +255,7 @@ const getMyTotalContributions = async (userReps, startDate, endDateParam, limit 
     }
 
     // Get the total contributions for each day by the specified user representative using aggregation within the date range
-    const contributionsPerDay = await Contribution.aggregate([
+    const contributionsPerDay = await ContributionModel.aggregate([
       {
         $match: {
           userReps,
@@ -282,7 +289,7 @@ const getMyTotalContributions = async (userReps, startDate, endDateParam, limit 
       { $limit: parseInt(limit, 10) },
     ]);
     // Calculate the sum total of all contributions
-    const allContributions = await Contribution.aggregate([
+    const allContributions = await ContributionModel.aggregate([
       {
         $match: {
           userReps,
@@ -319,6 +326,7 @@ const getMyTotalContributions = async (userReps, startDate, endDateParam, limit 
  */
 const getMyDsWithdrawals = async (userReps, startDate, endDateParam, limit = 10) => {
   try {
+    const AccountTransactionModel = await AccountTransaction();
     // Set the endDate to the current date if not provided
     let endDate = endDateParam;
     if (!endDate) {
@@ -338,7 +346,7 @@ const getMyDsWithdrawals = async (userReps, startDate, endDateParam, limit = 10)
     }
 
     // Get the total daily savings withdrawals using aggregation
-    const totalWithdrawals = await AccountTransaction.aggregate([
+    const totalWithdrawals = await AccountTransactionModel.aggregate([
       { $match: match },
       {
         $group: {
@@ -379,7 +387,8 @@ const getMyDsWithdrawals = async (userReps, startDate, endDateParam, limit = 10)
  * @returns {Promise<number>} Total number of open packages for the user representative.
  */
 const getTotalOpenPackagesForUserReps = async (userReps) => {
-  const totalOpenPackages = await Package.countDocuments({ userReps, status: 'open' });
+  const PackageModel = await Package();
+  const totalOpenPackages = await PackageModel.countDocuments({ userReps, status: 'open' });
   return totalOpenPackages;
 };
 
@@ -389,7 +398,8 @@ const getTotalOpenPackagesForUserReps = async (userReps) => {
  * @returns {Promise<number>} Total number of closed packages for the user representative.
  */
 const getTotalClosedPackagesForUserReps = async (userReps) => {
-  const totalClosedPackages = await Package.countDocuments({ userReps, status: 'closed' });
+  const PackageModel = await Package();
+  const totalClosedPackages = await PackageModel.countDocuments({ userReps, status: 'closed' });
   return totalClosedPackages;
 };
 
@@ -405,13 +415,14 @@ const getTotalClosedPackagesForUserReps = async (userReps) => {
  */
 const getContributionsByDayForBranch = async (branchId, startDate, endDateParam, limit = 10) => {
   try {
+    const ContributionModel = await Contribution();
     // Set the endDate to the current date if not provided
     let endDate = endDateParam;
     if (!endDate) {
       endDate = new Date().getTime();
     }
     // Get the total contributions for each day for branch using aggregation within the date range
-    const contributionsPerDay = await Contribution.aggregate([
+    const contributionsPerDay = await ContributionModel.aggregate([
       {
         $match: {
           date: { $gte: startDate, $lte: endDate },
@@ -445,7 +456,7 @@ const getContributionsByDayForBranch = async (branchId, startDate, endDateParam,
       { $limit: parseInt(limit, 10) },
     ]);
     // Calculate the sum total of all contributions
-    const allContributions = await Contribution.aggregate([
+    const allContributions = await ContributionModel.aggregate([
       {
         $match: {
           date: { $gte: startDate, $lte: endDate },

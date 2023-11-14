@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
+const { getConnection } = require('./connection');
 
 const accountTransactionSchema = mongoose.Schema(
   {
@@ -52,9 +53,18 @@ const accountTransactionSchema = mongoose.Schema(
 accountTransactionSchema.plugin(toJSON);
 accountTransactionSchema.plugin(paginate);
 
+let model = null;
+
 /**
- * @typedef AccountTransaction
+ * @returns AccountTransaction
  */
-const AccountTransaction = mongoose.model('AccountTransaction', accountTransactionSchema);
+const AccountTransaction = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('AccountTransaction', accountTransactionSchema);
+  }
+
+  return model;
+};
 
 module.exports = AccountTransaction;
