@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Account } = require('../models');
+const { Account, Branch } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { generateAccountNumber } = require('../utils/account/accountUtils');
 const { getUserByEmail } = require('./user.service');

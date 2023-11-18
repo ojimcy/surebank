@@ -1,20 +1,5 @@
-const mongoose = require('mongoose');
 const { getConnection } = require('./connection');
-
-const fileUploadSchema = new mongoose.Schema({
-  originalFileName: {
-    type: String,
-    required: true,
-  },
-  fileName: {
-    type: String,
-    required: true,
-  },
-  filePath: {
-    type: String,
-    required: true,
-  },
-});
+const fileUploadSchema = require('./fileUpload.schema');
 
 let model = null;
 

@@ -1,18 +1,5 @@
-const mongoose = require('mongoose');
 const { getConnection } = require('./connection');
-
-const productCollectionSchema = new mongoose.Schema({
-  productId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true,
-  },
-  collectionId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Collection',
-    required: true,
-  },
-});
+const productCollectionSchema = require('./productCollection.schema');
 
 let model = null;
 

@@ -4,6 +4,7 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs18.x
+  environment: ${file(env.json)}
 
 functions:
   api:
