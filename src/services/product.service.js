@@ -369,12 +369,7 @@ const deleteProductCatalogue = async (productId, userId) => {
 
 const getProductCatalogueById = async (id) => {
   const ProductCatalogueModel = await ProductCatalogue();
-  const product = await ProductCatalogueModel.findById(id).populate([
-    {
-      path: 'merchantId',
-      select: 'storeName',
-    },
-  ]);
+  const product = await ProductCatalogueModel.findById(id);
   if (!product) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
   }

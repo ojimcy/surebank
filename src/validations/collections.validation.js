@@ -4,8 +4,7 @@ const createCollection = {
   body: Joi.object().keys({
     title: Joi.string().required(),
     description: Joi.string().required(),
-    image: Joi.string().required(),
-    slug: Joi.string().required(),
+    image: Joi.string().optional(),
   }),
 };
 

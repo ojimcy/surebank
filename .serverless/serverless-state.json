@@ -201,7 +201,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/aws-node-express-api/dev/1700081217436-2023-11-15T20:46:57.436Z/aws-node-express-api.zip"
+                "S3Key": "serverless/aws-node-express-api/dev/1700543653289-2023-11-21T05:14:13.289Z/aws-node-express-api.zip"
               },
               "Handler": "sls.handler",
               "Runtime": "nodejs18.x",
@@ -248,14 +248,14 @@
               "ApiLogGroup"
             ]
           },
-          "ApiLambdaVersioncXABSaPpYU670hLkGfTgpIvU8HoMNLhtp0QYu4ElI": {
+          "ApiLambdaVersionqEPHAjVCHHTQaOUNhyxU62z9qgyyDlS4SoDO7crIU": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ApiLambdaFunction"
               },
-              "CodeSha256": "OnxsC4pFGi9pEJxNB2JR4yPPNxzUBXbhtqE9hEPYDI0="
+              "CodeSha256": "ZqcOh8kJjrMtJyXnstKscwkju5tddWAFAP5DMQZFWU0="
             }
           },
           "HttpApi": {
@@ -363,7 +363,7 @@
           "ApiLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ApiLambdaVersioncXABSaPpYU670hLkGfTgpIvU8HoMNLhtp0QYu4ElI"
+              "Ref": "ApiLambdaVersionqEPHAjVCHHTQaOUNhyxU62z9qgyyDlS4SoDO7crIU"
             },
             "Export": {
               "Name": "sls-aws-node-express-api-dev-ApiLambdaFunctionQualifiedArn"
@@ -508,7 +508,7 @@
         "timeout": 6,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "ApiLambdaVersioncXABSaPpYU670hLkGfTgpIvU8HoMNLhtp0QYu4ElI"
+        "versionLogicalId": "ApiLambdaVersionqEPHAjVCHHTQaOUNhyxU62z9qgyyDlS4SoDO7crIU"
       }
     },
     "configValidationMode": "warn",
@@ -528,10 +528,10 @@
     },
     "layers": {},
     "isDashboardMonitoringPreconfigured": false,
-    "artifact": "/Users/anthonyademu/Documents/surebank/surebank/.serverless/aws-node-express-api.zip"
+    "artifact": "/home/ojimcy/Projects/surebank/.serverless/aws-node-express-api.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/aws-node-express-api/dev/1700081217436-2023-11-15T20:46:57.436Z",
+    "artifactDirectoryName": "serverless/aws-node-express-api/dev/1700543653289-2023-11-21T05:14:13.289Z",
     "artifact": "aws-node-express-api.zip"
   }
 }

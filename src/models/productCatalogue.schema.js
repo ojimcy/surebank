@@ -74,6 +74,10 @@ const productCatalogueSchema = mongoose.Schema(
     },
 
     tags: [String],
+    isSbAvailable: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,

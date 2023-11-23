@@ -15,7 +15,12 @@ const createCollection = async (collectionData) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Collection with the same slug already exists');
   }
 
-  const collection = await CollectionModel.create(collectionData);
+  const updatedCollectionData = {
+    ...collectionData,
+    slug: collectionData.title.toLowerCase().replace(/\s+/g, '-'),
+  };
+
+  const collection = await CollectionModel.create(updatedCollectionData);
   return collection;
 };
 

@@ -1,12 +1,12 @@
 const { startSession } = require('mongoose');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
-const { Product, SbPackage, Account, Contribution, AccountTransaction } = require('../models');
+const { SbPackage, Account, Contribution, AccountTransaction, ProductCatalogue } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
 
 const createSbPackage = async (sbPackageData) => {
-  const ProductModel = await Product();
+  const ProductCatalogueModel = await ProductCatalogue();
   const SbPackageModel = await SbPackage();
   const userAccount = await getUserByAccountNumber(sbPackageData.accountNumber);
 
@@ -24,7 +24,7 @@ const createSbPackage = async (sbPackageData) => {
     throw new ApiError(400, 'Customer has an active package running');
   }
 
-  const product = await ProductModel.findById(sbPackageData.product);
+  const product = await ProductCatalogueModel.findById(sbPackageData.product);
 
   if (!product || !product.isSbAvailable) {
     throw new ApiError(400, 'The selected product is not available for Savings-Buying');

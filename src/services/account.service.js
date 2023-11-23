@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Account, Branch } = require('../models');
+const { Account } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { generateAccountNumber } = require('../utils/account/accountUtils');
 const { getUserByEmail } = require('./user.service');
@@ -88,10 +88,10 @@ const getUserAccountNumber = async (userId) => {
  * @param {string} userId - User ID
  * @returns {Promise<Account>} User's account details
  */
-const getUserAccount = async (userId) => {
+const getUserAccount = async (userId, accountType) => {
   const accountModel = await Account();
   const account = await accountModel
-    .findOne({ userId })
+    .find({ userId, accountType })
     .populate([
       {
         path: 'accountManagerId',

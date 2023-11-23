@@ -74,6 +74,9 @@ const getUserAccount = {
   params: Joi.object().keys({
     userId: Joi.string().required().custom(objectId),
   }),
+  query: Joi.object().keys({
+    accountType: Joi.string().optional(),
+  }),
 };
 
 const getAllAccounts = {
