@@ -383,6 +383,18 @@ const getProductsByIds = async (payload) => {
   return products;
 };
 
+const getProductsByCategory = async (categorySlug) => {
+  const ProductModel = await Product();
+  const CollectionModel = await Collection();
+  const collection = await CollectionModel.findOne({ slug: categorySlug });
+  if (!collection) {
+    throw new ApiError(404, 'Collection not found');
+  }
+
+  const products = await ProductModel.find({ collections: collection._id });
+  return products;
+};
+
 module.exports = {
   createProductRequest,
   viewProductRequests,

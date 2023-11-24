@@ -267,11 +267,12 @@ const getUserSbPackages = async (userId) => {
   const userPackages = await SbPackageModel.find({
     userId,
     status: 'open',
-  }).populate({
-    path: 'product',
-    select: ['name', 'images', 'price', 'salesPrice'],
-  });
-
+  })
+    .populate({
+      path: 'product',
+      select: ['name', 'images', 'price', 'salesPrice'],
+    })
+    .exec();
   return userPackages;
 };
 

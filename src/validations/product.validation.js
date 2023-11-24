@@ -153,7 +153,7 @@ const deleteProductCatalogue = {
 
 const getProductsByIds = {
   query: Joi.object().keys({
-    id_in: Joi.array().items(Joi.string().custom(objectId)).single(),
+    ids: Joi.array().items(Joi.string().custom(objectId)).single(),
   }),
 };
 

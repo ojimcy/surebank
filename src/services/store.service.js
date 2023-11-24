@@ -10,10 +10,45 @@ const ApiError = require('../utils/ApiError');
 const createCategory = async (categoryData) => {
   const CategoryModel = await Category();
   const existingCategory = await CategoryModel.findOne({ name: categoryData.name });
+
   if (existingCategory) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Category with the same name already exists');
   }
-  return CategoryModel.create(categoryData);
+
+  // Check if subcategories are provided
+  if (categoryData.subCategories && categoryData.subCategories.length > 0) {
+    // Check for existing subcategories
+    const existingSubcategories = await CategoryModel.find({
+      'subCategories.heading': { $in: categoryData.subCategories.map((subcat) => subcat.heading) },
+    });
+
+    if (existingSubcategories.length > 0) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'One or more subcategories already exist');
+    }
+
+    // Update subcategories with slugs
+    const updatedSubCategories = categoryData.subCategories.map((subcategory) => ({
+      heading: subcategory.heading,
+      items: subcategory.items.map((item) => ({
+        name: item.name,
+        slug: item.name.toLowerCase().replace(/\s+/g, '-'),
+      })),
+    }));
+
+    // Create the new category with subcategories
+    const updatedCategoryData = {
+      ...categoryData,
+      slug: categoryData.name.toLowerCase().replace(/\s+/g, '-'),
+      subCategories: updatedSubCategories,
+    };
+
+    return CategoryModel.create(updatedCategoryData);
+  }
+  // Create the new category without subcategories
+  return CategoryModel.create({
+    ...categoryData,
+    slug: categoryData.name.toLowerCase().replace(/\s+/g, '-'),
+  });
 };
 
 /**
