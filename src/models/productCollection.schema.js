@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const productCollectionSchema = new mongoose.Schema({
-  productId: {
+  productCatalogueId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
     required: true,

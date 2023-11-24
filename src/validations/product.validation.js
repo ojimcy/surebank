@@ -134,7 +134,7 @@ const deleteProduct = {
 
 const addProductToCollection = {
   query: Joi.object().keys({
-    productId: Joi.string().required().custom(objectId),
+    productCatalogueId: Joi.string().required().custom(objectId),
     collectionId: Joi.string().required().custom(objectId),
   }),
 };

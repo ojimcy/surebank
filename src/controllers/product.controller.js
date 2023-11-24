@@ -87,9 +87,8 @@ const deleteProduct = catchAsync(async (req, res) => {
 });
 
 const addProductToCollection = catchAsync(async (req, res) => {
-  const { productId, collectionId } = req.query;
-
-  const productCollection = await productService.addProductToCollection(productId, collectionId);
+  const { productCatalogueId, collectionId } = req.query;
+  const productCollection = await productService.addProductToCollection({ productCatalogueId, collectionId });
   res.status(httpStatus.OK).send(productCollection);
 });
 

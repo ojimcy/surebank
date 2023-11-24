@@ -279,21 +279,20 @@ const deleteProduct = async (productId, merchantId) => {
   return product;
 };
 
-const addProductToCollection = async (productId, collectionId) => {
-  const ProductModel = await Product();
+const addProductToCollection = async (productCatalogueId, collectionId) => {
+  const ProductCatalogueModel = await ProductCatalogue();
   const CollectionModel = await Collection();
   const ProductCollectionModel = await ProductCollection();
   // Check if the product and collection exist
-  const product = await ProductModel.findById(productId);
+  const product = await ProductCatalogueModel.findById(productCatalogueId);
   const collection = await CollectionModel.findById(collectionId);
 
   if (!product || !collection) {
     throw new ApiError(404, 'Product or collection not found');
   }
-
   // Check if the product is already in the collection
   const productInCollection = await ProductCollectionModel.findOne({
-    productId,
+    productCatalogueId,
     collectionId,
   });
 
@@ -301,7 +300,7 @@ const addProductToCollection = async (productId, collectionId) => {
     throw new ApiError(400, 'Product is already in the collection');
   }
 
-  const productCollection = new ProductCollectionModel({ productId, collectionId });
+  const productCollection = new ProductCollectionModel({ productCatalogueId, collectionId });
   await productCollection.save();
 
   // Update the product's collections
@@ -312,13 +311,12 @@ const addProductToCollection = async (productId, collectionId) => {
 };
 
 const getProductsBySlug = async (collectionSlug) => {
-  const ProductModel = await Product();
+  const ProductModel = await ProductCatalogue();
   const CollectionModel = await Collection();
   const collection = await CollectionModel.findOne({ slug: collectionSlug });
   if (!collection) {
     throw new ApiError(404, 'Collection not found');
   }
-
   const products = await ProductModel.find({ collections: collection._id });
   return products;
 };
