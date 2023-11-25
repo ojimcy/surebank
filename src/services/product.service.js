@@ -319,13 +319,28 @@ const addProductToCollection = async (productCatalogueId, collectionId) => {
 };
 
 const getProductsBySlug = async (collectionSlug) => {
-  const ProductModel = await ProductCatalogue();
+  const ProductCatalogueModel = await ProductCatalogue();
   const CollectionModel = await Collection();
+
+  // Find the collection by slug
   const collection = await CollectionModel.findOne({ slug: collectionSlug });
+
   if (!collection) {
     throw new ApiError(404, 'Collection not found');
   }
-  const products = await ProductModel.find({ collections: collection._id });
+
+  // Extract the product IDs from the collection
+  const productIds = collection.products;
+
+  // Retrieve detailed information for each product using the IDs
+  const products = await Promise.all(
+    productIds.map(async (productId) => {
+      // Assuming ProductCatalogueModel is the correct model for detailed product information
+      const productDetails = await ProductCatalogueModel.findById(productId);
+      return productDetails;
+    })
+  );
+
   return products;
 };
 
