@@ -4,6 +4,7 @@ const { SbPackage, Account, Contribution, AccountTransaction, ProductCatalogue }
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
+const { getProductCatalogueById } = require('./product.service');
 
 const createSbPackage = async (sbPackageData) => {
   const ProductCatalogueModel = await ProductCatalogue();
@@ -247,14 +248,21 @@ const makeSbWithdrawal = async (withdrawal) => {
  */
 const getPackageById = async (packageId) => {
   const SbPackageModel = await SbPackage();
-  const userPackage = await SbPackageModel.findById(packageId).populate({
-    path: 'product',
-    select: ['name', 'images', 'price', 'salesPrice'],
-  });
+  const userPackage = await SbPackageModel.findById(packageId);
   if (!userPackage) {
     throw new ApiError(404, 'Package not found!!!');
   }
-  return userPackage;
+  const productCat = await getProductCatalogueById(userPackage.product);
+  const product = productCat
+    ? {
+        name: productCat.name,
+        images: productCat.images,
+        price: productCat.price,
+        salesPrice: productCat.salesPrice,
+      }
+    : null;
+
+  return { ...userPackage.toObject(), product };
 };
 
 /**
@@ -267,13 +275,25 @@ const getUserSbPackages = async (userId) => {
   const userPackages = await SbPackageModel.find({
     userId,
     status: 'open',
-  })
-    .populate({
-      path: 'product',
-      select: ['name', 'images', 'price', 'salesPrice'],
+  });
+
+  const packagesWithProducts = await Promise.all(
+    userPackages.map(async (userPackage) => {
+      const productCat = await getProductCatalogueById(userPackage.product);
+      const product = productCat
+        ? {
+            name: productCat.name,
+            images: productCat.images,
+            price: productCat.price,
+            salesPrice: productCat.salesPrice,
+          }
+        : null;
+
+      return { userPackage, product };
     })
-    .exec();
-  return userPackages;
+  );
+
+  return packagesWithProducts;
 };
 
 module.exports = {

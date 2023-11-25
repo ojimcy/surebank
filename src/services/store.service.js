@@ -61,6 +61,17 @@ const getCategories = async () => {
 };
 
 /**
+ * Get category by id
+ * @param {ObjectId} id
+ * @returns {Promise<Category>}
+ */
+const getCategoryById = async (id) => {
+  const categoryModel = await Category();
+  const category = await categoryModel.findById(id);
+  return category;
+};
+
+/**
  * Create a new brand
  * @param {Object} brandData - Brand data
  * @returns {Promise<Object>} Result of the operation
@@ -85,9 +96,22 @@ const getBrands = async () => {
   return BrandModel.find();
 };
 
+/**
+ * Get brand by id
+ * @param {ObjectId} id
+ * @returns {Promise<Brand>}
+ */
+const getBrandById = async (id) => {
+  const brandModel = await Brand();
+  const brand = await brandModel.findById(id);
+  return brand;
+};
+
 module.exports = {
   createCategory,
   getCategories,
+  getCategoryById,
   createBrand,
   getBrands,
+  getBrandById,
 };

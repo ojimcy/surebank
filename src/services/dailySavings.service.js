@@ -4,6 +4,7 @@ const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
+const { getUserById } = require('./user.service');
 
 /**
  * Create a daily savings package
@@ -261,11 +262,12 @@ const getUserDailySavingsPackages = async (userId) => {
  */
 const getDailySavingsContributions = async (packageId) => {
   const ContributionModel = await Contribution();
-  try {
-    return await ContributionModel.find({ packageId }).populate('createdBy', 'firstName lastName').lean();
-  } catch (error) {
-    throw new ApiError('Failed to get contributions for the package', error);
-  }
+  const contribution = ContributionModel.find({ packageId });
+
+  const user = await getUserById(contribution.product);
+  const createdBy = user ? `${user.firstName} ${user.lastName}` : null;
+
+  return { contribution, createdBy };
 };
 
 /**
@@ -275,15 +277,13 @@ const getDailySavingsContributions = async (packageId) => {
  * @returns {Promise<Array>} Array of withdrawals with the specified narration
  */
 const getDailySavingsWithdrawals = async (accountNumber, narration) => {
-  try {
-    const AccountTransactionModel = await AccountTransaction();
-    const withdrawals = await AccountTransactionModel.find({ accountNumber, narration })
-      .populate('createdBy', 'firstName lastName')
-      .lean();
-    return withdrawals;
-  } catch (error) {
-    throw new ApiError('Failed to get daily savings withdrawals', error);
-  }
+  const AccountTransactionModel = await AccountTransaction();
+  const withdrawals = await AccountTransactionModel.find({ accountNumber, narration });
+
+  const user = await getUserById(withdrawals.createdBy);
+  const createdBy = user ? `${user.firstName} ${user.lastName}` : null;
+
+  return { withdrawals, createdBy };
 };
 
 module.exports = {

@@ -1,7 +1,8 @@
 const httpStatus = require('http-status');
-const { ProductRequest, Product, ProductCatalogue, ProductCollection, Collection } = require('../models');
+const { ProductRequest, Product, ProductCatalogue, ProductCollection, Collection, Category } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getMerchantByUserId } = require('./merchant.service');
+const { getCategoryById, getBrandById } = require('./store.service');
 
 /**
  * Create product request
@@ -222,15 +223,22 @@ const viewProducts = async (filter, options) => {
  */
 const getProductById = async (id) => {
   const ProductModel = await Product();
-  const product = await ProductModel.findById(id).populate([
-    { path: 'categoryId', select: 'name' },
-    { path: 'subCategoryId', select: 'name' },
-    { path: 'brand', select: 'name' },
-  ]);
+  const product = await ProductModel.findById(id);
   if (!product) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
   }
-  return product;
+
+  // Fetch additional details using separate functions
+  const category = await getCategoryById(product.categoryId);
+  const brand = await getBrandById(product.brand);
+  // Add fetched details to the product object
+  const productWithDetails = {
+    product,
+    category: category ? category.name : null,
+    brand: brand ? brand.name : null,
+  };
+
+  return productWithDetails;
 };
 
 /**
@@ -330,16 +338,7 @@ const getProductCatalogue = async (filter, options) => {
 const viewMyProductCatalogue = async (userId) => {
   const ProductCatalogueModel = await ProductCatalogue();
   const merchant = await getMerchantByUserId(userId);
-  const products = await ProductCatalogueModel.find({ merchantId: merchant._id }).populate([
-    {
-      path: 'productId',
-      model: 'Product',
-    },
-    {
-      path: 'merchantId',
-      select: 'storeName',
-    },
-  ]);
+  const products = await ProductCatalogueModel.find({ merchantId: merchant._id });
   return products;
 };
 
@@ -383,13 +382,13 @@ const getProductsByIds = async (payload) => {
 
 const getProductsByCategory = async (categorySlug) => {
   const ProductModel = await Product();
-  const CollectionModel = await Collection();
-  const collection = await CollectionModel.findOne({ slug: categorySlug });
-  if (!collection) {
-    throw new ApiError(404, 'Collection not found');
+  const categoryModel = await Category();
+  const category = await categoryModel.findOne({ slug: categorySlug });
+  if (!category) {
+    throw new ApiError(404, 'category not found');
   }
 
-  const products = await ProductModel.find({ collections: collection._id });
+  const products = await ProductModel.find({ categories: category._id });
   return products;
 };
 
@@ -412,4 +411,5 @@ module.exports = {
   deleteProductCatalogue,
   getProductCatalogueById,
   getProductsByIds,
+  getProductsByCategory,
 };
