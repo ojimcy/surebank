@@ -126,7 +126,7 @@ const viewProductCatalogue = catchAsync(async (req, res) => {
 });
 
 const getProductsByIds = catchAsync(async (req, res) => {
-  const { payload } = req.query;
+  const payload = req.query.ids;
   const products = await productService.getProductsByIds(payload);
   res.status(httpStatus.OK).send(products);
 });

@@ -389,8 +389,8 @@ const getProductCatalogueById = async (id) => {
 };
 
 const getProductsByIds = async (payload) => {
-  const ProductModel = await Product();
-  const ids = payload.split('&').map((id) => id.split('=')[1]);
+  const ProductModel = await ProductCatalogue();
+  const ids = Object.values(payload).map((id) => id);
   const products = await ProductModel.find({ id: { $in: ids } });
   return products;
 };
