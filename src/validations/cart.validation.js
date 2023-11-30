@@ -4,7 +4,6 @@ const { objectId } = require('./custom.validation');
 const addToCart = {
   body: Joi.object().keys({
     productCatalogueId: Joi.string().required().custom(objectId),
-    unitPrice: Joi.number().required(),
     quantity: Joi.number().required(),
   }),
 };
@@ -27,9 +26,16 @@ const clearCart = {
   }),
 };
 
+const increaseQuantity = {
+  body: Joi.object().keys({
+    productCatalogueId: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   addToCart,
   getCartItems,
   removeCartItem,
   clearCart,
+  increaseQuantity,
 };

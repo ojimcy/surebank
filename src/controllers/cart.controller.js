@@ -5,13 +5,11 @@ const { cartService } = require('../services');
 
 const addToCart = catchAsync(async (req, res) => {
   const userId = req.user._id;
-  const { productCatalogueId, unitPrice, quantity } = req.body;
-  const { cart, addItem } = await cartService.addToCart(userId, productCatalogueId, unitPrice, quantity);
+  const { productCatalogueId, quantity } = req.body;
+  const { cart, cartItem } = await cartService.addToCart(userId, productCatalogueId, quantity);
   res.status(httpStatus.CREATED).send({
-    data: {
-      cart,
-      addItem,
-    },
+    cart,
+    cartItem,
   });
 });
 
@@ -19,10 +17,8 @@ const viewCartItems = catchAsync(async (req, res) => {
   const userId = req.user._id;
   const { cart, cartItems } = await cartService.getCartItems(userId);
   res.status(httpStatus.OK).send({
-    data: {
-      cart,
-      cartItems,
-    },
+    cart,
+    cartItems,
   });
 });
 
@@ -39,9 +35,31 @@ const clearCart = catchAsync(async (req, res) => {
   res.sendStatus(httpStatus.OK);
 });
 
+const increaseQuantity = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const { productCatalogueId } = req.body;
+  const { cart, cartItem } = await cartService.increaseQuantity(userId, productCatalogueId);
+  res.status(httpStatus.OK).send({
+    cart,
+    cartItem,
+  });
+});
+
+const decreaseQuantity = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const { productCatalogueId } = req.body;
+  const { cart, cartItem } = await cartService.decreaseQuantity(userId, productCatalogueId);
+  res.status(httpStatus.OK).send({
+    cart,
+    cartItem,
+  });
+});
+
 module.exports = {
   addToCart,
   viewCartItems,
   removeCartItem,
   clearCart,
+  increaseQuantity,
+  decreaseQuantity,
 };
