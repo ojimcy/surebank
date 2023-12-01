@@ -407,6 +407,12 @@ const getProductsByCategory = async (categorySlug) => {
   return products;
 };
 
+const getTotalCount = async () => {
+  const ProductModel = await ProductCatalogue();
+  const totalCount = await ProductModel.countDocuments();
+  return totalCount;
+};
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
@@ -427,4 +433,5 @@ module.exports = {
   getProductCatalogueById,
   getProductsByIds,
   getProductsByCategory,
+  getTotalCount,
 };

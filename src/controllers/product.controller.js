@@ -131,6 +131,11 @@ const getProductsByIds = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(products);
 });
 
+const getTotalCount = catchAsync(async (req, res) => {
+  const totalCount = await productService.getTotalCount();
+  res.status(httpStatus.OK).json({ totalCount });
+});
+
 module.exports = {
   createProductRequest,
   viewProductRequests,
@@ -150,4 +155,5 @@ module.exports = {
   deleteProductCatalogue,
   viewProductCatalogue,
   getProductsByIds,
+  getTotalCount,
 };

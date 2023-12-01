@@ -45,7 +45,6 @@ const addToCart = async (userId, productCatalogueId, quantity) => {
       cartId: cart._id,
       productCatalogueId,
     });
-
     if (existingItem) {
       // If the item exists, increase the quantity by one
       existingItem.quantity += 1;

@@ -41,6 +41,8 @@ router
   .post(auth('productRequest'), validate(productValidation.createProductRequest), productController.createProductRequest)
   .get(auth('productRequest'), validate(productValidation.viewProductRequests), productController.viewProductRequests);
 
+router.route('/count').get(productController.getTotalCount);
+
 router
   .route('/:productId')
   .get(validate(productValidation.viewProduct), productController.viewProduct)
