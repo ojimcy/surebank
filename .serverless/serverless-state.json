@@ -10,7 +10,7 @@
       "environment": {
         "PORT": "3001",
         "NODE_ENV": "development",
-        "MONGODB_URL": "mongodb://localhost:27017/surebankLTD?retryWrites=false",
+        "MONGODB_URL": "mongodb+srv://surebank:sbAtgr8God@cluster0.j34xo9a.mongodb.net/surebankLTD?retryWrites=true&w=majority",
         "JWT_SECRET": "thisisasamplesecret1530",
         "JWT_ACCESS_EXPIRATION_MINUTES": "3000",
         "JWT_REFRESH_EXPIRATION_DAYS": "3000",
@@ -201,7 +201,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/aws-node-express-api/dev/1700543653289-2023-11-21T05:14:13.289Z/aws-node-express-api.zip"
+                "S3Key": "serverless/aws-node-express-api/dev/1701998352648-2023-12-08T01:19:12.648Z/aws-node-express-api.zip"
               },
               "Handler": "sls.handler",
               "Runtime": "nodejs18.x",
@@ -212,7 +212,7 @@
                 "Variables": {
                   "PORT": "3001",
                   "NODE_ENV": "development",
-                  "MONGODB_URL": "mongodb://localhost:27017/surebankLTD?retryWrites=false",
+                  "MONGODB_URL": "mongodb+srv://surebank:sbAtgr8God@cluster0.j34xo9a.mongodb.net/surebankLTD?retryWrites=true&w=majority",
                   "JWT_SECRET": "thisisasamplesecret1530",
                   "JWT_ACCESS_EXPIRATION_MINUTES": "3000",
                   "JWT_REFRESH_EXPIRATION_DAYS": "3000",
@@ -248,14 +248,14 @@
               "ApiLogGroup"
             ]
           },
-          "ApiLambdaVersionqEPHAjVCHHTQaOUNhyxU62z9qgyyDlS4SoDO7crIU": {
+          "ApiLambdaVersion2tlfPkY864AgUzpvpZWrhaBWd7IwFjTJ8N3VCZSU": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ApiLambdaFunction"
               },
-              "CodeSha256": "ZqcOh8kJjrMtJyXnstKscwkju5tddWAFAP5DMQZFWU0="
+              "CodeSha256": "y1ZXH7CDdauiD5qyr5XZWydU3ZpoztrZq21cTDg9vag="
             }
           },
           "HttpApi": {
@@ -363,7 +363,7 @@
           "ApiLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ApiLambdaVersionqEPHAjVCHHTQaOUNhyxU62z9qgyyDlS4SoDO7crIU"
+              "Ref": "ApiLambdaVersion2tlfPkY864AgUzpvpZWrhaBWd7IwFjTJ8N3VCZSU"
             },
             "Export": {
               "Name": "sls-aws-node-express-api-dev-ApiLambdaFunctionQualifiedArn"
@@ -508,7 +508,7 @@
         "timeout": 6,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "ApiLambdaVersionqEPHAjVCHHTQaOUNhyxU62z9qgyyDlS4SoDO7crIU"
+        "versionLogicalId": "ApiLambdaVersion2tlfPkY864AgUzpvpZWrhaBWd7IwFjTJ8N3VCZSU"
       }
     },
     "configValidationMode": "warn",
@@ -528,10 +528,10 @@
     },
     "layers": {},
     "isDashboardMonitoringPreconfigured": false,
-    "artifact": "/home/ojimcy/Projects/surebank/.serverless/aws-node-express-api.zip"
+    "artifact": "/mnt/c/Users/Ojima/Desktop/Projects/surebank/.serverless/aws-node-express-api.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/aws-node-express-api/dev/1700543653289-2023-11-21T05:14:13.289Z",
+    "artifactDirectoryName": "serverless/aws-node-express-api/dev/1701998352648-2023-12-08T01:19:12.648Z",
     "artifact": "aws-node-express-api.zip"
   }
 }
