@@ -1,5 +1,6 @@
 const httpStatus = require('http-status');
 const { authenticator } = require('otplib');
+const validator = require('validator');
 const tokenService = require('./token.service');
 const userService = require('./user.service');
 const Token = require('../models/token.model');
@@ -26,6 +27,53 @@ const loginUserWithEmailAndPassword = async (email, password, otp) => {
     const isValid = authenticator.verify({ token: otp, secret: user.twoFactorAuthSecret });
     if (!isValid) {
       throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid OTP');
+    }
+  }
+
+  return user;
+};
+
+/**
+ * Login with email or phone number and password
+ * @param {string} identifier - Email or phone number
+ * @param {string} password
+ * @param {string} otp - One-time password for two-factor authentication
+ * @returns {Promise<User>}
+ */
+const loginUser = async (identifier, password, otp) => {
+  // Check if the identifier is an email or a phone number
+  const isEmail = validator.isEmail(identifier);
+  const isPhoneNumber = validator.isMobilePhone(identifier, 'any', { strictMode: false });
+
+  if (!isEmail && !isPhoneNumber) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid email or phone number format');
+  }
+
+  let user;
+  if (isEmail) {
+    // Login with email
+    user = await userService.getUserByEmail(identifier);
+  } else {
+    // Login with phone number
+    user = await userService.getUserByPhoneNumber(identifier);
+  }
+
+  if (!user) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'User not found. Please check your email or phone number.');
+  }
+
+  if (!(await user.isPasswordMatch(password))) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect password. Please try again.');
+  }
+
+  if (user.isTwoFactorAuthEnabled) {
+    if (!otp) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'OTP is required for two-factor authentication.');
+    }
+
+    const isValid = authenticator.verify({ token: otp, secret: user.twoFactorAuthSecret });
+    if (!isValid) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid OTP. Please enter a valid OTP.');
     }
   }
 
@@ -105,6 +153,7 @@ const verifyEmail = async (verifyEmailToken) => {
 
 module.exports = {
   loginUserWithEmailAndPassword,
+  loginUser,
   logout,
   refreshAuth,
   resetPassword,

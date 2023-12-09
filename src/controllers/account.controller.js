@@ -26,7 +26,8 @@ const assignManager = catchAsync(async (req, res) => {
 
 const getUserAccount = catchAsync(async (req, res) => {
   const { userId } = req.params;
-  const account = await accountService.getUserAccount(userId);
+  const { accountType } = req.query;
+  const account = await accountService.getUserAccount(userId, accountType);
   res.status(httpStatus.OK).send(account);
 });
 
