@@ -15,6 +15,13 @@ const login = catchAsync(async (req, res) => {
   res.send({ user, tokens });
 });
 
+const loginUser = catchAsync(async (req, res) => {
+  const { identifier, password, otp } = req.body;
+  const user = await authService.loginUser(identifier, password, otp);
+  const tokens = await tokenService.generateAuthTokens(user);
+  res.send({ user, tokens });
+});
+
 const logout = catchAsync(async (req, res) => {
   await authService.logout(req.body.refreshToken);
   res.status(httpStatus.NO_CONTENT).send();
@@ -50,6 +57,7 @@ const verifyEmail = catchAsync(async (req, res) => {
 module.exports = {
   register,
   login,
+  loginUser,
   logout,
   refreshTokens,
   forgotPassword,

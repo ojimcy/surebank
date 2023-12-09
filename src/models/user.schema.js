@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const parsePhoneNumber = require('libphonenumber-js');
 const { toJSON, paginate } = require('./plugins');
 const { roles } = require('../config/roles');
 
@@ -101,6 +102,18 @@ userSchema.plugin(paginate);
  */
 userSchema.statics.isEmailTaken = async function (email, excludeUserId) {
   const user = await this.findOne({ email, _id: { $ne: excludeUserId } });
+  return !!user;
+};
+
+/**
+ * Check if phone number is taken
+ * @param {string} phoneNumber - The user's phone number
+ * @param {ObjectId} [excludeUserId] - The id of the user to be excluded
+ * @returns {Promise<boolean>}
+ */
+userSchema.statics.isPhoneNumberTaken = async function (phoneNumber, excludeUserId) {
+  const normalizedPhoneNumber = parsePhoneNumber(phoneNumber, 'NG').format('E.164');
+  const user = await this.findOne({ phoneNumber: normalizedPhoneNumber, _id: { $ne: excludeUserId } });
   return !!user;
 };
 

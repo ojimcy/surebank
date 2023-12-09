@@ -32,6 +32,7 @@ const createAccount = async (accountData, createdBy) => {
     userId,
     firstName: user.firstName,
     lastName: user.lastName,
+    phoneNumber: user.phoneNumber,
     accountNumber,
     availableBalance: 0,
     ledgerBalance: 0,

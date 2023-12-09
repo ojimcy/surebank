@@ -21,6 +21,12 @@ const accountSchema = mongoose.Schema(
       unique: true,
       trim: true,
     },
+    phoneNumber: {
+      type: String,
+      required: false,
+      trim: true,
+      minlength: 4,
+    },
     availableBalance: {
       type: Number,
       required: true,

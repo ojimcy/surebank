@@ -1,6 +1,25 @@
 const httpStatus = require('http-status');
+const parsePhoneNumber = require('libphonenumber-js');
 const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
+
+/**
+ * Normalize the provided phone number
+ * @param {string} phoneNumber
+ * @returns {string} Normalized phone number
+ */
+const normalizePhoneNumber = (phoneNumber) => {
+  // Parse and normalize the phone number
+  const parsedPhoneNumber = parsePhoneNumber(phoneNumber, 'NG');
+
+  // Basic validation
+  if (parsedPhoneNumber && parsedPhoneNumber.isValid()) {
+    return parsedPhoneNumber.format('E.164');
+  }
+
+  // Throw an error for invalid phone numbers
+  throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid phone number');
+};
 
 /**
  * Create a user
@@ -9,11 +28,19 @@ const ApiError = require('../utils/ApiError');
  */
 const createUser = async (userBody) => {
   const userModel = await User();
-  if (await userModel.isEmailTaken(userBody.email)) {
+  // Normalize the provided phone number
+  const normalizedPhoneNumber = normalizePhoneNumber(userBody.phoneNumber);
+
+  // Check if the email is already taken
+  if (await User.isPhoneNumberTaken(userBody.phoneNumber)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Phone number already taken');
+  } else if (await User.isEmailTaken(userBody.email)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
+
+  // Create the user object with normalized phone number
   const referralCode = Math.floor(100000 + Math.random() * 900000);
-  const user = { ...userBody, referralCode };
+  const user = { ...userBody, phoneNumber: normalizedPhoneNumber, referralCode };
   return userModel.create(user);
 };
 
