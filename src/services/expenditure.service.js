@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Expenditure, BranchStaff: BranchStaffModel } = require('../models');
+const { Expenditure, BranchStaff } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -9,6 +9,7 @@ const ApiError = require('../utils/ApiError');
  */
 const createExpenditure = async (expenditureInput) => {
   const ExpenditureModel = await Expenditure();
+  const BranchStaffModel = await BranchStaff();
   const branch = await BranchStaffModel.findOne({ staffId: expenditureInput.createdBy });
   if (!branch) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Branch not found for the given admin');
@@ -82,6 +83,8 @@ const getTotalExpenditure = async () => {
 
 const getBranchTotalExpenditure = async (branchAdmin) => {
   const ExpenditureModel = await Expenditure();
+  const BranchStaffModel = await BranchStaff();
+
   const branch = await BranchStaffModel.findOne({ staffId: branchAdmin });
   const totalExpenditure = await ExpenditureModel.aggregate([
     {

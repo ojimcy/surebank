@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Contribution, AccountTransaction, Package } = require('../models');
+const { Contribution, AccountTransaction, Package, SbPackage } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -478,6 +478,50 @@ const getContributionsByDayForBranch = async (branchId, startDate, endDateParam,
   }
 };
 
+/**
+ * Get packages that have been charged (hasBeenCharged is true).
+ * @returns {Promise<Array>} Array of packages that have been charged.
+ * Each object represents a charged package with its details.
+ */
+const getChargedPackages = async () => {
+  try {
+    const PackageModel = await Package();
+    const chargedPackages = await PackageModel.find({ hasBeenCharged: true }).populate([
+      {
+        path: 'userId',
+        select: 'firstName lastName role',
+      },
+    ]);
+    const totalAmountPerDay = chargedPackages.reduce((total, packages) => total + packages.amountPerDay, 0);
+
+    return { chargedPackages, totalAmountPerDay };
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get charged packages: ${error.message}`);
+  }
+};
+
+/**
+ * Get packages that have been charged (hasBeenCharged is true).
+ * @returns {Promise<Array>} Array of packages that have been charged.
+ * Each object represents a charged package with its details.
+ */
+const getChargedSbPackages = async () => {
+  try {
+    const PackageModel = await SbPackage();
+    const chargedPackages = await PackageModel.find({ hasBeenCharged: true }).populate([
+      {
+        path: 'userId',
+        select: 'firstName lastName role',
+      },
+    ]);
+    const totalAmountPerDay = chargedPackages.reduce((total, packages) => total + packages.amountPerDay, 0);
+
+    return { chargedPackages, totalAmountPerDay };
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get charged packages: ${error.message}`);
+  }
+};
+
 module.exports = {
   getTotalContributionsByDay,
   getTotalDailySavingsWithdrawal,
@@ -490,4 +534,6 @@ module.exports = {
   getTotalOpenPackagesForUserReps,
   getTotalClosedPackagesForUserReps,
   getContributionsByDayForBranch,
+  getChargedPackages,
+  getChargedSbPackages,
 };

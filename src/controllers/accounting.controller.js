@@ -77,6 +77,7 @@ const getSumOfFirstContributions = catchAsync(async (req, res) => {
   const result = await accountingService.getSumOfFirstContributions();
   res.status(httpStatus.OK).json(result);
 });
+
 const getBranchSumOfFirstContributions = catchAsync(async (req, res) => {
   const branchAdmin = req.user._id;
   const result = await accountingService.getBranchSumOfFirstContributions(branchAdmin);
