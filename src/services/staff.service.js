@@ -100,8 +100,8 @@ const addStaffToBranch = async (branchId, staffId, newRole, assigningUserRole) =
  */
 const getAllStaffService = async (filter, options) => {
   const BranchStaffModel = await BranchStaff();
-  const { limit = 10, page = 1, sortBy } = options;
-  const skip = (page - 1) * limit;
+  const { limit, page, sortBy } = options;
+  const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
   const branchStaff = await BranchStaffModel.find({})
     .populate([
