@@ -21,8 +21,12 @@ const createStaff = catchAsync(async (req, res) => {
 });
 
 const getAllStaff = catchAsync(async (req, res) => {
+  // Pick relevant options
   const filter = pick(req.query, ['staffId', 'isCurrent']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+  options.limit = parseInt(options.limit, 10) || 20;
+  options.page = parseInt(options.page, 10) || 1;
   const result = await staffService.getAllStaffService(filter, options);
   res.send(result);
 });

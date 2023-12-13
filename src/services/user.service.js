@@ -32,9 +32,9 @@ const createUser = async (userBody) => {
   const normalizedPhoneNumber = normalizePhoneNumber(userBody.phoneNumber);
 
   // Check if the email is already taken
-  if (await User.isPhoneNumberTaken(userBody.phoneNumber)) {
+  if (await userModel.isPhoneNumberTaken(userBody.phoneNumber)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Phone number already taken');
-  } else if (await User.isEmailTaken(userBody.email)) {
+  } else if (await userModel.isEmailTaken(userBody.email)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
 
