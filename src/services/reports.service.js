@@ -528,7 +528,7 @@ const getChargedSbPackages = async () => {
  * @returns {Promise<Array>} Array of charges
  */
 const getCharges = async (filterOpts, paginationOpts) => {
-  const ChargeModel = Charge();
+  const ChargeModel = await Charge();
 
   const { startDate, endDate, branchId } = filterOpts;
   const { limit, page, sortBy } = paginationOpts;
@@ -548,42 +548,32 @@ const getCharges = async (filterOpts, paginationOpts) => {
     query.branchId = branchId;
   }
 
-  const [charges, totalAmount] = await Promise.all([
-    ChargeModel.find(query)
-      .populate([
-        {
-          path: 'userId',
-          select: 'firstName lastName',
-        },
-        {
-          path: 'branchId',
-          select: 'name',
-        },
-      ])
-      .skip(skip)
-      .limit(limit)
-      .sort(sortBy)
-      .exec(),
-    ChargeModel.aggregate([{ $group: { _id: null, totalAmount: { $sum: '$amount' } } }]).exec(),
-  ]);
+  const charges = await ChargeModel.find(query)
+    .populate([
+      {
+        path: 'userId',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'branchId',
+        select: 'name',
+      },
+    ])
+    .skip(skip)
+    .limit(limit)
+    .sort(sortBy)
+    .exec();
 
-  const result = {
-    charges,
-    totalAmount: totalAmount.length > 0 ? totalAmount[0].totalAmount : 0,
-  };
-
-  return result;
+  return charges;
 };
 
 /**
  * Get total amount with optional filtering by branch
- * @param {Object} filterOpts - Filtering options (branchId)
+ * @param {Object} branchId - Filtering options (branchId)
  * @returns {Promise<Number>} Total amount
  */
-const getSumOfFirstContributions = async (filterOpts) => {
-  const ChargeModel = Charge();
-  const { branchId } = filterOpts;
-
+const getSumOfFirstContributions = async (branchId) => {
+  const ChargeModel = await Charge();
   const query = {};
 
   if (branchId) {

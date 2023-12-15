@@ -129,17 +129,19 @@ const saveDailyContribution = async (contributionInput) => {
     const branch = await AccountModel.findOne({ accountNumber: contributionInput.accountNumber });
 
     const newContribution = await ContributionModel.create(
-      {
-        createdBy: contributionInput.createdBy,
-        amount: contributionInput.amount,
-        branchId: branch.branchId,
-        accountNumber: contributionInput.accountNumber,
-        packageId: userPackageId,
-        count: contributionDaysCount,
-        totalCount,
-        date: currentDate,
-        narration: `Daily contribution`,
-      },
+      [
+        {
+          createdBy: contributionInput.createdBy,
+          amount: contributionInput.amount,
+          branchId: branch.branchId,
+          accountNumber: contributionInput.accountNumber,
+          packageId: userPackageId,
+          count: contributionDaysCount,
+          totalCount,
+          date: currentDate,
+          narration: `Daily contribution`,
+        },
+      ],
       { session }
     );
 
@@ -158,7 +160,7 @@ const saveDailyContribution = async (contributionInput) => {
     // Check for first contribution in each circle
     if (totalCount % CONTRIBUTION_CIRCLE === 1) {
       // Charge the user amountPerDay on the first savings of each cycle
-      await Package.findByIdAndUpdate(
+      await PackageModel.findByIdAndUpdate(
         userPackageId,
         {
           $inc: { totalContribution: -userPackage.amountPerDay },
@@ -171,15 +173,17 @@ const saveDailyContribution = async (contributionInput) => {
     const transactionDate = new Date().getTime();
 
     const contributionTransaction = await AccountTransactionModel.create(
-      {
-        accountNumber: contributionInput.accountNumber,
-        amount: contributionInput.amount,
-        createdBy: contributionInput.createdBy,
-        branchId: branch.branchId,
-        date: transactionDate,
-        direction: 'inflow',
-        narration: `Daily contribution`,
-      },
+      [
+        {
+          accountNumber: contributionInput.accountNumber,
+          amount: contributionInput.amount,
+          createdBy: contributionInput.createdBy,
+          branchId: branch.branchId,
+          date: transactionDate,
+          direction: 'inflow',
+          narration: `Daily contribution`,
+        },
+      ],
       { session }
     );
 
