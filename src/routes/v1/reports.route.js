@@ -46,6 +46,10 @@ router
   .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getContributionsByDayForBranch);
 
 router.route('/packages/charged').get(auth('reports'), reportsController.getChargedPackages);
+
 router.route('/packages/sb/charged').get(auth('reports'), reportsController.getChargedSbPackages);
+
+router.route('/charges').get(auth('reports'), validate(reportsValidation.getCharges), reportsController.getCharges);
+router.route('/contribution-incomes/supperadmin').get(auth('reports'), reportsController.getSumOfFirstContributions);
 
 module.exports = router;

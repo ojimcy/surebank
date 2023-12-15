@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Contribution, AccountTransaction, Package, SbPackage } = require('../models');
+const { Contribution, AccountTransaction, Package, SbPackage, Charge } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -522,6 +522,84 @@ const getChargedSbPackages = async () => {
   }
 };
 
+/**
+ * Get charges with optional filtering by date and branch
+ * @param {Object} filterOptions - Filtering options (startDate, endDate, branchId)
+ * @returns {Promise<Array>} Array of charges
+ */
+const getCharges = async (filterOpts, paginationOpts) => {
+  const ChargeModel = Charge();
+
+  const { startDate, endDate, branchId } = filterOpts;
+  const { limit, page, sortBy } = paginationOpts;
+  const skip = (page - 1) * limit;
+
+  const query = {};
+
+  if (startDate && endDate) {
+    query.date = { $gte: startDate, $lte: endDate };
+  } else if (startDate) {
+    query.date = { $gte: startDate };
+  } else if (endDate) {
+    query.date = { $lte: endDate };
+  }
+
+  if (branchId) {
+    query.branchId = branchId;
+  }
+
+  const [charges, totalAmount] = await Promise.all([
+    ChargeModel.find(query)
+      .populate([
+        {
+          path: 'userId',
+          select: 'firstName lastName',
+        },
+        {
+          path: 'branchId',
+          select: 'name',
+        },
+      ])
+      .skip(skip)
+      .limit(limit)
+      .sort(sortBy)
+      .exec(),
+    ChargeModel.aggregate([{ $group: { _id: null, totalAmount: { $sum: '$amount' } } }]).exec(),
+  ]);
+
+  const result = {
+    charges,
+    totalAmount: totalAmount.length > 0 ? totalAmount[0].totalAmount : 0,
+  };
+
+  return result;
+};
+
+/**
+ * Get total amount with optional filtering by branch
+ * @param {Object} filterOpts - Filtering options (branchId)
+ * @returns {Promise<Number>} Total amount
+ */
+const getSumOfFirstContributions = async (filterOpts) => {
+  const ChargeModel = Charge();
+  const { branchId } = filterOpts;
+
+  const query = {};
+
+  if (branchId) {
+    query.branchId = branchId;
+  }
+
+  const totalAmountResult = await ChargeModel.aggregate([
+    { $match: query },
+    { $group: { _id: null, totalAmount: { $sum: '$amount' } } },
+  ]).exec();
+
+  const totalCharge = totalAmountResult.length > 0 ? totalAmountResult[0].totalAmount : 0;
+
+  return { totalCharge };
+};
+
 module.exports = {
   getTotalContributionsByDay,
   getTotalDailySavingsWithdrawal,
@@ -536,4 +614,6 @@ module.exports = {
   getContributionsByDayForBranch,
   getChargedPackages,
   getChargedSbPackages,
+  getCharges,
+  getSumOfFirstContributions,
 };

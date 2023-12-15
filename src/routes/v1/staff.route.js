@@ -8,7 +8,7 @@ const router = express.Router();
 
 router
   .route('/')
-  .get(auth('getAllStaff'), validate('getAllStaff'), staffController.getAllStaff)
+  .get(auth('getAllStaff'), validate(staffValidation.getAllStaff), staffController.getAllStaff)
   .post(auth('updateBranchStaff'), validate(staffValidation.createStaff), staffController.createStaff)
   .patch(auth('updateBranchStaff'), validate(staffValidation.updateBranchStaff), staffController.updateBranchStaff);
 
@@ -18,5 +18,9 @@ router
   .route('/:branchId')
   .post(auth('updateBranchStaff'), validate(staffValidation.addStaffToBranch), staffController.addStaffToBranch)
   .get(auth('getStaffInBranch'), validate(staffValidation.getStaffInBranch), staffController.getStaffInBranch);
+
+router
+  .route('/user/:userId')
+  .get(auth('getAllStaff'), validate(staffValidation.getBranchStaffByUserId), staffController.getBranchStaffByUserId);
 
 module.exports = router;

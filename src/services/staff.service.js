@@ -104,7 +104,17 @@ const getAllStaffService = async (filter, options) => {
   const { limit = 10, page = 1, sortBy } = options;
   const skip = (page - 1) * limit;
 
-  const branchStaff = await BranchStaffModel.find({})
+  const query = {};
+
+  if (filter.branchId) {
+    query['branchId.id'] = filter.branchId.id;
+  }
+
+  if (filter.isCurrent !== undefined) {
+    query.isCurrent = filter.isCurrent;
+  }
+
+  const branchStaff = await BranchStaffModel.find(query)
     .populate([
       {
         path: 'staffId',
@@ -118,6 +128,7 @@ const getAllStaffService = async (filter, options) => {
     .skip(skip)
     .limit(limit)
     .sort(sortBy);
+
   return branchStaff;
 };
 
@@ -209,6 +220,16 @@ const deleteStaffById = async (staffId) => {
   await staff.remove();
 };
 
+/**
+ * Get branch staff by user id
+ * @param {ObjectId} userId
+ * @returns {Promise<BranchStaff>}
+ */
+const getBranchStaffByUserId = async (userId) => {
+  const BranchStaffModel = await BranchStaff();
+  return BranchStaffModel.findOne({ staffId: userId });
+};
+
 module.exports = {
   addStaffToBranch,
   getStaffInBranch,
@@ -218,4 +239,5 @@ module.exports = {
   deleteAllBranchStaffById,
   deleteStaffById,
   updateStaffRole,
+  getBranchStaffByUserId,
 };
