@@ -21,7 +21,7 @@ const createStaff = catchAsync(async (req, res) => {
 });
 
 const getAllStaff = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['staffId', 'isCurrent']);
+  const filter = pick(req.query, ['staffId', 'isCurrent', 'branchId']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await staffService.getAllStaffService(filter, options);
   res.send(result);
@@ -63,6 +63,12 @@ const updateStaffRole = catchAsync(async (req, res) => {
   }
 });
 
+const getBranchStaffByUserId = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+  const branchStaff = await staffService.getBranchStaffByUserId(userId);
+  res.send(branchStaff);
+});
+
 module.exports = {
   addStaffToBranch,
   createStaff,
@@ -71,4 +77,5 @@ module.exports = {
   updateBranchStaff,
   deleteStaff,
   updateStaffRole,
+  getBranchStaffByUserId,
 };

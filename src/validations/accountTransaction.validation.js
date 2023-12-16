@@ -82,6 +82,14 @@ const getWithdrawalRequestById = {
   }),
 };
 
+const getAccountTransactionsForStaff = {
+  query: Joi.object().keys({
+    staffId: Joi.string().required().custom(objectId),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
 module.exports = {
   makeCustomerDeposit,
   getAvailableBalance,
@@ -94,4 +102,5 @@ module.exports = {
   rejectWithdrawalRequest,
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
+  getAccountTransactionsForStaff,
 };

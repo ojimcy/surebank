@@ -1,9 +1,45 @@
 const { startSession } = require('mongoose');
-const { Package, Contribution, AccountTransaction, Account } = require('../models');
+const { Package, Contribution, AccountTransaction, Account, Charge } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
-const { addLedgerEntry } = require('./accounting.service');
-const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
+const { CONTRIBUTION_CIRCLE } = require('../constants/account');
+
+/**
+ * Save a charge and update the count in the associated package
+ * @param {Object} chargeInput - Charge input
+ * @returns {Promise<Object>} Result of the operation
+ */
+const saveCharge = async (packageId, amount, session) => {
+  // Fetch the package details to get the branchId
+  const packageDetails = await Package.findById(packageId);
+  if (!packageDetails) {
+    throw new Error('Package not found');
+  }
+
+  const { branchId, userId } = packageDetails;
+  const currentDate = new Date().getTime();
+
+  // Create a new charge
+  const newCharge = await Charge.create(
+    [
+      {
+        branchId,
+        packageId,
+        userId,
+        date: currentDate,
+        amount,
+      },
+    ],
+    { session }
+  );
+
+  // Update the count in the total count
+  await Charge.findByIdAndUpdate(newCharge._id, {
+    $inc: { totalCount: 1 },
+  });
+
+  return newCharge;
+};
 
 /**
  * Create a daily savings package
@@ -40,117 +76,114 @@ const createDailySavingsPackage = async (dailyInput) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const saveDailyContribution = async (contributionInput) => {
-  const userAccount = await getUserByAccountNumber(contributionInput.accountNumber);
-  if (!userAccount) {
-    throw new ApiError(404, 'Account number does not exist.');
-  }
-  const userPackage = await Package.findOne({
-    accountNumber: contributionInput.accountNumber,
-    status: 'open',
-    target: contributionInput.target,
-  });
+  const session = await startSession();
+  session.startTransaction();
 
-  if (!userPackage) {
-    throw new ApiError(409, 'Customer does not have an active package');
-  }
+  try {
+    const userAccount = await getUserByAccountNumber(contributionInput.accountNumber);
 
-  if (contributionInput.amount % userPackage.amountPerDay !== 0) {
-    throw new ApiError(400, `Amount is not valid for ${userPackage.amountPerDay} daily savings package`);
-  }
+    if (!userAccount) {
+      throw new ApiError(404, 'Account number does not exist.');
+    }
 
-  const userPackageId = userPackage._id;
-  const contributionDaysCount = contributionInput.amount / userPackage.amountPerDay;
-  const currentDate = new Date().getTime();
-
-  if (contributionInput.amount < userPackage.amountPerDay) {
-    throw new ApiError(400, `Amount cannot be less than ${userPackage.amountPerDay}`);
-  }
-
-  if (userPackage.status === 'closed') {
-    throw new ApiError(403, 'This package has been closed');
-  }
-
-  // Calculate the new total count by adding contributionDaysCount to the existing value
-  const totalCount = userPackage.totalCount + contributionDaysCount;
-
-  if (totalCount > 31) {
-    throw new ApiError(400, 'Total contribution count cannot exceed 31');
-  }
-
-  const branch = await Account.findOne({ accountNumber: contributionInput.accountNumber });
-
-  const newContribution = await Contribution.create({
-    createdBy: contributionInput.createdBy,
-    amount: contributionInput.amount,
-    branchId: branch.branchId,
-    accountNumber: contributionInput.accountNumber,
-    packageId: userPackageId,
-    count: contributionDaysCount,
-    totalCount,
-    date: currentDate,
-    narration: `Daily contribution`,
-  });
-
-  userPackage.totalContribution += contributionInput.amount;
-
-  if (userPackage.hasBeenCharged === false) {
-    userPackage.totalContribution -= userPackage.amountPerDay;
-    await Package.findByIdAndUpdate(userPackageId, {
-      hasBeenCharged: true,
-    });
-
-    const addLedgerEntryInput = {
-      type: ACCOUNT_TYPE.ds,
-      direction: DIRECTION_VALUE.inflow,
-      date: currentDate,
-      narration: 'Daily contribution',
-      amount: userPackage.amountPerDay,
-      userId: userPackage.createdBy,
-      branchId: branch.branchId,
-    };
-    await addLedgerEntry(addLedgerEntryInput);
-  }
-
-  await Package.findByIdAndUpdate(userPackageId, {
-    totalContribution: userPackage.totalContribution,
-  });
-
-  // Update the total contribution count in the Package model
-  await Package.findByIdAndUpdate(userPackageId, {
-    $set: { totalCount }, // Update the totalCount field with the new value
-  });
-
-  if (totalCount === 31) {
-    const narration = 'Total contribution';
-    const depositDetail = {
+    const userPackage = await Package.findOne({
       accountNumber: contributionInput.accountNumber,
-      amount: userPackage.totalContribution,
-      createdBy: userPackage.createdBy,
-      narration,
-    };
-
-    await makeCustomerDeposit(depositDetail);
-
-    // Close the package and reset total contribution count to 0
-    await Package.findByIdAndUpdate(userPackageId, {
-      status: 'closed',
-      totalContribution: 0,
-      totalCount: 0,
+      status: 'open',
+      target: contributionInput.target,
     });
-  } else {
+
+    if (!userPackage) {
+      throw new ApiError(409, 'Customer does not have an active package');
+    }
+
+    if (contributionInput.amount % userPackage.amountPerDay !== 0) {
+      throw new ApiError(400, `Amount is not valid for ${userPackage.amountPerDay} daily savings package`);
+    }
+
+    const userPackageId = userPackage._id;
+    const contributionDaysCount = contributionInput.amount / userPackage.amountPerDay;
+    const currentDate = new Date().getTime();
+
+    if (contributionInput.amount < userPackage.amountPerDay) {
+      throw new ApiError(400, `Amount cannot be less than ${userPackage.amountPerDay}`);
+    }
+
+    if (userPackage.status === 'closed') {
+      throw new ApiError(403, 'This package has been closed');
+    }
+
+    // Calculate the new total count by adding contributionDaysCount to the existing value
+    const totalCount = userPackage.totalCount + contributionDaysCount;
+
+    const branch = await Account.findOne({ accountNumber: contributionInput.accountNumber });
+
+    const newContribution = await Contribution.create(
+      [
+        {
+          userReps: contributionInput.userReps,
+          amount: contributionInput.amount,
+          branchId: branch.branchId,
+          accountNumber: contributionInput.accountNumber,
+          packageId: userPackageId,
+          count: contributionDaysCount,
+          totalCount,
+          date: currentDate,
+          narration: `Daily contribution`,
+        },
+      ],
+      { session }
+    );
+
+    userPackage.totalContribution += contributionInput.amount;
+
+    // Consolidated update operations into a single findByIdAndUpdate call
+    await Package.findByIdAndUpdate(
+      userPackageId,
+      {
+        $set: { totalCount },
+        $inc: { totalContribution: contributionInput.amount },
+      },
+      { session }
+    );
+
+    // Check for first contribution of subsequent
+    if (totalCount % CONTRIBUTION_CIRCLE === 1) {
+      // Charge the user amountPerDay on the first savings of each cycle
+      await Package.findByIdAndUpdate(
+        userPackageId,
+        {
+          $inc: { totalContribution: -userPackage.amountPerDay },
+        },
+        { session }
+      );
+      await saveCharge(userPackageId, userPackage.amountPerDay, session);
+    }
+
     const transactionDate = new Date().getTime();
 
-    const contributionTransaction = await AccountTransaction.create({
-      accountNumber: contributionInput.accountNumber,
-      amount: contributionInput.amount,
-      createdBy: contributionInput.createdBy,
-      branchId: branch.branchId,
-      date: transactionDate,
-      direction: 'inflow',
-      narration: `Daily contribution`,
-    });
+    await AccountTransaction.create(
+      [
+        {
+          accountNumber: contributionInput.accountNumber,
+          amount: contributionInput.amount,
+          createdBy: contributionInput.createdBy,
+          branchId: branch.branchId,
+          date: transactionDate,
+          direction: 'inflow',
+          narration: `Daily contribution`,
+        },
+      ],
+      { session }
+    );
 
-    return { newContribution, contributionTransaction };
+    await session.commitTransaction();
+    session.endSession();
+
+    return newContribution;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
 };
 
@@ -193,7 +226,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
     const withdrawalDetails = {
       accountNumber: withdrawal.accountNumber,
       amount: withdrawal.amount,
-      createdBy: withdrawal.createdBy,
+      userReps: withdrawal.userReps,
       narration: `Daily contribution withdrawal`,
     };
 

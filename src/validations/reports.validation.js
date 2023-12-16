@@ -26,4 +26,32 @@ const getMyTotalContributions = {
   }),
 };
 
-module.exports = { getTotalContributions, getTotalContributionsByUserReps, getMyTotalContributions };
+const getCharges = {
+  query: Joi.object().keys({
+    startDate: Joi.number(),
+    endDate: Joi.number(),
+    branchId: Joi.string().optional().custom(objectId),
+    sortBy: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
+const getPackages = {
+  query: Joi.object().keys({
+    status: Joi.string(),
+    branchId: Joi.string().optional().custom(objectId),
+    createdBy: Joi.string().optional().custom(objectId),
+    sortBy: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
+module.exports = {
+  getTotalContributions,
+  getTotalContributionsByUserReps,
+  getMyTotalContributions,
+  getCharges,
+  getPackages,
+};

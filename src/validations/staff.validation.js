@@ -20,6 +20,19 @@ const createStaff = {
   }),
 };
 
+const getAllStaff = {
+  query: Joi.object().keys({
+    branchId: Joi.object().keys({
+      name: Joi.string(),
+      id: Joi.string(),
+    }),
+    sortBy: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+    isCurrent: Joi.boolean(),
+  }),
+};
+
 const getStaffInBranch = {
   params: Joi.object().keys({
     branchId: Joi.string().required().custom(objectId),
@@ -46,10 +59,18 @@ const updateStaffRole = {
   }),
 };
 
+const getBranchStaffByUserId = {
+  params: Joi.object().keys({
+    userId: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   addStaffToBranch,
   getStaffInBranch,
   updateBranchStaff,
   createStaff,
   updateStaffRole,
+  getAllStaff,
+  getBranchStaffByUserId,
 };

@@ -19,7 +19,7 @@ const userSchema = mongoose.Schema(
     },
     address: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
     isTwoFactorAuthEnabled: {
@@ -33,7 +33,7 @@ const userSchema = mongoose.Schema(
     },
     email: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
       trim: true,
       lowercase: true,

@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 const { reportService } = require('../services');
+const pick = require('../utils/pick');
 
 const getTotalContributions = catchAsync(async (req, res) => {
   const { startDate, endDateParam } = req.query;
@@ -64,6 +65,51 @@ const getContributionsByDayForBranch = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(totalContributions);
 });
 
+const getChargedPackages = catchAsync(async (req, res) => {
+  const chargedPackages = await reportService.getChargedPackages();
+  res.status(httpStatus.OK).json(chargedPackages);
+});
+
+const getChargedSbPackages = catchAsync(async (req, res) => {
+  const chargedPackages = await reportService.getChargedSbPackages();
+  res.status(httpStatus.OK).json(chargedPackages);
+});
+
+const getCharges = catchAsync(async (req, res) => {
+  const { startDate, endDate, branchId } = req.query;
+
+  const filterOptions = {
+    startDate,
+    endDate,
+    branchId,
+  };
+
+  const options = {
+    limit: req.query.limit || 100,
+    page: req.query.page || 1,
+    sortBy: req.query.sortBy,
+  };
+
+  const charges = await reportService.getCharges(filterOptions, options);
+
+  res.status(httpStatus.OK).json(charges);
+});
+
+const getSumOfFirstContributions = catchAsync(async (req, res) => {
+  const { branchId } = req.query;
+
+  const totalCharge = await reportService.getSumOfFirstContributions(branchId);
+
+  res.status(httpStatus.OK).json(totalCharge);
+});
+
+const getPackages = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['status', 'createdBy', 'branchId']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const result = await reportService.getPackages(filter, options);
+  res.send(result);
+});
+
 module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
@@ -73,4 +119,9 @@ module.exports = {
   getMyDsWithdrawals,
   getPackageReportForUserRep,
   getContributionsByDayForBranch,
+  getChargedPackages,
+  getChargedSbPackages,
+  getCharges,
+  getSumOfFirstContributions,
+  getPackages,
 };

@@ -13,9 +13,7 @@ router
   .route('/total-savings-withdrawal')
   .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getDailySavingsWithdrawals);
 
-router
-  .route('/packages')
-  .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getPackageReport);
+router.route('/packages').get(auth('reports'), validate(reportsValidation.getPackages), reportsController.getPackages);
 
 router
   .route('/user-reps/total-contributions')
@@ -43,6 +41,16 @@ router
 
 router
   .route('/:branchId/total-contributions')
-  .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getContributionsByDayForBranch);
+  .get(
+    auth('branchReports'),
+    validate(reportsValidation.getTotalContributions),
+    reportsController.getContributionsByDayForBranch
+  );
+
+router.route('/packages/charged').get(auth('reports'), reportsController.getChargedPackages);
+router.route('/packages/sb/charged').get(auth('reports'), reportsController.getChargedSbPackages);
+router.route('/charges').get(auth('reports'), validate(reportsValidation.getCharges), reportsController.getCharges);
+
+router.route('/contribution-incomes/supperadmin').get(auth('accounting'), reportsController.getSumOfFirstContributions);
 
 module.exports = router;

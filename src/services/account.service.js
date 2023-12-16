@@ -159,9 +159,8 @@ const getAccountsInBranch = async (branchId, filter, options) => {
  */
 
 const getAccountsByStaff = async (staffId, filter, options) => {
-  const { limit = 10, page = 1, sortBy } = options;
-  const skip = (page - 1) * limit;
-
+  const { limit, page, sortBy } = options;
+  const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
   const staffAccount = await Account.find({ accountManagerId: staffId }).skip(skip).limit(limit).sort(sortBy);
   return staffAccount;
 };

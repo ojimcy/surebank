@@ -114,6 +114,16 @@ const getWithdrawalRequestById = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(cashRequest);
 });
 
+const getAccountTransactionsForStaff = catchAsync(async (req, res) => {
+  const { staffId, page = 1, limit = 10 } = req.query;
+  const parsedPage = parseInt(page, 10);
+  const parsedLimit = parseInt(limit, 10);
+
+  const transactions = await accountTransactionService.getAccountTransactionsForStaff(staffId, parsedPage, parsedLimit);
+
+  res.status(httpStatus.OK).json(transactions);
+});
+
 module.exports = {
   makeCustomerDeposit,
   updateAccountStatus,
@@ -130,4 +140,5 @@ module.exports = {
   rejectWithdrawalRequest,
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
+  getAccountTransactionsForStaff,
 };

@@ -37,6 +37,7 @@ const getAllAccounts = catchAsync(async (req, res) => {
   const result = await accountService.getAllAccounts(filter, options);
   res.send(result);
 });
+
 const getAccountInBranch = catchAsync(async (req, res) => {
   const { branchId } = req.params;
   const filter = pick(req.query, ['staffId', 'isCurrent']);
@@ -46,14 +47,20 @@ const getAccountInBranch = catchAsync(async (req, res) => {
 
   res.send(branchCustomerAccounts);
 });
+
 const getAccountsByStaff = catchAsync(async (req, res) => {
   const { staffId } = req.params;
+
+  // Pick relevant options
   const filter = pick(req.query, ['staffId', 'isCurrent']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
 
+  options.limit = parseInt(options.limit, 10) || 20;
+  options.page = parseInt(options.page, 10) || 1;
+
   const staffCustomerAccounts = await accountService.getAccountsByStaff(staffId, filter, options);
 
-  res.send(staffCustomerAccounts);
+  res.status(httpStatus.OK).send(staffCustomerAccounts);
 });
 
 const deleteAccount = catchAsync(async (req, res) => {

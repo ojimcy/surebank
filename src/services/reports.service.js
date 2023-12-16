@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Contribution, AccountTransaction, Package } = require('../models');
+const { Contribution, AccountTransaction, Package, SbPackage, Charge } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -467,6 +467,128 @@ const getContributionsByDayForBranch = async (branchId, startDate, endDateParam,
   }
 };
 
+/**
+ * Get packages that have been charged (hasBeenCharged is true).
+ * @returns {Promise<Array>} Array of packages that have been charged.
+ * Each object represents a charged package with its details.
+ */
+const getChargedPackages = async () => {
+  try {
+    const chargedPackages = await Package.find({ hasBeenCharged: true }).populate([
+      {
+        path: 'userId',
+        select: 'firstName lastName role',
+      },
+    ]);
+    const totalAmountPerDay = chargedPackages.reduce((total, packages) => total + packages.amountPerDay, 0);
+
+    return { chargedPackages, totalAmountPerDay };
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get charged packages: ${error.message}`);
+  }
+};
+
+/**
+ * Get packages that have been charged (hasBeenCharged is true).
+ * @returns {Promise<Array>} Array of packages that have been charged.
+ * Each object represents a charged package with its details.
+ */
+const getChargedSbPackages = async () => {
+  try {
+    const chargedPackages = await SbPackage.find({ hasBeenCharged: true }).populate([
+      {
+        path: 'userId',
+        select: 'firstName lastName role',
+      },
+    ]);
+    const totalAmountPerDay = chargedPackages.reduce((total, packages) => total + packages.amountPerDay, 0);
+
+    return { chargedPackages, totalAmountPerDay };
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get charged packages: ${error.message}`);
+  }
+};
+
+/**
+ * Get charges with optional filtering by date and branch
+ * @param {Object} filterOpts - Filtering options (startDate, endDate, branchId)
+ * @param {Object} paginationOpts - Pagination options (limit, page, sortBy)
+ * @returns {Promise<{ charges: Array, totalAmount: Number }>} Array of charges and total amount
+ */
+const getCharges = async (filterOpts, paginationOpts) => {
+  const { startDate, endDate, branchId } = filterOpts;
+  const { limit, page, sortBy } = paginationOpts;
+  const skip = (page - 1) * limit;
+
+  const query = {};
+
+  if (startDate && endDate) {
+    query.date = { $gte: startDate, $lte: endDate };
+  } else if (startDate) {
+    query.date = { $gte: startDate };
+  } else if (endDate) {
+    query.date = { $lte: endDate };
+  }
+
+  if (branchId) {
+    query.branchId = branchId;
+  }
+
+  const charges = await Charge.find(query)
+    .populate([
+      {
+        path: 'userId',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'branchId',
+        select: 'name',
+      },
+    ])
+    .skip(skip)
+    .limit(limit)
+    .sort(sortBy)
+    .exec();
+
+  return charges;
+};
+
+/**
+ * Get total amount with optional filtering by branch
+ * @param {Object} filterOpts - Filtering options (branchId)
+ * @returns {Promise<Number>} Total amount
+ */
+const getSumOfFirstContributions = async (branchId) => {
+  const query = {};
+
+  if (branchId) {
+    query.branchId = branchId;
+  }
+
+  const totalAmountResult = await Charge.aggregate([
+    { $match: query },
+    { $group: { _id: null, totalAmount: { $sum: '$amount' } } },
+  ]).exec();
+
+  const totalCharge = totalAmountResult.length > 0 ? totalAmountResult[0].totalAmount : 0;
+
+  return { totalCharge };
+};
+
+/**
+ * Query for packages
+ * @param {Object} filter - Mongo filter
+ * @param {Object} options - Query options
+ * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<QueryResult>}
+ */
+const getPackages = async (filter, options) => {
+  const packages = await Package.paginate(filter, options);
+  return packages;
+};
+
 module.exports = {
   getTotalContributionsByDay,
   getTotalDailySavingsWithdrawal,
@@ -479,4 +601,9 @@ module.exports = {
   getTotalOpenPackagesForUserReps,
   getTotalClosedPackagesForUserReps,
   getContributionsByDayForBranch,
+  getChargedPackages,
+  getChargedSbPackages,
+  getCharges,
+  getSumOfFirstContributions,
+  getPackages,
 };

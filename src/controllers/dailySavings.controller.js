@@ -20,17 +20,17 @@ const createDailySavingsPackage = catchAsync(async (req, res) => {
 
 const saveDailyContribution = catchAsync(async (req, res) => {
   const contributionInput = req.body;
-  const createdBy = req.user._id;
+  const userReps = req.user._id;
   const packageId = req.query;
-  const result = await dailySavingsService.saveDailyContribution({ ...contributionInput, createdBy, packageId });
+  const result = await dailySavingsService.saveDailyContribution({ ...contributionInput, userReps, packageId });
   res.status(httpStatus.OK).json(result);
 });
 
 const makeDailySavingsWithdrawal = catchAsync(async (req, res) => {
   const withdrawal = req.body;
-  const createdBy = req.user._id;
+  const userReps = req.user._id;
   const packageId = req.query;
-  const withdrawalDetails = await dailySavingsService.makeDailySavingsWithdrawal({ ...withdrawal, createdBy, packageId });
+  const withdrawalDetails = await dailySavingsService.makeDailySavingsWithdrawal({ ...withdrawal, userReps, packageId });
   res.status(httpStatus.OK).json(withdrawalDetails);
 });
 

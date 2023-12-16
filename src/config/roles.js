@@ -69,6 +69,8 @@ const managerPermissions = [
   'deleteUser',
   'manageStaff',
   'sbWithdrawal',
+  'getBranchStaff',
+  'branchReports',
 ];
 
 const adminPermissions = [

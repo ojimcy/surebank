@@ -488,6 +488,22 @@ const getCustomerwithdrawals = async (startDate, endDate, branchId, createdBy, a
   }
 };
 
+/**
+ * Get account transactions for a specific staff member
+ * @param {string} staffId - Staff ID or createdBy value
+ * @param {number} page - Current page number
+ * @param {number} limit - Maximum number of transactions per page
+ * @returns {Promise<Array>} Array of account transactions
+ */
+const getAccountTransactionsForStaff = async (staffId, page, limit) => {
+  const skip = (page - 1) * limit;
+
+  // Assuming staffId corresponds to the createdBy field
+  const transactions = await AccountTransaction.find({ createdBy: staffId }).skip(skip).limit(limit).sort({ date: 'desc' });
+
+  return transactions;
+};
+
 module.exports = {
   getUserByAccountNumber,
   makeCustomerDeposit,
@@ -504,4 +520,5 @@ module.exports = {
   rejectWithdrawalRequest,
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
+  getAccountTransactionsForStaff,
 };
