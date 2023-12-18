@@ -85,7 +85,7 @@ const getUserAccountNumber = async (userId) => {
  * @returns {Promise<Account>} User's account details
  */
 const getUserAccount = async (userId) => {
-  const account = await Account.findOne({ userId })
+  const account = await Account.find({ userId })
     .populate([
       {
         path: 'accountManagerId',

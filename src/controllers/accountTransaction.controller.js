@@ -70,11 +70,17 @@ const makeCustomerWithdrawal = catchAsync(async (req, res) => {
 });
 
 const getAccountTransactions = catchAsync(async (req, res) => {
-  const { accountNumber, page = 1, limit = 10 } = req.query;
+  const { accountNumber, userReps, narration, page = 1, limit = 10000 } = req.query;
   const parsedPage = parseInt(page, 10);
   const parsedLimit = parseInt(limit, 10);
 
-  const transactions = await accountTransactionService.getAccountTransactions(accountNumber, parsedPage, parsedLimit);
+  const transactions = await accountTransactionService.getAccountTransactions({
+    accountNumber,
+    userReps,
+    narration,
+    page: parsedPage,
+    limit: parsedLimit,
+  });
 
   res.status(httpStatus.OK).json(transactions);
 });

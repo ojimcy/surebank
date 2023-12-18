@@ -410,15 +410,35 @@ const rejectWithdrawalRequest = async (requestId, narration) => {
 };
 
 /**
- * Get account transactions for a specific account with pagination
- * @param {string} accountNumber - Account number
- * @param {number} page - Current page number
- * @param {number} limit - Maximum number of transactions per page
+ * Get account transactions with optional filtering by account number, userReps, page, limit, and narration
+ * @param {Object} options - Query options
+ * @param {string} [options.accountNumber] - Optional account number for filtering
+ * @param {string} [options.userReps] - Optional userReps for filtering
+ * @param {number} [options.page] - Optional current page number
+ * @param {number} [options.limit] - Optional maximum number of transactions per page
+ * @param {string} [options.narration] - Optional narration for filtering
  * @returns {Promise<Array>} Array of account transactions
  */
-const getAccountTransactions = async (accountNumber, page, limit) => {
+const getAccountTransactions = async (options = {}) => {
+  const { accountNumber, userReps, page = 1, limit, narration } = options;
   const skip = (page - 1) * limit;
-  const transactions = await AccountTransaction.find({ accountNumber })
+
+  // Construct the query object
+  const query = {};
+
+  if (accountNumber) {
+    query.accountNumber = accountNumber;
+  }
+
+  if (userReps) {
+    query.userReps = userReps;
+  }
+
+  if (narration) {
+    query.narration = narration;
+  }
+
+  const transactions = await AccountTransaction.find(query)
     .populate([
       {
         path: 'userReps',
@@ -432,6 +452,7 @@ const getAccountTransactions = async (accountNumber, page, limit) => {
     .skip(skip)
     .limit(limit)
     .sort({ date: 'desc' });
+
   return transactions;
 };
 

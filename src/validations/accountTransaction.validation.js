@@ -30,6 +30,8 @@ const makeCustomerWithdrawal = {
 const getAccountTransactions = {
   query: Joi.object().keys({
     accountNumber: Joi.string(),
+    narration: Joi.string(),
+    userReps: Joi.string().optional().custom(objectId),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
   }),
