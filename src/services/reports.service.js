@@ -128,46 +128,16 @@ const getTotalDailySavingsWithdrawal = async (startDate, endDateParam, limit = 1
 };
 
 /**
- * Get total number of packages
- * @returns {Promise<number>} Total number of packages
- */
-const getTotalPackages = async () => {
-  const PackageModel = await Package();
-  const totalPackages = await PackageModel.countDocuments();
-  return totalPackages;
-};
-
-/**
- * Get total number of open packages
- * @returns {Promise<number>} Total number of open packages
- */
-const getTotalOpenPackages = async () => {
-  const PackageModel = await Package();
-  const totalOpenPackages = await PackageModel.countDocuments({ status: 'open' });
-  return totalOpenPackages;
-};
-
-/**
- * Get total number of closed packages
- * @returns {Promise<number>} Total number of closed packages
- */
-const getTotalClosedPackages = async () => {
-  const PackageModel = await Package();
-  const totalClosedPackages = await PackageModel.countDocuments({ status: 'closed' });
-  return totalClosedPackages;
-};
-
-/**
  * Retrieves the total contributions made by a specific user representative (userReps)
  * each day within a given date range.
  *
- * @param {string} userReps - The ID of the user representative.
+ * @param {string} createdBy - The ID of the user representative.
  * @param {Date} startDate - The start date of the range.
  * @param {Date} endDateParam - The end date of the range.
  * @returns {Promise<Object>} An object containing the contributions per day and the sum total of all contributions.
  * @throws {ApiError} If there is an error retrieving the total contributions by day.
  */
-const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam, limit = 10) => {
+const getTotalContributionsByUserReps = async (createdBy, startDate, endDateParam, limit = 10) => {
   try {
     const ContributionModel = await Contribution();
     // Set the endDate to the current date if not provided
@@ -180,7 +150,7 @@ const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam
       {
         $match: {
           date: { $gte: startDate, $lte: endDate },
-          userReps,
+          createdBy,
         },
       },
       {
@@ -214,7 +184,7 @@ const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam
       {
         $match: {
           date: { $gte: startDate, $lte: endDate },
-          userReps,
+          createdBy,
         },
       },
       {
@@ -235,13 +205,13 @@ const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam
 /**
  * Retrieves my total contributions
  *
- * @param {string} userReps - The ID of the user representative.
+ * @param {string} createdBy - The ID of the user representative.
  * @param {Date} startDate - The start date of the range.
  * @param {Date} endDateParam - The end date of the range.
  * @returns {Promise<Object>} An object containing the contributions per day and the sum total of all contributions.
  * @throws {ApiError} If there is an error retrieving the total contributions by day.
  */
-const getMyTotalContributions = async (userReps, startDate, endDateParam, limit = 10) => {
+const getMyTotalContributions = async (createdBy, startDate, endDateParam, limit = 10) => {
   try {
     const ContributionModel = await Contribution();
     let dateFilter = {};
@@ -258,7 +228,7 @@ const getMyTotalContributions = async (userReps, startDate, endDateParam, limit 
     const contributionsPerDay = await ContributionModel.aggregate([
       {
         $match: {
-          userReps,
+          createdBy,
           ...dateFilter,
         },
       },
@@ -292,7 +262,7 @@ const getMyTotalContributions = async (userReps, startDate, endDateParam, limit 
     const allContributions = await ContributionModel.aggregate([
       {
         $match: {
-          userReps,
+          createdBy,
           ...dateFilter,
         },
       },
@@ -314,7 +284,7 @@ const getMyTotalContributions = async (userReps, startDate, endDateParam, limit 
 /**
  * Retrieves my total daily savings withdrawals
  *
- * @param {string} userReps - The ID of the user representative.
+ * @param {string} createdBy - The ID of the user representative.
  * @param {Date} startDate - The start date of the range.
  * @param {Date} endDateParam - The end date of the range.
  * @param {number} limit - The maximum number of records to return.
@@ -324,7 +294,7 @@ const getMyTotalContributions = async (userReps, startDate, endDateParam, limit 
  * - total: The total amount of savings withdrawals made on that day.
  * @throws {ApiError} If there is an error retrieving the total daily withdrawals.
  */
-const getMyDsWithdrawals = async (userReps, startDate, endDateParam, limit = 10) => {
+const getMyDsWithdrawals = async (createdBy, startDate, endDateParam, limit = 10) => {
   try {
     const AccountTransactionModel = await AccountTransaction();
     // Set the endDate to the current date if not provided
@@ -335,7 +305,7 @@ const getMyDsWithdrawals = async (userReps, startDate, endDateParam, limit = 10)
 
     // Create a match object to filter based on userReps and date range
     const match = {
-      userReps,
+      createdBy,
       direction: 'inflow',
       narration: 'Daily contribution withdrawal',
     };
@@ -379,28 +349,6 @@ const getMyDsWithdrawals = async (userReps, startDate, endDateParam, limit = 10)
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total daily withdrawals by day: ${error.message}`);
   }
-};
-
-/**
- * Get total number of open packages for a specific user representative
- * @param {string} userReps - The ID of the user representative.
- * @returns {Promise<number>} Total number of open packages for the user representative.
- */
-const getTotalOpenPackagesForUserReps = async (userReps) => {
-  const PackageModel = await Package();
-  const totalOpenPackages = await PackageModel.countDocuments({ userReps, status: 'open' });
-  return totalOpenPackages;
-};
-
-/**
- * Get total number of closed packages for a specific user representative
- * @param {string} userReps - The ID of the user representative.
- * @returns {Promise<number>} Total number of closed packages for the user representative.
- */
-const getTotalClosedPackagesForUserReps = async (userReps) => {
-  const PackageModel = await Package();
-  const totalClosedPackages = await PackageModel.countDocuments({ userReps, status: 'closed' });
-  return totalClosedPackages;
 };
 
 /**
@@ -590,20 +538,31 @@ const getSumOfFirstContributions = async (branchId) => {
   return { totalCharge };
 };
 
+/**
+ * Query for packages
+ * @param {Object} filter - Mongo filter
+ * @param {Object} options - Query options
+ * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<QueryResult>}
+ */
+const getPackages = async (filter, options) => {
+  const PackageModel = await Package();
+  const packages = await PackageModel.paginate(filter, options);
+  return packages;
+};
+
 module.exports = {
   getTotalContributionsByDay,
   getTotalDailySavingsWithdrawal,
-  getTotalPackages,
-  getTotalOpenPackages,
-  getTotalClosedPackages,
   getTotalContributionsByUserReps,
   getMyTotalContributions,
   getMyDsWithdrawals,
-  getTotalOpenPackagesForUserReps,
-  getTotalClosedPackagesForUserReps,
   getContributionsByDayForBranch,
   getChargedPackages,
   getChargedSbPackages,
   getCharges,
   getSumOfFirstContributions,
+  getPackages,
 };

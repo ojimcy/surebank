@@ -19,9 +19,13 @@ const accountTransactionSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    status: {
+      type: String,
+      required: false,
+    },
     narration: {
       type: String,
-      required: true,
+      required: false,
     },
     branchId: {
       type: mongoose.Schema.Types.ObjectId,

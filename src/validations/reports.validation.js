@@ -15,7 +15,7 @@ const getTotalContributionsByUserReps = {
     endDateParam: Joi.number(),
   }),
   params: Joi.object().keys({
-    userReps: Joi.string().required().custom(objectId),
+    createdBy: Joi.string().required().custom(objectId),
   }),
 };
 
@@ -37,4 +37,21 @@ const getCharges = {
   }),
 };
 
-module.exports = { getTotalContributions, getTotalContributionsByUserReps, getMyTotalContributions, getCharges };
+const getPackages = {
+  query: Joi.object().keys({
+    status: Joi.string(),
+    branchId: Joi.string().optional().custom(objectId),
+    userReps: Joi.string().optional().custom(objectId),
+    sortBy: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
+module.exports = {
+  getTotalContributions,
+  getTotalContributionsByUserReps,
+  getMyTotalContributions,
+  getCharges,
+  getPackages,
+};
