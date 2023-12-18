@@ -28,16 +28,15 @@ const getPackageReport = catchAsync(async (req, res) => {
 });
 
 const getTotalContributionsByUserReps = catchAsync(async (req, res) => {
-  const { userReps } = req.params;
-  const { startDate, endDateParam } = req.query;
-  const totalContributions = await reportService.getTotalContributionsByUserReps(userReps, startDate, endDateParam);
+  const { createdBy } = req.params;
+  const totalContributions = await reportService.getTotalContributionsByUserReps(createdBy);
   res.status(httpStatus.OK).json(totalContributions);
 });
 
 const getMyTotalContributions = catchAsync(async (req, res) => {
-  const userReps = req.user._id;
+  const createdBy = req.user._id;
   const { startDate, endDateParam } = req.query;
-  const totalContributions = await reportService.getMyTotalContributions(userReps, startDate, endDateParam);
+  const totalContributions = await reportService.getMyTotalContributions(createdBy, startDate, endDateParam);
   res.status(httpStatus.OK).json(totalContributions);
 });
 

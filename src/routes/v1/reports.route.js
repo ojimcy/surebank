@@ -13,7 +13,9 @@ router
   .route('/total-savings-withdrawal')
   .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getDailySavingsWithdrawals);
 
-router.route('/packages').get(auth('reports'), validate(reportsValidation.getPackages), reportsController.getPackages);
+router
+  .route('/packages')
+  .get(auth('packageReports'), validate(reportsValidation.getPackages), reportsController.getPackages);
 
 router
   .route('/user-reps/total-contributions')

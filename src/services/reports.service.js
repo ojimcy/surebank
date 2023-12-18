@@ -89,7 +89,7 @@ const getTotalDailySavingsWithdrawal = async (startDate, endDateParam, limit = 1
         $match: {
           date: { $gte: startDate, $lte: endDate },
           direction: 'inflow',
-          narration: 'Daily contribution withdrawal',
+          narration: 'Request Cash',
         },
       },
       {
@@ -162,7 +162,7 @@ const getTotalClosedPackages = async () => {
  * @returns {Promise<Object>} An object containing the contributions per day and the sum total of all contributions.
  * @throws {ApiError} If there is an error retrieving the total contributions by day.
  */
-const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam, limit = 10) => {
+const getTotalContributionsByUserReps = async (createdBy, startDate, endDateParam, limit = 10) => {
   try {
     // Set the endDate to the current date if not provided
     let endDate = endDateParam;
@@ -174,7 +174,7 @@ const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam
       {
         $match: {
           date: { $gte: startDate, $lte: endDate },
-          userReps,
+          createdBy,
         },
       },
       {
@@ -208,7 +208,7 @@ const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam
       {
         $match: {
           date: { $gte: startDate, $lte: endDate },
-          userReps,
+          createdBy,
         },
       },
       {
@@ -229,13 +229,13 @@ const getTotalContributionsByUserReps = async (userReps, startDate, endDateParam
 /**
  * Retrieves my total contributions
  *
- * @param {string} userReps - The ID of the user representative.
+ * @param {string} createdBy - The ID of the user representative.
  * @param {Date} startDate - The start date of the range.
  * @param {Date} endDateParam - The end date of the range.
  * @returns {Promise<Object>} An object containing the contributions per day and the sum total of all contributions.
  * @throws {ApiError} If there is an error retrieving the total contributions by day.
  */
-const getMyTotalContributions = async (userReps, startDate, endDateParam, limit = 10) => {
+const getMyTotalContributions = async (createdBy, startDate, endDateParam, limit = 20) => {
   try {
     let dateFilter = {};
 
@@ -251,7 +251,7 @@ const getMyTotalContributions = async (userReps, startDate, endDateParam, limit 
     const contributionsPerDay = await Contribution.aggregate([
       {
         $match: {
-          userReps,
+          createdBy,
           ...dateFilter,
         },
       },
@@ -285,7 +285,7 @@ const getMyTotalContributions = async (userReps, startDate, endDateParam, limit 
     const allContributions = await Contribution.aggregate([
       {
         $match: {
-          userReps,
+          createdBy,
           ...dateFilter,
         },
       },

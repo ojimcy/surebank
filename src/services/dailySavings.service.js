@@ -120,7 +120,7 @@ const saveDailyContribution = async (contributionInput) => {
     const newContribution = await Contribution.create(
       [
         {
-          userReps: contributionInput.userReps,
+          createdBy: contributionInput.createdBy,
           amount: contributionInput.amount,
           branchId: branch.branchId,
           accountNumber: contributionInput.accountNumber,

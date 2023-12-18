@@ -255,7 +255,7 @@ const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy)
     if (createdBy) {
       query.createdBy = createdBy;
     }
-    query.direction = 'pending';
+    query.status = 'pending';
     query.narration = 'Request Cash';
     const withdrawalRequests = await AccountTransaction.find(query)
       .populate([
@@ -326,7 +326,7 @@ const makeCustomerWithdrawal = async (requestId) => {
     if (!withdrawalRequest) {
       throw new ApiError(404, 'Withdrawal request does not exist.');
     }
-    if (withdrawalRequest.direction !== 'pending' || withdrawalRequest.narration !== 'Request Cash') {
+    if (withdrawalRequest.status !== 'pending' || withdrawalRequest.narration !== 'Request Cash') {
       throw new ApiError(400, 'Invalid withdrawal request.');
     }
     const { accountNumber } = withdrawalRequest;
@@ -347,6 +347,7 @@ const makeCustomerWithdrawal = async (requestId) => {
           branchId: withdrawalRequest.branchId,
           narration: withdrawalRequest.narration,
           direction: 'outflow',
+          status: 'approved',
           date: transactionDate,
           amount: withdrawalRequest.amount,
           accountNumber: withdrawalRequest.accountNumber,
@@ -355,7 +356,8 @@ const makeCustomerWithdrawal = async (requestId) => {
       { session }
     );
     // Update the withdrawal request
-    withdrawalRequest.narration = 'fulfilled';
+    withdrawalRequest.direction = 'outflow';
+    withdrawalRequest.narration = 'Request Cash';
     withdrawalRequest.createdBy = createdBy;
     await withdrawalRequest.save();
 
@@ -400,7 +402,8 @@ const rejectWithdrawalRequest = async (requestId, narration) => {
     throw new ApiError(404, 'Withdrawal request does not exist.');
   }
   withdrawalRequest.narration = narration;
-  withdrawalRequest.direction = 'rejected';
+  withdrawalRequest.status = 'rejected';
+  withdrawalRequest.direction = 'outflow';
   await withdrawalRequest.save();
 
   return withdrawalRequest;

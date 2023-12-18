@@ -10,10 +10,6 @@ const getTotalContributions = {
 };
 
 const getTotalContributionsByUserReps = {
-  query: Joi.object().keys({
-    startDate: Joi.number(),
-    endDateParam: Joi.number(),
-  }),
   params: Joi.object().keys({
     userReps: Joi.string().required().custom(objectId),
   }),

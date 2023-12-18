@@ -23,6 +23,10 @@ const accountTransactionSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    status: {
+      type: String,
+      required: false,
+    },
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Branch',
