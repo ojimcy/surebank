@@ -4,8 +4,10 @@ const { reportService } = require('../services');
 const pick = require('../utils/pick');
 
 const getTotalContributions = catchAsync(async (req, res) => {
-  const { startDate, endDateParam } = req.query;
-  const totalContributions = await reportService.getTotalContributionsByDay(startDate, endDateParam);
+  const { startDate, endDate, branchId, createdBy } = req.query;
+
+  const totalContributions = await reportService.getSumOfDailyContributionsByDate(startDate, endDate, branchId, createdBy);
+
   res.status(httpStatus.OK).json(totalContributions);
 });
 
@@ -27,19 +29,6 @@ const getPackageReport = catchAsync(async (req, res) => {
   });
 });
 
-const getTotalContributionsByUserReps = catchAsync(async (req, res) => {
-  const { createdBy } = req.params;
-  const totalContributions = await reportService.getTotalContributionsByUserReps(createdBy);
-  res.status(httpStatus.OK).json(totalContributions);
-});
-
-const getMyTotalContributions = catchAsync(async (req, res) => {
-  const createdBy = req.user._id;
-  const { startDate, endDateParam } = req.query;
-  const totalContributions = await reportService.getMyTotalContributions(createdBy, startDate, endDateParam);
-  res.status(httpStatus.OK).json(totalContributions);
-});
-
 const getMyDsWithdrawals = catchAsync(async (req, res) => {
   const userReps = req.user._id;
   const { startDate, endDateParam } = req.query;
@@ -55,13 +44,6 @@ const getPackageReportForUserRep = catchAsync(async (req, res) => {
     totalOpenPackages,
     totalClosedPackages,
   });
-});
-
-const getContributionsByDayForBranch = catchAsync(async (req, res) => {
-  const { branchId } = req.params;
-  const { startDate, endDateParam } = req.query;
-  const totalContributions = await reportService.getContributionsByDayForBranch(branchId, startDate, endDateParam);
-  res.status(httpStatus.OK).json(totalContributions);
 });
 
 const getChargedPackages = catchAsync(async (req, res) => {
@@ -113,11 +95,8 @@ module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
   getPackageReport,
-  getTotalContributionsByUserReps,
-  getMyTotalContributions,
   getMyDsWithdrawals,
   getPackageReportForUserRep,
-  getContributionsByDayForBranch,
   getChargedPackages,
   getChargedSbPackages,
   getCharges,
