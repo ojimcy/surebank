@@ -46,6 +46,8 @@ const userRepsPermissions = [
   'manageExpenditure',
   'getReports',
   'manageMerchantAdmin',
+  'packageReports',
+  'dashboardReports',
 ];
 
 const managerPermissions = [

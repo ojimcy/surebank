@@ -3,73 +3,6 @@ const { Contribution, AccountTransaction, Package, SbPackage, Charge } = require
 const ApiError = require('../utils/ApiError');
 
 /**
- * Retrieves the total contributions made each day within a given date range.
- *
- * @param {Date} startDate - The start date of the range.
- * @param {Date} endDate - The end date of the range.
- * @returns {Promise<Object>} An object containing the contributions per day and the sum total of all contributions.
- * @throws {ApiError} If there is an error retrieving the total contributions by day.
- */
-const getTotalContributionsByDay = async (startDate, endDateParam, limit = 10) => {
-  try {
-    const ContributionModel = await Contribution();
-    // Set the endDate to the current date if not provided
-    let endDate = endDateParam;
-    if (!endDate) {
-      endDate = new Date().getTime();
-    }
-    // Get the total contributions for each day using aggregation within the date range
-    const contributionsPerDay = await ContributionModel.aggregate([
-      {
-        $match: {
-          date: { $gte: startDate, $lte: endDate },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: { $toDate: '$date' } },
-            month: { $month: { $toDate: '$date' } },
-            day: { $dayOfMonth: { $toDate: '$date' } },
-          },
-          total: { $sum: '$amount' },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          date: {
-            $dateFromParts: {
-              year: '$_id.year',
-              month: '$_id.month',
-              day: '$_id.day',
-            },
-          },
-          total: 1,
-        },
-      },
-      { $sort: { date: -1 } },
-      { $limit: parseInt(limit, 10) },
-    ]);
-
-    // Calculate the sum total of all contributions
-    const allContributions = await ContributionModel.aggregate([
-      {
-        $group: {
-          _id: null,
-          total: { $sum: '$amount' },
-        },
-      },
-    ]);
-    const sumTotal = allContributions.length > 0 ? allContributions[0].total : 0;
-
-    return { contributionsPerDay, sumTotal };
-  } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total contributions by day: ${error.message}`);
-  }
-};
-
-/**
  * Retrieves the total daily savings withdrawals made each day.
  * @returns {Promise<number>} Array of objects representing the total daily savings withdrawals for each day.
  * Each object has the following fields:
@@ -203,85 +136,6 @@ const getTotalContributionsByUserReps = async (createdBy, startDate, endDatePara
 };
 
 /**
- * Retrieves my total contributions
- *
- * @param {string} createdBy - The ID of the user representative.
- * @param {Date} startDate - The start date of the range.
- * @param {Date} endDateParam - The end date of the range.
- * @returns {Promise<Object>} An object containing the contributions per day and the sum total of all contributions.
- * @throws {ApiError} If there is an error retrieving the total contributions by day.
- */
-const getMyTotalContributions = async (createdBy, startDate, endDateParam, limit = 10) => {
-  try {
-    const ContributionModel = await Contribution();
-    let dateFilter = {};
-
-    if (startDate && endDateParam) {
-      dateFilter = { date: { $gte: startDate, $lte: endDateParam } };
-    } else if (startDate) {
-      dateFilter = { date: { $gte: startDate } };
-    } else if (endDateParam) {
-      dateFilter = { date: { $lte: endDateParam } };
-    }
-
-    // Get the total contributions for each day by the specified user representative using aggregation within the date range
-    const contributionsPerDay = await ContributionModel.aggregate([
-      {
-        $match: {
-          createdBy,
-          ...dateFilter,
-        },
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: { $toDate: '$date' } },
-            month: { $month: { $toDate: '$date' } },
-            day: { $dayOfMonth: { $toDate: '$date' } },
-          },
-          total: { $sum: '$amount' },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          date: {
-            $dateFromParts: {
-              year: '$_id.year',
-              month: '$_id.month',
-              day: '$_id.day',
-            },
-          },
-          total: 1,
-        },
-      },
-      { $sort: { date: -1 } },
-      { $limit: parseInt(limit, 10) },
-    ]);
-    // Calculate the sum total of all contributions
-    const allContributions = await ContributionModel.aggregate([
-      {
-        $match: {
-          createdBy,
-          ...dateFilter,
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: '$amount' },
-        },
-      },
-    ]);
-    const sumTotal = allContributions.length > 0 ? allContributions[0].total : 0;
-
-    return { contributionsPerDay, sumTotal };
-  } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total contributions by user representative: ${error.message}`);
-  }
-};
-
-/**
  * Retrieves my total daily savings withdrawals
  *
  * @param {string} createdBy - The ID of the user representative.
@@ -348,81 +202,6 @@ const getMyDsWithdrawals = async (createdBy, startDate, endDateParam, limit = 10
     return totalWithdrawals;
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total daily withdrawals by day: ${error.message}`);
-  }
-};
-
-/**
- * Retrieves the total contributions made by a specific user representative (userReps)
- * each day within a given date range.
- *
- * @param {string} branchId - The ID of the branch.
- * @param {Date} startDate - The start date of the range.
- * @param {Date} endDateParam - The end date of the range.
- * @returns {Promise<Object>} An object containing the contributions per day and the sum total of all contributions.
- * @throws {ApiError} If there is an error retrieving the total contributions by day.
- */
-const getContributionsByDayForBranch = async (branchId, startDate, endDateParam, limit = 10) => {
-  try {
-    const ContributionModel = await Contribution();
-    // Set the endDate to the current date if not provided
-    let endDate = endDateParam;
-    if (!endDate) {
-      endDate = new Date().getTime();
-    }
-    // Get the total contributions for each day for branch using aggregation within the date range
-    const contributionsPerDay = await ContributionModel.aggregate([
-      {
-        $match: {
-          date: { $gte: startDate, $lte: endDate },
-          branchId,
-        },
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: { $toDate: '$date' } },
-            month: { $month: { $toDate: '$date' } },
-            day: { $dayOfMonth: { $toDate: '$date' } },
-          },
-          total: { $sum: '$amount' },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          date: {
-            $dateFromParts: {
-              year: '$_id.year',
-              month: '$_id.month',
-              day: '$_id.day',
-            },
-          },
-          total: 1,
-        },
-      },
-      { $sort: { date: -1 } },
-      { $limit: parseInt(limit, 10) },
-    ]);
-    // Calculate the sum total of all contributions
-    const allContributions = await ContributionModel.aggregate([
-      {
-        $match: {
-          date: { $gte: startDate, $lte: endDate },
-          branchId,
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: '$amount' },
-        },
-      },
-    ]);
-    const sumTotal = allContributions.length > 0 ? allContributions[0].total : 0;
-
-    return { contributionsPerDay, sumTotal };
-  } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total contributions by branch: ${error.message}`);
   }
 };
 
@@ -562,6 +341,7 @@ const getPackages = async (filter, options) => {
  * @returns {Promise<number>} Sum of daily contributions
  */
 const getSumOfDailyContributionsByDate = async (startDate, endDate, branchId, createdBy) => {
+  const ContributionModel = await Contribution();
   try {
     const query = {};
     if (startDate) query.date = { $gte: startDate };
@@ -569,21 +349,18 @@ const getSumOfDailyContributionsByDate = async (startDate, endDate, branchId, cr
     if (branchId) query.branchId = branchId;
     if (createdBy) query.createdBy = createdBy;
 
-    const contributions = await Contribution.find(query);
-    const sum = contributions.reduce((total, contribution) => total + contribution.amount, 0);
-    return sum;
+    const contributions = await ContributionModel.find(query);
+    const sumTotal = contributions.reduce((total, contribution) => total + contribution.amount, 0);
+    return sumTotal;
   } catch (error) {
     throw new ApiError('Failed to get the sum of daily contributions', error);
   }
 };
 
 module.exports = {
-  getTotalContributionsByDay,
   getTotalDailySavingsWithdrawal,
   getTotalContributionsByUserReps,
-  getMyTotalContributions,
   getMyDsWithdrawals,
-  getContributionsByDayForBranch,
   getChargedPackages,
   getChargedSbPackages,
   getCharges,

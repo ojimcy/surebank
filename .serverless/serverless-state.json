@@ -201,7 +201,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/aws-node-express-api/dev/1702941761405-2023-12-18T23:22:41.405Z/aws-node-express-api.zip"
+                "S3Key": "serverless/aws-node-express-api/dev/1702995401711-2023-12-19T14:16:41.711Z/aws-node-express-api.zip"
               },
               "Handler": "sls.handler",
               "Runtime": "nodejs18.x",
@@ -248,14 +248,14 @@
               "ApiLogGroup"
             ]
           },
-          "ApiLambdaVersionMBQh5vre6eiRTtpsE87h77YFwJS3c1ufFtK5pVJXBc": {
+          "ApiLambdaVersionDtd2MTIYE1EEb2BjLJzKqZiimoNrOOCZ1XV3rvQEg": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ApiLambdaFunction"
               },
-              "CodeSha256": "ffWFSpkX3v8ya8DqjXzpZvruicJBTf5P8r1iSNCprkY="
+              "CodeSha256": "EyA+GI9dFwAJ5vncEuhVfPOhe+xiYqtNlbtZ8lAfe1s="
             }
           },
           "HttpApi": {
@@ -363,7 +363,7 @@
           "ApiLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ApiLambdaVersionMBQh5vre6eiRTtpsE87h77YFwJS3c1ufFtK5pVJXBc"
+              "Ref": "ApiLambdaVersionDtd2MTIYE1EEb2BjLJzKqZiimoNrOOCZ1XV3rvQEg"
             },
             "Export": {
               "Name": "sls-aws-node-express-api-dev-ApiLambdaFunctionQualifiedArn"
@@ -508,7 +508,7 @@
         "timeout": 6,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "ApiLambdaVersionMBQh5vre6eiRTtpsE87h77YFwJS3c1ufFtK5pVJXBc"
+        "versionLogicalId": "ApiLambdaVersionDtd2MTIYE1EEb2BjLJzKqZiimoNrOOCZ1XV3rvQEg"
       }
     },
     "configValidationMode": "warn",
@@ -531,7 +531,7 @@
     "artifact": "/mnt/c/Users/Ojima/Desktop/Projects/surebank/.serverless/aws-node-express-api.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/aws-node-express-api/dev/1702941761405-2023-12-18T23:22:41.405Z",
+    "artifactDirectoryName": "serverless/aws-node-express-api/dev/1702995401711-2023-12-19T14:16:41.711Z",
     "artifact": "aws-node-express-api.zip"
   }
 }

@@ -4,8 +4,10 @@ const catchAsync = require('../utils/catchAsync');
 const { reportService } = require('../services');
 
 const getTotalContributions = catchAsync(async (req, res) => {
-  const { startDate, endDateParam } = req.query;
-  const totalContributions = await reportService.getTotalContributionsByDay(startDate, endDateParam);
+  const { startDate, endDate, branchId, createdBy } = req.query;
+
+  const totalContributions = await reportService.getSumOfDailyContributionsByDate(startDate, endDate, branchId, createdBy);
+
   res.status(httpStatus.OK).json(totalContributions);
 });
 
@@ -15,32 +17,11 @@ const getDailySavingsWithdrawals = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(totalWithdrawals);
 });
 
-const getTotalContributionsByUserReps = catchAsync(async (req, res) => {
-  const { createdBy } = req.params;
-  const { startDate, endDateParam } = req.query;
-  const totalContributions = await reportService.getTotalContributionsByUserReps(createdBy, startDate, endDateParam);
-  res.status(httpStatus.OK).json(totalContributions);
-});
-
-const getMyTotalContributions = catchAsync(async (req, res) => {
-  const createdBy = req.user._id;
-  const { startDate, endDateParam } = req.query;
-  const totalContributions = await reportService.getMyTotalContributions(createdBy, startDate, endDateParam);
-  res.status(httpStatus.OK).json(totalContributions);
-});
-
 const getMyDsWithdrawals = catchAsync(async (req, res) => {
   const createdBy = req.user._id;
   const { startDate, endDateParam } = req.query;
   const totalWithdrawals = await reportService.getMyDsWithdrawals(createdBy, startDate, endDateParam);
   res.status(httpStatus.OK).json(totalWithdrawals);
-});
-
-const getContributionsByDayForBranch = catchAsync(async (req, res) => {
-  const { branchId } = req.params;
-  const { startDate, endDateParam } = req.query;
-  const totalContributions = await reportService.getContributionsByDayForBranch(branchId, startDate, endDateParam);
-  res.status(httpStatus.OK).json(totalContributions);
 });
 
 const getChargedPackages = catchAsync(async (req, res) => {
@@ -99,10 +80,7 @@ const getSumOfDailyContributions = catchAsync(async (req, res) => {
 module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
-  getTotalContributionsByUserReps,
-  getMyTotalContributions,
   getMyDsWithdrawals,
-  getContributionsByDayForBranch,
   getChargedPackages,
   getChargedSbPackages,
   getCharges,

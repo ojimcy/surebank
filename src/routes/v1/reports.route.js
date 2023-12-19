@@ -7,17 +7,17 @@ const reportsController = require('../../controllers/reports.controller');
 const router = express.Router();
 router
   .route('/total-contributions')
-  .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getTotalContributions);
+  .get(auth('dashboardReports'), validate(reportsValidation.getTotalContributions), reportsController.getTotalContributions);
 
 router
   .route('/total-savings-withdrawal')
-  .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getDailySavingsWithdrawals);
+  .get(
+    auth('dashboardReports'),
+    validate(reportsValidation.getTotalContributions),
+    reportsController.getDailySavingsWithdrawals
+  );
 
 router.route('/packages').get(auth('reports'), validate(reportsValidation.getPackages), reportsController.getPackages);
-
-router
-  .route('/user-reps/total-contributions')
-  .get(auth('getReports'), validate(reportsValidation.getMyTotalContributions), reportsController.getMyTotalContributions);
 
 router
   .route('/user-reps/total-savings-withdrawal')
@@ -26,18 +26,6 @@ router
     validate(reportsValidation.getMyTotalContributions),
     reportsController.getMyDsWithdrawals
   );
-
-router
-  .route('/total-contributions/:userReps')
-  .get(
-    auth('reports'),
-    validate(reportsValidation.getTotalContributionsByUserReps),
-    reportsController.getTotalContributionsByUserReps
-  );
-
-router
-  .route('/:branchId/total-contributions')
-  .get(auth('reports'), validate(reportsValidation.getTotalContributions), reportsController.getContributionsByDayForBranch);
 
 router.route('/packages/charged').get(auth('reports'), reportsController.getChargedPackages);
 
