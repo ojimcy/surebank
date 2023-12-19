@@ -3,26 +3,19 @@ const { objectId } = require('./custom.validation');
 
 const getTotalContributions = {
   query: Joi.object().keys({
-    startDate: Joi.number(),
-    endDateParam: Joi.number(),
+    startDate: Joi.number().optional(),
+    endDate: Joi.number().optional(),
     branchId: Joi.string().optional().custom(objectId),
+    createdBy: Joi.string().optional().custom(objectId),
   }),
 };
 
-const getTotalContributionsByUserReps = {
+const getDailySavingsWithdrawals = {
   query: Joi.object().keys({
-    startDate: Joi.number(),
-    endDateParam: Joi.number(),
-  }),
-  params: Joi.object().keys({
-    createdBy: Joi.string().required().custom(objectId),
-  }),
-};
-
-const getMyTotalContributions = {
-  query: Joi.object().keys({
-    startDate: Joi.number(),
-    endDateParam: Joi.number(),
+    startDate: Joi.number().optional(),
+    endDateParam: Joi.number().optional(),
+    branchId: Joi.string().optional().custom(objectId),
+    userReps: Joi.string().optional().custom(objectId),
   }),
 };
 
@@ -50,8 +43,7 @@ const getPackages = {
 
 module.exports = {
   getTotalContributions,
-  getTotalContributionsByUserReps,
-  getMyTotalContributions,
+  getDailySavingsWithdrawals,
   getCharges,
   getPackages,
 };

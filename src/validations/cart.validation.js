@@ -10,7 +10,7 @@ const addToCart = {
 
 const getCartItems = {
   body: Joi.object().keys({
-    userId: Joi.optional().custom(objectId),
+    userId: Joi.custom(objectId).optional(),
   }),
 };
 
@@ -22,7 +22,7 @@ const removeCartItem = {
 
 const clearCart = {
   body: Joi.object().keys({
-    userId: Joi.optional().custom(objectId),
+    userId: Joi.custom(objectId).optional(),
   }),
 };
 

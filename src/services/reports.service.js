@@ -553,6 +553,30 @@ const getPackages = async (filter, options) => {
   return packages;
 };
 
+/**
+ * Get the sum of daily contributions across all packages within a date range
+ * @param {number} startDate - Timestamp representing the start date
+ * @param {number} endDate - Timestamp representing the end date
+ * @param {string} branchId - Branch ID (optional)
+ * @param {string} createdBy - User ID (optional)
+ * @returns {Promise<number>} Sum of daily contributions
+ */
+const getSumOfDailyContributionsByDate = async (startDate, endDate, branchId, createdBy) => {
+  try {
+    const query = {};
+    if (startDate) query.date = { $gte: startDate };
+    if (endDate) query.date = { ...query.date, $lte: endDate };
+    if (branchId) query.branchId = branchId;
+    if (createdBy) query.createdBy = createdBy;
+
+    const contributions = await Contribution.find(query);
+    const sum = contributions.reduce((total, contribution) => total + contribution.amount, 0);
+    return sum;
+  } catch (error) {
+    throw new ApiError('Failed to get the sum of daily contributions', error);
+  }
+};
+
 module.exports = {
   getTotalContributionsByDay,
   getTotalDailySavingsWithdrawal,
@@ -565,4 +589,5 @@ module.exports = {
   getCharges,
   getSumOfFirstContributions,
   getPackages,
+  getSumOfDailyContributionsByDate,
 };

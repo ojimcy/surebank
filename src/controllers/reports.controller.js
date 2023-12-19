@@ -88,6 +88,14 @@ const getPackages = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+const getSumOfDailyContributions = catchAsync(async (req, res) => {
+  const { startDate, endDate, branchId, createdBy } = req.query;
+
+  const dailyContributions = await reportService.getSumOfDailyContributionsByDate(startDate, endDate, branchId, createdBy);
+
+  res.status(httpStatus.OK).sebd(dailyContributions);
+});
+
 module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
@@ -100,4 +108,5 @@ module.exports = {
   getCharges,
   getSumOfFirstContributions,
   getPackages,
+  getSumOfDailyContributions,
 };
