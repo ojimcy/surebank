@@ -68,7 +68,7 @@ const updateStaffRole = catchAsync(async (req, res) => {
 });
 
 const getBranchStaffByUserId = catchAsync(async (req, res) => {
-  const { userId } = req.query;
+  const { userId } = req.params;
   const branchStaff = await staffService.getBranchStaffByUserId(userId);
   res.send(branchStaff);
 });

@@ -55,8 +55,9 @@ const updateStaffRole = {
     role: Joi.string().required(),
   }),
 };
+
 const getBranchStaffByUserId = {
-  query: Joi.object().keys({
+  params: Joi.object().keys({
     userId: Joi.string().required().custom(objectId),
   }),
 };

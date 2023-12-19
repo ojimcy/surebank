@@ -81,6 +81,7 @@ const getUserAccount = {
 
 const getAllAccounts = {
   query: Joi.object().keys({
+    branchId: Joi.string().custom(objectId),
     accountManagerId: Joi.string().custom(objectId),
     accountNumber: Joi.number(),
     name: Joi.string(),

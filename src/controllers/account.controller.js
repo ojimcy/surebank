@@ -32,11 +32,12 @@ const getUserAccount = catchAsync(async (req, res) => {
 });
 
 const getAllAccounts = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['accountManagerId', 'accountNumber']);
+  const filter = pick(req.query, ['branchId', 'accountManagerId']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await accountService.getAllAccounts(filter, options);
   res.send(result);
 });
+
 const getAccountInBranch = catchAsync(async (req, res) => {
   const { branchId } = req.params;
 
