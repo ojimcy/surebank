@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Contribution, AccountTransaction, Package, SbPackage, Charge } = require('../models');
+const { Contribution, AccountTransaction, Package, Charge } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -23,7 +23,7 @@ const getTotalDailySavingsWithdrawal = async (startDate, endDateParam, limit = 1
         $match: {
           date: { $gte: startDate, $lte: endDate },
           direction: 'inflow',
-          narration: 'Request Cash',
+          narration: 'Daily contribution withdrawal',
         },
       },
       {
@@ -60,36 +60,83 @@ const getTotalDailySavingsWithdrawal = async (startDate, endDateParam, limit = 1
 };
 
 /**
- * Get total number of packages
- * @returns {Promise<number>} Total number of packages
+ * Retrieves the total contributions made by a specific user representative (userReps)
+ * each day within a given date range.
+ *
+ * @param {string} createdBy - The ID of the user representative.
+ * @param {Date} startDate - The start date of the range.
+ * @param {Date} endDateParam - The end date of the range.
+ * @returns {Promise<Object>} An object containing the contributions per day and the sum total of all contributions.
+ * @throws {ApiError} If there is an error retrieving the total contributions by day.
  */
-const getTotalPackages = async () => {
-  const totalPackages = await Package.countDocuments();
-  return totalPackages;
-};
+const getTotalContributionsByUserReps = async (createdBy, startDate, endDateParam, limit = 10) => {
+  try {
+    // Set the endDate to the current date if not provided
+    let endDate = endDateParam;
+    if (!endDate) {
+      endDate = new Date().getTime();
+    }
+    // Get the total contributions for each day by the specified user representative using aggregation within the date range
+    const contributionsPerDay = await Contribution.aggregate([
+      {
+        $match: {
+          date: { $gte: startDate, $lte: endDate },
+          createdBy,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: { $toDate: '$date' } },
+            month: { $month: { $toDate: '$date' } },
+            day: { $dayOfMonth: { $toDate: '$date' } },
+          },
+          total: { $sum: '$amount' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: {
+            $dateFromParts: {
+              year: '$_id.year',
+              month: '$_id.month',
+              day: '$_id.day',
+            },
+          },
+          total: 1,
+        },
+      },
+      { $sort: { date: -1 } },
+      { $limit: parseInt(limit, 10) },
+    ]);
+    // Calculate the sum total of all contributions
+    const allContributions = await Contribution.aggregate([
+      {
+        $match: {
+          date: { $gte: startDate, $lte: endDate },
+          createdBy,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' },
+        },
+      },
+    ]);
+    const sumTotal = allContributions.length > 0 ? allContributions[0].total : 0;
 
-/**
- * Get total number of open packages
- * @returns {Promise<number>} Total number of open packages
- */
-const getTotalOpenPackages = async () => {
-  const totalOpenPackages = await Package.countDocuments({ status: 'open' });
-  return totalOpenPackages;
-};
-
-/**
- * Get total number of closed packages
- * @returns {Promise<number>} Total number of closed packages
- */
-const getTotalClosedPackages = async () => {
-  const totalClosedPackages = await Package.countDocuments({ status: 'closed' });
-  return totalClosedPackages;
+    return { contributionsPerDay, sumTotal };
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Failed to get total contributions by user representative: ${error.message}`);
+  }
 };
 
 /**
  * Retrieves my total daily savings withdrawals
  *
- * @param {string} userReps - The ID of the user representative.
+ * @param {string} createdBy - The ID of the user representative.
  * @param {Date} startDate - The start date of the range.
  * @param {Date} endDateParam - The end date of the range.
  * @param {number} limit - The maximum number of records to return.
@@ -99,7 +146,7 @@ const getTotalClosedPackages = async () => {
  * - total: The total amount of savings withdrawals made on that day.
  * @throws {ApiError} If there is an error retrieving the total daily withdrawals.
  */
-const getMyDsWithdrawals = async (userReps, startDate, endDateParam, limit = 10) => {
+const getMyDsWithdrawals = async (createdBy, startDate, endDateParam, limit = 10) => {
   try {
     // Set the endDate to the current date if not provided
     let endDate = endDateParam;
@@ -109,7 +156,7 @@ const getMyDsWithdrawals = async (userReps, startDate, endDateParam, limit = 10)
 
     // Create a match object to filter based on userReps and date range
     const match = {
-      userReps,
+      createdBy,
       direction: 'inflow',
       narration: 'Daily contribution withdrawal',
     };
@@ -156,26 +203,6 @@ const getMyDsWithdrawals = async (userReps, startDate, endDateParam, limit = 10)
 };
 
 /**
- * Get total number of open packages for a specific user representative
- * @param {string} userReps - The ID of the user representative.
- * @returns {Promise<number>} Total number of open packages for the user representative.
- */
-const getTotalOpenPackagesForUserReps = async (userReps) => {
-  const totalOpenPackages = await Package.countDocuments({ userReps, status: 'open' });
-  return totalOpenPackages;
-};
-
-/**
- * Get total number of closed packages for a specific user representative
- * @param {string} userReps - The ID of the user representative.
- * @returns {Promise<number>} Total number of closed packages for the user representative.
- */
-const getTotalClosedPackagesForUserReps = async (userReps) => {
-  const totalClosedPackages = await Package.countDocuments({ userReps, status: 'closed' });
-  return totalClosedPackages;
-};
-
-/**
  * Get packages that have been charged (hasBeenCharged is true).
  * @returns {Promise<Array>} Array of packages that have been charged.
  * Each object represents a charged package with its details.
@@ -203,7 +230,7 @@ const getChargedPackages = async () => {
  */
 const getChargedSbPackages = async () => {
   try {
-    const chargedPackages = await SbPackage.find({ hasBeenCharged: true }).populate([
+    const chargedPackages = await Package.find({ hasBeenCharged: true }).populate([
       {
         path: 'userId',
         select: 'firstName lastName role',
@@ -219,9 +246,8 @@ const getChargedSbPackages = async () => {
 
 /**
  * Get charges with optional filtering by date and branch
- * @param {Object} filterOpts - Filtering options (startDate, endDate, branchId)
- * @param {Object} paginationOpts - Pagination options (limit, page, sortBy)
- * @returns {Promise<{ charges: Array, totalAmount: Number }>} Array of charges and total amount
+ * @param {Object} filterOptions - Filtering options (startDate, endDate, branchId)
+ * @returns {Promise<Array>} Array of charges
  */
 const getCharges = async (filterOpts, paginationOpts) => {
   const { startDate, endDate, branchId } = filterOpts;
@@ -263,7 +289,7 @@ const getCharges = async (filterOpts, paginationOpts) => {
 
 /**
  * Get total amount with optional filtering by branch
- * @param {Object} filterOpts - Filtering options (branchId)
+ * @param {Object} branchId - Filtering options (branchId)
  * @returns {Promise<Number>} Total amount
  */
 const getSumOfFirstContributions = async (branchId) => {
@@ -323,12 +349,8 @@ const getSumOfDailyContributionsByDate = async (startDate, endDate, branchId, cr
 
 module.exports = {
   getTotalDailySavingsWithdrawal,
-  getTotalPackages,
-  getTotalOpenPackages,
-  getTotalClosedPackages,
+  getTotalContributionsByUserReps,
   getMyDsWithdrawals,
-  getTotalOpenPackagesForUserReps,
-  getTotalClosedPackagesForUserReps,
   getChargedPackages,
   getChargedSbPackages,
   getCharges,

@@ -1,7 +1,7 @@
 const httpStatus = require('http-status');
+const pick = require('../utils/pick');
 const catchAsync = require('../utils/catchAsync');
 const { reportService } = require('../services');
-const pick = require('../utils/pick');
 
 const getTotalContributions = catchAsync(async (req, res) => {
   const { startDate, endDate, branchId, createdBy } = req.query;
@@ -17,33 +17,11 @@ const getDailySavingsWithdrawals = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(totalWithdrawals);
 });
 
-const getPackageReport = catchAsync(async (req, res) => {
-  const totalPackages = await reportService.getTotalPackages();
-  const totalOpenPackages = await reportService.getTotalOpenPackages();
-  const totalClosedPackages = await reportService.getTotalClosedPackages();
-
-  res.status(httpStatus.OK).json({
-    totalPackages,
-    totalOpenPackages,
-    totalClosedPackages,
-  });
-});
-
 const getMyDsWithdrawals = catchAsync(async (req, res) => {
-  const userReps = req.user._id;
+  const createdBy = req.user._id;
   const { startDate, endDateParam } = req.query;
-  const totalWithdrawals = await reportService.getMyDsWithdrawals(userReps, startDate, endDateParam);
+  const totalWithdrawals = await reportService.getMyDsWithdrawals(createdBy, startDate, endDateParam);
   res.status(httpStatus.OK).json(totalWithdrawals);
-});
-
-const getPackageReportForUserRep = catchAsync(async (req, res) => {
-  const totalOpenPackages = await reportService.getTotalOpenPackagesForUserReps();
-  const totalClosedPackages = await reportService.getTotalClosedPackagesForUserReps();
-
-  res.status(httpStatus.OK).json({
-    totalOpenPackages,
-    totalClosedPackages,
-  });
 });
 
 const getChargedPackages = catchAsync(async (req, res) => {
@@ -85,21 +63,28 @@ const getSumOfFirstContributions = catchAsync(async (req, res) => {
 });
 
 const getPackages = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['status', 'createdBy', 'branchId']);
+  const filter = pick(req.query, ['status', 'userReps', 'branchId']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await reportService.getPackages(filter, options);
   res.send(result);
 });
 
+const getSumOfDailyContributions = catchAsync(async (req, res) => {
+  const { startDate, endDate, branchId, createdBy } = req.query;
+
+  const dailyContributions = await reportService.getSumOfDailyContributionsByDate(startDate, endDate, branchId, createdBy);
+
+  res.status(httpStatus.OK).sebd(dailyContributions);
+});
+
 module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
-  getPackageReport,
   getMyDsWithdrawals,
-  getPackageReportForUserRep,
   getChargedPackages,
   getChargedSbPackages,
   getCharges,
   getSumOfFirstContributions,
   getPackages,
+  getSumOfDailyContributions,
 };

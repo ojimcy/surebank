@@ -13,22 +13,25 @@ router
   .route('/total-savings-withdrawal')
   .get(
     auth('dashboardReports'),
-    validate(reportsValidation.getDailySavingsWithdrawals),
+    validate(reportsValidation.getTotalContributions),
     reportsController.getDailySavingsWithdrawals
   );
 
-router
-  .route('/packages')
-  .get(auth('packageReports'), validate(reportsValidation.getPackages), reportsController.getPackages);
+router.route('/packages').get(auth('reports'), validate(reportsValidation.getPackages), reportsController.getPackages);
 
 router
-  .route('/user-reps/packages')
-  .get(auth('getReports'), validate(reportsValidation.getTotalContributions), reportsController.getPackageReportForUserRep);
+  .route('/user-reps/total-savings-withdrawal')
+  .get(
+    auth('getTotalWithdrawals'),
+    validate(reportsValidation.getMyTotalContributions),
+    reportsController.getMyDsWithdrawals
+  );
 
 router.route('/packages/charged').get(auth('reports'), reportsController.getChargedPackages);
-router.route('/packages/sb/charged').get(auth('reports'), reportsController.getChargedSbPackages);
-router.route('/charges').get(auth('reports'), validate(reportsValidation.getCharges), reportsController.getCharges);
 
-router.route('/contribution-incomes/supperadmin').get(auth('accounting'), reportsController.getSumOfFirstContributions);
+router.route('/packages/sb/charged').get(auth('reports'), reportsController.getChargedSbPackages);
+
+router.route('/charges').get(auth('reports'), validate(reportsValidation.getCharges), reportsController.getCharges);
+router.route('/contribution-incomes/supperadmin').get(auth('reports'), reportsController.getSumOfFirstContributions);
 
 module.exports = router;
