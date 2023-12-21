@@ -36,7 +36,7 @@ const getExpendituresByDateRange = async (startDate, endDate, page, limit, branc
   const options = {
     page,
     limit,
-    sort: { date: 'desc' }, // Sort by date in descending order
+    sort: { date: 'desc' },
   };
 
   const query = {};
