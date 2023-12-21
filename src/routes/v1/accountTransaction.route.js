@@ -80,4 +80,6 @@ router
     accountTransactionController.rejectWithdrawalRequest
   );
 
+router.route('/held-amount').get(auth('rejectWithdrawalRequests'), accountTransactionController.getHeldAmount);
+
 module.exports = router;

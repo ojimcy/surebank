@@ -226,7 +226,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
     const withdrawalDetails = {
       accountNumber: withdrawal.accountNumber,
       amount: withdrawal.amount,
-      userReps: withdrawal.userReps,
+      createdBy: withdrawal.createdBy,
       narration: `Daily contribution withdrawal`,
     };
 

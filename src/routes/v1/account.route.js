@@ -36,7 +36,7 @@ router
 
 router
   .route('/:accountId/assign-manager')
-  .post(auth('assignManager'), validate(accountValidation.assignManager), accountController.assignManager);
+  .post(auth('assignAccountManager'), validate(accountValidation.assignManager), accountController.assignManager);
 
 router
   .route('/entry')

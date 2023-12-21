@@ -28,9 +28,11 @@ const createExpenditure = async (expenditureInput) => {
  * @param {Date} endDate - End date for the range (optional)
  * @param {number} page - Page number for pagination
  * @param {number} limit - Number of items per page
+ * @param {string} [branchId] - Optional branch ID to filter by
+ * @param {string} [createdBy] - Optional createdBy to filter by
  * @returns {Promise<Object>} Paginated expenditures within the date range
  */
-const getExpendituresByDateRange = async (startDate, endDate, page, limit) => {
+const getExpendituresByDateRange = async (startDate, endDate, page, limit, branchId, createdBy) => {
   const options = {
     page,
     limit,
@@ -48,6 +50,16 @@ const getExpendituresByDateRange = async (startDate, endDate, page, limit) => {
   } else if (endDate) {
     // If only endDate is provided, get expenditures up to the endDate
     query.date = { $lte: endDate };
+  }
+
+  // Optional branch filtering
+  if (branchId) {
+    query.branchId = branchId;
+  }
+
+  // Optional createdBy filtering
+  if (createdBy) {
+    query.createdBy = createdBy;
   }
 
   const paginatedExpenditures = await Expenditure.paginate(query, options);

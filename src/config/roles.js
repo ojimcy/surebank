@@ -72,6 +72,7 @@ const managerPermissions = [
   'manageStaff',
   'sbWithdrawal',
   'getBranchStaff',
+  'assignAccountManager',
   'branchReports',
 ];
 
@@ -88,14 +89,7 @@ const adminPermissions = [
   'manageBrand',
 ];
 
-const superAdminPermissions = [
-  ...adminPermissions,
-  'createAdmin',
-  'updateBranchManager',
-  'assignManager',
-  'reports',
-  'accounting',
-];
+const superAdminPermissions = [...adminPermissions, 'createAdmin', 'updateBranchManager', 'reports', 'accounting'];
 
 const allRoles = {
   user: userPermissions,
