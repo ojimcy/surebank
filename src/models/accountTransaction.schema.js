@@ -42,6 +42,11 @@ const accountTransactionSchema = mongoose.Schema(
       ref: 'User',
       required: false,
     },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: false,
+    },
     reasons: {
       type: String,
       required: false,

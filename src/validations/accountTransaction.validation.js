@@ -45,11 +45,15 @@ const getUserByAccountNumber = {
 
 const getCustomerwithdrawals = {
   query: Joi.object().keys({
-    userReps: Joi.string().optional().custom(objectId),
+    createdBy: Joi.string().optional().custom(objectId),
+    approvedBy: Joi.string().optional().custom(objectId),
     branchId: Joi.string().optional().custom(objectId),
     startDate: Joi.number().optional(),
     endDate: Joi.number().optional(),
     accountNumber: Joi.number().optional(),
+    narration: Joi.string().optional(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
   }),
 };
 
@@ -75,6 +79,8 @@ const getAllWithdrawalRequests = {
     branchId: Joi.string().optional().custom(objectId),
     startDate: Joi.number().optional(),
     endDate: Joi.number().optional(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
   }),
 };
 

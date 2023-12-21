@@ -64,8 +64,8 @@ const getAccountBalance = catchAsync(async (req, res) => {
 
 const makeCustomerWithdrawal = catchAsync(async (req, res) => {
   const { requestId } = req.query;
-  const createdBy = req.user._id;
-  const result = await accountTransactionService.makeCustomerWithdrawal(requestId, createdBy);
+  const approvedBy = req.user._id;
+  const result = await accountTransactionService.makeCustomerWithdrawal(requestId, approvedBy);
   res.status(httpStatus.OK).json(result);
 });
 
@@ -86,8 +86,15 @@ const getAccountTransactions = catchAsync(async (req, res) => {
 });
 
 const getCustomerwithdrawals = catchAsync(async (req, res) => {
-  const { startDate, endDate, branchId, userReps } = req.query;
-  const result = await accountTransactionService.getCustomerwithdrawals(startDate, endDate, branchId, userReps);
+  const { startDate, endDate, branchId, createdBy, approvedBy, narration } = req.query;
+  const result = await accountTransactionService.getCustomerwithdrawals(
+    startDate,
+    endDate,
+    branchId,
+    createdBy,
+    approvedBy,
+    narration
+  );
   res.status(httpStatus.OK).json(result);
 });
 
@@ -106,8 +113,19 @@ const rejectWithdrawalRequest = catchAsync(async (req, res) => {
 });
 
 const getAllWithdrawalRequests = catchAsync(async (req, res) => {
-  const { startDate, endDate, branchId, createdBy } = req.query;
-  const result = await accountTransactionService.getAllWithdrawalRequests(startDate, endDate, branchId, createdBy);
+  const { startDate, endDate, branchId, createdBy, page = 1, limit = 20 } = req.query;
+
+  const parsedPage = parseInt(page, 10);
+  const parsedLimit = parseInt(limit, 10);
+
+  const result = await accountTransactionService.getAllWithdrawalRequests(
+    startDate,
+    endDate,
+    branchId,
+    createdBy,
+    parsedPage,
+    parsedLimit
+  );
   res.status(httpStatus.OK).json(result);
 });
 
@@ -118,6 +136,18 @@ const getWithdrawalRequestById = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Cash request not found');
   }
   res.status(httpStatus.OK).json(cashRequest);
+});
+
+const getHeldAmount = catchAsync(async (req, res) => {
+  const { accountNumber } = req.query;
+
+  if (!accountNumber) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Account number is required');
+  }
+
+  const heldAmount = await accountTransactionService.getHeldAmount(accountNumber);
+
+  res.status(httpStatus.OK).json(heldAmount);
 });
 
 module.exports = {
@@ -136,4 +166,5 @@ module.exports = {
   rejectWithdrawalRequest,
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
+  getHeldAmount,
 };

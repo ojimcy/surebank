@@ -181,10 +181,27 @@ const getAccountBalance = async (accountNumber) => {
 };
 
 /**
+ * Get held amount for a specific account
+ * @param {string} accountNumber - Account number
+ * @returns {Promise<number>} Held amount
+ */
+const getHeldAmount = async (accountNumber) => {
+  const AccountModel = await Account();
+  const accountBalance = await AccountModel.findOne({ accountNumber });
+
+  if (!accountBalance) {
+    throw new ApiError(404, 'Account not found');
+  }
+
+  const heldAmount = accountBalance.ledgerBalance - accountBalance.availableBalance;
+  return heldAmount;
+};
+
+/**
  * Make withdrawal Request
  * @param {string} accountNumber - Account number
  * @param {number} amount - Amount to request
- * @param {string} userReps - User making the request
+ * @param {string} createdBy - User making the request
  * @param {Object} session - Mongoose session
  * @returns {Promise<Object>} Result of the operation
  */
@@ -195,17 +212,19 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
   session.startTransaction();
 
   try {
+    // Ensure account exists
     const account = await AccountModel.findOne({ accountNumber }).session(session);
     if (!account) {
       throw new ApiError(404, 'Account number does not exist.');
     }
 
+    // Check if there is sufficient balance
     if (account.availableBalance < amount) {
       throw new ApiError(400, 'Insufficient balance to request cash.');
     }
 
-    const transactionDate = new Date().getTime();
     const branch = await AccountModel.findOne({ accountNumber }).session(session);
+    const transactionDate = new Date().getTime();
 
     // Create withdrawal request transaction
     const withdrawalRequest = await AccountTransactionModel.create(
@@ -217,22 +236,25 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
           userReps: account.accountManagerId,
           branchId: branch.branchId,
           date: transactionDate,
-          direction: 'outflow',
           status: 'pending',
+          direction: 'outflow',
           narration: 'Request Cash',
         },
       ],
       { session }
     );
 
+    // Deduct the requested amount from the available balance
+    const updatedBalance = await putAmountOnHold(accountNumber, amount);
+
     await session.commitTransaction();
 
     return {
       withdrawalRequest,
+      availableBalance: updatedBalance.availableBalance,
     };
   } catch (error) {
     await session.abortTransaction();
-    session.endSession();
     throw error;
   } finally {
     session.endSession();
@@ -328,27 +350,26 @@ const getWithdrawalRequestById = async (requestId) => {
 /**
  * Make withdrawal for a customer
  * @param {string} requestId - Withdrawal request ID
- * @param {string} createdBy - User fulfilling the request
- * @param {Object} session - Mongoose session
  * @returns {Promise<Object>} Result of the operation
  */
-const makeCustomerWithdrawal = async (requestId) => {
-  const AccountTransactionModel = await AccountTransaction();
+const makeCustomerWithdrawal = async (requestId, approvedBy) => {
   const AccountModel = await Account();
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     const withdrawalRequest = await getWithdrawalRequestById(requestId);
+
     if (!withdrawalRequest) {
       throw new ApiError(404, 'Withdrawal request does not exist.');
     }
-    if (withdrawalRequest.status !== 'pending' || withdrawalRequest.narration !== 'Request Cash') {
+
+    if (withdrawalRequest.status !== 'pending') {
+      throw new ApiError(400, 'Withdrawal request has been processed!!!.');
+    }
+
+    if (withdrawalRequest.narration !== 'Request Cash') {
       throw new ApiError(400, 'Invalid withdrawal request.');
     }
-    const { accountNumber } = withdrawalRequest;
-    const { amount } = withdrawalRequest;
-    const { createdBy } = withdrawalRequest;
+
+    const { accountNumber, amount } = withdrawalRequest;
     const accountBalance = await getAccountBalance(accountNumber);
 
     if (accountBalance < amount) {
@@ -356,25 +377,14 @@ const makeCustomerWithdrawal = async (requestId) => {
     }
 
     const transactionDate = new Date().getTime();
-    // Create a new transaction to represent the fulfilled withdrawal
-    const fulfilledWithdrawal = await AccountTransactionModel.create(
-      [
-        {
-          createdBy: withdrawalRequest.createdBy,
-          branchId: withdrawalRequest.branchId,
-          narration: withdrawalRequest.narration,
-          direction: 'outflow',
-          status: 'approved',
-          date: transactionDate,
-          amount: withdrawalRequest.amount,
-          accountNumber: withdrawalRequest.accountNumber,
-        },
-      ],
-      { session }
-    );
-    // Update the withdrawal request
+
+    // Update the withdrawal request transaction to represent the fulfilled withdrawal
+    withdrawalRequest.direction = 'outflow';
     withdrawalRequest.narration = 'Request Cash';
-    withdrawalRequest.createdBy = createdBy;
+    withdrawalRequest.status = 'approved';
+    withdrawalRequest.date = transactionDate;
+    withdrawalRequest.approvedBy = approvedBy;
+
     await withdrawalRequest.save();
 
     // Deduct the withdrawn amount from the account
@@ -389,39 +399,47 @@ const makeCustomerWithdrawal = async (requestId) => {
       {
         new: true,
         runValidators: true,
-        session,
       }
     );
 
-    await session.commitTransaction();
-    session.endSession();
-
     return {
       accountBalance: updatedBalance.availableBalance,
-      fulfilledWithdrawal,
+      fulfilledWithdrawal: withdrawalRequest,
     };
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
+    throw new ApiError('Failed to make customer withdrawal', error);
   }
 };
 
 /**
  * Reject a withdrawal request
  * @param {string} requestId - Withdrawal request ID
+ * @param {string} narration - Rejection narration
  * @returns {Promise<Object>} Result of the operation
  */
 const rejectWithdrawalRequest = async (requestId, narration) => {
   const withdrawalRequest = await getWithdrawalRequestById(requestId);
+
   if (!withdrawalRequest) {
     throw new ApiError(404, 'Withdrawal request does not exist.');
   }
+
+  // Move held amount to available balance
+  const movedAmount = withdrawalRequest.amount;
+  const { accountNumber } = withdrawalRequest;
+
+  const updatedBalance = await moveHeldAmountToAvailable(accountNumber, movedAmount);
+
+  // Update withdrawal request details
   withdrawalRequest.narration = narration;
-  withdrawalRequest.direction = 'rejected';
+  withdrawalRequest.status = 'rejected';
+  withdrawalRequest.direction = 'outflow';
   await withdrawalRequest.save();
 
-  return withdrawalRequest;
+  return {
+    accountBalance: updatedBalance.availableBalance,
+    rejectedWithdrawal: withdrawalRequest,
+  };
 };
 
 /**
@@ -480,8 +498,18 @@ const getAccountTransactions = async (options = {}) => {
  * @param {string} [createdBy] - Optional createdBy to filter by
  * @returns {Promise<Array>} Array of ds withdrawals
  */
-const getCustomerwithdrawals = async (startDate, endDate, branchId, createdBy, accountNumber) => {
-  const AccountTransactionModel = await AccountTransaction();
+const getCustomerwithdrawals = async (
+  startDate,
+  endDate,
+  branchId,
+  createdBy,
+  approvedBy,
+  accountNumber,
+  page,
+  limit,
+  narration
+) => {
+  const skip = (page - 1) * limit;
   try {
     const query = {};
 
@@ -504,12 +532,16 @@ const getCustomerwithdrawals = async (startDate, endDate, branchId, createdBy, a
       query.createdBy = createdBy;
     }
 
+    if (approvedBy) {
+      query.approvedBy = approvedBy;
+    }
+
     if (accountNumber) {
       query.accountNumber = accountNumber;
     }
 
-    query.direction = 'outflow';
-    const withdrawals = await AccountTransactionModel.find(query)
+    query.narration = 'Request Cash' || narration;
+    const withdrawals = await AccountTransaction.find(query)
       .populate([
         {
           path: 'createdBy',
@@ -519,8 +551,14 @@ const getCustomerwithdrawals = async (startDate, endDate, branchId, createdBy, a
           path: 'branchId',
           select: 'name',
         },
+        {
+          path: 'approvedBy',
+          select: 'firstName lastName',
+        },
       ])
-      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit)
+      .sort({ date: 'desc' })
       .lean();
 
     return withdrawals;
@@ -545,4 +583,5 @@ module.exports = {
   rejectWithdrawalRequest,
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
+  getHeldAmount,
 };
