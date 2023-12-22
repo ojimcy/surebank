@@ -21,14 +21,21 @@ const createExpenditure = catchAsync(async (req, res) => {
 
 const getExpendituresByDateRange = catchAsync(async (req, res) => {
   // Extract start and end date from the request query
-  const { startDate, endDate } = req.query;
+  const { startDate, endDate, branchId, createdBy } = req.query;
 
   // Extract page and limit for pagination from the request query
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
 
   // Call the service function to get paginated expenditures within the date range
-  const paginatedExpenditures = await expenditureService.getExpendituresByDateRange(startDate, endDate, page, limit);
+  const paginatedExpenditures = await expenditureService.getExpendituresByDateRange(
+    startDate,
+    endDate,
+    page,
+    limit,
+    branchId,
+    createdBy
+  );
 
   res.status(httpStatus.OK).send(paginatedExpenditures);
 });
