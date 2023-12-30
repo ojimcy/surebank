@@ -14,6 +14,8 @@ const getExpendituresByDateRange = {
     endDate: Joi.number(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
+    createdBy: Joi.string().custom(objectId),
+    branchId: Joi.string().custom(objectId),
   }),
 };
 
@@ -28,8 +30,8 @@ const updateExpenditure = {
     expenditureId: Joi.required().custom(objectId),
   }),
   body: Joi.object().keys({
-    amount: Joi.number().required(),
-    reason: Joi.string().required(),
+    amount: Joi.number().optional(),
+    reason: Joi.string().optional(),
   }),
 };
 

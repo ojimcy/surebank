@@ -37,16 +37,16 @@ app.use(mongoSanitize());
 // gzip compression
 app.use(compression());
 
-// // enable cors
-// app.use(cors({ credentials: true }));
-// app.options('*', cors({ credentials: true }));
+// enable cors
+app.use(cors({ credentials: true }));
+app.options('*', cors({ credentials: true }));
 
 // enable cors with credentials for the specific frontend domain
-const corsOptions = {
-  origin: '*',
-  credentials: true,
-};
-app.use(cors(corsOptions));
+// const corsOptions = {
+//   origin: '*',
+//   credentials: true,
+// };
+// app.use(cors(corsOptions));
 
 // jwt authentication
 app.use(passport.initialize());
