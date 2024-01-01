@@ -9,7 +9,11 @@ const categorySchema = mongoose.Schema(
     },
     image: {
       type: String,
-      required: true,
+      required: false,
+    },
+    icon: {
+      type: String,
+      required: false,
     },
     slug: {
       type: String,
@@ -18,6 +22,28 @@ const categorySchema = mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    subCategories: [
+      {
+        heading: {
+          type: String,
+        },
+        items: [
+          {
+            name: {
+              type: String,
+            },
+            slug: {
+              type: String,
+              required: true,
+              unique: true,
+              trim: true,
+              sparse: true,
+              lowercase: true,
+            },
+          },
+        ],
+      },
+    ],
   },
   {
     timestamps: true,

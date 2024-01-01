@@ -61,16 +61,12 @@ const addToCart = async (userId, productCatalogueId, unitPrice, quantity) => {
  * @returns {Promise<Object>} The cart and its items
  */
 const getCartItems = async (userId) => {
-  try {
-    const cart = await Cart.findOne({ userId });
-    if (!cart) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Cart item not found');
-    }
-    const cartItems = await CartItem.find({ cartId: cart._id });
-    return { cart, cartItems };
-  } catch (error) {
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error retrieving cart items');
+  const cart = await Cart.findOne({ userId });
+  if (!cart) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Cart item not found');
   }
+  const cartItems = await CartItem.find({ cartId: cart._id });
+  return { cart, cartItems };
 };
 
 /**

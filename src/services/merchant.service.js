@@ -8,11 +8,6 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<Object>} Result of the operation
  */
 const createMerchantRequest = async (requestData) => {
-  // Ensure that all required fields are present
-  if (!requestData.storeName || !requestData.storeAddress || !requestData.storePhoneNumber || !requestData.email) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Missing required fields');
-  }
-
   // Check if storeName already exists
   const { storeName } = requestData;
   const existingMerchantRequest = await MerchantRequest.findOne({
