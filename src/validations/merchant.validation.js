@@ -6,7 +6,7 @@ const createMerchantRequest = {
     storeName: Joi.string().required(),
     storeAddress: Joi.string().required(),
     storePhoneNumber: Joi.string().required(),
-    email: Joi.string().required().email(),
+    email: Joi.string().optional().email(),
     website: Joi.string().optional(),
     logo: Joi.string().optional(),
     description: Joi.string().optional(),

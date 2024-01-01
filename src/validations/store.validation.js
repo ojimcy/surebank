@@ -4,7 +4,7 @@ const createCategory = {
   body: Joi.object().keys({
     name: Joi.string().required(),
     image: Joi.string().optional(),
-    icon: Joi.string().optional(),
+    description: Joi.string().optional(),
     slug: Joi.string().optional(),
     subCategories: Joi.array().optional(),
   }),

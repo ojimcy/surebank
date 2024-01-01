@@ -65,6 +65,7 @@ const makeDailyContribution = async (contributionInput) => {
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
+
   const userPackage = await SbPackageModel.findOne({
     accountNumber: contributionInput.accountNumber,
     status: 'open',
@@ -76,23 +77,10 @@ const makeDailyContribution = async (contributionInput) => {
   }
 
   const userPackageId = userPackage._id;
-  const contributionDaysCount = contributionInput.amount / userPackage.amountPerDay;
   const currentDate = new Date().getTime();
-  const { amountPerDay } = userPackage;
-
-  if (contributionInput.amount < amountPerDay) {
-    throw new ApiError(400, `Amount cannot be less than ${amountPerDay}`);
-  }
 
   if (userPackage.status === 'closed') {
     throw new ApiError(403, 'This package has been closed');
-  }
-
-  // Calculate the new total count by adding contributionDaysCount to the existing value
-  const totalCount = userPackage.totalCount + contributionDaysCount;
-
-  if (totalCount > 31) {
-    throw new ApiError(400, 'Total contribution count cannot exceed 31');
   }
 
   const branch = await AccountModel.findOne({
@@ -105,78 +93,44 @@ const makeDailyContribution = async (contributionInput) => {
     branchId: branch.branchId,
     accountNumber: contributionInput.accountNumber,
     packageId: userPackageId,
-    count: contributionDaysCount,
-    totalCount,
     date: currentDate,
-    narration: `SB Daily contribution`,
+    narration: `SB contribution`,
   });
 
   userPackage.totalContribution = contributionInput.amount;
 
-  if (!userPackage.hasBeenCharged) {
-    userPackage.totalContribution -= userPackage.amountPerDay;
-
-    await SbPackageModel.findByIdAndUpdate(userPackageId, {
-      hasBeenCharged: true,
-    });
-
-    const addLedgerEntryInput = {
-      type: ACCOUNT_TYPE.sb,
-      direction: DIRECTION_VALUE.inflow,
-      date: currentDate,
-      narration: 'Daily contribution',
-      amount: amountPerDay,
-      userId: userPackage.createdBy,
-      branchId: branch.branchId,
-    };
-
-    await addLedgerEntry(addLedgerEntryInput);
-  }
-
-  await SbPackageModel.findByIdAndUpdate(userPackageId, {
+  await SbPackage.findByIdAndUpdate(userPackageId, {
     totalContribution: userPackage.totalContribution,
   });
 
-  await SbPackageModel.findByIdAndUpdate(userPackageId, {
-    $set: {
-      totalCount,
-    },
+  const addLedgerEntryInput = {
+    type: ACCOUNT_TYPE.sb,
+    direction: DIRECTION_VALUE.inflow,
+    date: currentDate,
+    narration: 'SB contribution',
+    amount: contributionInput.amount,
+    userId: userPackage.createdBy,
+    branchId: branch.branchId,
+  };
+
+  await addLedgerEntry(addLedgerEntryInput);
+
+  const transactionDate = new Date().getTime();
+
+  const contributionTransaction = await AccountTransactionModel.create({
+    accountNumber: userPackage.accountNumber,
+    amount: contributionInput.amount,
+    createdBy: contributionInput.createdBy,
+    branchId: branch.branchId,
+    date: transactionDate,
+    direction: 'inflow',
+    narration: `SB Daily contribution`,
   });
 
-  if (totalCount === 31) {
-    const narration = 'Total contribution';
-    const depositDetail = {
-      accountNumber: contributionInput.accountNumber,
-      amount: userPackage.totalContribution,
-      createdBy: userPackage.createdBy,
-      narration,
-    };
-
-    await makeCustomerDeposit(depositDetail);
-
-    await SbPackageModel.findByIdAndUpdate(userPackageId, {
-      status: 'closed',
-      totalContribution: 0,
-      totalCount: 0,
-    });
-  } else {
-    const transactionDate = new Date().getTime();
-
-    const contributionTransaction = await AccountTransactionModel.create({
-      accountNumber: userPackage.accountNumber,
-      amount: contributionInput.amount,
-      createdBy: contributionInput.createdBy,
-      branchId: branch.branchId,
-      date: transactionDate,
-      direction: 'inflow',
-      narration: `SB Daily contribution`,
-    });
-
-    return {
-      newContribution,
-      contributionTransaction,
-    };
-  }
+  return {
+    newContribution,
+    contributionTransaction,
+  };
 };
 
 /**
