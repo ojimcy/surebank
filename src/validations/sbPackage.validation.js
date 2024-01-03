@@ -7,7 +7,6 @@ const createSbPackage = {
     product: Joi.string().required().custom(objectId),
     createdBy: Joi.string().optional().custom(objectId),
     targetAmount: Joi.number().optional(),
-    amountPerDay: Joi.number().optional(),
     image: Joi.string().optional(),
     status: Joi.string().optional(),
     hasBeenCharged: Joi.boolean(),

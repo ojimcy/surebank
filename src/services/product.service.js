@@ -18,7 +18,7 @@ const createProductRequest = async (requestData, merchantId) => {
   const existingProductRequest = await ProductRequest.findOne({ name: requestData.name });
   const existingProduct = await Product.findOne({ name: requestData.name });
   if (existingProductRequest || existingProduct) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Product request with the same name already exists');
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Product request or product with the same name already exists');
   }
 
   // Create the product request
@@ -345,23 +345,18 @@ const deleteProductCatalogue = async (productId, userId) => {
   return product;
 };
 
-const getProductCatalogueById = async (id) => {
-  const product = await ProductCatalogue.findById(id).populate([
-    {
-      path: 'merchantId',
-      select: 'storeName',
-    },
-  ]);
-  if (!product) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
-  }
-  return product;
-};
-
 const getProductsByIds = async (payload) => {
   const ids = payload.split('&').map((id) => id.split('=')[1]);
   const products = await Product.find({ id: { $in: ids } });
   return products;
+};
+
+const getProductCatalogueById = async (id) => {
+  const product = await ProductCatalogue.findById(id);
+  if (!product) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
+  }
+  return product;
 };
 
 module.exports = {

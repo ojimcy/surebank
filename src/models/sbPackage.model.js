@@ -19,10 +19,6 @@ const sbPackageSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  amountPerDay: {
-    type: Number,
-    required: true,
-  },
   image: {
     type: String,
     required: false,
@@ -44,6 +40,7 @@ const sbPackageSchema = new mongoose.Schema({
   totalContribution: {
     type: Number,
     required: false,
+    default: 0,
   },
   totalCount: {
     type: Number,

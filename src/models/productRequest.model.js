@@ -49,6 +49,7 @@ const productRequestSchema = mongoose.Schema(
     slug: {
       type: String,
       unique: true,
+      sparse: true,
       trim: true,
       lowercase: true,
     },

@@ -4,6 +4,7 @@ const { SbPackage, Account, Contribution, AccountTransaction, ProductCatalogue }
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
+const { getProductCatalogueById } = require('./product.service');
 
 const createSbPackage = async (sbPackageData) => {
   const userAccount = await getUserByAccountNumber(sbPackageData.accountNumber);
@@ -28,7 +29,6 @@ const createSbPackage = async (sbPackageData) => {
     throw new ApiError(400, 'The selected product is not available for Savings-Buying');
   }
 
-  const amountPerDay = parseFloat((product.price / 31).toFixed(2));
   const startDate = new Date().getTime();
 
   const savingsBuyingPackage = await SbPackage.create({
@@ -36,7 +36,6 @@ const createSbPackage = async (sbPackageData) => {
     userId: userAccount.userId,
     targetAmount: product.price,
     image: product.images[1],
-    amountPerDay,
     startDate,
   });
 
@@ -86,7 +85,7 @@ const makeDailyContribution = async (contributionInput) => {
     narration: `SB contribution`,
   });
 
-  userPackage.totalContribution = contributionInput.amount;
+  userPackage.totalContribution += contributionInput.amount;
 
   await SbPackage.findByIdAndUpdate(userPackageId, {
     totalContribution: userPackage.totalContribution,
@@ -211,12 +210,19 @@ const getUserSbPackages = async (userId) => {
   const userPackages = await SbPackage.find({
     userId,
     status: 'open',
-  }).populate({
-    path: 'product',
-    select: ['name', 'images', 'price', 'salesPrice'],
   });
 
-  return userPackages;
+  const packagesWithProducts = await Promise.all(
+    userPackages.map(async (userPackage) => {
+      const productCat = await getProductCatalogueById(userPackage.product);
+
+      const updatedUserPackage = { ...userPackage.toObject(), product: productCat };
+
+      return updatedUserPackage;
+    })
+  );
+
+  return packagesWithProducts;
 };
 
 module.exports = {

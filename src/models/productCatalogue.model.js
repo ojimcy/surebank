@@ -13,7 +13,7 @@ const productCatalogueSchema = mongoose.Schema(
       required: true,
       ref: 'Merchant',
     },
-    title: {
+    name: {
       type: String,
       required: true,
     },
@@ -74,6 +74,10 @@ const productCatalogueSchema = mongoose.Schema(
     },
 
     tags: [String],
+    isSbAvailable: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
