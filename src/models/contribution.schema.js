@@ -32,7 +32,7 @@ const contributionSchema = mongoose.Schema(
     },
     count: {
       type: Number,
-      required: true,
+      required: false,
     },
     totalCount: {
       type: Number,

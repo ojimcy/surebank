@@ -116,9 +116,9 @@ const createProductCatalogue = async (productData, userId) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Merchant not found, please apply');
   }
 
-  // Check if the title is unique
+  // Check if the name is unique
   const existingProductCatalogue = await ProductCatalogueModel.findOne({
-    title: productData.title,
+    name: productData.name,
     merchantId: merchant._id,
   });
   if (existingProductCatalogue) {

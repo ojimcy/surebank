@@ -34,7 +34,6 @@ const createSbPackage = async (sbPackageData) => {
     throw new ApiError(400, 'The selected product is not available for Savings-Buying');
   }
 
-  const amountPerDay = parseFloat((product.price / 31).toFixed(2));
   const startDate = new Date().getTime();
 
   const savingsBuyingPackage = await SbPackageModel.create({
@@ -42,7 +41,6 @@ const createSbPackage = async (sbPackageData) => {
     userId: userAccount.userId,
     targetAmount: product.price,
     image: product.images[1],
-    amountPerDay,
     startDate,
   });
 
@@ -97,7 +95,7 @@ const makeDailyContribution = async (contributionInput) => {
     narration: `SB contribution`,
   });
 
-  userPackage.totalContribution = contributionInput.amount;
+  userPackage.totalContribution += contributionInput.amount;
 
   await SbPackage.findByIdAndUpdate(userPackageId, {
     totalContribution: userPackage.totalContribution,

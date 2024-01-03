@@ -13,7 +13,7 @@ const productCatalogueSchema = mongoose.Schema(
       required: true,
       ref: 'Merchant',
     },
-    title: {
+    name: {
       type: String,
       required: true,
     },
