@@ -228,7 +228,7 @@ const getUserSbPackages = async (userId) => {
 /**
  * Merge savings packages into a single package
  * @param {string} targetPackageId - ID of the package to merge contributions into
- * @param {Array<string>} sourcePackageIds - Array of package IDs to be merged (excluding the target package)
+ * @param {Array<string>} sourcePackageIds - Array of  package IDs to be merged (excluding the target package)
  * @returns {Promise<Object>} Result of the operation
  */
 const mergeSavingsPackages = async (targetPackageId, sourcePackageIds) => {
