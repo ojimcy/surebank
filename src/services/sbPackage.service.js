@@ -225,10 +225,88 @@ const getUserSbPackages = async (userId) => {
   return packagesWithProducts;
 };
 
+/**
+ * Merge savings packages into a single package
+ * @param {string} targetPackageId - ID of the package to merge contributions into
+ * @param {Array<string>} sourcePackageIds - Array of package IDs to be merged (excluding the target package)
+ * @returns {Promise<Object>} Result of the operation
+ */
+const mergeSavingsPackages = async (targetPackageId, sourcePackageIds) => {
+  const session = await startSession();
+  session.startTransaction();
+
+  try {
+    // Fetch and validate the packages to be merged
+    const targetPackage = await SbPackage.findById(targetPackageId).session(session);
+    if (!targetPackage || targetPackage.status !== 'open') {
+      throw new ApiError(404, 'Target package is not valid.');
+    }
+    const userAccount = await getUserByAccountNumber(targetPackage.accountNumber);
+
+    const sourcePackages = await SbPackage.find({
+      _id: { $in: sourcePackageIds },
+      status: 'open',
+    }).session(session);
+
+    if (sourcePackages.length !== sourcePackageIds.length) {
+      throw new ApiError(404, 'One or more source packages are not valid.');
+    }
+    // Transfer contributions from source packages to the target package
+    // eslint-disable-next-line no-restricted-syntax
+    for (const sourcePackage of sourcePackages) {
+      targetPackage.totalContribution += sourcePackage.totalContribution;
+      // eslint-disable-next-line no-await-in-loop
+      await Contribution.updateMany({ packageId: sourcePackage._id }, { packageId: targetPackage._id }, { session });
+    }
+
+    // Save the updated totalContribution to the database
+    await targetPackage.save();
+
+    // Create an AccountTransaction for the merge
+    const currentDate = new Date().getTime();
+
+    await AccountTransaction.create({
+      accountNumber: targetPackage.accountNumber,
+      amount: targetPackage.totalContribution,
+      createdBy: targetPackage.userId,
+      branchId: userAccount.branchId,
+      date: currentDate,
+      direction: 'inflow',
+      narration: 'Savings packages merged',
+    });
+
+    // Close the source packages
+    await SbPackage.updateMany({ _id: { $in: sourcePackageIds } }, { status: 'closed' }, { session });
+    // Record the merge in the ledger
+    const mergeLedgerEntryInput = {
+      type: 'SB Merge',
+      direction: 'inflow',
+      date: currentDate,
+      narration: 'Savings packages merged',
+      amount: targetPackage.totalContribution,
+      userId: targetPackage.userId,
+      branchId: targetPackage.branchId,
+    };
+
+    await addLedgerEntry(mergeLedgerEntryInput, session);
+
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    return targetPackage;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
   makeSbWithdrawal,
   getPackageById,
   getUserSbPackages,
+  mergeSavingsPackages,
 };

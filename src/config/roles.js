@@ -48,6 +48,7 @@ const userRepsPermissions = [
   'manageMerchantAdmin',
   'packageReports',
   'dashboardReports',
+  'mergePackages',
 ];
 
 const managerPermissions = [

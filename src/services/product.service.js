@@ -2,6 +2,7 @@ const httpStatus = require('http-status');
 const { ProductRequest, Product, ProductCatalogue, ProductCollection, Collection } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getMerchantByUserId } = require('./merchant.service');
+const { slugify } = require('../utils/slugify');
 
 /**
  * Create product request
@@ -108,13 +109,13 @@ const createProductCatalogue = async (productData, userId) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Merchant not found, please apply');
   }
 
-  // Check if the title is unique
+  // Check if the name is unique
   const existingProductCatalogue = await ProductCatalogue.findOne({
-    title: productData.title,
+    name: productData.name,
     merchantId: merchant._id,
   });
   if (existingProductCatalogue) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Product with the same title already exists in the catalogue');
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Product with the same name already exists in the catalogue');
   }
 
   // Create the product catalogue entry
@@ -162,7 +163,7 @@ const approveProductRequest = async (requestId) => {
     shipping: productRequest.shipping,
     stock: productRequest.stock,
     tags: productRequest.tags,
-    slug: productRequest.slug,
+    slug: slugify(productRequest.name),
   });
 
   // Save the new product document
