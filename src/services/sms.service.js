@@ -22,7 +22,7 @@ const compiledTempltes = {};
  */
 const getTemplate = async (templateName) => {
   if (!compiledTempltes[templateName]) {
-    const templatePath = `${config.email.templateDirectory}/${templateName}.hbs`;
+    const templatePath = `${config.sms.templateDirectory}/${templateName}.hbs`;
     // eslint-disable-next-line security/detect-non-literal-fs-filename
     if (!fs.existsSync(templatePath)) {
       throw new Error(`Template ${templateName} not found`);
@@ -36,7 +36,7 @@ const getTemplate = async (templateName) => {
 const sendSms = async ({ phone, template, message }, vars) => {
   const compiledTemplate = template ? await getTemplate(template) : null;
   const body = template ? compiledTemplate(vars) : message;
-  const url = 'https://www.bulksmsnigeria.com/api/v1/sms/create';
+  const url = 'https://www.bulksmsnigeria.com/api/v2/sms';
   const params = {
     api_token: config.sms.apiToken,
     from: config.sms.smsSender,
