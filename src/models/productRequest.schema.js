@@ -45,14 +45,6 @@ const productRequestSchema = mongoose.Schema(
       endDate: Date,
     },
     tags: [String],
-
-    slug: {
-      type: String,
-      unique: true,
-      sparse: true,
-      trim: true,
-      lowercase: true,
-    },
   },
   {
     timestamps: true,

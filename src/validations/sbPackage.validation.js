@@ -47,10 +47,20 @@ const getUserSbPackages = {
   }),
 };
 
+const mergeSavingsPackages = {
+  params: Joi.object().keys({
+    targetPackageId: Joi.string().required().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    sourcePackageIds: Joi.array().items(Joi.string()).required(),
+  }),
+};
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
   makeSbWithdrawal,
   getPackageById,
   getUserSbPackages,
+  mergeSavingsPackages,
 };

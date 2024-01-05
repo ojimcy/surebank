@@ -14,7 +14,6 @@ const createProductRequest = {
     shipping: Joi.string().optional(),
     inventory: Joi.string().optional(),
     tags: Joi.string().optional(),
-    slug: Joi.string().optional(),
   }),
 };
 

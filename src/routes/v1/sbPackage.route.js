@@ -24,6 +24,10 @@ router
   .post(auth('sbWithdrawal'), validate(sbPackageValidation.makeSbWithdrawal), sbPackageController.makeSbWithdrawal);
 
 router
+  .route('/package/merge/:targetPackageId')
+  .post(auth('mergePackages'), validate(sbPackageValidation.mergeSavingsPackages), sbPackageController.mergeSavingsPackages);
+
+router
   .route('/package/:packageId')
   .get(auth('getPackage'), validate(sbPackageValidation.getPackageById), sbPackageController.getPackageById);
 
