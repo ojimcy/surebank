@@ -18,6 +18,11 @@ const branchStaffSchema = mongoose.Schema(
       required: true,
       default: true,
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'User',
+    },
   },
   {
     timestamps: true,

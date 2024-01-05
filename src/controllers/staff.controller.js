@@ -13,11 +13,10 @@ const addStaffToBranch = catchAsync(async (req, res) => {
 });
 
 const createStaff = catchAsync(async (req, res) => {
-  const { staffId, branchId, role } = req.body;
-  const assigningUser = await getUserById(req.user._id);
-  const assigningUserRole = assigningUser.role;
-  const branchStaff = await staffService.addStaffToBranch(branchId, staffId, role, assigningUserRole);
-  res.send(branchStaff);
+  const createdBy = req.user._id;
+  const { ...staffData } = req.body;
+  const { user, staff } = await staffService.createStaff({ ...staffData, createdBy });
+  res.status(httpStatus.CREATED).json({ user, staff });
 });
 
 const getAllStaff = catchAsync(async (req, res) => {

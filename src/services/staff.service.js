@@ -3,16 +3,8 @@ const httpStatus = require('http-status');
 const { BranchStaff, User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { roles } = require('../config/roles');
-
-/**
- * Get branch staff by id
- * @param {ObjectId} id
- * @returns {Promise<Branch>}
- */
-const getBranchStaffById = async (id) => {
-  const BranchStaffModel = await BranchStaff();
-  return BranchStaffModel.findOne({ staffId: id });
-};
+const { getUserById } = require('./user.service');
+const { userService } = require('.');
 
 /**
  * Check if a role is lower or equal in hierarchy to another role
@@ -27,6 +19,122 @@ const isRoleLowerOrEqual = (roleToCheck, comparedRole) => {
   return indexToCheck >= 0 && indexCompared >= 0 && indexToCheck <= indexCompared;
 };
 
+/**
+ * Validate if the assigning user has the authority to assign the given role
+ * @param {string} roleToCheck - Role to check
+ * @param {string} assigningUserId - ID of the assigning user
+ */
+const validateRole = async (roleToCheck, assigningUserId) => {
+  // Retrieve assigning user's role
+  const assigningUser = await getUserById(assigningUserId);
+
+  // Check if the assigning user has the authority to assign this role
+  if (!isRoleLowerOrEqual(roleToCheck, assigningUser.role)) {
+    throw new ApiError(httpStatus.FORBIDDEN, `You don't have permissions to create a ${roleToCheck}`);
+  }
+};
+
+/**
+ * Create a staff
+ * @param {Object} staffData - Staff data
+ * @param {string} staffData.email - Staff's email
+ * @param {string} staffData.password - Staff's password
+ * @param {string} staffData.firstName - Staff's first name
+ * @param {string} staffData.lastName - Staff's last name
+ * @param {string} staffData.address - Staff's address
+ * @param {string} staffData.accountType - Account type
+ * @param {string} staffData.phoneNumber - Staff's phone number
+ * @param {string} staffData.branchId - Branch ID
+ * @param {string} staffData.createdBy - ID of the admin user who initiated the creation
+ * @returns {Promise<{ user: User, account: Account }>} Created user and account
+ */
+const createStaff = async (staffData) => {
+  const BranchStaffModel = await BranchStaff();
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Validate the role before querying the user
+    if (!roles.includes(staffData.role)) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid role');
+    }
+
+    // Separate function for role validation
+    validateRole(staffData.role, staffData.createdBy);
+
+    let user;
+
+    // Get user data
+    if (staffData.email) {
+      user = await userService.getUserByEmail(staffData.email);
+    } else if (staffData.phoneNumber) {
+      user = await userService.getUserByPhoneNumber(staffData.phoneNumber);
+    }
+
+    if (!user) {
+      // If user doesn't exist, create a new user
+      const newUserAccount = await userService.createUser({
+        email: staffData.email,
+        password: staffData.password,
+        firstName: staffData.firstName,
+        lastName: staffData.lastName,
+        address: staffData.address,
+        phoneNumber: staffData.phoneNumber,
+        role: staffData.role,
+        branchId: staffData.branchId,
+      });
+
+      const staffAccountData = {
+        branchId: staffData.branchId,
+        staffId: newUserAccount._id,
+        isCurrent: true,
+        createdBy: staffData.createdBy,
+      };
+
+      const staff = await BranchStaffModel.create([staffAccountData], { session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return { user: newUserAccount, staff };
+    }
+
+    // Check if there is already a corresponding entry in BranchStaff for the given branch
+    const existingBranchStaff = await BranchStaffModel.findOne({
+      branchId: staffData.branchId,
+      staffId: user.id,
+    });
+    if (existingBranchStaff) {
+      throw new ApiError(httpStatus.CONFLICT, 'Staff already exists in the branch');
+    }
+    const staffAccountData = {
+      branchId: staffData.branchId,
+      staffId: user._id,
+      isCurrent: true,
+      createdBy: staffData.createdBy,
+    };
+
+    const staff = await BranchStaffModel.create([staffAccountData], { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return { user, staff };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
+/**
+ * Get branch staff by id
+ * @param {ObjectId} id
+ * @returns {Promise<Branch>}
+ */
+const getBranchStaffById = async (id) => {
+  return BranchStaff.findOne({ staffId: id });
+};
 /**
  * Update the role of a staff member
  * @param {string} userId - User ID
@@ -231,6 +339,7 @@ const getBranchStaffByUserId = async (userId) => {
 };
 
 module.exports = {
+  createStaff,
   addStaffToBranch,
   getStaffInBranch,
   getAllStaffService,
