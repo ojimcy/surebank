@@ -9,6 +9,7 @@ const createUser = {
     lastName: Joi.string().required(),
     address: Joi.string().optional(),
     phoneNumber: Joi.string().required(),
+    role: Joi.string().optional(),
     branchId: Joi.string().optional().custom(objectId),
   }),
 };

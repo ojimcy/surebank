@@ -1,5 +1,20 @@
 const Joi = require('joi');
-const { objectId } = require('./custom.validation');
+const { objectId, password } = require('./custom.validation');
+
+const createStaff = {
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required().custom(password),
+    firstName: Joi.string().required(),
+    lastName: Joi.string().required(),
+    address: Joi.string().required(),
+    phoneNumber: Joi.string().required(),
+    branchId: Joi.string().required().custom(objectId),
+    staffId: Joi.string().custom(objectId),
+    isCurrent: Joi.boolean(),
+    role: Joi.string().optional(),
+  }),
+};
 
 const addStaffToBranch = {
   params: Joi.object().keys({
@@ -8,15 +23,6 @@ const addStaffToBranch = {
   body: Joi.object().keys({
     staffId: Joi.string().required().custom(objectId),
     isCurrent: Joi.boolean(),
-  }),
-};
-
-const createStaff = {
-  body: Joi.object().keys({
-    branchId: Joi.string().required().custom(objectId),
-    staffId: Joi.string().required().custom(objectId),
-    isCurrent: Joi.boolean(),
-    role: Joi.string().optional(),
   }),
 };
 
