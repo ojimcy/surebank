@@ -4,6 +4,7 @@ const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { getUserById } = require('./user.service');
 const { CONTRIBUTION_CIRCLE } = require('../constants/account');
+const { templates, sendSms } = require('./sms.service');
 
 /**
  * Save a charge and update the count in the associated package
@@ -72,6 +73,17 @@ const createDailySavingsPackage = async (dailyInput) => {
     userId: userAccount.userId,
     branchId: branch.branchId,
   });
+
+  // Send welcome SMS
+  const phone = userAccount.phoneNumber;
+  const welcomeMessageTemplate = templates.WELCOME;
+  const vars = {
+    name: userAccount.firstName,
+    accountNumber: dailyInput.accountNumber,
+    target: dailyInput.target,
+  };
+
+  await sendSms({ phone, template: welcomeMessageTemplate, vars });
 
   return createdPackage;
 };
@@ -187,6 +199,18 @@ const saveDailyContribution = async (contributionInput) => {
       { session }
     );
 
+    // Send credit SMS
+    const phone = userAccount.phoneNumber;
+    const creditMessageTemplate = templates.DS_CREDIT;
+    const vars = {
+      amount: contributionInput.amount,
+      accountNumber: contributionInput.accountNumber,
+      balance: userPackage.totalContribution,
+      cashier: contributionInput.createdBy,
+    };
+
+    await sendSms({ phone, template: creditMessageTemplate, vars });
+
     await session.commitTransaction();
     session.endSession();
 
@@ -251,6 +275,18 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
         { session }
       );
     }
+
+    // Send debit SMS
+    const phone = userPackage.phoneNumber;
+    const debitMessageTemplate = templates.DEBIT;
+    const vars = {
+      amount: withdrawal.amount,
+      accountNumber: withdrawal.accountNumber,
+      balance: userPackage.availableBalance,
+      cashier: withdrawal.createdBy,
+    };
+
+    await sendSms({ phone, template: debitMessageTemplate, vars });
 
     await session.commitTransaction();
     session.endSession();

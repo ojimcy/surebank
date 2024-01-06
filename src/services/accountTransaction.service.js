@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const httpStatus = require('http-status');
 const { Account, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { templates, sendSms } = require('./sms.service');
 
 /**
  * Helper function to find a branch by account number
@@ -401,6 +402,18 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
         runValidators: true,
       }
     );
+
+    // Send debit SMS
+    const phone = withdrawalRequest.phoneNumber;
+    const debitMessageTemplate = templates.DEBIT;
+    const vars = {
+      amount: withdrawalRequest.amount,
+      accountNumber: withdrawalRequest.accountNumber,
+      balance: updatedBalance.availableBalance,
+      cashier: approvedBy,
+    };
+
+    await sendSms({ phone, template: debitMessageTemplate, vars });
 
     return {
       accountBalance: updatedBalance.availableBalance,

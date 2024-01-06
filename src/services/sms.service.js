@@ -5,11 +5,11 @@ const config = require('../config/config');
 const logger = require('../config/logger');
 
 const templates = {
-  NEW_TRANSACTION: 'defipay-p2p-new-transaction',
-  P2P_PAYMENT_SENT: 'defipay-p2p-new-transaction.hbs',
-  P2P_PAYMENT_CONFIRMED: 'defipay-p2p-transaction-confirmed',
+  DS_CREDIT: 'ds_received.hbs',
+  SB_CREDIT: 'sb_recieved.hbs',
+  DEBIT: 'payment_withdrawn.hbs',
+  WELCOME: 'welcome_message.hbs',
 };
-
 const compiledTempltes = {};
 
 /**
