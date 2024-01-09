@@ -2,12 +2,13 @@ const handlebars = require('handlebars');
 const axios = require('axios');
 const config = require('../config/config');
 const logger = require('../config/logger');
+const { default: templates } = require('../templates/sms/templates');
 
-const templates = {
-  DS_CREDIT: 'ds_received.hbs',
-  SB_CREDIT: 'sb_recieved.hbs',
-  DEBIT: 'payment_withdrawn.hbs',
-  WELCOME: 'welcome_message.hbs',
+const tmpls = {
+  DS_CREDIT: templates.dsReceived,
+  SB_CREDIT: templates.sbReceived,
+  DEBIT: templates.paymentWithdrawn,
+  WELCOME: templates.welcomeMessage,
 };
 const compiledTempltes = {};
 
@@ -43,5 +44,5 @@ const sendSms = async ({ phone, template, message }, vars) => {
 
 module.exports = {
   sendSms,
-  templates,
+  templates: tmpls,
 };
