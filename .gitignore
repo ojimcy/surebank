@@ -83,4 +83,4 @@ yarn-error.log
 
 # Code coverage
 coverage
-.serverless/aws-node-express-api.zip
+.serverless
