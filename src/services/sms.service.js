@@ -22,12 +22,7 @@ const compiledTempltes = {};
  */
 const getTemplate = async (templateName) => {
   if (!compiledTempltes[templateName]) {
-    const templatePath = `${config.sms.templateDirectory}/${templateName}.hbs`;
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    if (!fs.existsSync(templatePath)) {
-      throw new Error(`Template ${templateName} not found`);
-    }
-    const templateHtml = fs.readFileSync(templatePath, 'utf8');
+    const templateHtml = templateName;
     compiledTempltes[templateName] = handlebars.compile(templateHtml);
   }
   return compiledTempltes[templateName];
