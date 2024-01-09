@@ -1,4 +1,3 @@
-const fs = require('fs');
 const handlebars = require('handlebars');
 const axios = require('axios');
 const config = require('../config/config');
