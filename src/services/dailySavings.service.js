@@ -4,7 +4,8 @@ const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { getUserById } = require('./user.service');
 const { CONTRIBUTION_CIRCLE } = require('../constants/account');
-const { templates, sendSms } = require('./sms.service');
+const { sendSms } = require('./sms.service');
+const { welcomeMessage, constributionMessage } = require('../templates/sms/templates');
 
 /**
  * Save a charge and update the count in the associated package
@@ -75,15 +76,10 @@ const createDailySavingsPackage = async (dailyInput) => {
   });
 
   // Send welcome SMS
-  const phone = userAccount.phoneNumber;
-  const welcomeMessageTemplate = templates.WELCOME;
-  const vars = {
-    name: userAccount.firstName,
-    accountNumber: dailyInput.accountNumber,
-    target: dailyInput.target,
-  };
 
-  await sendSms({ phone, template: welcomeMessageTemplate, vars });
+  const phone = userAccount.phoneNumber;
+  const message = welcomeMessage(userAccount.firstName, dailyInput.accountNumber, dailyInput.target);
+  await sendSms(phone, message);
 
   return createdPackage;
 };
@@ -113,7 +109,9 @@ const saveDailyContribution = async (contributionInput) => {
       accountNumber: contributionInput.accountNumber,
       status: 'open',
       target: contributionInput.target,
-    });
+    })
+      .populate('createdBy', 'firstName lastName')
+      .lean();
 
     if (!userPackage) {
       throw new ApiError(409, 'Customer does not have an active package');
@@ -201,15 +199,13 @@ const saveDailyContribution = async (contributionInput) => {
 
     // Send credit SMS
     const phone = userAccount.phoneNumber;
-    const creditMessageTemplate = templates.DS_CREDIT;
-    const vars = {
-      amount: contributionInput.amount,
-      accountNumber: contributionInput.accountNumber,
-      balance: userPackage.totalContribution,
-      cashier: contributionInput.createdBy,
-    };
-
-    await sendSms({ phone, template: creditMessageTemplate, vars });
+    const message = constributionMessage(
+      contributionInput.amount,
+      contributionInput.accountNumber,
+      userPackage.totalContribution,
+      contributionInput.createdBy.firstName
+    );
+    await sendSms(phone, message);
 
     await session.commitTransaction();
     session.endSession();
@@ -275,18 +271,6 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
         { session }
       );
     }
-
-    // Send debit SMS
-    const phone = userPackage.phoneNumber;
-    const debitMessageTemplate = templates.DEBIT;
-    const vars = {
-      amount: withdrawal.amount,
-      accountNumber: withdrawal.accountNumber,
-      balance: userPackage.availableBalance,
-      cashier: withdrawal.createdBy,
-    };
-
-    await sendSms({ phone, template: debitMessageTemplate, vars });
 
     await session.commitTransaction();
     session.endSession();

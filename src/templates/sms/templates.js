@@ -1,11 +1,3 @@
-const welcomeMessage = require('./welcome_message');
-const paymentWithdrawn = require('./payment_withdrawn');
-const sbReceived = require('./sb_received');
-const dsReceived = require('./ds_received');
-
-export default {
-  welcomeMessage,
-  paymentWithdrawn,
-  sbReceived,
-  dsReceived,
-};
+module.exports.withdrawalMessage = require('./payment_withdrawn');
+module.exports.welcomeMessage = require('./welcome_message');
+module.exports.contributionMessage = require('./contribution_message');

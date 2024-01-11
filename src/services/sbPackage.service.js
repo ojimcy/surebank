@@ -5,6 +5,8 @@ const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
 const { getProductCatalogueById } = require('./product.service');
+const { sendSms } = require('./sms.service');
+const { constributionMessage } = require('../templates/sms/templates');
 
 const createSbPackage = async (sbPackageData) => {
   const SbPackageModel = await SbPackage();
@@ -18,13 +20,13 @@ const createSbPackage = async (sbPackageData) => {
     throw new ApiError(404, 'Provide a valid DS account number');
   }
 
-  const userPackageExist = await SbPackageModel.findOne({
+  const userPackage = await SbPackageModel.findOne({
     accountNumber: sbPackageData.accountNumber,
     status: 'open',
     product: sbPackageData.product,
   });
 
-  if (userPackageExist) {
+  if (userPackage) {
     throw new ApiError(400, 'Customer has an active package running');
   }
 
@@ -36,7 +38,7 @@ const createSbPackage = async (sbPackageData) => {
 
   const startDate = new Date().getTime();
 
-  const savingsBuyingPackage = await SbPackageModel.create({
+  const sbPackage = await SbPackageModel.create({
     ...sbPackageData,
     userId: userAccount.userId,
     targetAmount: product.price,
@@ -44,7 +46,7 @@ const createSbPackage = async (sbPackageData) => {
     startDate,
   });
 
-  return savingsBuyingPackage;
+  return sbPackage;
 };
 
 /**
@@ -68,7 +70,9 @@ const makeDailyContribution = async (contributionInput) => {
     accountNumber: contributionInput.accountNumber,
     status: 'open',
     product: contributionInput.product,
-  });
+  })
+    .populate('createdBy', 'firstName lastName')
+    .lean();
 
   if (!userPackage) {
     throw new ApiError(409, 'Customer does not have an active package');
@@ -124,6 +128,16 @@ const makeDailyContribution = async (contributionInput) => {
     direction: 'inflow',
     narration: `SB Daily contribution`,
   });
+
+  // Send credit SMS
+  const phone = userAccount.phoneNumber;
+  const message = constributionMessage(
+    contributionInput.amount,
+    contributionInput.accountNumber,
+    userPackage.totalContribution,
+    contributionInput.createdBy.firstName
+  );
+  await sendSms(phone, message);
 
   return {
     newContribution,

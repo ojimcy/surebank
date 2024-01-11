@@ -1,8 +1,0 @@
-const tmpl = `SURE-BANK
-Credit
-Amt: {{amount}} NGN
-Acc: {{accountNumber}}
-Avail Bal: {{aalance}} NGN
-Cashier: {{cashier}}`;
-
-export default tmpl;
