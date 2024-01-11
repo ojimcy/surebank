@@ -3,6 +3,8 @@ const { Package, Contribution, AccountTransaction, Account, Charge } = require('
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { CONTRIBUTION_CIRCLE } = require('../constants/account');
+const { sendSms } = require('./sms.service');
+const { welcomeMessage, constributionMessage } = require('../templates/sms/templates');
 
 /**
  * Save a charge and update the count in the associated package
@@ -67,6 +69,12 @@ const createDailySavingsPackage = async (dailyInput) => {
     branchId: branch.branchId,
   });
 
+  // Send welcome SMS
+
+  const phone = userAccount.phoneNumber;
+  const message = welcomeMessage(userAccount.firstName, dailyInput.accountNumber, dailyInput.target);
+  await sendSms(phone, message);
+
   return createdPackage;
 };
 
@@ -90,7 +98,9 @@ const saveDailyContribution = async (contributionInput) => {
       accountNumber: contributionInput.accountNumber,
       status: 'open',
       target: contributionInput.target,
-    });
+    })
+      .populate('createdBy', 'firstName lastName')
+      .lean();
 
     if (!userPackage) {
       throw new ApiError(409, 'Customer does not have an active package');
@@ -175,6 +185,16 @@ const saveDailyContribution = async (contributionInput) => {
       ],
       { session }
     );
+
+    // Send credit SMS
+    const phone = userAccount.phoneNumber;
+    const message = constributionMessage(
+      contributionInput.amount,
+      contributionInput.accountNumber,
+      userPackage.totalContribution,
+      contributionInput.createdBy.firstName
+    );
+    await sendSms(phone, message);
 
     await session.commitTransaction();
     session.endSession();

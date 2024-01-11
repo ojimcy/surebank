@@ -8,12 +8,12 @@ const router = express.Router();
 
 router
   .route('/categories')
-  .post(auth('manageCategory'), validate(storeValidation.createCategory), storeController.createCategory)
+  .post(auth('manageStore'), validate(storeValidation.createCategory), storeController.createCategory)
   .get(storeController.getCategories);
 
 router
   .route('/brands')
-  .post(auth('manageBrands'), validate(storeValidation.createCategory), storeController.createBrand)
+  .post(auth('manageStore'), validate(storeValidation.createBrand), storeController.createBrand)
   .get(storeController.getBrands);
 
 module.exports = router;

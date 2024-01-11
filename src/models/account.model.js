@@ -15,6 +15,10 @@ const accountSchema = mongoose.Schema(
       type: String,
       trim: true,
     },
+    phoneNumber: {
+      type: String,
+      trim: true,
+    },
     accountNumber: {
       type: String,
       required: true,

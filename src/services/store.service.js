@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const { Category, Brand } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { slugify } = require('../utils/slugify');
 
 /**
  * Create a new category
@@ -8,10 +9,10 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<Object>} Result of the operation
  */
 const createCategory = async (categoryData) => {
-  const existingCategory = await Category.findOne({ name: categoryData.name });
+  const existingCategory = await Category.findOne({ title: categoryData.title });
 
   if (existingCategory) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Category with the same name already exists');
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Category with the same title already exists');
   }
 
   // Check if subcategories are provided
@@ -29,15 +30,15 @@ const createCategory = async (categoryData) => {
     const updatedSubCategories = categoryData.subCategories.map((subcategory) => ({
       heading: subcategory.heading,
       items: subcategory.items.map((item) => ({
-        name: item.name,
-        slug: item.name.toLowerCase().replace(/\s+/g, '-'),
+        title: item.title,
+        slug: slugify(categoryData.title),
       })),
     }));
 
     // Create the new category with subcategories
     const updatedCategoryData = {
       ...categoryData,
-      slug: categoryData.name.toLowerCase().replace(/\s+/g, '-'),
+      slug: slugify(categoryData.title),
       subCategories: updatedSubCategories,
     };
 
@@ -46,7 +47,7 @@ const createCategory = async (categoryData) => {
   // Create the new category without subcategories
   return Category.create({
     ...categoryData,
-    slug: categoryData.name.toLowerCase().replace(/\s+/g, '-'),
+    slug: slugify(categoryData.title),
   });
 };
 

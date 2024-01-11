@@ -81,7 +81,7 @@ const defaultRoutes = [
     route: productRoute,
   },
   {
-    path: '/store',
+    path: '/stores',
     route: storeRoute,
   },
   {

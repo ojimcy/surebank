@@ -73,6 +73,9 @@ const getUserAccount = {
   params: Joi.object().keys({
     userId: Joi.string().required().custom(objectId),
   }),
+  query: Joi.object().keys({
+    accountType: Joi.string().optional(),
+  }),
 };
 
 const getAllAccounts = {
@@ -116,6 +119,7 @@ const updateAccount = {
   body: Joi.object().keys({
     firstName: Joi.string().optional(),
     lastName: Joi.string().optional(),
+    phoneNumber: Joi.string().optional(),
     accountType: Joi.string().optional(),
     branchId: Joi.string().optional().custom(objectId),
     accountManagerId: Joi.string().optional(),

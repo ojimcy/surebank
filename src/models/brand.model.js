@@ -8,8 +8,6 @@ const brandSchema = mongoose.Schema(
       required: true,
       trim: true,
     },
-  },
-  {
     logo: {
       type: String,
       required: false,

@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const { Collection } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { slugify } = require('../utils/slugify');
 
 /**
  * Create a new collection
@@ -13,8 +14,7 @@ const createCollection = async (collectionData) => {
   if (existingCollection) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Collection with the same slug already exists');
   }
-
-  const collection = await Collection.create(collectionData);
+  const collection = await Collection.create({ ...collectionData, slug: slugify(collectionData.title) });
   return collection;
 };
 

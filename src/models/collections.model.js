@@ -13,7 +13,7 @@ const collectionSchema = mongoose.Schema(
     },
     image: {
       type: String,
-      required: true,
+      required: false,
     },
     products: [
       {
@@ -23,7 +23,7 @@ const collectionSchema = mongoose.Schema(
     ],
     slug: {
       type: String,
-      required: true,
+      required: false,
       sparse: true,
       unique: true,
       trim: true,

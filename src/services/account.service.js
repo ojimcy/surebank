@@ -31,6 +31,7 @@ const createAccount = async (accountData, createdBy) => {
     userId,
     firstName: user.firstName,
     lastName: user.lastName,
+    phoneNumber: user.phoneNumber,
     accountNumber,
     availableBalance: 0,
     ledgerBalance: 0,
@@ -84,8 +85,13 @@ const getUserAccountNumber = async (userId) => {
  * @param {string} userId - User ID
  * @returns {Promise<Account>} User's account details
  */
-const getUserAccount = async (userId) => {
-  const account = await Account.find({ userId })
+const getUserAccount = async (userId, accountType) => {
+  const filter = { userId };
+  if (accountType) {
+    filter.accountType = accountType;
+  }
+
+  const account = await Account.findOne(filter)
     .populate([
       {
         path: 'accountManagerId',
@@ -97,9 +103,11 @@ const getUserAccount = async (userId) => {
       },
     ])
     .lean();
+
   if (!account) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User does not have an account');
   }
+
   return account;
 };
 

@@ -5,6 +5,8 @@ const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
 const { getProductCatalogueById } = require('./product.service');
+const { tmpls, sendSms } = require('./sms.service');
+const { constributionMessage } = require('../templates/sms/templates');
 
 const createSbPackage = async (sbPackageData) => {
   const userAccount = await getUserByAccountNumber(sbPackageData.accountNumber);
@@ -17,7 +19,9 @@ const createSbPackage = async (sbPackageData) => {
     accountNumber: sbPackageData.accountNumber,
     status: 'open',
     product: sbPackageData.product,
-  });
+  })
+    .populate('createdBy', 'firstName lastName')
+    .lean();
 
   if (userPackageExist) {
     throw new ApiError(400, 'Customer has an active package running');
@@ -38,6 +42,17 @@ const createSbPackage = async (sbPackageData) => {
     image: product.images[1],
     startDate,
   });
+
+  // Send welcome SMS
+  const phone = userAccount.phoneNumber;
+  const welcomeMessageTemplate = tmpls.WELCOME;
+  const vars = {
+    name: userAccount.firstName,
+    accountNumber: sbPackageData.accountNumber,
+    target: savingsBuyingPackage.targetAmount,
+  };
+
+  await sendSms({ phone, template: welcomeMessageTemplate, vars });
 
   return savingsBuyingPackage;
 };
@@ -114,6 +129,16 @@ const makeDailyContribution = async (contributionInput) => {
     direction: 'inflow',
     narration: `SB Daily contribution`,
   });
+
+  // Send credit SMS
+  const phone = userAccount.phoneNumber;
+  const message = constributionMessage(
+    contributionInput.amount,
+    contributionInput.accountNumber,
+    userPackage.totalContribution,
+    contributionInput.createdBy.firstName
+  );
+  await sendSms(phone, message);
 
   return {
     newContribution,

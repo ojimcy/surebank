@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const httpStatus = require('http-status');
 const { Account, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { withdrawalMessage } = require('../templates/sms/templates');
+const { sendSms } = require('./sms.service');
 
 /**
  * Helper function to find a branch by account number
@@ -351,6 +353,8 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
     }
 
     const { accountNumber, amount } = withdrawalRequest;
+    const account = await Account.findOne({ accountNumber });
+
     const accountBalance = await getAccountBalance(accountNumber);
 
     if (accountBalance < amount) {
@@ -382,6 +386,16 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
         runValidators: true,
       }
     );
+
+    // Send credit SMS
+    const phone = account.phoneNumber;
+    const message = withdrawalMessage(
+      withdrawalRequest.amount,
+      withdrawalRequest.accountNumber,
+      account.availableBalance,
+      withdrawalRequest.userReps.firstName
+    );
+    await sendSms(phone, message);
 
     return {
       accountBalance: updatedBalance.availableBalance,

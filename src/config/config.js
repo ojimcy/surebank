@@ -37,6 +37,7 @@ const envVarsSchema = Joi.object()
     RELOADLY_TOPUPS_BASE_URL: Joi.string().description('Reloadly topups base URL'),
     SMS_API_TOKEN: Joi.string().description('API token for SMS provider'),
     SMS_SENDER: Joi.string().description('Sender name for SMS'),
+    SMS_TEMPLATE_DIRECTORY: Joi.string().description('directory where sms templates are stored'),
   })
   .unknown();
 
@@ -89,6 +90,7 @@ module.exports = {
   sms: {
     apiToken: envVars.SMS_API_TOKEN,
     smsSender: envVars.SMS_SENDER,
+    templateDirectory: envVars.SMS_TEMPLATE_DIRECTORY.toString().trimEnd('/'),
   },
   reloadly: {
     clientId: envVars.RELOADLY_CLIENT_ID,
