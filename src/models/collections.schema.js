@@ -23,7 +23,7 @@ const collectionSchema = mongoose.Schema(
     ],
     slug: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
       sparse: true,
       trim: true,

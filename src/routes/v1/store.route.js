@@ -10,8 +10,8 @@ const router = express.Router();
 
 router
   .route('/brands')
-  .post(auth('manageBrand'), validate(brandValidation.createBrand), brandController.createBrand)
-  .get(auth('manageBrand'), validate(brandValidation.viewBrands), brandController.viewBrands);
+  .post(auth('manageStore'), validate(storeValidation.createBrand), storeController.createBrand)
+  .get(storeController.getBrands);
 
 router
   .route('/brands/:brandId')
@@ -20,7 +20,7 @@ router
 
 router
   .route('/categories')
-  .post(auth('manageCategory'), validate(storeValidation.createCategory), storeController.createCategory)
+  .post(auth('manageStore'), validate(storeValidation.createCategory), storeController.createCategory)
   .get(storeController.getCategories);
 
 module.exports = router;

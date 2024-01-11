@@ -3,7 +3,7 @@ const { toJSON, paginate } = require('./plugins');
 
 const categorySchema = mongoose.Schema(
   {
-    name: {
+    title: {
       type: String,
       required: true,
     },
@@ -23,27 +23,11 @@ const categorySchema = mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-    subCategories: [
-      {
-        heading: {
-          type: String,
-        },
-        items: [
-          {
-            name: {
-              type: String,
-            },
-            slug: {
-              type: String,
-              required: true,
-              unique: true,
-              trim: true,
-              lowercase: true,
-            },
-          },
-        ],
-      },
-    ],
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: false,
+      ref: 'Category',
+    },
   },
   {
     timestamps: true,

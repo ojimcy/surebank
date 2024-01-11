@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const { Category, Brand } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { slugify } = require('../utils/slugify');
 
 /**
  * Create a new category
@@ -9,45 +10,16 @@ const ApiError = require('../utils/ApiError');
  */
 const createCategory = async (categoryData) => {
   const CategoryModel = await Category();
-  const existingCategory = await CategoryModel.findOne({ name: categoryData.name });
+  const existingCategory = await CategoryModel.findOne({ title: categoryData.title });
 
   if (existingCategory) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Category with the same name already exists');
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Category with the same title already exists');
   }
 
-  // Check if subcategories are provided
-  if (categoryData.subCategories && categoryData.subCategories.length > 0) {
-    // Check for existing subcategories
-    const existingSubcategories = await CategoryModel.find({
-      'subCategories.heading': { $in: categoryData.subCategories.map((subcat) => subcat.heading) },
-    });
-
-    if (existingSubcategories.length > 0) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'One or more subcategories already exist');
-    }
-
-    // Update subcategories with slugs
-    const updatedSubCategories = categoryData.subCategories.map((subcategory) => ({
-      heading: subcategory.heading,
-      items: subcategory.items.map((item) => ({
-        name: item.name,
-        slug: item.name.toLowerCase().replace(/\s+/g, '-'),
-      })),
-    }));
-
-    // Create the new category with subcategories
-    const updatedCategoryData = {
-      ...categoryData,
-      slug: categoryData.name.toLowerCase().replace(/\s+/g, '-'),
-      subCategories: updatedSubCategories,
-    };
-
-    return CategoryModel.create(updatedCategoryData);
-  }
   // Create the new category without subcategories
   return CategoryModel.create({
     ...categoryData,
-    slug: categoryData.name.toLowerCase().replace(/\s+/g, '-'),
+    slug: slugify(categoryData.title),
   });
 };
 

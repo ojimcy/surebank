@@ -84,7 +84,7 @@ const adminPermissions = [
   'manageVendors',
   'managePromotion',
   'manageCollection',
-  'manageCategory',
+  'manageStore',
   'manageBrand',
 ];
 

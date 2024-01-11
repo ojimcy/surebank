@@ -16,7 +16,6 @@ const dailySavingsRoute = require('./dailySavings.route');
 const merchantRoute = require('./merchant.route');
 const productRoute = require('./product.route');
 const storeRoute = require('./store.route');
-const brandRoute = require('./brand.route');
 const cartRoute = require('./cart.route');
 const salesRoute = require('./sales.route');
 const reportsRoute = require('./reports.route');
@@ -86,12 +85,8 @@ const defaultRoutes = [
     route: productRoute,
   },
   {
-    path: '/store',
+    path: '/stores',
     route: storeRoute,
-  },
-  {
-    path: '/brands',
-    route: brandRoute,
   },
   {
     path: '/cart',
