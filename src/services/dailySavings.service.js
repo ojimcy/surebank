@@ -4,7 +4,7 @@ const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { CONTRIBUTION_CIRCLE } = require('../constants/account');
 const { sendSms } = require('./sms.service');
-const { welcomeMessage, constributionMessage } = require('../templates/sms/templates');
+const { welcomeMessage, contributionMessage } = require('../templates/sms/templates');
 
 /**
  * Save a charge and update the count in the associated package
@@ -188,7 +188,7 @@ const saveDailyContribution = async (contributionInput) => {
 
     // Send credit SMS
     const phone = userAccount.phoneNumber;
-    const message = constributionMessage(
+    const message = contributionMessage(
       contributionInput.amount,
       contributionInput.accountNumber,
       userPackage.totalContribution,

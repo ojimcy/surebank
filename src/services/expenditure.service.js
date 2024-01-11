@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const { Expenditure, BranchStaff } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { getUserById } = require('./user.service');
 
 /**
  * Create a new expenditure
@@ -8,15 +9,11 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<Object>} The created expenditure object
  */
 const createExpenditure = async (expenditureInput) => {
+  const user = await getUserById(expenditureInput.createdBy);
   const branch = await BranchStaff.findOne({ staffId: expenditureInput.createdBy });
-  if (!branch) {
+  if (!user.role === 'superAdmin' || !branch) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Branch not found for the given admin');
   }
-  // Check if branch has a valid branchId before destructuring
-  if (!branch.branchId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Branch does not have a valid branchId');
-  }
-
   const { branchId } = branch;
   const createdExpenditure = await Expenditure.create({ ...expenditureInput, branchId });
   return createdExpenditure;
