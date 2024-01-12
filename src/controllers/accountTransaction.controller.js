@@ -112,17 +112,18 @@ const rejectWithdrawalRequest = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(result);
 });
 
-const getAllWithdrawalRequests = catchAsync(async (req, res) => {
-  const { startDate, endDate, branchId, createdBy, page = 1, limit = 20 } = req.query;
+const getAllWithdrawals = catchAsync(async (req, res) => {
+  const { startDate, endDate, branchId, createdBy, status, page = 1, limit = 20 } = req.query;
 
   const parsedPage = parseInt(page, 10);
   const parsedLimit = parseInt(limit, 10);
 
-  const result = await accountTransactionService.getAllWithdrawalRequests(
+  const result = await accountTransactionService.getAllWithdrawals(
     startDate,
     endDate,
     branchId,
     createdBy,
+    status,
     parsedPage,
     parsedLimit
   );
@@ -164,7 +165,7 @@ module.exports = {
   getCustomerwithdrawals,
   makeWithdrawalRequest,
   rejectWithdrawalRequest,
-  getAllWithdrawalRequests,
+  getAllWithdrawals,
   getWithdrawalRequestById,
   getHeldAmount,
 };

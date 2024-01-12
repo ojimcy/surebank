@@ -271,7 +271,7 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
  * @param {string} [createdBy] - Optional createdBy to filter by
  * @returns {Promise<Array>} Array of ds withdrawals
  */
-const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy) => {
+const getAllWithdrawals = async (startDate, endDate, branchId, createdBy, status) => {
   const AccountTransactionModel = await AccountTransaction();
   try {
     const query = {};
@@ -293,7 +293,10 @@ const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy)
     if (createdBy) {
       query.createdBy = createdBy;
     }
-    query.status = 'pending';
+    // Optional status filtering
+    if (status) {
+      query.status = status;
+    }
     query.narration = 'Request Cash';
     const withdrawalRequests = await AccountTransactionModel.find(query)
       .populate([
@@ -355,7 +358,6 @@ const getWithdrawalRequestById = async (requestId) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const makeCustomerWithdrawal = async (requestId, approvedBy) => {
-  const AccountModel = await Account();
   try {
     const withdrawalRequest = await getWithdrawalRequestById(requestId);
 
@@ -390,20 +392,7 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
 
     await withdrawalRequest.save();
 
-    // Deduct the withdrawn amount from the account
-    const updatedBalance = await AccountModel.findOneAndUpdate(
-      { accountNumber },
-      {
-        $inc: {
-          availableBalance: -amount,
-          ledgerBalance: -amount,
-        },
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    await spendHeldAmount(accountNumber, amount);
 
     // Send credit SMS
     const phone = account.phoneNumber;
@@ -416,7 +405,6 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
     await sendSms(phone, message);
 
     return {
-      accountBalance: updatedBalance.availableBalance,
       fulfilledWithdrawal: withdrawalRequest,
     };
   } catch (error) {
@@ -594,7 +582,7 @@ module.exports = {
   getCustomerwithdrawals,
   makeWithdrawalRequest,
   rejectWithdrawalRequest,
-  getAllWithdrawalRequests,
+  getAllWithdrawals,
   getWithdrawalRequestById,
   getHeldAmount,
 };

@@ -3,9 +3,10 @@ const { Package, Contribution, AccountTransaction, Account, Charge } = require('
 const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { getUserById } = require('./user.service');
-const { CONTRIBUTION_CIRCLE } = require('../constants/account');
+const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 const { sendSms } = require('./sms.service');
 const { welcomeMessage, constributionMessage } = require('../templates/sms/templates');
+const { addLedgerEntry } = require('./accounting.service');
 
 /**
  * Save a charge and update the count in the associated package
@@ -179,6 +180,18 @@ const saveDailyContribution = async (contributionInput) => {
       );
       await saveCharge(userPackageId, userPackage.amountPerDay, session);
     }
+
+    const addLedgerEntryInput = {
+      type: ACCOUNT_TYPE[1],
+      direction: DIRECTION_VALUE[0],
+      date: currentDate,
+      narration: 'Daily contribution',
+      amount: contributionInput.amount,
+      userId: userPackage.createdBy,
+      branchId: branch.branchId,
+    };
+
+    await addLedgerEntry(addLedgerEntryInput);
 
     const transactionDate = new Date().getTime();
 
