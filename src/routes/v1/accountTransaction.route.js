@@ -63,8 +63,8 @@ router
   )
   .get(
     auth('requestCash'),
-    validate(accountTransactionValidation.getAllWithdrawalRequests),
-    accountTransactionController.getAllWithdrawalRequests
+    validate(accountTransactionValidation.getAllWithdrawals),
+    accountTransactionController.getAllWithdrawals
   );
 
 router

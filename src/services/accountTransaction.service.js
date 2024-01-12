@@ -254,7 +254,7 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
  * @param {string} [createdBy] - Optional createdBy to filter by
  * @returns {Promise<Array>} Array of ds withdrawals
  */
-const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy) => {
+const getAllWithdrawals = async (startDate, endDate, branchId, createdBy, status) => {
   try {
     const query = {};
     // Optional date range filtering
@@ -276,7 +276,11 @@ const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy)
       query.createdBy = createdBy;
     }
 
-    query.status = 'pending';
+    // Optional createdBy filtering
+    if (status) {
+      query.status = status;
+    }
+
     query.narration = 'Request Cash';
     const withdrawalRequests = await AccountTransaction.find(query)
       .populate([
@@ -372,20 +376,7 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
 
     await withdrawalRequest.save();
 
-    // Deduct the withdrawn amount from the account
-    const updatedBalance = await Account.findOneAndUpdate(
-      { accountNumber },
-      {
-        $inc: {
-          availableBalance: -amount,
-          ledgerBalance: -amount,
-        },
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    await spendHeldAmount(accountNumber, amount);
 
     // Send credit SMS
     const phone = account.phoneNumber;
@@ -398,7 +389,6 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
     await sendSms(phone, message);
 
     return {
-      accountBalance: updatedBalance.availableBalance,
       fulfilledWithdrawal: withdrawalRequest,
     };
   } catch (error) {
@@ -592,7 +582,7 @@ module.exports = {
   getCustomerwithdrawals,
   makeWithdrawalRequest,
   rejectWithdrawalRequest,
-  getAllWithdrawalRequests,
+  getAllWithdrawals,
   getWithdrawalRequestById,
   getAccountTransactionsForStaff,
 };

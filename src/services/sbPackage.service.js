@@ -107,8 +107,8 @@ const makeDailyContribution = async (contributionInput) => {
   });
 
   const addLedgerEntryInput = {
-    type: ACCOUNT_TYPE.sb,
-    direction: DIRECTION_VALUE.inflow,
+    type: ACCOUNT_TYPE[2],
+    direction: DIRECTION_VALUE[0],
     date: currentDate,
     narration: 'SB contribution',
     amount: contributionInput.amount,
