@@ -92,7 +92,7 @@ const getUserAccountNumber = async (userId) => {
 const getUserAccount = async (userId, accountType) => {
   const accountModel = await Account();
   const account = await accountModel
-    .find({ userId, accountType })
+    .findOne({ userId, accountType })
     .populate([
       {
         path: 'accountManagerId',
