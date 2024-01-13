@@ -348,7 +348,30 @@ const getProductsBySlug = async (collectionSlug) => {
 
 const getProductCatalogue = async (filter, options) => {
   const ProductCatalogueModel = await ProductCatalogue();
-  const product = await ProductCatalogueModel.paginate(filter, options);
+  const { limit = 10, page = 1, sortBy } = options;
+  const skip = (page - 1) * limit;
+
+  const query = {};
+
+  if (filter.merchantId) {
+    query['merchantId.id'] = filter.merchantId.id;
+  }
+
+  const product = await ProductCatalogueModel.find(query)
+    .populate([
+      {
+        path: 'productId',
+        model: 'Product',
+      },
+      {
+        path: 'merchantId',
+        select: 'storeName',
+      },
+    ])
+    .skip(skip)
+    .limit(limit)
+    .sort(sortBy);
+
   return product;
 };
 

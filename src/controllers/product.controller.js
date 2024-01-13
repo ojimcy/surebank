@@ -57,8 +57,11 @@ const rejectProduct = catchAsync(async (req, res) => {
 });
 
 const viewProducts = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['name', 'role']);
+  const filter = pick(req.query, ['merchantId']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+  options.limit = parseInt(options.limit, 10) || 20;
+  options.page = parseInt(options.page, 10) || 1;
   const result = await productService.viewProducts(filter, options);
   res.status(httpStatus.OK).send(result);
 });
