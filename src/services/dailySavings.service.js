@@ -5,7 +5,7 @@ const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransa
 const { getUserById } = require('./user.service');
 const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 const { sendSms } = require('./sms.service');
-const { welcomeMessage, constributionMessage } = require('../templates/sms/templates');
+const { welcomeMessage, contributionMessage } = require('../templates/sms/templates');
 const { addLedgerEntry } = require('./accounting.service');
 
 /**
@@ -212,7 +212,7 @@ const saveDailyContribution = async (contributionInput) => {
 
     // Send credit SMS
     const phone = userAccount.phoneNumber;
-    const message = constributionMessage(
+    const message = contributionMessage(
       contributionInput.amount,
       contributionInput.accountNumber,
       userPackage.totalContribution,

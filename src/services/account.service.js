@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const { Account } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { generateAccountNumber } = require('../utils/account/accountUtils');
-const { getUserByEmail } = require('./user.service');
+const { getUserByEmail, getUserById } = require('./user.service');
 
 /**
  * Create an account
@@ -24,6 +24,8 @@ const createAccount = async (accountData, createdBy) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'User already has an account of the specified type');
   }
 
+  const accManager = await getUserById(createdBy);
+
   // Generate a unique account number
   const accountNumber = await generateAccountNumber();
 
@@ -38,7 +40,7 @@ const createAccount = async (accountData, createdBy) => {
     ledgerBalance: 0,
     accountType,
     createdBy,
-    accountManagerId: accountData.accountManagerId || null,
+    accountManagerId: accManager.role === 'userReps' ? createdBy : null,
     branchId,
     status: 'active',
   };
