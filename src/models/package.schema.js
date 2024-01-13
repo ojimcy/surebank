@@ -55,6 +55,10 @@ const packageSchema = mongoose.Schema(
       type: String,
       default: 0,
     },
+    deductionCount: {
+      type: Number,
+      default: 0,
+    },
     targetAmount: {
       type: Number,
       default: 0,

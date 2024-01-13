@@ -122,6 +122,10 @@ const saveDailyContribution = async (contributionInput) => {
       throw new ApiError(400, `Amount is not valid for ${userPackage.amountPerDay} daily savings package`);
     }
 
+    if (contributionInput.amount / userPackage.amountPerDay >= 30) {
+      throw new ApiError(409, 'Amount too big');
+    }
+
     const userPackageId = userPackage._id;
     const contributionDaysCount = contributionInput.amount / userPackage.amountPerDay;
     const currentDate = new Date().getTime();
@@ -168,13 +172,17 @@ const saveDailyContribution = async (contributionInput) => {
       { session }
     );
 
+    let expectedDeduction = totalCount - (totalCount % CONTRIBUTION_CIRCLE) / CONTRIBUTION_CIRCLE;
+    if (totalCount % CONTRIBUTION_CIRCLE > 0) {
+      expectedDeduction += 1;
+    }
     // Check for first contribution in each circle
-    if (totalCount % CONTRIBUTION_CIRCLE === 1) {
+    if (userPackage.deductionCount < expectedDeduction) {
       // Charge the user amountPerDay on the first savings of each cycle
       await PackageModel.findByIdAndUpdate(
         userPackageId,
         {
-          $inc: { totalContribution: -userPackage.amountPerDay },
+          $inc: { totalContribution: -userPackage.amountPerDay, deductionCount: 1 },
         },
         { session }
       );
@@ -191,7 +199,7 @@ const saveDailyContribution = async (contributionInput) => {
       branchId: branch.branchId,
     };
 
-    await addLedgerEntry(addLedgerEntryInput);
+    await addLedgerEntry(addLedgerEntryInput, session);
 
     const transactionDate = new Date().getTime();
 

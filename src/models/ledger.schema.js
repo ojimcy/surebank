@@ -20,7 +20,6 @@ const ledgerSchema = mongoose.Schema(
     narration: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
     type: {
