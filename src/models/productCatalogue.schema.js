@@ -19,9 +19,9 @@ const productCatalogueSchema = mongoose.Schema(
     },
     featuredImage: {
       type: String,
-      required: true,
+      required: false,
     },
-    images: [{ type: String, required: true }],
+    images: [{ type: String, required: false }],
     description: {
       type: String,
       required: true,

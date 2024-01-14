@@ -12,8 +12,8 @@ const getTotalContributions = catchAsync(async (req, res) => {
 });
 
 const getDailySavingsWithdrawals = catchAsync(async (req, res) => {
-  const { startDate, endDateParam } = req.query;
-  const totalWithdrawals = await reportService.getTotalDailySavingsWithdrawal(startDate, endDateParam);
+  const { startDate, endDateParam, branchId, createdBy } = req.query;
+  const totalWithdrawals = await reportService.getTotalDailySavingsWithdrawal(startDate, endDateParam, branchId, createdBy);
   res.status(httpStatus.OK).json(totalWithdrawals);
 });
 

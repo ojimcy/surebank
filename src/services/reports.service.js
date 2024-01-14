@@ -4,29 +4,40 @@ const ApiError = require('../utils/ApiError');
 
 /**
  * Retrieves the total daily savings withdrawals made each day.
- * @returns {Promise<number>} Array of objects representing the total daily savings withdrawals for each day.
+ * @param {number} startDate - Timestamp representing the start date
+ * @param {number} endDate - Timestamp representing the end date (optional)
+ * @param {string} branchId - Branch ID (optional)
+ * @param {string} createdBy - User ID (optional)
+ * @param {number} limit - Limit the number of results (default is 10)
+ * @returns {Promise<Array>} Array of objects representing the total daily savings withdrawals for each day.
  * Each object has the following fields:
  * - date: The date for which the total withdrawals were calculated.
  * - total: The total amount of savings withdrawals made on that day.
  * @throws {Error} If there is an error retrieving the total daily withdrawals.
  */
-const getTotalDailySavingsWithdrawal = async (startDate, endDateParam, limit = 10) => {
+const getTotalDailySavingsWithdrawal = async (startDate, endDateParam, branchId, createdBy, limit = 10) => {
   try {
     const AccountTransactionModel = await AccountTransaction();
+
     // Set the endDate to the current date if not provided
     let endDate = endDateParam;
     if (!endDate) {
       endDate = new Date().getTime();
     }
+
+    // Build the match criteria
+    const matchCriteria = {
+      date: { $gte: startDate, $lte: endDate },
+      direction: 'inflow',
+      narration: 'Daily contribution withdrawal',
+    };
+
+    if (branchId) matchCriteria.branchId = branchId;
+    if (createdBy) matchCriteria.createdBy = createdBy;
+
     // Get the total daily savings withdrawals for each day using aggregation
     const totalWithdrawals = await AccountTransactionModel.aggregate([
-      {
-        $match: {
-          date: { $gte: startDate, $lte: endDate },
-          direction: 'inflow',
-          narration: 'Daily contribution withdrawal',
-        },
-      },
+      { $match: matchCriteria },
       {
         $group: {
           _id: {
