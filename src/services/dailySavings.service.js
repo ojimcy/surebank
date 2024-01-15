@@ -123,6 +123,9 @@ const saveDailyContribution = async (contributionInput) => {
       throw new ApiError(403, 'This package has been closed');
     }
 
+    if (contributionInput.amount / userPackage.amountPerDay >= 30) {
+      throw new ApiError(409, 'Amount too big');
+    }
     // Calculate the new total count by adding contributionDaysCount to the existing value
     const totalCount = userPackage.totalCount + contributionDaysCount;
 
@@ -157,13 +160,18 @@ const saveDailyContribution = async (contributionInput) => {
       { session }
     );
 
+    let expectedDeduction = totalCount - (totalCount % CONTRIBUTION_CIRCLE) / CONTRIBUTION_CIRCLE;
+    if (totalCount % CONTRIBUTION_CIRCLE > 0) {
+      expectedDeduction += 1;
+    }
+
     // Check for first contribution of subsequent
-    if (totalCount % CONTRIBUTION_CIRCLE === 1) {
+    if (userPackage.deductionCount < expectedDeduction) {
       // Charge the user amountPerDay on the first savings of each cycle
       await Package.findByIdAndUpdate(
         userPackageId,
         {
-          $inc: { totalContribution: -userPackage.amountPerDay },
+          $inc: { totalContribution: -userPackage.amountPerDay, deductionCount: 1 },
         },
         { session }
       );
@@ -180,7 +188,7 @@ const saveDailyContribution = async (contributionInput) => {
       branchId: branch.branchId,
     };
 
-    await addLedgerEntry(addLedgerEntryInput);
+    await addLedgerEntry(addLedgerEntryInput, session);
 
     const transactionDate = new Date().getTime();
 
@@ -207,6 +215,7 @@ const saveDailyContribution = async (contributionInput) => {
       userPackage.totalContribution,
       contributionInput.createdBy.firstName
     );
+
     await sendSms(phone, message);
 
     await session.commitTransaction();

@@ -5,8 +5,8 @@ const ApiError = require('../utils/ApiError');
 const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
 const { getProductCatalogueById } = require('./product.service');
-const { tmpls, sendSms } = require('./sms.service');
-const { constributionMessage } = require('../templates/sms/templates');
+const { sendSms } = require('./sms.service');
+const { contributionMessage, welcomeMessage } = require('../templates/sms/templates');
 
 const createSbPackage = async (sbPackageData) => {
   const userAccount = await getUserByAccountNumber(sbPackageData.accountNumber);
@@ -44,15 +44,10 @@ const createSbPackage = async (sbPackageData) => {
   });
 
   // Send welcome SMS
-  const phone = userAccount.phoneNumber;
-  const welcomeMessageTemplate = tmpls.WELCOME;
-  const vars = {
-    name: userAccount.firstName,
-    accountNumber: sbPackageData.accountNumber,
-    target: savingsBuyingPackage.targetAmount,
-  };
 
-  await sendSms({ phone, template: welcomeMessageTemplate, vars });
+  const phone = userAccount.phoneNumber;
+  const message = welcomeMessage(userAccount.firstName, sbPackageData.accountNumber, sbPackageData.target);
+  await sendSms(phone, message);
 
   return savingsBuyingPackage;
 };
@@ -132,13 +127,26 @@ const makeDailyContribution = async (contributionInput) => {
 
   // Send credit SMS
   const phone = userAccount.phoneNumber;
-  const message = constributionMessage(
+  const message = contributionMessage(
     contributionInput.amount,
     contributionInput.accountNumber,
     userPackage.totalContribution,
     contributionInput.createdBy.firstName
   );
   await sendSms(phone, message);
+
+  // Check if totalContribution equals the product price
+  const { product } = contributionInput;
+  if (userPackage.totalContribution >= product.price) {
+    // Make customer deposit
+    const depositDetails = {
+      accountNumber: contributionInput.accountNumber,
+      amount: userPackage.totalContribution,
+      createdBy: contributionInput.createdBy,
+      narration: 'SB Daily contribution transfer to available balance',
+    };
+    await makeCustomerDeposit(depositDetails);
+  }
 
   return {
     newContribution,
@@ -218,7 +226,7 @@ const makeSbWithdrawal = async (withdrawal) => {
 const getPackageById = async (packageId) => {
   const userPackage = await SbPackage.findById(packageId).populate({
     path: 'product',
-    select: ['name', 'images', 'price', 'salesPrice'],
+    select: ['name', 'images', 'price', 'sellingPrice'],
   });
   if (!userPackage) {
     throw new ApiError(404, 'Package not found!!!');

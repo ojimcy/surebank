@@ -54,11 +54,11 @@ const deleteProductRequest = {
 const createProductCatalogue = {
   body: Joi.object().keys({
     productId: Joi.string().required().custom(objectId),
-    featuredImage: Joi.string().required(),
-    images: Joi.string().required(),
+    featuredImage: Joi.string().optional(),
+    images: Joi.string().optional(),
     name: Joi.string().required(),
     description: Joi.string().required(),
-    salesPrice: Joi.number().required(),
+    sellingPrice: Joi.number().required(),
     price: Joi.number().required(),
     quantity: Joi.number().required(),
     discount: Joi.number().optional(),

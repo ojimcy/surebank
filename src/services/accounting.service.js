@@ -7,7 +7,7 @@ const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
  * @returns {Promise<Object>} Result of the ledger entry operation
  */
 
-const addLedgerEntry = async (addLedgerEntryInput) => {
+const addLedgerEntry = async (addLedgerEntryInput, session) => {
   const { type } = addLedgerEntryInput;
   if (!ACCOUNT_TYPE.includes(type)) {
     return { success: false, data: null, message: 'Invalid account type' };
@@ -22,7 +22,7 @@ const addLedgerEntry = async (addLedgerEntryInput) => {
   if (amount < 0) {
     return { success: false, data: null, message: 'Invalid amount' };
   }
-  const createLedgerEntry = await Ledger.create(addLedgerEntryInput);
+  const createLedgerEntry = await Ledger.create([addLedgerEntryInput], { session });
   return createLedgerEntry;
 };
 
