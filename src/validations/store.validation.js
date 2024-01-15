@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { objectId } = require('./custom.validation');
 
 const createCategory = {
   body: Joi.object().keys({
@@ -6,6 +7,25 @@ const createCategory = {
     image: Joi.string().optional(),
     description: Joi.string().optional(),
     parentCategoryId: Joi.optional(),
+  }),
+};
+
+const updateCategory = {
+  params: Joi.object().keys({
+    categoryId: Joi.string().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    title: Joi.string().optional(),
+    image: Joi.string().optional(),
+    description: Joi.string().optional(),
+    slug: Joi.string().optional(),
+    parentCategoryId: Joi.optional(),
+  }),
+};
+
+const deleteCatgory = {
+  params: Joi.object().keys({
+    categoryId: Joi.string().custom(objectId),
   }),
 };
 
@@ -19,4 +39,6 @@ const createBrand = {
 module.exports = {
   createCategory,
   createBrand,
+  updateCategory,
+  deleteCatgory,
 };

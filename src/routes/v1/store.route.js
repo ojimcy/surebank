@@ -19,6 +19,11 @@ router
   .delete(auth('manageBrand'), validate(brandValidation.deleteBrand), brandController.deleteBrand);
 
 router
+  .route('/categories/:categoryId')
+  .patch(auth('manageStore'), validate(storeValidation.updateCategory), storeController.updateCatgory)
+  .delete(auth('manageStore'), validate(storeValidation.deleteCatgory), storeController.deleteCatgory);
+
+router
   .route('/categories')
   .post(auth('manageStore'), validate(storeValidation.createCategory), storeController.createCategory)
   .get(storeController.getCategories);

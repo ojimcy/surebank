@@ -24,9 +24,21 @@ const getBrands = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(brands);
 });
 
+const updateCatgory = catchAsync(async (req, res) => {
+  const category = await storeService.updateCategory(req.params.categoryId, req.body);
+  res.send(category);
+});
+
+const deleteCatgory = catchAsync(async (req, res) => {
+  await storeService.deleteCategoryById(req.params.categoryId);
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
 module.exports = {
   createCategory,
   createBrand,
   getCategories,
   getBrands,
+  updateCatgory,
+  deleteCatgory,
 };
