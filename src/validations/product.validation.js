@@ -59,7 +59,7 @@ const createProductCatalogue = {
     name: Joi.string().required(),
     description: Joi.string().required(),
     sellingPrice: Joi.number().required(),
-    price: Joi.number().required(),
+    costPrice: Joi.number().required(),
     quantity: Joi.number().required(),
     discount: Joi.number().optional(),
   }),
@@ -96,7 +96,7 @@ const viewProduct = {
   }),
 };
 
-const updateProduct = {
+const updateProductCatalogue = {
   params: Joi.object().keys({
     productId: Joi.string().required().custom(objectId),
   }),
@@ -108,8 +108,8 @@ const updateProduct = {
     categoryId: Joi.string().optional().custom(objectId),
     subCategoryId: Joi.string().optional().custom(objectId),
     brand: Joi.string().optional().custom(objectId),
-    originalPrice: Joi.number().optional(),
-    price: Joi.number().optional(),
+    costPrice: Joi.number().optional(),
+    sellingPrice: Joi.number().optional(),
     reviews: Joi.string().optional(),
     features: Joi.string().optional(),
     ratings: Joi.string().optional(),
@@ -167,7 +167,7 @@ module.exports = {
   viewProducts,
   viewProduct,
   deleteProduct,
-  updateProduct,
+  updateProductCatalogue,
   addProductToCollection,
   getProductsBySlug,
   deleteProductCatalogue,

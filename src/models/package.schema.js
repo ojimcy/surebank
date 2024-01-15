@@ -59,6 +59,10 @@ const packageSchema = mongoose.Schema(
       type: Number,
       default: 0,
     },
+    totalCharge: {
+      type: Number,
+      default: 0,
+    },
     targetAmount: {
       type: Number,
       default: 0,

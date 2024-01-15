@@ -34,7 +34,12 @@ router
     validate(productValidation.deleteProductCatalogue),
     productController.deleteProductCatalogue
   )
-  .get(validate(productValidation.viewProduct), productController.viewProductCatalogue);
+  .get(validate(productValidation.viewProduct), productController.viewProductCatalogue)
+  .patch(
+    auth('manageProduct'),
+    validate(productValidation.updateProductCatalogue),
+    productController.updateProductCatalogue
+  );
 
 router
   .route('/request')
@@ -46,7 +51,6 @@ router.route('/count').get(productController.getTotalCount);
 router
   .route('/:productId')
   .get(validate(productValidation.viewProduct), productController.viewProduct)
-  .patch(auth('manageProduct'), validate(productValidation.updateProduct), productController.updateProduct)
   .delete(auth('manageProduct'), validate(productValidation.deleteProduct), productController.deleteProduct);
 
 router
