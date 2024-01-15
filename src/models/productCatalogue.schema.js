@@ -26,7 +26,7 @@ const productCatalogueSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    salesPrice: {
+    sellingPrice: {
       type: Number,
       required: true,
     },

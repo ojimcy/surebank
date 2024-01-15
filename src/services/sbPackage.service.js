@@ -6,7 +6,7 @@ const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransa
 const { addLedgerEntry } = require('./accounting.service');
 const { getProductCatalogueById } = require('./product.service');
 const { sendSms } = require('./sms.service');
-const { constributionMessage } = require('../templates/sms/templates');
+const { contributionMessage } = require('../templates/sms/templates');
 
 const createSbPackage = async (sbPackageData) => {
   const SbPackageModel = await SbPackage();
@@ -41,7 +41,7 @@ const createSbPackage = async (sbPackageData) => {
   const sbPackage = await SbPackageModel.create({
     ...sbPackageData,
     userId: userAccount.userId,
-    targetAmount: product.price,
+    targetAmount: product.sellingPrice,
     image: product.images[1],
     startDate,
   });
@@ -131,13 +131,26 @@ const makeDailyContribution = async (contributionInput) => {
 
   // Send credit SMS
   const phone = userAccount.phoneNumber;
-  const message = constributionMessage(
+  const message = contributionMessage(
     contributionInput.amount,
     contributionInput.accountNumber,
     userPackage.totalContribution,
     contributionInput.createdBy.firstName
   );
   await sendSms(phone, message);
+
+  // Check if totalContribution equals the product price
+  const { product } = contributionInput;
+  if (userPackage.totalContribution >= product.price) {
+    // Make customer deposit
+    const depositDetails = {
+      accountNumber: contributionInput.accountNumber,
+      amount: userPackage.totalContribution,
+      createdBy: contributionInput.createdBy,
+      narration: 'SB Daily contribution transfer to available balance',
+    };
+    await makeCustomerDeposit(depositDetails);
+  }
 
   return {
     newContribution,

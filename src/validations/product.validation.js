@@ -58,7 +58,7 @@ const createProductCatalogue = {
     images: Joi.string().optional(),
     name: Joi.string().required(),
     description: Joi.string().required(),
-    salesPrice: Joi.number().required(),
+    sellingPrice: Joi.number().required(),
     price: Joi.number().required(),
     quantity: Joi.number().required(),
     discount: Joi.number().optional(),

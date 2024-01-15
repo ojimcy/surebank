@@ -363,10 +363,6 @@ const getProductCatalogue = async (filter, options) => {
         path: 'productId',
         model: 'Product',
       },
-      {
-        path: 'merchantId',
-        select: 'storeName',
-      },
     ])
     .skip(skip)
     .limit(limit)

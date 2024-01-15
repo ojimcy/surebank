@@ -59,13 +59,13 @@ const addToCart = async (userId, productCatalogueId, quantity) => {
   }
 
   // If the item doesn't exist, create a new cart item
-  const subTotal = product.salesPrice * quantity;
+  const subTotal = product.sellingPrice * quantity;
   const cartId = cart._id;
 
   const cartItem = await CartItemModel.create({
     cartId,
     productCatalogueId,
-    unitPrice: product.salesPrice,
+    unitPrice: product.sellingPrice,
     quantity,
     subTotal,
   });
