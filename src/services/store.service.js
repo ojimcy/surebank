@@ -101,6 +101,39 @@ const getBrandById = async (id) => {
   return brand;
 };
 
+/**
+ * Update category
+ * @param {string} categoryId - The ID of the category catalogue to update
+ * @param {Object} updateData - The updated data for the category
+ * @returns {Promise<Object>} The updated category
+ */
+const updateCategory = async (categoryId, updateData) => {
+  // Check if the category exists
+  const category = getCategoryById(categoryId);
+  if (!category) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Category not found');
+  }
+
+  Object.assign(category, updateData);
+  await category.save();
+
+  return category;
+};
+
+/**
+ * Delete category by id
+ * @param {ObjectId} categoryId
+ * @returns {Promise<Category>}
+ */
+const deleteCategoryById = async (categoryId) => {
+  const category = await getCategoryById(categoryId);
+  if (!category) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Category not found');
+  }
+  await category.remove();
+  return category;
+};
+
 module.exports = {
   createCategory,
   getCategories,
@@ -108,4 +141,6 @@ module.exports = {
   createBrand,
   getBrands,
   getBrandById,
+  updateCategory,
+  deleteCategoryById,
 };
