@@ -203,13 +203,13 @@ const getMyDsWithdrawals = async (createdBy, startDate, endDateParam, limit = 10
 };
 
 /**
- * Get packages that have been charged (hasBeenCharged is true).
+ * Get packages that have been charged (deductionCount is greater than 0).
  * @returns {Promise<Array>} Array of packages that have been charged.
  * Each object represents a charged package with its details.
  */
 const getChargedPackages = async () => {
   try {
-    const chargedPackages = await Package.find({ hasBeenCharged: true }).populate([
+    const chargedPackages = await Package.find({ deductionCount: { $gt: 0 } }).populate([
       {
         path: 'userId',
         select: 'firstName lastName role',

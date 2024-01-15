@@ -30,7 +30,11 @@ const productCatalogueSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
-    price: {
+    costPrice: {
+      type: Number,
+      required: true,
+    },
+    discount: {
       type: Number,
       required: true,
     },
@@ -65,12 +69,6 @@ const productCatalogueSchema = mongoose.Schema(
     quantity: {
       type: Number,
       required: true,
-    },
-
-    discount: {
-      type: Number,
-      startDate: Date,
-      endDate: Date,
     },
 
     tags: [String],

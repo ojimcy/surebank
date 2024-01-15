@@ -171,7 +171,7 @@ const saveDailyContribution = async (contributionInput) => {
       await Package.findByIdAndUpdate(
         userPackageId,
         {
-          $inc: { totalContribution: -userPackage.amountPerDay, deductionCount: 1 },
+          $inc: { totalContribution: -userPackage.amountPerDay, deductionCount: 1, totalCharge: userPackage.amountPerDay },
         },
         { session }
       );

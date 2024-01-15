@@ -38,7 +38,7 @@ const createSbPackage = async (sbPackageData) => {
   const savingsBuyingPackage = await SbPackage.create({
     ...sbPackageData,
     userId: userAccount.userId,
-    targetAmount: product.price,
+    targetAmount: product.sellingPrice,
     image: product.images[1],
     startDate,
   });
@@ -137,7 +137,7 @@ const makeDailyContribution = async (contributionInput) => {
 
   // Check if totalContribution equals the product price
   const { product } = contributionInput;
-  if (userPackage.totalContribution >= product.price) {
+  if (userPackage.totalContribution >= product.sellingPrice) {
     // Make customer deposit
     const depositDetails = {
       accountNumber: contributionInput.accountNumber,
@@ -226,7 +226,7 @@ const makeSbWithdrawal = async (withdrawal) => {
 const getPackageById = async (packageId) => {
   const userPackage = await SbPackage.findById(packageId).populate({
     path: 'product',
-    select: ['name', 'images', 'price', 'sellingPrice'],
+    select: ['name', 'images', 'costPrice', 'sellingPrice'],
   });
   if (!userPackage) {
     throw new ApiError(404, 'Package not found!!!');

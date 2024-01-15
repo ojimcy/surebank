@@ -68,11 +68,11 @@ const viewProduct = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(product);
 });
 
-const updateProduct = catchAsync(async (req, res) => {
+const updateProductCatalogue = catchAsync(async (req, res) => {
   const { productId } = req.params;
   const updateData = req.body;
 
-  const updatedProduct = await productService.updateProduct(productId, updateData);
+  const updatedProduct = await productService.updateProductCatalogue(productId, updateData);
 
   res.status(httpStatus.OK).send(updatedProduct);
 });
@@ -145,7 +145,7 @@ module.exports = {
   rejectProduct,
   viewProducts,
   viewProduct,
-  updateProduct,
+  updateProductCatalogue,
   deleteProduct,
   addProductToCollection,
   getProductsBySlug,
