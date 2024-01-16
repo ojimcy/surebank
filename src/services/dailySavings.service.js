@@ -202,6 +202,7 @@ const saveDailyContribution = async (contributionInput) => {
           date: transactionDate,
           direction: 'inflow',
           narration: `Daily contribution`,
+          userId: userAccount,
         },
       ],
       { session }

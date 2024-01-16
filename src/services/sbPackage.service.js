@@ -306,6 +306,7 @@ const mergeSavingsPackages = async (targetPackageId, sourcePackageIds) => {
       date: currentDate,
       direction: 'inflow',
       narration: 'Savings packages merged',
+      userId: userAccount,
     });
 
     // Close the source packages
