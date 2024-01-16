@@ -241,6 +241,7 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
           status: 'pending',
           direction: 'outflow',
           narration: 'Request Cash',
+          userId: account,
         },
       ],
       { session }
@@ -476,7 +477,7 @@ const getAccountTransactions = async (options = {}) => {
   const transactions = await AccountTransactionModel.find(query)
     .populate([
       {
-        path: 'userReps',
+        path: 'userId',
         select: 'firstName lastName',
       },
       {

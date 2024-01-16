@@ -147,6 +147,7 @@ const makeWithdrawal = async (withdrawalInput, userId, userReps) => {
           date: transactionDate,
           direction: 'outflow',
           narration: withdrawalInput.narration,
+          userId: userAccount,
         },
       ],
       { session }
