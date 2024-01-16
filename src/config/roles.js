@@ -67,7 +67,6 @@ const managerPermissions = [
   'makeDeposit',
   'makeWithdrawal',
   'rejectWithdrawalRequests',
-  'manageProductRequest',
   'updateUser',
   'deleteUser',
   'manageStaff',
@@ -88,6 +87,8 @@ const adminPermissions = [
   'manageCollection',
   'manageStore',
   'manageBrand',
+  'manageProductRequest',
+  'deleteAccount',
 ];
 
 const superAdminPermissions = [...adminPermissions, 'createAdmin', 'updateBranchManager', 'reports', 'accounting'];
