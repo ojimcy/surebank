@@ -31,7 +31,7 @@ const getAccountTransactions = {
   query: Joi.object().keys({
     accountNumber: Joi.string().optional(),
     narration: Joi.string().optional(),
-    userReps: Joi.string().optional().custom(objectId),
+    createdBy: Joi.string().optional().custom(objectId),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
   }),
