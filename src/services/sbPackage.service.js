@@ -101,7 +101,7 @@ const makeDailyContribution = async (contributionInput) => {
 
   userPackage.totalContribution += contributionInput.amount;
 
-  await SbPackage.findByIdAndUpdate(userPackageId, {
+  await SbPackageModel.findByIdAndUpdate(userPackageId, {
     totalContribution: userPackage.totalContribution,
   });
 

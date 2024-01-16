@@ -447,7 +447,7 @@ const rejectWithdrawalRequest = async (requestId, narration) => {
  * Get account transactions with optional filtering by account number, userReps, page, limit, and narration
  * @param {Object} options - Query options
  * @param {string} [options.accountNumber] - Optional account number for filtering
- * @param {string} [options.userReps] - Optional userReps for filtering
+ * @param {string} [options.createdBy] - Optional createdBy for filtering
  * @param {number} [options.page] - Optional current page number
  * @param {number} [options.limit] - Optional maximum number of transactions per page
  * @param {string} [options.narration] - Optional narration for filtering
@@ -455,7 +455,7 @@ const rejectWithdrawalRequest = async (requestId, narration) => {
  */
 const getAccountTransactions = async (options = {}) => {
   const AccountTransactionModel = await AccountTransaction();
-  const { accountNumber, userReps, page = 1, limit, narration } = options;
+  const { accountNumber, createdBy, page = 1, limit, narration } = options;
   const skip = (page - 1) * limit;
 
   // Construct the query object
@@ -465,8 +465,8 @@ const getAccountTransactions = async (options = {}) => {
     query.accountNumber = accountNumber;
   }
 
-  if (userReps) {
-    query.userReps = userReps;
+  if (createdBy) {
+    query.createdBy = createdBy;
   }
 
   if (narration) {

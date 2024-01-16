@@ -73,6 +73,7 @@ const managerPermissions = [
   'manageStaff',
   'sbWithdrawal',
   'assignAccountManager',
+  'deleteAccount',
 ];
 
 const adminPermissions = [
