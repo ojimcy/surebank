@@ -25,7 +25,7 @@ const findBranchByAccountNumber = async (accountNumber, session) => {
  * @param {string} accountNumber - Account number
  * @returns {Promise<Object>} Result of the operation
  */
-const getUserByAccountNumber = async (accountNumber) => {
+const getAccountByNumber = async (accountNumber) => {
   const AccountModel = await Account();
   const accountDetail = await AccountModel.findOne({ accountNumber });
   if (!accountDetail) {
@@ -570,7 +570,7 @@ const getCustomerwithdrawals = async (
 };
 
 module.exports = {
-  getUserByAccountNumber,
+  getAccountByNumber,
   makeCustomerDeposit,
   updateAccountStatus,
   putAmountOnHold,

@@ -1,7 +1,7 @@
 const { startSession } = require('mongoose');
-const { Package, Contribution, AccountTransaction, Account, Charge } = require('../models');
+const { Package, Contribution, AccountTransaction, Account, Charge, User } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
+const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { getUserById } = require('./user.service');
 const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 const { sendSms } = require('./sms.service');
@@ -56,7 +56,7 @@ const saveCharge = async (packageId, amount, session) => {
 const createDailySavingsPackage = async (dailyInput) => {
   const PackageModel = await Package();
   const AccountModel = await Account();
-  const userAccount = await getUserByAccountNumber(dailyInput.accountNumber);
+  const userAccount = await getAccountByNumber(dailyInput.accountNumber);
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
@@ -98,9 +98,10 @@ const saveDailyContribution = async (contributionInput) => {
   const ContributionModel = await Contribution();
   const AccountModel = await Account();
   const AccountTransactionModel = await AccountTransaction();
+  const UserModel = await User();
 
   try {
-    const userAccount = await getUserByAccountNumber(contributionInput.accountNumber);
+    const userAccount = await getAccountByNumber(contributionInput.accountNumber);
 
     if (!userAccount) {
       throw new ApiError(404, 'Account number does not exist.');
@@ -213,11 +214,13 @@ const saveDailyContribution = async (contributionInput) => {
           date: transactionDate,
           direction: 'inflow',
           narration: `Daily contribution`,
-          userId: userAccount,
+          userId: userAccount.userId,
         },
       ],
       { session }
     );
+
+    const cashier = await UserModel.findById(contributionInput.createdBy);
 
     // Send credit SMS
     const phone = userAccount.phoneNumber;
@@ -225,7 +228,7 @@ const saveDailyContribution = async (contributionInput) => {
       contributionInput.amount,
       contributionInput.accountNumber,
       userPackage.totalContribution,
-      contributionInput.createdBy.firstName
+      cashier.firstName
     );
     await sendSms(phone, message);
 

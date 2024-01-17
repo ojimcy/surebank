@@ -14,7 +14,7 @@ const sendSms = async (phone, message) => {
       dnd: 1,
     };
     const resp = await axios.post(url, data);
-    logger.info(resp.data);
+    logger(resp.data);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error);
