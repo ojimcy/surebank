@@ -328,6 +328,62 @@ const getBranchStaffByUserId = async (userId) => {
   return BranchStaff.findOne({ staffId: userId });
 };
 
+const validateDeactivationAuthority = async (staffRole, assigningUserId) => {
+  // Retrieve the role of the assigning user
+  const assigningUser = await getUserById(assigningUserId);
+
+  // Check if the assigning user has the authority to deactivate the staff member
+  if (!isRoleLowerOrEqual(staffRole, assigningUser.role)) {
+    throw new ApiError(httpStatus.FORBIDDEN, "You don't have permissions to deactivate this staff member");
+  }
+};
+
+/**
+ * Deactivate a staff member
+ * @param {string} staffId - ID of the staff member to deactivate
+ * @param {string} assigningUserId - ID of the user initiating the deactivation
+ * @returns {Promise<void>}
+ */
+const deactivateStaff = async (staffId, assigningUserId) => {
+  const user = await getUserById(staffId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // Validate if the assigning user has the authority to deactivate this staff member
+  validateDeactivationAuthority(user.role, assigningUserId);
+
+  // Deactivate the staff member by updating their status to inactive
+  await user.updateOne({ isActive: false });
+
+  // Update the BranchStaff to set isActive to false
+  await BranchStaff.updateOne({ staffId }, { isActive: false });
+};
+
+/**
+ * Reactivate a staff member
+ * @param {string} staffId - ID of the staff member to reactivate
+ * @param {string} assigningUserId - ID of the user initiating the reactivation
+ * @returns {Promise<void>}
+ */
+const reactivateStaff = async (staffId, assigningUserId) => {
+  const user = await getUserById(staffId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // Validate if the assigning user has the authority to reactivate this staff member
+  validateDeactivationAuthority(user.role, assigningUserId);
+
+  // Deactivate the staff member by updating their status to active
+  await user.updateOne({ isActive: true });
+
+  // Update the BranchStaff to set isActive to false
+  await BranchStaff.updateOne({ staffId }, { isActive: true });
+};
+
 module.exports = {
   createStaff,
   addStaffToBranch,
@@ -339,4 +395,6 @@ module.exports = {
   deleteStaffById,
   updateStaffRole,
   getBranchStaffByUserId,
+  deactivateStaff,
+  reactivateStaff,
 };

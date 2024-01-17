@@ -74,6 +74,7 @@ const managerPermissions = [
   'getBranchStaff',
   'assignAccountManager',
   'branchReports',
+  'deactivateStaff',
 ];
 
 const adminPermissions = [

@@ -68,6 +68,24 @@ const getBranchStaffByUserId = catchAsync(async (req, res) => {
   res.send(branchStaff);
 });
 
+const deactivateStaff = catchAsync(async (req, res) => {
+  const { staffId } = req.params;
+  const userId = req.user._id;
+
+  await staffService.deactivateStaff(staffId, userId);
+
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
+const reactivateStaff = catchAsync(async (req, res) => {
+  const { staffId } = req.params;
+  const userId = req.user._id;
+
+  await staffService.reactivateStaff(staffId, userId);
+
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
 module.exports = {
   addStaffToBranch,
   createStaff,
@@ -77,4 +95,6 @@ module.exports = {
   deleteStaff,
   updateStaffRole,
   getBranchStaffByUserId,
+  deactivateStaff,
+  reactivateStaff,
 };

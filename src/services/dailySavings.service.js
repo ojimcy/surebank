@@ -159,7 +159,9 @@ const saveDailyContribution = async (contributionInput) => {
       { session }
     );
 
-    let expectedDeduction = totalCount - (totalCount % CONTRIBUTION_CIRCLE) / CONTRIBUTION_CIRCLE;
+    // expected to take one in every CONTRIBUTION_CIRCLE
+    let expectedDeduction = totalCount - (totalCount % CONTRIBUTION_CIRCLE);
+
     if (totalCount % CONTRIBUTION_CIRCLE > 0) {
       expectedDeduction += 1;
     }
@@ -170,7 +172,11 @@ const saveDailyContribution = async (contributionInput) => {
       await Package.findByIdAndUpdate(
         userPackageId,
         {
-          $inc: { totalContribution: -userPackage.amountPerDay, deductionCount: 1, totalCharge: userPackage.amountPerDay },
+          $inc: {
+            totalContribution: -userPackage.amountPerDay,
+            deductionCount: expectedDeduction - userPackage.deductionCount,
+            totalCharge: userPackage.amountPerDay,
+          },
         },
         { session }
       );

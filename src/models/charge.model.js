@@ -26,11 +26,6 @@ const chargeSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
-    totalCount: {
-      type: Number,
-      required: false,
-      default: 0,
-    },
   },
   {
     timestamps: true,
