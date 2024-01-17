@@ -19,6 +19,10 @@ const loginUserWithEmailAndPassword = async (email, password, otp) => {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
   }
 
+  if (!user.isActive) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Account deactivated, pls contact admin');
+  }
+
   if (user.isTwoFactorAuthEnabled) {
     if (!otp) {
       throw new ApiError(httpStatus.UNAUTHORIZED, 'OTP is required');
@@ -64,6 +68,10 @@ const loginUser = async (identifier, password, otp) => {
 
   if (!(await user.isPasswordMatch(password))) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect password. Please try again.');
+  }
+
+  if (!user.isActive) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Account deactivated, pls contact admin');
   }
 
   if (user.isTwoFactorAuthEnabled) {

@@ -15,6 +15,14 @@ router
 router.route('/role').patch(auth('manageStaff'), validate(staffValidation.updateStaffRole), staffController.updateStaffRole);
 
 router
+  .route('/:staffId/deactivate')
+  .post(auth('deactivateStaff'), validate(staffValidation.deactivateStaff), staffController.deactivateStaff);
+
+router
+  .route('/:staffId/activate')
+  .post(auth('deactivateStaff'), validate(staffValidation.deactivateStaff), staffController.reactivateStaff);
+
+router
   .route('/:branchId')
   .post(auth('updateBranchStaff'), validate(staffValidation.addStaffToBranch), staffController.addStaffToBranch)
   .get(auth('getStaffInBranch'), validate(staffValidation.getStaffInBranch), staffController.getStaffInBranch);

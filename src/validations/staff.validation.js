@@ -68,6 +68,12 @@ const getBranchStaffByUserId = {
   }),
 };
 
+const deactivateStaff = {
+  params: Joi.object().keys({
+    staffId: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   addStaffToBranch,
   getAllStaff,
@@ -76,4 +82,5 @@ module.exports = {
   createStaff,
   updateStaffRole,
   getBranchStaffByUserId,
+  deactivateStaff,
 };

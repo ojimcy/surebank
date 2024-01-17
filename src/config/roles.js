@@ -74,12 +74,12 @@ const managerPermissions = [
   'sbWithdrawal',
   'assignAccountManager',
   'deleteAccount',
+  'updateBranchStaff',
 ];
 
 const adminPermissions = [
   ...managerPermissions,
   'manageBranch',
-  'updateBranchStaff',
   'updateBranch',
   'managerManager',
   'manageVendors',

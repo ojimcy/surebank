@@ -71,10 +71,10 @@ const userSchema = mongoose.Schema(
       required: false,
       trim: true,
     },
-    status: {
-      type: String,
-      enum: ['active', 'inactive'],
-      default: 'active',
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: true,
     },
     branchId: {
       type: mongoose.Schema.Types.ObjectId,

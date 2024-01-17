@@ -23,6 +23,11 @@ const branchStaffSchema = mongoose.Schema(
       required: true,
       ref: 'User',
     },
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
   },
   {
     timestamps: true,
