@@ -24,7 +24,7 @@ const findBranchByAccountNumber = async (accountNumber, session) => {
  * @param {string} accountNumber - Account number
  * @returns {Promise<Object>} Result of the operation
  */
-const getUserByAccountNumber = async (accountNumber) => {
+const getAccountByNumber = async (accountNumber) => {
   const accountDetail = await Account.findOne({ accountNumber });
   if (!accountDetail) {
     throw new Error('Account number does not exist');
@@ -471,7 +471,6 @@ const getAccountTransactions = async (options = {}) => {
     .skip(skip)
     .limit(limit)
     .sort({ date: 'desc' });
-
   return transactions;
 };
 
@@ -569,7 +568,7 @@ const getAccountTransactionsForStaff = async (staffId, page, limit) => {
 };
 
 module.exports = {
-  getUserByAccountNumber,
+  getAccountByNumber,
   makeCustomerDeposit,
   updateAccountStatus,
   putAmountOnHold,

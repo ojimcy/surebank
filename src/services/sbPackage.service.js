@@ -2,14 +2,14 @@ const { startSession } = require('mongoose');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 const { SbPackage, Account, Contribution, AccountTransaction, ProductCatalogue } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { getUserByAccountNumber, makeCustomerDeposit } = require('./accountTransaction.service');
+const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
 const { getProductCatalogueById } = require('./product.service');
 const { sendSms } = require('./sms.service');
 const { contributionMessage, welcomeMessage } = require('../templates/sms/templates');
 
 const createSbPackage = async (sbPackageData) => {
-  const userAccount = await getUserByAccountNumber(sbPackageData.accountNumber);
+  const userAccount = await getAccountByNumber(sbPackageData.accountNumber);
 
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
@@ -59,7 +59,7 @@ const createSbPackage = async (sbPackageData) => {
  */
 
 const makeDailyContribution = async (contributionInput) => {
-  const userAccount = await getUserByAccountNumber(contributionInput.accountNumber);
+  const userAccount = await getAccountByNumber(contributionInput.accountNumber);
   if (!userAccount) {
     throw new ApiError(404, 'Account number does not exist.');
   }
@@ -274,7 +274,7 @@ const mergeSavingsPackages = async (targetPackageId, sourcePackageIds) => {
     if (!targetPackage || targetPackage.status !== 'open') {
       throw new ApiError(404, 'Target package is not valid.');
     }
-    const userAccount = await getUserByAccountNumber(targetPackage.accountNumber);
+    const userAccount = await getAccountByNumber(targetPackage.accountNumber);
 
     const sourcePackages = await SbPackage.find({
       _id: { $in: sourcePackageIds },

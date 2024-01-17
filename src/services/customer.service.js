@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const httpStatus = require('http-status');
 const { Account, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { getUserByAccountNumber, getAccountBalance } = require('./accountTransaction.service');
+const { getAccountByNumber, getAccountBalance } = require('./accountTransaction.service');
 const { userService, accountService } = require('.');
 
 /**
@@ -62,7 +62,7 @@ const makeDeposit = async (depositInput) => {
   session.startTransaction();
 
   try {
-    const userAccount = await getUserByAccountNumber(depositInput.accountNumber);
+    const userAccount = await getAccountByNumber(depositInput.accountNumber);
     if (!userAccount) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Account number does not exist.');
     }
@@ -119,7 +119,7 @@ const makeWithdrawal = async (withdrawalInput, userId, userReps) => {
   session.startTransaction();
 
   try {
-    const userAccount = await getUserByAccountNumber(withdrawalInput.accountNumber);
+    const userAccount = await getAccountByNumber(withdrawalInput.accountNumber);
     if (!userAccount) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Account number does not exist.');
     }

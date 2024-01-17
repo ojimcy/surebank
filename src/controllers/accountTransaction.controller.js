@@ -3,10 +3,10 @@ const { accountTransactionService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
 
-const getUserByAccountNumber = catchAsync(async (req, res) => {
+const getAccountByNumber = catchAsync(async (req, res) => {
   const { accountNumber } = req.query;
 
-  const result = await accountTransactionService.getUserByAccountNumber(accountNumber);
+  const result = await accountTransactionService.getAccountByNumber(accountNumber);
   res.status(httpStatus.OK).json(result);
 });
 
@@ -167,7 +167,7 @@ module.exports = {
   putAmountOnHold,
   spendHeldAmount,
   moveHeldAmountToAvailable,
-  getUserByAccountNumber,
+  getAccountByNumber,
   getAvailableBalance,
   getAccountBalance,
   makeCustomerWithdrawal,

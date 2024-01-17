@@ -19,7 +19,7 @@ router
   .get(
     auth('accountTransactions'),
     validate(accountTransactionValidation.getAccountTransactions),
-    accountTransactionController.getUserByAccountNumber
+    accountTransactionController.getAccountByNumber
   );
 
 router

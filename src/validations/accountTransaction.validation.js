@@ -38,7 +38,7 @@ const getAccountTransactions = {
   }),
 };
 
-const getUserByAccountNumber = {
+const getAccountByNumber = {
   query: Joi.object().keys({
     accountNumber: Joi.string().required(),
   }),
@@ -106,7 +106,7 @@ module.exports = {
   getAccountBalance,
   makeCustomerWithdrawal,
   getAccountTransactions,
-  getUserByAccountNumber,
+  getAccountByNumber,
   getCustomerwithdrawals,
   makeWithdrawalRequest,
   rejectWithdrawalRequest,
