@@ -3,6 +3,6 @@ module.exports = (amount, accountNumber, totalContribution, createdBy) => {
   Credit
   Amt: ${amount} NGN
   Acc: ${accountNumber}
-  Total Contrib: ${totalContribution} NGN
-  Cashier: ${createdBy}`;
+  DS Bal: ${totalContribution} NGN
+  Sales Rep: ${createdBy}`;
 };

@@ -6,7 +6,7 @@ const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransactio
 const { addLedgerEntry } = require('./accounting.service');
 const { getProductCatalogueById } = require('./product.service');
 const { sendSms } = require('./sms.service');
-const { contributionMessage } = require('../templates/sms/templates');
+const { sbContributionMessage } = require('../templates/sms/templates');
 
 const createSbPackage = async (sbPackageData) => {
   const SbPackageModel = await SbPackage();
@@ -135,7 +135,7 @@ const makeDailyContribution = async (contributionInput) => {
 
   // Send credit SMS
   const phone = userAccount.phoneNumber;
-  const message = contributionMessage(
+  const message = sbContributionMessage(
     contributionInput.amount,
     contributionInput.accountNumber,
     userPackage.totalContribution,
