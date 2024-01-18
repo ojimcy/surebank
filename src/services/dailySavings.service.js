@@ -174,7 +174,11 @@ const saveDailyContribution = async (contributionInput) => {
     );
 
     // expected to take one in every CONTRIBUTION_CIRCLE
-    const expectedDeduction = totalCount - (totalCount % CONTRIBUTION_CIRCLE);
+    let expectedDeduction = totalCount - (totalCount % CONTRIBUTION_CIRCLE);
+
+    if (totalCount % CONTRIBUTION_CIRCLE > 0) {
+      expectedDeduction += 1;
+    }
 
     // Check for first contribution in each circle
     if (userPackage.deductionCount < expectedDeduction) {
