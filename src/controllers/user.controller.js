@@ -55,6 +55,13 @@ const me = catchAsync(async (req, res) => {
   res.send(user);
 });
 
+const resetPassword = catchAsync(async (req, res) => {
+  const { password, newPassword, confirmPassword } = req.body;
+  const userId = req.user._id;
+  await userService.resetPassword(userId, password, newPassword, confirmPassword);
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
 module.exports = {
   createUser,
   getUsers,
@@ -63,4 +70,5 @@ module.exports = {
   deleteUser,
   updateProfile,
   me,
+  resetPassword,
 };

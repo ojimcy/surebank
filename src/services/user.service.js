@@ -151,6 +151,35 @@ const updateProfile = async (userId, updateData) => {
   return user;
 };
 
+/**
+ * Reset password
+ * @param {string} userId - User ID
+ * @param {string} password - Old password
+ * @param {string} newPassword - New password
+ * @returns {Promise}
+ */
+const resetPassword = async (userId, password, newPassword, confirmNewPassword) => {
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // Check if the old password matches the user's current password
+  const isPasswordMatch = await user.isPasswordMatch(password);
+  if (!isPasswordMatch) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Old password is incorrect');
+  }
+
+  // Check if the new password is confirmed
+  if (newPassword !== confirmNewPassword) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'New password and confirm password do not match');
+  }
+
+  // Update the user's password with the new password
+  user.password = newPassword;
+  await user.save();
+};
+
 module.exports = {
   createUser,
   queryUsers,
@@ -159,4 +188,5 @@ module.exports = {
   updateUserById,
   deleteUserById,
   updateProfile,
+  resetPassword,
 };

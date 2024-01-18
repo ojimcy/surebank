@@ -70,6 +70,14 @@ const updateProfile = {
   }),
 };
 
+const resetPassword = {
+  body: Joi.object().keys({
+    password: Joi.string().required().custom(password),
+    newPassword: Joi.string().required().custom(password),
+    confirmPassword: Joi.string().required().custom(password),
+  }),
+};
+
 module.exports = {
   createUser,
   getUsers,
@@ -78,4 +86,5 @@ module.exports = {
   deleteUser,
   getMyProfile,
   updateProfile,
+  resetPassword,
 };

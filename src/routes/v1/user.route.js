@@ -12,6 +12,10 @@ router
   .get(auth('getUsers'), validate(userValidation.getUsers), userController.getUsers)
   .patch(auth('updateProfile'), validate(userValidation.updateProfile), userController.updateProfile);
 
+router
+  .route('/reset-password')
+  .post(auth('updateProfile'), validate(userValidation.resetPassword), userController.resetPassword);
+
 router.get('/me', auth(), userController.me);
 
 router
