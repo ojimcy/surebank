@@ -30,7 +30,7 @@ const validateRole = async (roleToCheck, assigningUserId) => {
 
   // Check if the assigning user has the authority to assign this role
   if (!isRoleLowerOrEqual(roleToCheck, assigningUser.role)) {
-    throw new ApiError(httpStatus.FORBIDDEN, `You don't have permissions to create a ${roleToCheck}`);
+    throw new ApiError(httpStatus.FORBIDDEN, `You don't have permissions to perform this operation`);
   }
 };
 
@@ -409,4 +409,5 @@ module.exports = {
   getBranchStaffByUserId,
   deactivateStaff,
   reactivateStaff,
+  validateRole,
 };

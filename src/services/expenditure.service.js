@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
-const { Expenditure, BranchStaff } = require('../models');
+const { Expenditure, BranchStaff, User } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { validateRole } = require('./staff.service');
 
 /**
  * Create a new expenditure
@@ -10,17 +11,26 @@ const ApiError = require('../utils/ApiError');
 const createExpenditure = async (expenditureInput) => {
   const ExpenditureModel = await Expenditure();
   const BranchStaffModel = await BranchStaff();
-  const branch = await BranchStaffModel.findOne({ staffId: expenditureInput.createdBy });
-  if (!branch) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Branch not found for the given admin');
-  }
-  // Check if branch has a valid branchId before destructuring
-  if (!branch.branchId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Branch does not have a valid branchId');
+  const UserModel = await User();
+
+  const user = await UserModel.findById(expenditureInput.createdBy);
+
+  // Check if the user is not a superAdmin or admin
+  if (!(user.role === 'superAdmin' || user.role === 'admin')) {
+    const branch = await BranchStaffModel.findOne({ staffId: expenditureInput.createdBy });
+
+    // Check if the branch is not found
+    if (!branch) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Branch not found for the given admin');
+    }
+
+    const { branchId } = branch;
+    const createdExpenditure = await ExpenditureModel.create({ ...expenditureInput, branchId });
+    return createdExpenditure;
   }
 
-  const { branchId } = branch;
-  const createdExpenditure = await ExpenditureModel.create({ ...expenditureInput, branchId });
+  // If user is superAdmin or admin, create the expenditure without branch
+  const createdExpenditure = await ExpenditureModel.create(expenditureInput);
   return createdExpenditure;
 };
 
@@ -190,10 +200,16 @@ const getExpendituresByUserReps = async (userRepsId, page, limit) => {
  * @returns {Promise<Object>} The updated expenditure object
  */
 const approveExpenditure = async (expenditureId, approvedBy) => {
+  const UserModel = await User();
   const expenditure = await getExpenditureById(expenditureId);
   if (!expenditure) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Expenditure not found');
   }
+
+  const user = await UserModel.findById(expenditure.createdBy);
+
+  // Validate the role of the approving user
+  await validateRole(user.role, approvedBy);
 
   // Update the expenditure fields
   expenditure.status = 'approved';

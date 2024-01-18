@@ -87,16 +87,11 @@ const adminPermissions = [
   'manageCollection',
   'manageStore',
   'manageBrand',
+  'reports',
+  'updateBranchManager',
 ];
 
-const superAdminPermissions = [
-  ...adminPermissions,
-  'createAdmin',
-  'updateBranchManager',
-  'assignManager',
-  'reports',
-  'accounting',
-];
+const superAdminPermissions = [...adminPermissions, 'createAdmin', 'assignManager', 'accounting'];
 
 const allRoles = {
   user: userPermissions,
