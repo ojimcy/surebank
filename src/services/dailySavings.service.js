@@ -232,6 +232,7 @@ const saveDailyContribution = async (contributionInput) => {
     // Send credit SMS
     const phone = userAccount.phoneNumber;
     const message = dsContributionMessage(
+      userAccount.firstName,
       contributionInput.amount,
       contributionInput.accountNumber,
       userPackage.totalContribution,

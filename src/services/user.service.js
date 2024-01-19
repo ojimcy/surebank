@@ -79,6 +79,13 @@ const getUserByEmail = async (email) => {
   return userModel.findOne({ email });
 };
 
+const getUserByPhoneNumber = async (phoneNumber) => {
+  const userModel = await User();
+  // Normalize the provided phone number
+  const normalizedPhoneNumber = parsePhoneNumber(phoneNumber, 'NG').format('E.164');
+  return userModel.findOne({ phoneNumber: normalizedPhoneNumber });
+};
+
 /**
  * Update user by id
  * @param {ObjectId} userId
@@ -185,6 +192,7 @@ module.exports = {
   queryUsers,
   getUserById,
   getUserByEmail,
+  getUserByPhoneNumber,
   updateUserById,
   deleteUserById,
   updateProfile,

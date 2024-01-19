@@ -1,6 +1,6 @@
-module.exports = (amount, accountNumber, availableBalance, createdBy) => {
+module.exports = (customerName, amount, accountNumber, availableBalance, createdBy) => {
   return `SURE-BANK
-  Debit
+  Debit: ${customerName}
   Amt: ${amount} NGN
   Acc: ${accountNumber}
   Avail Bal: ${availableBalance} NGN

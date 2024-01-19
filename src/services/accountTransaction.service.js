@@ -385,6 +385,7 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
     // Send credit SMS
     const phone = account.phoneNumber;
     const message = withdrawalMessage(
+      account.firstName,
       withdrawalRequest.amount,
       withdrawalRequest.accountNumber,
       account.availableBalance,

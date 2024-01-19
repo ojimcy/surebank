@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const { Account } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { generateAccountNumber } = require('../utils/account/accountUtils');
-const { getUserByEmail, getUserById } = require('./user.service');
+const { getUserByEmail, getUserById, getUserByPhoneNumber } = require('./user.service');
 
 /**
  * Create an account
@@ -15,8 +15,15 @@ const { getUserByEmail, getUserById } = require('./user.service');
  */
 const createAccount = async (accountData, createdBy) => {
   const accountModel = await Account();
-  const { email, accountType, branchId } = accountData;
-  const user = await getUserByEmail(email);
+  const { accountType, branchId } = accountData;
+
+  let user;
+  if (accountData.email) {
+    user = await getUserByEmail(accountData.email);
+  } else {
+    user = await getUserByPhoneNumber(accountData.phoneNumber);
+  }
+
   const userId = user._id;
   // Check if the user already has an account of the specified type
   const existingAccount = await accountModel.findOne({ userId, accountType });

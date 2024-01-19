@@ -1,6 +1,6 @@
-module.exports = (amount, accountNumber, totalContribution, createdBy) => {
+module.exports = (customerName, amount, accountNumber, totalContribution, createdBy) => {
   return `SURE-BANK
-  Credit
+  Credit: ${customerName}
   Amt: ${amount} NGN
   Acc: ${accountNumber}
   SB Bal: ${totalContribution} NGN

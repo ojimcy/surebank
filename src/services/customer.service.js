@@ -19,36 +19,53 @@ const { userService, accountService } = require('.');
  * @param {string} createdBy - ID of the admin user who initiated the creation
  * @returns {Promise<{ user: User, account: Account }>} Created user and account
  */
-const createCustomer = async (customerData, branchId) => {
-  // Check if the user already exists
-  let user = await userService.getUserByEmail(customerData.email);
+const createCustomer = async (customerData) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  if (!user) {
-    // If user doesn't exist, create a new user
-    user = await userService.createUser({
-      email: customerData.email,
-      password: customerData.password,
-      firstName: customerData.firstName,
-      lastName: customerData.lastName,
-      address: customerData.address,
-      phoneNumber: customerData.phoneNumber,
-      branchId,
-    });
+  try {
+    // Check if the user already exists
+    let user = await userService.getUserByEmail(customerData.email);
+
+    if (!user) {
+      // If user doesn't exist, create a new user within the transaction
+      user = await userService.createUser(
+        {
+          email: customerData.email,
+          password: customerData.password,
+          firstName: customerData.firstName,
+          lastName: customerData.lastName,
+          address: customerData.address,
+          phoneNumber: customerData.phoneNumber,
+          branchId: customerData.branchId,
+        },
+        session
+      );
+    }
+
+    // Create an account for the user within the transaction
+    const accountData = {
+      email: user.email,
+      userId: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      accountType: customerData.accountType,
+      branchId: customerData.branchId,
+      accountManagerId: null,
+    };
+    const account = await accountService.createAccount(accountData, customerData.createdBy, session);
+
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    return { user, account };
+  } catch (error) {
+    // If an error occurs, abort the transaction
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
-
-  // Create an account for the user
-  const accountData = {
-    email: user.email,
-    userId: user._id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    accountType: customerData.accountType,
-    branchId: customerData.branchId,
-    accountManagerId: null,
-  };
-  const account = await accountService.createAccount(accountData, customerData.createdBy);
-
-  return { user, account };
 };
 
 /**

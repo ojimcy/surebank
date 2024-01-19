@@ -4,7 +4,7 @@ const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 
 const createAccount = {
   body: Joi.object().keys({
-    email: Joi.string().required().email(),
+    email: Joi.string().optional().email(),
     accountType: Joi.string().required(),
     branchId: Joi.string().required().custom(objectId),
     createdBy: Joi.string().custom(objectId),

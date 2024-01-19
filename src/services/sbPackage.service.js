@@ -137,6 +137,7 @@ const makeDailyContribution = async (contributionInput) => {
   // Send credit SMS
   const phone = userAccount.phoneNumber;
   const message = sbContributionMessage(
+    userAccount.firstName,
     contributionInput.amount,
     contributionInput.accountNumber,
     userPackage.totalContribution,
