@@ -6,21 +6,6 @@ const { withdrawalMessage } = require('../templates/sms/templates');
 const { sendSms } = require('./sms.service');
 
 /**
- * Helper function to find a branch by account number
- * @param {string} accountNumber - Account number
- * @param {Object} session - Mongoose session
- * @returns {Promise<Object>} Branch details
- */
-const findBranchByAccountNumber = async (accountNumber, session) => {
-  const AccountModel = await Account();
-  const branch = await AccountModel.findOne({ accountNumber }).session(session);
-  if (!branch) {
-    throw new ApiError(404, 'Account number does not exist.');
-  }
-  return branch;
-};
-
-/**
  * Get user and account details by account number
  * @param {string} accountNumber - Account number
  * @returns {Promise<Object>} Result of the operation
@@ -47,7 +32,8 @@ const makeCustomerDeposit = async (depositInput) => {
   session.startTransaction();
 
   try {
-    const branch = await findBranchByAccountNumber(depositInput.accountNumber, session);
+    const { accountNumber } = depositInput;
+    const account = await AccountModel.findOne({ accountNumber }).session(session);
 
     const transactionDate = new Date().getTime();
     const customerDeposit = await AccountTransactionModel.create(
@@ -56,10 +42,11 @@ const makeCustomerDeposit = async (depositInput) => {
           accountNumber: depositInput.accountNumber,
           amount: depositInput.amount,
           createdBy: depositInput.createdBy,
-          branchId: branch.branchId,
+          branchId: account.branchId,
           date: transactionDate,
           direction: 'inflow',
           narration: depositInput.narration,
+          userId: account.userId,
         },
       ],
       { session }
@@ -241,7 +228,7 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
           status: 'pending',
           direction: 'outflow',
           narration: 'Request Cash',
-          userId: account,
+          userId: account.userId,
         },
       ],
       { session }

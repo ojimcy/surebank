@@ -129,6 +129,7 @@ const makeDailyContribution = async (contributionInput) => {
     date: transactionDate,
     direction: 'inflow',
     narration: `SB Daily contribution`,
+    userId: userAccount.userId,
   });
 
   const cashier = await UserModel.findById(contributionInput.createdBy);

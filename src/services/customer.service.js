@@ -80,6 +80,7 @@ const makeDeposit = async (depositInput) => {
           date: transactionDate,
           direction: 'inflow',
           narration: depositInput.narration,
+          userId: userAccount.userId,
         },
       ],
       { session }
