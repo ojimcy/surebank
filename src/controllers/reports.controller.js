@@ -54,10 +54,18 @@ const getCharges = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(charges);
 });
 
-const getSumOfFirstDsContributions = catchAsync(async (req, res) => {
+const getSumOfDsCharges = catchAsync(async (req, res) => {
   const { branchId } = req.query;
 
-  const totalCharge = await reportService.getSumOfFirstDsContributions(branchId);
+  const totalCharge = await reportService.getSumOfDsCharges(branchId);
+
+  res.status(httpStatus.OK).json(totalCharge);
+});
+
+const getSumOfOtherCharges = catchAsync(async (req, res) => {
+  const { branchId } = req.query;
+
+  const totalCharge = await reportService.getSumOfOtherCharges(branchId);
 
   res.status(httpStatus.OK).json(totalCharge);
 });
@@ -92,7 +100,8 @@ module.exports = {
   getChargedPackages,
   getChargedSbPackages,
   getCharges,
-  getSumOfFirstDsContributions,
+  getSumOfDsCharges,
+  getSumOfOtherCharges,
   getPackages,
   getSumOfDailyContributions,
   getOtherCharges,
