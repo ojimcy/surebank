@@ -6,7 +6,7 @@ const chargeSchema = mongoose.Schema(
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Branch',
-      required: true,
+      required: false,
     },
     packageId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -18,12 +18,21 @@ const chargeSchema = mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     date: {
       type: Number,
       required: true,
     },
     amount: {
       type: Number,
+      required: true,
+    },
+    reasons: {
+      type: String,
       required: true,
     },
   },

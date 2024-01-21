@@ -13,7 +13,7 @@ const { addLedgerEntry } = require('./accounting.service');
  * @param {Object} chargeInput - Charge input
  * @returns {Promise<Object>} Result of the operation
  */
-const saveCharge = async (packageId, amount, session) => {
+const saveCharge = async (packageId, amount, createdBy, session) => {
   const PackageModel = await Package();
   const ChargeModel = await Charge();
 
@@ -35,6 +35,8 @@ const saveCharge = async (packageId, amount, session) => {
         userId,
         date: currentDate,
         amount,
+        createdBy,
+        reason: 'DS charge',
       },
     ],
     { session }
@@ -194,7 +196,7 @@ const saveDailyContribution = async (contributionInput) => {
         },
         { session }
       );
-      await saveCharge(userPackageId, userPackage.amountPerDay, session);
+      await saveCharge(userPackageId, userPackage.amountPerDay, contributionInput.createdBy, session);
     }
 
     const addLedgerEntryInput = {

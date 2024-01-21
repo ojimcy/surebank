@@ -24,6 +24,7 @@ const getCharges = {
     startDate: Joi.number(),
     endDate: Joi.number(),
     branchId: Joi.string().optional().custom(objectId),
+    reasons: Joi.string(),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),

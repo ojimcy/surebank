@@ -268,7 +268,7 @@ const getChargedSbPackages = async () => {
 const getCharges = async (filterOpts, paginationOpts) => {
   const ChargeModel = await Charge();
 
-  const { startDate, endDate, branchId } = filterOpts;
+  const { startDate, endDate, branchId, reasons } = filterOpts;
   const { limit, page, sortBy } = paginationOpts;
   const skip = (page - 1) * limit;
 
@@ -286,6 +286,9 @@ const getCharges = async (filterOpts, paginationOpts) => {
     query.branchId = branchId;
   }
 
+  if (reasons) {
+    query.reasons = reasons;
+  }
   const charges = await ChargeModel.find(query)
     .populate([
       {
@@ -310,13 +313,15 @@ const getCharges = async (filterOpts, paginationOpts) => {
  * @param {Object} branchId - Filtering options (branchId)
  * @returns {Promise<Number>} Total amount
  */
-const getSumOfFirstContributions = async (branchId) => {
+const getSumOfFirstDsContributions = async (branchId) => {
   const ChargeModel = await Charge();
   const query = {};
 
   if (branchId) {
     query.branchId = branchId;
   }
+
+  query.reasons = 'DS charge';
 
   const totalAmountResult = await ChargeModel.aggregate([
     { $match: query },
@@ -368,6 +373,58 @@ const getSumOfDailyContributionsByDate = async (startDate, endDate, branchId, cr
   }
 };
 
+/**
+ * Get the sum of charges excluding 'DS charge' with optional filtering by date and branch
+ * @param {Object} filterOptions - Filtering options (startDate, endDate, branchId)
+ * @returns {Promise<{ charges: Array, totalCharge: Number }>} Charges and total amount
+ */
+const getOtherCharges = async (filterOptions) => {
+  const ChargeModel = await Charge();
+  const { startDate, endDate, branchId } = filterOptions;
+
+  const query = {
+    reasons: { $ne: 'DS charge' }, // Exclude charges with reason 'DS charge'
+  };
+
+  if (startDate && endDate) {
+    query.date = { $gte: startDate, $lte: endDate };
+  } else if (startDate) {
+    query.date = { $gte: startDate };
+  } else if (endDate) {
+    query.date = { $lte: endDate };
+  }
+
+  if (branchId) {
+    query.branchId = branchId;
+  }
+
+  try {
+    const charges = await ChargeModel.find(query)
+      .populate([
+        {
+          path: 'userId',
+          select: 'firstName lastName',
+        },
+        {
+          path: 'branchId',
+          select: 'name',
+        },
+      ])
+      .exec();
+
+    const totalAmountResult = await ChargeModel.aggregate([
+      { $match: query },
+      { $group: { _id: null, totalAmount: { $sum: '$amount' } } },
+    ]).exec();
+
+    const totalCharge = totalAmountResult.length > 0 ? totalAmountResult[0].totalAmount : 0;
+
+    return { charges, totalCharge };
+  } catch (error) {
+    throw new ApiError('Failed to get charges and sum of other charges', error);
+  }
+};
+
 module.exports = {
   getTotalDailySavingsWithdrawal,
   getTotalContributionsByUserReps,
@@ -375,7 +432,8 @@ module.exports = {
   getChargedPackages,
   getChargedSbPackages,
   getCharges,
-  getSumOfFirstContributions,
+  getSumOfFirstDsContributions,
   getPackages,
   getSumOfDailyContributionsByDate,
+  getOtherCharges,
 };

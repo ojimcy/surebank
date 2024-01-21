@@ -17,3 +17,4 @@ module.exports.staffValidation = require('./staff.validation');
 module.exports.promotionsValidation = require('./promotions.validation');
 module.exports.collectionValidation = require('./collections.validation');
 module.exports.sbPackageValidation = require('./sbPackage.validation');
+module.exports.chargerValidation = require('./charge.validation');
