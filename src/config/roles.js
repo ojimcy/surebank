@@ -75,6 +75,7 @@ const managerPermissions = [
   'assignAccountManager',
   'deleteAccount',
   'updateBranchStaff',
+  'deactivateStaff',
   'charge',
 ];
 
