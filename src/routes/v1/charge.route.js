@@ -5,6 +5,7 @@ const chargerValidation = require('../../validations/charge.validation');
 const chargeController = require('../../controllers/charge.controller');
 
 const router = express.Router();
-router.route('/').post(auth('charge'), validate(chargerValidation.recordCharge), chargeController.recordCharge);
+router.route('/ds').post(auth('charge'), validate(chargerValidation.recordCharge), chargeController.recordDsCharge);
+router.route('/sb').post(auth('charge'), validate(chargerValidation.recordCharge), chargeController.recordSbCharge);
 
 module.exports = router;
