@@ -346,6 +346,7 @@ const getWithdrawalRequestById = async (requestId) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const makeCustomerWithdrawal = async (requestId, approvedBy) => {
+  const AccountModel = await Account();
   try {
     const withdrawalRequest = await getWithdrawalRequestById(requestId);
 
@@ -362,7 +363,8 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
     }
 
     const { accountNumber, amount } = withdrawalRequest;
-    const account = await Account.findOne({ accountNumber });
+    const account = await AccountModel.findOne({ accountNumber });
+
     const accountBalance = await getAccountBalance(accountNumber);
 
     if (accountBalance < amount) {
@@ -393,9 +395,7 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
     );
     await sendSms(phone, message);
 
-    return {
-      fulfilledWithdrawal: withdrawalRequest,
-    };
+    return withdrawalRequest;
   } catch (error) {
     throw new ApiError('Failed to make customer withdrawal', error);
   }

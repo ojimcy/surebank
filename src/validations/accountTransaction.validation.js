@@ -76,7 +76,7 @@ const rejectWithdrawalRequest = {
 
 const getAllWithdrawals = {
   query: Joi.object().keys({
-    userReps: Joi.string().optional().custom(objectId),
+    createdBy: Joi.string().optional().custom(objectId),
     branchId: Joi.string().optional().custom(objectId),
     status: Joi.string().optional(),
     startDate: Joi.number().optional(),

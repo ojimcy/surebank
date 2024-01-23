@@ -127,7 +127,17 @@ const getAllWithdrawals = catchAsync(async (req, res) => {
     parsedPage,
     parsedLimit
   );
-  res.status(httpStatus.OK).json(result);
+
+  // Calculate the sum of withdrawal amounts
+  const totalAmount = result.reduce((sum, withdrawal) => sum + withdrawal.amount, 0);
+
+  // Add the totalAmount to the result object
+  const resultWithTotalAmount = {
+    withdrawals: result,
+    totalAmount,
+  };
+
+  res.status(httpStatus.OK).json(resultWithTotalAmount);
 });
 
 const getWithdrawalRequestById = catchAsync(async (req, res) => {
