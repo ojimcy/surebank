@@ -7,6 +7,7 @@ const getTotalContributions = {
     endDate: Joi.number().optional(),
     branchId: Joi.string().optional().custom(objectId),
     createdBy: Joi.string().optional().custom(objectId),
+    narration: Joi.string(),
   }),
 };
 

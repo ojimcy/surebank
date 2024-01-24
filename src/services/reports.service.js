@@ -381,7 +381,7 @@ const getPackages = async (filter, options) => {
  * @param {string} createdBy - User ID (optional)
  * @returns {Promise<number>} Sum of daily contributions
  */
-const getSumOfDailyContributionsByDate = async (startDate, endDate, branchId, createdBy) => {
+const getSumOfDailyContributionsByDate = async (startDate, endDate, branchId, createdBy, narration) => {
   const ContributionModel = await Contribution();
   try {
     const query = {};
@@ -389,6 +389,7 @@ const getSumOfDailyContributionsByDate = async (startDate, endDate, branchId, cr
     if (endDate) query.date = { ...query.date, $lte: endDate };
     if (branchId) query.branchId = branchId;
     if (createdBy) query.createdBy = createdBy;
+    if (narration) query.narration = narration;
 
     const contributions = await ContributionModel.find(query);
     const sumTotal = contributions.reduce((total, contribution) => total + contribution.amount, 0);

@@ -78,9 +78,15 @@ const getPackages = catchAsync(async (req, res) => {
 });
 
 const getSumOfDailyContributions = catchAsync(async (req, res) => {
-  const { startDate, endDate, branchId, createdBy } = req.query;
+  const { startDate, endDate, branchId, createdBy, narration } = req.query;
 
-  const dailyContributions = await reportService.getSumOfDailyContributionsByDate(startDate, endDate, branchId, createdBy);
+  const dailyContributions = await reportService.getSumOfDailyContributionsByDate(
+    startDate,
+    endDate,
+    branchId,
+    createdBy,
+    narration
+  );
 
   res.status(httpStatus.OK).sebd(dailyContributions);
 });
