@@ -362,6 +362,10 @@ const getProductCatalogue = async (filter, options) => {
       {
         path: 'productId',
         model: 'Product',
+        populate: [
+          { path: 'brand', model: 'Brand', select: 'name' },
+          { path: 'categoryId', model: 'Category', select: 'title' },
+        ],
       },
     ])
     .skip(skip)
@@ -374,7 +378,16 @@ const getProductCatalogue = async (filter, options) => {
 const viewMyProductCatalogue = async (userId) => {
   const ProductCatalogueModel = await ProductCatalogue();
   const merchant = await getMerchantByUserId(userId);
-  const products = await ProductCatalogueModel.find({ merchantId: merchant._id });
+  const products = await ProductCatalogueModel.find({ merchantId: merchant._id }).populate([
+    {
+      path: 'productId',
+      model: 'Product',
+      populate: [
+        { path: 'brand', model: 'Brand', select: 'name' },
+        { path: 'categoryId', model: 'Category', select: 'title' },
+      ],
+    },
+  ]);
   return products;
 };
 
@@ -402,7 +415,16 @@ const deleteProductCatalogue = async (productId, userId) => {
 
 const getProductCatalogueById = async (id) => {
   const ProductCatalogueModel = await ProductCatalogue();
-  const product = await ProductCatalogueModel.findById(id);
+  const product = await ProductCatalogueModel.findById(id).populate([
+    {
+      path: 'productId',
+      model: 'Product',
+      populate: [
+        { path: 'brand', model: 'Brand', select: 'name' },
+        { path: 'categoryId', model: 'Category', select: 'title' },
+      ],
+    },
+  ]);
   if (!product) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
   }

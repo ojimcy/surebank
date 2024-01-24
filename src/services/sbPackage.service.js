@@ -371,7 +371,7 @@ const updatePackageProduct = async (packageId, newProductId) => {
   sbPackage.targetAmount = newProduct.sellingPrice;
 
   // Save the updated package
-  const updatedPackage = await SbPackageModel.save();
+  const updatedPackage = await sbPackage.save();
 
   return updatedPackage;
 };

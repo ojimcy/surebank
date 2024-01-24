@@ -19,8 +19,8 @@ const sbPackageSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  image: {
-    type: String,
+  quantity: {
+    type: Number,
     required: false,
   },
   startDate: {
