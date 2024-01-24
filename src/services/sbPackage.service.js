@@ -1,6 +1,6 @@
 const { startSession } = require('mongoose');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
-const { SbPackage, Account, Contribution, AccountTransaction, User } = require('../models');
+const { SbPackage, Account, Contribution, AccountTransaction, User, ProductCatalogue } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
@@ -351,6 +351,31 @@ const mergeSavingsPackages = async (targetPackageId, sourcePackageIds) => {
   }
 };
 
+const updatePackageProduct = async (packageId, newProductId) => {
+  const ProductCatalogueModel = await ProductCatalogue();
+  const SbPackageModel = await SbPackage();
+  // Fetch the SB package
+  const sbPackage = await SbPackageModel.findById(packageId);
+  if (!sbPackage) {
+    throw new ApiError(404, 'Package not found');
+  }
+
+  // Fetch the new product
+  const newProduct = await ProductCatalogueModel.findById(newProductId);
+  if (!newProduct || !newProduct.isSbAvailable) {
+    throw new ApiError(400, 'The selected product is not available for Savings-Buying');
+  }
+
+  // Update the SB package with the new product
+  sbPackage.product = newProductId;
+  sbPackage.targetAmount = newProduct.sellingPrice;
+
+  // Save the updated package
+  const updatedPackage = await SbPackageModel.save();
+
+  return updatedPackage;
+};
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
@@ -358,4 +383,5 @@ module.exports = {
   getPackageById,
   getUserSbPackages,
   mergeSavingsPackages,
+  updatePackageProduct,
 };

@@ -29,6 +29,11 @@ router
 
 router
   .route('/package/:packageId')
-  .get(auth('getPackage'), validate(sbPackageValidation.getPackageById), sbPackageController.getPackageById);
+  .get(auth('getPackage'), validate(sbPackageValidation.getPackageById), sbPackageController.getPackageById)
+  .patch(
+    auth('updatePackage'),
+    validate(sbPackageValidation.updatePackageProduct),
+    sbPackageController.updatePackageProduct
+  );
 
 module.exports = router;

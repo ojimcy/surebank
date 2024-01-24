@@ -56,6 +56,15 @@ const mergeSavingsPackages = {
   }),
 };
 
+const updatePackageProduct = {
+  params: Joi.object().keys({
+    packageId: Joi.string().required().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    newProductId: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
@@ -63,4 +72,5 @@ module.exports = {
   getPackageById,
   getUserSbPackages,
   mergeSavingsPackages,
+  updatePackageProduct,
 };
