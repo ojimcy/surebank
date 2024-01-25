@@ -81,7 +81,7 @@ const createDailySavingsPackage = async (dailyInput) => {
   // Send welcome SMS
 
   const phone = userAccount.phoneNumber;
-  const message = welcomeMessage(userAccount.firstName, dailyInput.accountNumber, dailyInput.target);
+  const message = welcomeMessage(userAccount.firstName, dailyInput.accountNumber);
   await sendSms(phone, message);
 
   return createdPackage;

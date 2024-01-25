@@ -4,9 +4,15 @@ const catchAsync = require('../utils/catchAsync');
 const { reportService } = require('../services');
 
 const getTotalContributions = catchAsync(async (req, res) => {
-  const { startDate, endDate, branchId, createdBy } = req.query;
+  const { startDate, endDate, branchId, createdBy, narration } = req.query;
 
-  const totalContributions = await reportService.getSumOfDailyContributionsByDate(startDate, endDate, branchId, createdBy);
+  const totalContributions = await reportService.getSumOfDailyContributionsByDate(
+    startDate,
+    endDate,
+    branchId,
+    createdBy,
+    narration
+  );
 
   res.status(httpStatus.OK).json(totalContributions);
 });
@@ -80,7 +86,7 @@ const getPackages = catchAsync(async (req, res) => {
 const getSumOfDailyContributions = catchAsync(async (req, res) => {
   const { startDate, endDate, branchId, createdBy, narration } = req.query;
 
-  const dailyContributions = await reportService.getSumOfDailyContributionsByDate(
+  const totalContributions = await reportService.getSumOfDailyContributionsByDate(
     startDate,
     endDate,
     branchId,
@@ -88,7 +94,7 @@ const getSumOfDailyContributions = catchAsync(async (req, res) => {
     narration
   );
 
-  res.status(httpStatus.OK).sebd(dailyContributions);
+  res.status(httpStatus.OK).sebd(totalContributions);
 });
 
 const getOtherCharges = catchAsync(async (req, res) => {
