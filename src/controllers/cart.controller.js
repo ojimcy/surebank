@@ -5,8 +5,8 @@ const { cartService } = require('../services');
 
 const addToCart = catchAsync(async (req, res) => {
   const userId = req.user._id;
-  const { productCatalogueId, quantity } = req.body;
-  const { cart, cartItem } = await cartService.addToCart(userId, productCatalogueId, quantity);
+  const { productCatalogueId, packageId, quantity } = req.body;
+  const { cart, cartItem } = await cartService.addToCart(userId, productCatalogueId, packageId, quantity);
   res.status(httpStatus.CREATED).send({
     cart,
     cartItem,

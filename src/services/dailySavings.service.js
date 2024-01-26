@@ -36,7 +36,7 @@ const saveCharge = async (packageId, amount, createdBy, session) => {
         date: currentDate,
         amount,
         createdBy,
-        reason: 'DS charge',
+        reasons: 'DS charge',
       },
     ],
     { session }

@@ -46,14 +46,6 @@ const addToCart = async (userId, productCatalogueId, quantity) => {
       productCatalogueId,
     });
     if (existingItem) {
-      // If the item exists, increase the quantity by one
-      existingItem.quantity += 1;
-      existingItem.subTotal = existingItem.unitPrice * existingItem.quantity;
-      await existingItem.save();
-
-      // Update the total in the cart
-      cart.total += existingItem.unitPrice;
-      await cart.save();
       return { cart, cartItem: { ...existingItem.toObject(), product } };
     }
   }

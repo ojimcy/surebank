@@ -348,7 +348,7 @@ const getProductsBySlug = async (collectionSlug) => {
 
 const getProductCatalogue = async (filter, options) => {
   const ProductCatalogueModel = await ProductCatalogue();
-  const { limit = 10, page = 1, sortBy } = options;
+  const { limit, page, sortBy } = options;
   const skip = (page - 1) * limit;
 
   const query = {};

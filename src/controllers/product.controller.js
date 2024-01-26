@@ -103,8 +103,11 @@ const getProductsBySlug = catchAsync(async (req, res) => {
 });
 
 const getProductCatalogue = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['name', 'slug']);
+  const filter = pick(req.query, ['merchantId']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+  options.limit = parseInt(options.limit, 10);
+  options.page = parseInt(options.page, 10);
   const result = await productService.getProductCatalogue(filter, options);
   res.status(httpStatus.OK).send(result);
 });

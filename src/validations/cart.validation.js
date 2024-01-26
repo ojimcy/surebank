@@ -5,6 +5,7 @@ const addToCart = {
   body: Joi.object().keys({
     productCatalogueId: Joi.string().required().custom(objectId),
     quantity: Joi.number().required(),
+    packageId: Joi.string().optional().custom(objectId),
   }),
 };
 

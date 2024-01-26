@@ -24,6 +24,7 @@ const userPermissions = [
   'getTotalWithdrawals',
   'stores',
   'makeContribution',
+  'orderOperations',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];
@@ -92,6 +93,7 @@ const adminPermissions = [
   'manageBrand',
   'reports',
   'updateBranchManager',
+  'manageorder',
 ];
 
 const superAdminPermissions = [...adminPermissions, 'createAdmin', 'assignManager', 'accounting'];

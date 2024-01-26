@@ -13,9 +13,10 @@ const cartItemSchema = mongoose.Schema(
       required: true,
       ref: 'ProductCatalogue',
     },
-    unitPrice: {
-      type: Number,
-      required: true,
+    packageId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: false,
+      ref: 'SbPackage',
     },
     quantity: {
       type: Number,
