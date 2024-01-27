@@ -113,12 +113,13 @@ const updateProductCatalogue = {
     reviews: Joi.string().optional(),
     features: Joi.string().optional(),
     ratings: Joi.string().optional(),
-    variations: Joi.string().optional(),
+    variations: Joi.array().optional(),
     shipping: Joi.string().optional(),
     stock: Joi.string().optional(),
     discount: Joi.number().optional(),
     tags: Joi.string().optional(),
     slug: Joi.string().optional(),
+    quantity: Joi.number().optional(),
   }),
 };
 

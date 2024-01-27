@@ -332,6 +332,10 @@ const getWithdrawalRequestById = async (requestId) => {
         select: 'firstName lastName',
       },
       {
+        path: 'userId',
+        select: 'firstName lastName',
+      },
+      {
         path: 'branchId',
         select: 'name',
       },
