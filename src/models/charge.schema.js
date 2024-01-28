@@ -11,7 +11,7 @@ const chargeSchema = mongoose.Schema(
     packageId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Package',
-      required: true,
+      required: false,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -31,7 +31,7 @@ const chargeSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
-    reasons: {
+    reason: {
       type: String,
       required: true,
     },

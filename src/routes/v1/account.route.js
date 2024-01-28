@@ -17,6 +17,10 @@ router
   .get(auth('manageAccounts'), validate(accountValidation.getAccountInBranch), accountController.getAccountInBranch);
 
 router
+  .route('/:userId/all')
+  .get(auth('getUserAccount'), validate(accountValidation.getUserAccount), accountController.getUserAccounts);
+
+router
   .route('/:staffId/staffaccounts')
   .get(auth('manageAccounts'), validate(accountValidation.getAccountsByStaff), accountController.getAccountsByStaff);
 

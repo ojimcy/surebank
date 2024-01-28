@@ -26,7 +26,7 @@ const removeCartItem = catchAsync(async (req, res) => {
   const userId = req.user._id;
   const { productCatalogueId } = req.body;
   await cartService.removeCartItem(userId, productCatalogueId);
-  res.sendStatus(httpStatus.OK);
+  res.sendStatus(httpStatus.NO_CONTENT);
 });
 
 const clearCart = catchAsync(async (req, res) => {

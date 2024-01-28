@@ -31,6 +31,12 @@ const getUserAccount = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(account);
 });
 
+const getUserAccounts = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+  const account = await accountService.getUserAccounts(userId);
+  res.status(httpStatus.OK).send(account);
+});
+
 const getAllAccounts = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['branchId', 'accountManagerId']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
@@ -92,6 +98,7 @@ module.exports = {
   assignBranch,
   assignManager,
   getUserAccount,
+  getUserAccounts,
   getAllAccounts,
   getAccountInBranch,
   getAccountsByStaff,

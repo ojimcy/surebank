@@ -111,7 +111,7 @@ const removeCartItem = async (userId, productCatalogueId) => {
 
   const cart = await CartModel.findOne({ userId });
   if (!cart) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Cart item not found');
+    throw new ApiError(httpStatus.NOT_FOUND, 'Cart not found');
   }
   const cartItem = await CartItemModel.findOneAndRemove({
     productCatalogueId,

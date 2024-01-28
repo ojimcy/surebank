@@ -120,6 +120,33 @@ const getUserAccount = async (userId, accountType) => {
 };
 
 /**
+ * Retrieve account details for a specific user
+ * @param {string} userId - User ID
+ * @returns {Promise<Account>} User's account details
+ */
+const getUserAccounts = async (userId, accountType) => {
+  const filter = { userId };
+  if (accountType) {
+    filter.accountType = accountType;
+  }
+
+  const account = await Account.find(filter)
+    .populate([
+      {
+        path: 'accountManagerId',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'branchId',
+        select: 'name',
+      },
+    ])
+    .lean();
+
+  return account;
+};
+
+/**
  * Query for accounts
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
@@ -249,4 +276,5 @@ module.exports = {
   deleteAccount,
   updateAccount,
   getAccountById,
+  getUserAccounts,
 };
