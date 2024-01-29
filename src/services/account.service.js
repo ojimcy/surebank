@@ -125,12 +125,14 @@ const getUserAccount = async (userId, accountType) => {
  * @returns {Promise<Account>} User's account details
  */
 const getUserAccounts = async (userId, accountType) => {
+  const accountModel = await Account();
   const filter = { userId };
   if (accountType) {
     filter.accountType = accountType;
   }
 
-  const account = await Account.find(filter)
+  const account = await accountModel
+    .find(filter)
     .populate([
       {
         path: 'accountManagerId',

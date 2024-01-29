@@ -5,7 +5,7 @@ const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransactio
 const { getUserById } = require('./user.service');
 const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 const { sendSms } = require('./sms.service');
-const { welcomeMessage, dsContributionMessage } = require('../templates/sms/templates');
+const { dsContributionMessage } = require('../templates/sms/templates');
 const { addLedgerEntry } = require('./accounting.service');
 
 /**
@@ -77,12 +77,6 @@ const createDailySavingsPackage = async (dailyInput) => {
     userId: userAccount.userId,
     branchId: branch.branchId,
   });
-
-  // Send welcome SMS
-
-  const phone = userAccount.phoneNumber;
-  const message = welcomeMessage(userAccount.firstName, dailyInput.accountNumber);
-  await sendSms(phone, message);
 
   return createdPackage;
 };

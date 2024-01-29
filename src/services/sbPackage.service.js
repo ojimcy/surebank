@@ -145,19 +145,6 @@ const makeDailyContribution = async (contributionInput) => {
   );
   await sendSms(phone, message);
 
-  // Check if totalContribution equals the product price
-  const { product } = contributionInput;
-  if (userPackage.totalContribution >= product.price) {
-    // Make customer deposit
-    const depositDetails = {
-      accountNumber: contributionInput.accountNumber,
-      amount: userPackage.totalContribution,
-      createdBy: contributionInput.createdBy,
-      narration: 'SB Daily contribution transfer to available balance',
-    };
-    await makeCustomerDeposit(depositDetails);
-  }
-
   return {
     newContribution,
     contributionTransaction,

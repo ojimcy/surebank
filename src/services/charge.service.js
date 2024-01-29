@@ -61,7 +61,7 @@ const recordDsCharge = async (chargeInput) => {
  * @param {Object} chargeInput - Charge input
  * @returns {Promise<Object>} Result of the operation
  */
-const recordSbCharge = async (chargeInput) => {
+const chageDsCustomer = async (chargeInput) => {
   const ChargeModel = await Charge();
   const PackageModel = await SbPackage();
   const session = await startSession();
@@ -113,5 +113,5 @@ const recordSbCharge = async (chargeInput) => {
 
 module.exports = {
   recordDsCharge,
-  recordSbCharge,
+  chageDsCustomer,
 };
