@@ -4,6 +4,7 @@ const { Account, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { withdrawalMessage } = require('../templates/sms/templates');
 const { sendSms } = require('./sms.service');
+const { chargeSmsFees } = require('./charge.service');
 
 /**
  * Get user and account details by account number
@@ -398,6 +399,9 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
       withdrawalRequest.userReps.firstName
     );
     await sendSms(phone, message);
+
+    // charge sms fee
+    await chargeSmsFees(phone, 1, withdrawalRequest.createdBy);
 
     return withdrawalRequest;
   } catch (error) {

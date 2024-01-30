@@ -23,6 +23,11 @@ const chargeSchema = mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    productCatalogueId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ProductCatalogue',
+      required: false,
+    },
     date: {
       type: Number,
       required: true,
@@ -31,7 +36,7 @@ const chargeSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
-    reason: {
+    reasons: {
       type: String,
       required: true,
     },

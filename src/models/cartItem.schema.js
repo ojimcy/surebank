@@ -22,6 +22,10 @@ const cartItemSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
+    costPrice: {
+      type: Number,
+      required: true,
+    },
     name: {
       type: String,
       required: true,
@@ -37,6 +41,10 @@ const cartItemSchema = mongoose.Schema(
       required: true,
     },
     subTotal: {
+      type: Number,
+      required: true,
+    },
+    costTotal: {
       type: Number,
       required: true,
     },

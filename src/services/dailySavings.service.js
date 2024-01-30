@@ -7,6 +7,7 @@ const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE } = require('../const
 const { sendSms } = require('./sms.service');
 const { dsContributionMessage } = require('../templates/sms/templates');
 const { addLedgerEntry } = require('./accounting.service');
+const { chargeSmsFees } = require('./charge.service');
 
 /**
  * Save a charge and update the count in the associated package
@@ -235,6 +236,8 @@ const saveDailyContribution = async (contributionInput) => {
       cashier.firstName
     );
     await sendSms(phone, message);
+
+    await chargeSmsFees(userAccount.phoneNumber, 1, contributionInput.createdBy, session);
 
     await session.commitTransaction();
     session.endSession();

@@ -10,11 +10,12 @@ const { getProductCatalogueById } = require('./product.service');
  * @param {number} total - The initial total value of the cart
  * @returns {Promise<Object>} The created cart
  */
-const initCart = async (userId, total) => {
+const initCart = async (userId, total, costTotal) => {
   const CartModel = await Cart();
   const newCart = new CartModel({
     userId,
     total,
+    costTotal,
   });
   await newCart.save();
   return newCart;
@@ -24,7 +25,7 @@ const initCart = async (userId, total) => {
  * Add an item to the cart
  * @param {string} userId - The ID of the user
  * @param {string} productCatalogueId - The ID of the product catalogue
- * @param {number} sellingPrice - The unit price of the item
+ * @param {string} packageId - The ID of the package
  * @param {number} quantity - The quantity of the item
  * @returns {Promise<Object>} The updated cart and added cart item
  */
@@ -32,13 +33,14 @@ const addToCart = async (userId, productCatalogueId, packageId, quantity) => {
   const CartModel = await Cart();
   const CartItemModel = await CartItem();
   const product = await getProductCatalogueById(productCatalogueId);
-  const { sellingPrice, name, images } = product;
+  const { costPrice, sellingPrice, discount, name, images } = product;
 
   let cart = await CartModel.findOne({ userId });
   if (!cart) {
     // Initialize Cart
-    const subTotal = sellingPrice * quantity;
-    cart = await initCart(userId, subTotal);
+    const subTotal = (discount > 0 ? discount : sellingPrice) * quantity;
+    const costTotal = costPrice * quantity;
+    cart = await initCart(userId, subTotal, costTotal);
   }
 
   // Check if the product already exists in the cart
@@ -51,19 +53,23 @@ const addToCart = async (userId, productCatalogueId, packageId, quantity) => {
     return { cart, existingCartItem };
   }
   // Create a new cart item
-  const subTotal = sellingPrice * quantity;
+  const subTotal = (discount > 0 ? discount : sellingPrice) * quantity;
+  const costTotal = costPrice * quantity;
   await CartItemModel.create({
     cartId: cart._id,
     productCatalogueId,
     packageId,
-    sellingPrice,
+    sellingPrice: discount > 0 ? discount : sellingPrice,
+    costPrice,
     name,
     images,
     quantity,
     subTotal,
+    costTotal,
   });
 
   cart.total += subTotal;
+  cart.costTotal += costTotal;
 
   await cart.save();
 

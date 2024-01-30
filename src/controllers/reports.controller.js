@@ -41,12 +41,13 @@ const getChargedSbPackages = catchAsync(async (req, res) => {
 });
 
 const getCharges = catchAsync(async (req, res) => {
-  const { startDate, endDate, branchId } = req.query;
+  const { startDate, endDate, branchId, reasons } = req.query;
 
   const filterOptions = {
     startDate,
     endDate,
     branchId,
+    reasons,
   };
 
   const options = {

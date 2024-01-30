@@ -14,12 +14,11 @@ router
   .route('/:orderId/sb-pay')
   .post(auth('orderOperations'), validate(orderValidation.payOrderWithSbBalance), orderController.payOrderWithSbBalance);
 
+router.route('/:orderId').get(auth('orderOperations'), validate(orderValidation.getOrder), orderController.getOrder);
+
 router
   .route('/:orderId/deliver')
-  .get(auth('manageOrders'), validate(orderValidation.getOrder), orderController.deliverOrder);
-
-router.route('/:orderId/').get(auth('orderOperations'), validate(orderValidation.getOrder), orderController.cancelOrder);
-
-// router.route('/:orderId/cancel').post(auth('manageorder'), validate(orderValidation.cancelSale), orderController.cancelSale);
+  .post(auth('manageOrder'), validate(orderValidation.getOrder), orderController.deliverOrder);
+router.route('/:orderId/cancel').post(auth('manageOrder'), validate(orderValidation.getOrder), orderController.cancelOrder);
 
 module.exports = router;

@@ -2,6 +2,8 @@
 const { startSession } = require('mongoose');
 const { Charge, Package, SbPackage } = require('../models');
 const { getAccountByNumber } = require('./accountTransaction.service');
+const { SMS_FFE } = require('../constants/account');
+const { getUserByPhoneNumber } = require('./user.service');
 
 /**
  * Save a charge and update the count in the associated package
@@ -111,7 +113,67 @@ const chageDsCustomer = async (chargeInput) => {
   }
 };
 
+/**
+ * Charge SMS fees to a user
+ * @param {string} phoneNumber - The phone number of the user
+ * @param {string} createdBy - The ID of the user initiating the charge
+ * @returns {Promise<Object>} - Result of the operation
+ */
+const chargeSmsFees = async (phoneNumber, numberOfSMS, createdBy, session) => {
+  const ChargeModel = await Charge();
+  // Get user information based on phone number
+  const user = await getUserByPhoneNumber(phoneNumber);
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Calculate total charge amount
+  const smsChargedAmount = SMS_FFE * numberOfSMS;
+
+  // Create a charge record
+  const charge = await ChargeModel.create(
+    [
+      {
+        userId: user._id,
+        date: new Date().getTime(),
+        amount: smsChargedAmount,
+        createdBy,
+        reasons: `SMS charge`,
+      },
+    ],
+    { session }
+  );
+
+  return charge;
+};
+
+/**
+ * Save SB profit and create a charge entry
+ * @param {number} costPrice - The cost price of the product
+ * @param {number} sellingPrice - The selling price of the product
+ * @param {string} userId - The ID of the user initiating the charge
+ * @returns {Promise<Object>} Result of the operation
+ */
+const saveSbProfit = async (costPrice, sellingPrice, userId, createdBy) => {
+  const ChargeModel = await Charge();
+
+  // Calculate profit
+  const profit = costPrice - sellingPrice;
+  // Create a charge record
+  const charge = await ChargeModel.create({
+    userId,
+    date: new Date().getTime(),
+    amount: profit,
+    createdBy,
+    reasons: 'Profit from SB',
+  });
+  return charge;
+};
+
 module.exports = {
   recordDsCharge,
   chageDsCustomer,
+  chargeSmsFees,
+  saveSbProfit,
 };

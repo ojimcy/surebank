@@ -6,6 +6,6 @@ const chargeController = require('../../controllers/charge.controller');
 
 const router = express.Router();
 router.route('/ds').post(auth('charge'), validate(chargerValidation.recordCharge), chargeController.chageDsCustomer);
-router.route('/sb').post(auth('charge'), validate(chargerValidation.recordCharge), chargeController.chagerSbCustomer);
+router.route('/sb').post(auth('charge'), validate(chargerValidation.recordCharge), chargeController.chargeSbCustomer);
 
 module.exports = router;

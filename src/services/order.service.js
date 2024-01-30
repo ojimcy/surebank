@@ -5,6 +5,7 @@ const ApiError = require('../utils/ApiError');
 const { clearCart, getCartItems } = require('./cart.service');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 const { addLedgerEntry } = require('./accounting.service');
+const { saveSbProfit } = require('./charge.service');
 
 /**
  * Check product availability based on its ID and requested quantity
@@ -74,6 +75,7 @@ const createOrder = async (userId, orderDetails) => {
     );
     // Calculate total price and create the order
     const totalAmount = products.cartItems.reduce((total, item) => total + item.subTotal, 0);
+    const costTotal = products.cartItems.reduce((total, item) => total + item.costTotal, 0);
     const order = await OrderModel.create(
       [
         {
@@ -96,6 +98,7 @@ const createOrder = async (userId, orderDetails) => {
           },
           paymentMethod: orderDetails.paymentMethod,
           totalAmount,
+          costTotal,
           status: 'pending',
           createdBy: userId,
           shippingPrice: orderDetails.shippingPrice || 0,
@@ -105,6 +108,8 @@ const createOrder = async (userId, orderDetails) => {
       ],
       { session }
     );
+    // save profit to charge
+    await saveSbProfit(costTotal, totalAmount, userId, userId);
 
     // Clear the user's cart
     await clearCart(userId, session);
@@ -148,10 +153,10 @@ const getOrder = async (orderId) => {
  * @param {Object} filters - Optional filters for querying orders
  * @returns {Promise<Array>} Array of order data
  */
-const getAllOrders = async (branchId, createdBy, status) => {
+const getAllOrders = async (status, branchId, createdBy) => {
   const OrderModel = await Order();
   const query = {};
-  if (branchId) query.branchId = branchId;
+  if (branchId) query['deliveryAddress.branchId'] = branchId;
   if (createdBy) query.createdBy = createdBy;
   if (status) query.status = status;
 
