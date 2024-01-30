@@ -155,17 +155,18 @@ const chargeSmsFees = async (phoneNumber, numberOfSMS, createdBy, session) => {
  * @param {string} userId - The ID of the user initiating the charge
  * @returns {Promise<Object>} Result of the operation
  */
-const saveSbProfit = async (costPrice, sellingPrice, userId, createdBy) => {
+const saveSbProfit = async (costPrice, sellingPrice, userId, createdBy, branchId) => {
   const ChargeModel = await Charge();
 
   // Calculate profit
-  const profit = costPrice - sellingPrice;
+  const profit = sellingPrice - costPrice;
   // Create a charge record
   const charge = await ChargeModel.create({
     userId,
     date: new Date().getTime(),
     amount: profit,
     createdBy,
+    branchId,
     reasons: 'Profit from SB',
   });
   return charge;

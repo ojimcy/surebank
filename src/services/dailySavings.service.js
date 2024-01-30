@@ -237,7 +237,7 @@ const saveDailyContribution = async (contributionInput) => {
     );
     await sendSms(phone, message);
 
-    await chargeSmsFees(userAccount.phoneNumber, 1, contributionInput.createdBy, session);
+    await chargeSmsFees(userAccount.phoneNumber, 1, contributionInput.createdBy, branch.branchId, session);
 
     await session.commitTransaction();
     session.endSession();

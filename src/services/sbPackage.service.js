@@ -56,7 +56,6 @@ const createSbPackage = async (sbPackageData) => {
  * @param {Object} contributionInput - Contribution input
  * @returns {Promise<Object>} Result of the operation
  */
-
 const makeDailyContribution = async (contributionInput) => {
   const session = await startSession();
   session.startTransaction();
@@ -67,7 +66,6 @@ const makeDailyContribution = async (contributionInput) => {
     const AccountModel = await Account();
     const SbPackageModel = await SbPackage();
     const UserModel = await User();
-
     const userAccount = await getAccountByNumber(contributionInput.accountNumber);
     if (!userAccount) {
       throw new ApiError(404, 'Account number does not exist.');
@@ -77,9 +75,7 @@ const makeDailyContribution = async (contributionInput) => {
       accountNumber: contributionInput.accountNumber,
       status: 'open',
       product: contributionInput.product,
-    })
-      .populate('createdBy', 'firstName lastName')
-      .lean();
+    });
 
     if (!userPackage) {
       throw new ApiError(409, 'Customer does not have an active package');
@@ -111,12 +107,6 @@ const makeDailyContribution = async (contributionInput) => {
       { session }
     );
 
-    userPackage.totalContribution += contributionInput.amount;
-
-    await SbPackageModel.findByIdAndUpdate(userPackageId, {
-      totalContribution: userPackage.totalContribution,
-    });
-
     const addLedgerEntryInput = {
       type: ACCOUNT_TYPE[2],
       direction: DIRECTION_VALUE[0],
@@ -127,7 +117,7 @@ const makeDailyContribution = async (contributionInput) => {
       branchId: branch.branchId,
     };
 
-    await addLedgerEntry([addLedgerEntryInput], session);
+    await addLedgerEntry(addLedgerEntryInput, session);
 
     const transactionDate = new Date().getTime();
 
@@ -161,7 +151,7 @@ const makeDailyContribution = async (contributionInput) => {
     await sendSms(phone, message);
 
     // Charge for SMS fees
-    await chargeSmsFees(phone, 1, contributionInput.createdBy, session);
+    await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId, session);
 
     userPackage.totalContribution += contributionInput.amount;
     userPackage.totalContribution -= SMS_FFE;
