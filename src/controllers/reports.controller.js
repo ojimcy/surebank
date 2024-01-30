@@ -94,7 +94,7 @@ const getSumOfDailyContributions = catchAsync(async (req, res) => {
     narration
   );
 
-  res.status(httpStatus.OK).sebd(totalContributions);
+  res.status(httpStatus.OK).send(totalContributions);
 });
 
 const getOtherCharges = catchAsync(async (req, res) => {

@@ -10,10 +10,11 @@ const { getProductCatalogueById } = require('./product.service');
  * @param {number} total - The initial total value of the cart
  * @returns {Promise<Object>} The created cart
  */
-const initCart = async (userId) => {
+const initCart = async (userId, total) => {
   const CartModel = await Cart();
   const newCart = new CartModel({
     userId,
+    total,
   });
   await newCart.save();
   return newCart;
@@ -23,48 +24,50 @@ const initCart = async (userId) => {
  * Add an item to the cart
  * @param {string} userId - The ID of the user
  * @param {string} productCatalogueId - The ID of the product catalogue
+ * @param {number} sellingPrice - The unit price of the item
  * @param {number} quantity - The quantity of the item
  * @returns {Promise<Object>} The updated cart and added cart item
  */
-const addToCart = async (userId, productCatalogueId, quantity) => {
+const addToCart = async (userId, productCatalogueId, packageId, quantity) => {
   const CartModel = await Cart();
   const CartItemModel = await CartItem();
-
   const product = await getProductCatalogueById(productCatalogueId);
-  if (!product) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
-  }
+  const { sellingPrice, name, images } = product;
 
   let cart = await CartModel.findOne({ userId });
   if (!cart) {
     // Initialize Cart
-    cart = await initCart(userId);
-  } else {
-    // Check if the item already exists in the cart
-    const existingItem = await CartItemModel.findOne({
-      cartId: cart._id,
-      productCatalogueId,
-    });
-    if (existingItem) {
-      return { cart, cartItem: { ...existingItem.toObject(), product } };
-    }
+    const subTotal = sellingPrice * quantity;
+    cart = await initCart(userId, subTotal);
   }
 
-  // If the item doesn't exist, create a new cart item
-  const subTotal = product.sellingPrice * quantity;
-  const cartId = cart._id;
-
-  const cartItem = await CartItemModel.create({
-    cartId,
+  // Check if the product already exists in the cart
+  const existingCartItem = await CartItemModel.findOne({
+    cartId: cart._id,
     productCatalogueId,
-    unitPrice: product.sellingPrice,
+  });
+
+  if (existingCartItem) {
+    return { cart, existingCartItem };
+  }
+  // Create a new cart item
+  const subTotal = sellingPrice * quantity;
+  await CartItemModel.create({
+    cartId: cart._id,
+    productCatalogueId,
+    packageId,
+    sellingPrice,
+    name,
+    images,
     quantity,
     subTotal,
   });
+
   cart.total += subTotal;
+
   await cart.save();
 
-  return { cart, cartItem };
+  return { cart };
 };
 
 /**
@@ -75,7 +78,6 @@ const addToCart = async (userId, productCatalogueId, quantity) => {
 const getCartItems = async (userId) => {
   const CartModel = await Cart();
   const CartItemModel = await CartItem();
-
   const cart = await CartModel.findOne({ userId });
   if (!cart) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Cart item not found');
@@ -108,20 +110,22 @@ const getCartItems = async (userId) => {
 const removeCartItem = async (userId, productCatalogueId) => {
   const CartModel = await Cart();
   const CartItemModel = await CartItem();
-
-  const cart = await CartModel.findOne({ userId });
-  if (!cart) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Cart not found');
+  try {
+    const cart = await CartModel.findOne({ userId });
+    if (!cart) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Cart item not found');
+    }
+    const cartItem = await CartItemModel.findOneAndRemove({
+      productCatalogueId,
+      cartId: cart._id,
+    });
+    const subTotal = cartItem ? +cartItem.subTotal : 0;
+    cart.total -= parseFloat(subTotal);
+    const result = await cart.save();
+    return result;
+  } catch (error) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error removing cart item');
   }
-  const cartItem = await CartItemModel.findOneAndRemove({
-    productCatalogueId,
-    cartId: cart._id,
-  });
-
-  const subTotal = cartItem ? +cartItem.subTotal : 0;
-  cart.total -= parseFloat(subTotal);
-  const result = await cart.save();
-  return result;
 };
 
 /**
@@ -133,10 +137,9 @@ const clearCart = async (userId) => {
   try {
     const CartModel = await Cart();
     const CartItemModel = await CartItem();
-
     const cart = await CartModel.findOne({ userId });
     if (!cart) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Cart item not found');
+      throw new ApiError(httpStatus.NOT_FOUND, 'Cart not found');
     }
     await CartItemModel.deleteMany({ cartId: cart._id });
     const deletedCart = await cart.remove();

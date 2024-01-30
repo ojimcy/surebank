@@ -16,3 +16,4 @@ module.exports.collectionContoller = require('./collections.controller');
 module.exports.fileUploadContoller = require('./fileUpload.controller');
 module.exports.sbPackageContoller = require('./sbPackage.controller');
 module.exports.chargeController = require('./charge.controller');
+module.exports.orderController = require('./order.controller');

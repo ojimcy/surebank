@@ -18,6 +18,20 @@ const cartItemSchema = mongoose.Schema(
       required: false,
       ref: 'SbPackage',
     },
+    sellingPrice: {
+      type: Number,
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    images: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     quantity: {
       type: Number,
       required: true,

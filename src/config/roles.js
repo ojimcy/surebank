@@ -93,7 +93,7 @@ const adminPermissions = [
   'manageBrand',
   'reports',
   'updateBranchManager',
-  'manageorder',
+  'manageOrders',
 ];
 
 const superAdminPermissions = [...adminPermissions, 'createAdmin', 'assignManager', 'accounting'];

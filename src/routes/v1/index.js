@@ -25,6 +25,7 @@ const collectionRoute = require('./collections.route');
 const fileUploadRoute = require('./fileUpload.route');
 const sbPackageRoute = require('./sbPackage.route');
 const chargeRoute = require('./charge.route');
+const orderRoute = require('./order.route');
 
 const router = express.Router();
 
@@ -124,6 +125,10 @@ const defaultRoutes = [
   {
     path: '/charge',
     route: chargeRoute,
+  },
+  {
+    path: '/orders',
+    route: orderRoute,
   },
 ];
 

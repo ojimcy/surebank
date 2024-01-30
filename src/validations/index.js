@@ -18,3 +18,4 @@ module.exports.promotionsValidation = require('./promotions.validation');
 module.exports.collectionValidation = require('./collections.validation');
 module.exports.sbPackageValidation = require('./sbPackage.validation');
 module.exports.chargerValidation = require('./charge.validation');
+module.exports.orderValidation = require('./order.validation');
