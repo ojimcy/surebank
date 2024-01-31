@@ -30,11 +30,10 @@ const createUser = async (userBody) => {
   const userModel = await User();
   // Normalize the provided phone number
   const normalizedPhoneNumber = normalizePhoneNumber(userBody.phoneNumber);
-
   // Check if the email is already taken
   if (await userModel.isPhoneNumberTaken(userBody.phoneNumber)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Phone number already taken');
-  } else if (await userModel.isEmailTaken(userBody.email)) {
+  } else if (userBody.email && (await userModel.isEmailTaken(userBody.email))) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
 
@@ -81,8 +80,10 @@ const getUserByEmail = async (email) => {
 
 const getUserByPhoneNumber = async (phoneNumber) => {
   const userModel = await User();
-  // Normalize the provided phone number
-  const normalizedPhoneNumber = parsePhoneNumber(phoneNumber, 'NG').format('E.164');
+
+  // Ensure that phoneNumber is a non-null string before attempting to parse
+  const normalizedPhoneNumber = typeof phoneNumber === 'string' ? parsePhoneNumber(phoneNumber, 'NG').format('E.164') : null;
+
   return userModel.findOne({ phoneNumber: normalizedPhoneNumber });
 };
 

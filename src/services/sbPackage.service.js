@@ -148,7 +148,7 @@ const makeDailyContribution = async (contributionInput) => {
       userPackage.totalContribution,
       cashier.firstName
     );
-    await sendSms(phone, message);
+    // await sendSms(phone, message);
 
     // Charge for SMS fees
     await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId, session);

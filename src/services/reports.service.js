@@ -338,6 +338,31 @@ const getSumOfDsCharges = async (branchId) => {
  * @param {Object} branchId - Filtering options (branchId)
  * @returns {Promise<Number>} Total amount
  */
+const getSumOfSbCharges = async (branchId) => {
+  const ChargeModel = await Charge();
+  const query = {};
+
+  if (branchId) {
+    query.branchId = branchId;
+  }
+
+  query.reasons = 'Profit from SB';
+
+  const totalAmountResult = await ChargeModel.aggregate([
+    { $match: query },
+    { $group: { _id: null, totalAmount: { $sum: '$amount' } } },
+  ]).exec();
+
+  const totalCharge = totalAmountResult.length > 0 ? totalAmountResult[0].totalAmount : 0;
+
+  return { totalCharge };
+};
+
+/**
+ * Get total amount with optional filtering by branch
+ * @param {Object} branchId - Filtering options (branchId)
+ * @returns {Promise<Number>} Total amount
+ */
 const getSumOfOtherCharges = async (branchId) => {
   const ChargeModel = await Charge();
   const query = {
@@ -459,6 +484,7 @@ module.exports = {
   getChargedSbPackages,
   getCharges,
   getSumOfDsCharges,
+  getSumOfSbCharges,
   getSumOfOtherCharges,
   getPackages,
   getSumOfDailyContributionsByDate,

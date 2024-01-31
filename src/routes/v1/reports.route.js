@@ -37,6 +37,7 @@ router
   .get(auth('reports'), validate(reportsValidation.getCharges), reportsController.getOtherCharges);
 
 router.route('/contribution-incomes/ds/supperadmin').get(auth('reports'), reportsController.getSumOfDsCharges);
+router.route('/contribution-incomes/sb/supperadmin').get(auth('reports'), reportsController.getSumOfSbCharges);
 router.route('/contribution-incomes/others/supperadmin').get(auth('reports'), reportsController.getSumOfOtherCharges);
 
 module.exports = router;

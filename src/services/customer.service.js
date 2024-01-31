@@ -22,13 +22,19 @@ const { userService, accountService } = require('.');
 const createCustomer = async (customerData) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-
   try {
     // Check if the user already exists
-    let user = await userService.getUserByEmail(customerData.email);
+    let user;
+    if (customerData.email) {
+      user = await userService.getUserByEmail(customerData.email);
+    } else {
+      user = await userService.getUserByPhoneNumber(customerData.phoneNumber);
+    }
+    console.log(customerData);
 
     if (!user) {
       // If user doesn't exist, create a new user within the transaction
+
       user = await userService.createUser(
         {
           email: customerData.email,
@@ -42,10 +48,10 @@ const createCustomer = async (customerData) => {
         session
       );
     }
-
     // Create an account for the user within the transaction
     const accountData = {
       email: user.email,
+      phoneNumber: user.phoneNumber,
       userId: user._id,
       firstName: user.firstName,
       lastName: user.lastName,

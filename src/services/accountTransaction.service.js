@@ -398,7 +398,7 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
       account.availableBalance,
       withdrawalRequest.userReps.firstName
     );
-    await sendSms(phone, message);
+    // await sendSms(phone, message);
 
     // charge sms fee
     await chargeSmsFees(phone, 1, withdrawalRequest.createdBy, withdrawalRequest.branchId);
