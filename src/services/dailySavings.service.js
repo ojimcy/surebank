@@ -1,4 +1,4 @@
-const { startSession } = require('mongoose');
+const mongoose = require('mongoose');
 const { Package, Contribution, AccountTransaction, Account, Charge, User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
@@ -88,7 +88,7 @@ const createDailySavingsPackage = async (dailyInput) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const saveDailyContribution = async (contributionInput) => {
-  const session = await startSession();
+  const session = await mongoose.startSession();
   session.startTransaction();
 
   const PackageModel = await Package();
@@ -257,7 +257,7 @@ const saveDailyContribution = async (contributionInput) => {
  */
 const makeDailySavingsWithdrawal = async (withdrawal) => {
   const PackageModel = await Package();
-  const session = await startSession();
+  const session = await mongoose.startSession();
   session.startTransaction();
 
   try {

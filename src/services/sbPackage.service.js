@@ -1,4 +1,4 @@
-const { startSession } = require('mongoose');
+const mongoose = require('mongoose');
 const { ACCOUNT_TYPE, DIRECTION_VALUE, SMS_FFE } = require('../constants/account');
 const { SbPackage, Account, Contribution, AccountTransaction, User, ProductCatalogue } = require('../models');
 const ApiError = require('../utils/ApiError');
@@ -57,7 +57,7 @@ const createSbPackage = async (sbPackageData) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const makeDailyContribution = async (contributionInput) => {
-  const session = await startSession();
+  const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
@@ -182,7 +182,7 @@ const makeDailyContribution = async (contributionInput) => {
  * @returns {Promise<Object>} Withdrawal details
  */
 const makeSbWithdrawal = async (withdrawal) => {
-  const session = await startSession();
+  const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
@@ -292,7 +292,7 @@ const mergeSavingsPackages = async (targetPackageId, sourcePackageIds) => {
   const SbPackageModel = await SbPackage();
   const ContributionModel = await Contribution();
 
-  const session = await startSession();
+  const session = await mongoose.startSession();
   session.startTransaction();
 
   try {

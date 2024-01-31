@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop */
-const { startSession } = require('mongoose');
-const { Charge, Package, SbPackage } = require('../models');
-const { getAccountByNumber } = require('./accountTransaction.service');
+const mongoose = require('mongoose');
+const { Charge, Package, SbPackage, Account } = require('../models');
 const { SMS_FFE } = require('../constants/account');
 const { getUserByPhoneNumber } = require('./user.service');
 
@@ -10,10 +9,10 @@ const { getUserByPhoneNumber } = require('./user.service');
  * @param {Object} chargeInput - Charge input
  * @returns {Promise<Object>} Result of the operation
  */
-const recordDsCharge = async (chargeInput) => {
+const chargeDsCustomer = async (chargeInput) => {
   const ChargeModel = await Charge();
   const PackageModel = await Package();
-  const session = await startSession();
+  const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
@@ -39,10 +38,10 @@ const recordDsCharge = async (chargeInput) => {
       { session }
     );
 
-    await Package.findByIdAndUpdate(
+    await PackageModel.findByIdAndUpdate(
       chargeInput.packageId,
       {
-        $inc: { totalContribution: chargeInput.amount },
+        $inc: { totalContribution: -chargeInput.amount },
       },
       { session }
     );
@@ -63,19 +62,22 @@ const recordDsCharge = async (chargeInput) => {
  * @param {Object} chargeInput - Charge input
  * @returns {Promise<Object>} Result of the operation
  */
-const chageDsCustomer = async (chargeInput) => {
+const chargeSbCustomer = async (chargeInput) => {
   const ChargeModel = await Charge();
   const PackageModel = await SbPackage();
-  const session = await startSession();
+  const AccountModel = await Account();
+  const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     // Fetch the package details to get the branchId
     const packageDetails = await PackageModel.findById(chargeInput.packageId);
+
     if (!packageDetails) {
       throw new Error('Package not found');
     }
-    const account = await getAccountByNumber(packageDetails.accountNumber);
+    const { accountNumber } = packageDetails;
+    const account = await AccountModel.findOne({ accountNumber });
 
     const currentDate = new Date().getTime();
     // Create a new charge
@@ -94,10 +96,10 @@ const chageDsCustomer = async (chargeInput) => {
       { session }
     );
 
-    await Package.findByIdAndUpdate(
+    await PackageModel.findByIdAndUpdate(
       chargeInput.packageId,
       {
-        $inc: { totalContribution: chargeInput.amount },
+        $inc: { totalContribution: -chargeInput.amount },
       },
       { session }
     );
@@ -173,8 +175,8 @@ const saveSbProfit = async (costPrice, sellingPrice, userId, createdBy, branchId
 };
 
 module.exports = {
-  recordDsCharge,
-  chageDsCustomer,
+  chargeDsCustomer,
+  chargeSbCustomer,
   chargeSmsFees,
   saveSbProfit,
 };

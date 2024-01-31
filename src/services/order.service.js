@@ -1,4 +1,4 @@
-const { startSession } = require('mongoose');
+const mongoose = require('mongoose');
 const httpStatus = require('http-status');
 const { ProductCatalogue, Order, SbPackage, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
@@ -59,7 +59,7 @@ const createOrder = async (userId, orderDetails) => {
   const ProductCatalogueModel = await ProductCatalogue();
   const OrderModel = await Order();
 
-  const session = await startSession();
+  const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const products = await getCartItems(userId);
@@ -109,7 +109,7 @@ const createOrder = async (userId, orderDetails) => {
       { session }
     );
     // save profit to charge
-    await saveSbProfit(costTotal, totalAmount, userId, userId);
+    await saveSbProfit(costTotal, totalAmount, userId, userId, orderDetails.deliveryAddress.branchId);
 
     // Clear the user's cart
     await clearCart(userId, session);
@@ -200,7 +200,7 @@ const updateOrder = async (orderId, updateBody) => {
  */
 const payOrderWithSbBalance = async (packageId, orderId, userId) => {
   const SbPackageModel = await SbPackage();
-  const session = await startSession();
+  const session = await mongoose.startSession();
   session.startTransaction();
   try {
     // Retrieve order details

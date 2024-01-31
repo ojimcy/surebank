@@ -6,7 +6,7 @@ const chageDsCustomer = catchAsync(async (req, res) => {
   const { ...chargeInput } = req.body;
   const createdBy = req.user._id;
 
-  const charge = await chargeService.chageDsCustomer({ ...chargeInput, createdBy });
+  const charge = await chargeService.chargeDsCustomer({ ...chargeInput, createdBy });
 
   res.status(httpStatus.OK).json(charge);
 });
