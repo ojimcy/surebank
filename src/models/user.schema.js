@@ -34,8 +34,6 @@ const userSchema = mongoose.Schema(
     email: {
       type: String,
       required: false,
-      unique: true,
-      sparse: true,
       trim: true,
       lowercase: true,
       validate(value) {

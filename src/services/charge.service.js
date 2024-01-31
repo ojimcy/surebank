@@ -119,9 +119,10 @@ const chargeSbCustomer = async (chargeInput) => {
  * Charge SMS fees to a user
  * @param {string} phoneNumber - The phone number of the user
  * @param {string} createdBy - The ID of the user initiating the charge
+ * @param {string} branchId - Branch ID if the user
  * @returns {Promise<Object>} - Result of the operation
  */
-const chargeSmsFees = async (phoneNumber, numberOfSMS, createdBy, session) => {
+const chargeSmsFees = async (phoneNumber, numberOfSMS, createdBy, branchId) => {
   const ChargeModel = await Charge();
   // Get user information based on phone number
   const user = await getUserByPhoneNumber(phoneNumber);
@@ -134,19 +135,14 @@ const chargeSmsFees = async (phoneNumber, numberOfSMS, createdBy, session) => {
   const smsChargedAmount = SMS_FFE * numberOfSMS;
 
   // Create a charge record
-  const charge = await ChargeModel.create(
-    [
-      {
-        userId: user._id,
-        date: new Date().getTime(),
-        amount: smsChargedAmount,
-        createdBy,
-        reasons: `SMS charge`,
-      },
-    ],
-    { session }
-  );
-
+  const charge = await ChargeModel.create({
+    userId: user._id,
+    date: new Date().getTime(),
+    amount: smsChargedAmount,
+    createdBy,
+    reasons: `SMS charge`,
+    branchId,
+  });
   return charge;
 };
 

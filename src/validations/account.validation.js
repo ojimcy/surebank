@@ -6,6 +6,7 @@ const createAccount = {
   body: Joi.object().keys({
     email: Joi.string().optional().email(),
     accountType: Joi.string().required(),
+    phoneNumber: Joi.string().optional(),
     branchId: Joi.string().required().custom(objectId),
     createdBy: Joi.string().custom(objectId),
     accountManagerName: Joi.string(),

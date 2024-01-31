@@ -57,123 +57,101 @@ const createSbPackage = async (sbPackageData) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const makeDailyContribution = async (contributionInput) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  const AccountTransactionModel = await AccountTransaction();
+  const ContributionModel = await Contribution();
+  const AccountModel = await Account();
+  const SbPackageModel = await SbPackage();
+  const UserModel = await User();
 
-  try {
-    const AccountTransactionModel = await AccountTransaction();
-    const ContributionModel = await Contribution();
-    const AccountModel = await Account();
-    const SbPackageModel = await SbPackage();
-    const UserModel = await User();
-    const userAccount = await getAccountByNumber(contributionInput.accountNumber);
-    if (!userAccount) {
-      throw new ApiError(404, 'Account number does not exist.');
-    }
-
-    const userPackage = await SbPackageModel.findOne({
-      accountNumber: contributionInput.accountNumber,
-      status: 'open',
-      product: contributionInput.product,
-    });
-
-    if (!userPackage) {
-      throw new ApiError(409, 'Customer does not have an active package');
-    }
-
-    const userPackageId = userPackage._id;
-    const currentDate = new Date().getTime();
-
-    if (userPackage.status === 'closed') {
-      throw new ApiError(403, 'This package has been closed');
-    }
-
-    const branch = await AccountModel.findOne({
-      accountNumber: contributionInput.accountNumber,
-    });
-
-    const newContribution = await ContributionModel.create(
-      [
-        {
-          createdBy: contributionInput.createdBy,
-          amount: contributionInput.amount,
-          branchId: branch.branchId,
-          accountNumber: contributionInput.accountNumber,
-          packageId: userPackageId,
-          date: currentDate,
-          narration: `SB contribution`,
-        },
-      ],
-      { session }
-    );
-
-    const addLedgerEntryInput = {
-      type: ACCOUNT_TYPE[2],
-      direction: DIRECTION_VALUE[0],
-      date: currentDate,
-      narration: 'SB contribution',
-      amount: contributionInput.amount,
-      userId: userPackage.createdBy,
-      branchId: branch.branchId,
-    };
-
-    await addLedgerEntry(addLedgerEntryInput, session);
-
-    const transactionDate = new Date().getTime();
-
-    const contributionTransaction = await AccountTransactionModel.create(
-      [
-        {
-          accountNumber: userPackage.accountNumber,
-          amount: contributionInput.amount,
-          createdBy: contributionInput.createdBy,
-          branchId: branch.branchId,
-          date: transactionDate,
-          direction: 'inflow',
-          narration: `SB Daily contribution`,
-          userId: userAccount.userId,
-        },
-      ],
-      { session }
-    );
-
-    const cashier = await UserModel.findById(contributionInput.createdBy);
-
-    // Send credit SMS
-    const phone = userAccount.phoneNumber;
-    const message = sbContributionMessage(
-      userAccount.firstName,
-      contributionInput.amount,
-      contributionInput.accountNumber,
-      userPackage.totalContribution,
-      cashier.firstName
-    );
-    // await sendSms(phone, message);
-
-    // Charge for SMS fees
-    await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId, session);
-
-    userPackage.totalContribution += contributionInput.amount;
-    userPackage.totalContribution -= SMS_FFE;
-
-    // Update total contribution and charge SMS fees atomically
-    await SbPackage.findByIdAndUpdate(userPackageId, {
-      totalContribution: userPackage.totalContribution,
-    });
-
-    // Commit the transaction
-    await session.commitTransaction();
-    session.endSession();
-
-    return {
-      newContribution,
-      contributionTransaction,
-    };
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
+  const userAccount = await getAccountByNumber(contributionInput.accountNumber);
+  if (!userAccount) {
+    throw new ApiError(404, 'Account number does not exist.');
   }
+
+  const userPackage = await SbPackageModel.findOne({
+    accountNumber: contributionInput.accountNumber,
+    status: 'open',
+    product: contributionInput.product,
+  });
+
+  if (!userPackage) {
+    throw new ApiError(409, 'Customer does not have an active package');
+  }
+
+  const userPackageId = userPackage._id;
+  const currentDate = new Date().getTime();
+
+  if (userPackage.status === 'closed') {
+    throw new ApiError(403, 'This package has been closed');
+  }
+
+  const branch = await AccountModel.findOne({
+    accountNumber: contributionInput.accountNumber,
+  });
+
+  const newContribution = await ContributionModel.create({
+    createdBy: contributionInput.createdBy,
+    amount: contributionInput.amount,
+    branchId: branch.branchId,
+    accountNumber: contributionInput.accountNumber,
+    packageId: userPackageId,
+    date: currentDate,
+    narration: `SB contribution`,
+  });
+
+  const addLedgerEntryInput = {
+    type: ACCOUNT_TYPE[2],
+    direction: DIRECTION_VALUE[0],
+    date: currentDate,
+    narration: 'SB contribution',
+    amount: contributionInput.amount,
+    userId: userPackage.createdBy,
+    branchId: branch.branchId,
+  };
+
+  await addLedgerEntry(addLedgerEntryInput);
+
+  const transactionDate = new Date().getTime();
+
+  const contributionTransaction = await AccountTransactionModel.create({
+    accountNumber: userPackage.accountNumber,
+    amount: contributionInput.amount,
+    createdBy: contributionInput.createdBy,
+    branchId: branch.branchId,
+    date: transactionDate,
+    direction: 'inflow',
+    narration: `SB Daily contribution`,
+    userId: userAccount.userId,
+  });
+
+  const cashier = await UserModel.findById(contributionInput.createdBy);
+
+  // Send credit SMS
+  const phone = userAccount.phoneNumber;
+  const message = sbContributionMessage(
+    userAccount.firstName,
+    contributionInput.amount,
+    contributionInput.accountNumber,
+    userPackage.totalContribution,
+    cashier.firstName
+  );
+  await sendSms(phone, message);
+
+  // Charge for SMS fees
+  await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId);
+
+  userPackage.totalContribution += contributionInput.amount;
+  userPackage.totalContribution -= SMS_FFE;
+
+  // Update total contribution and charge SMS fees atomically
+  await SbPackageModel.findByIdAndUpdate(userPackageId, {
+    totalContribution: userPackage.totalContribution,
+  });
+
+  return {
+    newContribution,
+    contributionTransaction,
+  };
 };
 
 /**

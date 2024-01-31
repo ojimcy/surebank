@@ -16,7 +16,6 @@ const { getUserByEmail, getUserById, getUserByPhoneNumber } = require('./user.se
 const createAccount = async (accountData, createdBy) => {
   const accountModel = await Account();
   const { accountType, branchId } = accountData;
-  console.log(accountData);
   let user;
   if (accountData.email) {
     user = await getUserByEmail(accountData.email);
