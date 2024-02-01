@@ -431,7 +431,7 @@ const getSumOfDailyContributionsByDate = async (startDate, endDate, branchId, cr
  */
 const getOtherCharges = async (filterOptions) => {
   const ChargeModel = await Charge();
-  const { startDate, endDate, branchId } = filterOptions;
+  const { startDate, endDate, branchId, reasons } = filterOptions;
 
   const query = {
     reasons: { $ne: 'DS charge' }, // Exclude charges with reason 'DS charge'
@@ -447,6 +447,10 @@ const getOtherCharges = async (filterOptions) => {
 
   if (branchId) {
     query.branchId = branchId;
+  }
+
+  if (reasons) {
+    query.reasons = reasons;
   }
 
   try {

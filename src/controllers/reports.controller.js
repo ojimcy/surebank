@@ -107,7 +107,7 @@ const getSumOfDailyContributions = catchAsync(async (req, res) => {
 });
 
 const getOtherCharges = catchAsync(async (req, res) => {
-  const filterOptions = pick(req.query, ['startDate', 'endDate', 'branchId']);
+  const filterOptions = pick(req.query, ['startDate', 'endDate', 'branchId', 'reasons']);
 
   const totalCharge = await reportService.getOtherCharges(filterOptions);
 

@@ -30,7 +30,6 @@ const createCustomer = async (customerData) => {
     } else {
       user = await userService.getUserByPhoneNumber(customerData.phoneNumber);
     }
-    console.log(customerData);
 
     if (!user) {
       // If user doesn't exist, create a new user within the transaction
@@ -47,6 +46,8 @@ const createCustomer = async (customerData) => {
         },
         session
       );
+    } else {
+      await userService.updateUserById(user._id, customerData.branchId);
     }
     // Create an account for the user within the transaction
     const accountData = {
