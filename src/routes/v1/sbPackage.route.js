@@ -7,6 +7,10 @@ const sbPackageController = require('../../controllers/sbPackage.controller');
 const router = express.Router();
 
 router
+  .route('/')
+  .get(auth('sbPackages'), validate(sbPackageValidation.getAllSbPackages), sbPackageController.getAllSbPackages);
+
+router
   .route('/package')
   .post(auth('createPackage'), validate(sbPackageValidation.createSbPackage), sbPackageController.createSbPackage)
   .get(auth('userPackage'), validate(sbPackageValidation.getUserSbPackages), sbPackageController.getUserSbPackages);

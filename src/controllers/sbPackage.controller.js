@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const { sbPackageService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
+const pick = require('../utils/pick');
 
 const createSbPackage = catchAsync(async (req, res) => {
   const sbPackageData = req.body;
@@ -52,6 +53,14 @@ const updatePackageProduct = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(updatedPackage);
 });
 
+const getAllSbPackages = catchAsync(async (req, res) => {
+  const filterOptions = pick(req.query, ['branchId']);
+
+  const packages = await sbPackageService.getAllSbPackages(filterOptions);
+
+  res.status(httpStatus.OK).json(packages);
+});
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
@@ -60,4 +69,5 @@ module.exports = {
   getUserSbPackages,
   mergeSavingsPackages,
   updatePackageProduct,
+  getAllSbPackages,
 };

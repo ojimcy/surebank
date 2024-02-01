@@ -65,6 +65,12 @@ const updatePackageProduct = {
   }),
 };
 
+const getAllSbPackages = {
+  query: Joi.object().keys({
+    branchId: Joi.string().optional().custom(objectId),
+  }),
+};
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
@@ -73,4 +79,5 @@ module.exports = {
   getUserSbPackages,
   mergeSavingsPackages,
   updatePackageProduct,
+  getAllSbPackages,
 };

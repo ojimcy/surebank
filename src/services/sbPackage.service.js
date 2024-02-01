@@ -8,6 +8,7 @@ const { getProductCatalogueById } = require('./product.service');
 const { sendSms } = require('./sms.service');
 const { sbContributionMessage } = require('../templates/sms/templates');
 const { chargeSmsFees } = require('./charge.service');
+const { getUserById } = require('./user.service');
 
 const createSbPackage = async (sbPackageData) => {
   const SbPackageModel = await SbPackage();
@@ -39,12 +40,12 @@ const createSbPackage = async (sbPackageData) => {
   }
 
   const startDate = new Date().getTime();
-
   const sbPackage = await SbPackageModel.create({
     ...sbPackageData,
     userId: userAccount.userId,
     targetAmount: product.sellingPrice,
     image: product.images[1],
+    branchId: userAccount.branchId,
     startDate,
   });
 
@@ -366,6 +367,62 @@ const updatePackageProduct = async (packageId, newProductId) => {
   return updatedPackage;
 };
 
+/**
+ * Get all sb packages. Filtering by branch and createdBy
+ * @param {Object} filterOptions - Filtering options (branchId, createdBy)
+ * @returns {Promise<Array>} Sb packages with additional information
+ */
+const getAllSbPackages = async (filterOptions) => {
+  const SbPackageModel = await SbPackage();
+  const { branchId, createdBy } = filterOptions;
+
+  const query = {};
+
+  if (branchId) {
+    query.branchId = branchId;
+  }
+
+  if (createdBy) {
+    query.createdBy = createdBy;
+  }
+
+  const packages = await SbPackageModel.find(query)
+    .populate([
+      {
+        path: 'userId',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'branchId',
+        select: 'name',
+      },
+      {
+        path: 'product',
+        model: 'ProductCatalogue',
+      },
+    ])
+    .exec();
+
+  const packagesWithProducts = await Promise.all(
+    packages.map(async (userPackage) => {
+      const response = await getAccountByNumber(userPackage.accountNumber);
+      const userReps = await getUserById(response.accountManagerId);
+
+      // Check if userReps is not null before accessing properties
+      const accountManager = userReps ? { firstName: userReps.firstName, lastName: userReps.lastName } : null;
+
+      const updatedUserPackage = {
+        ...userPackage.toObject(),
+        accountManager,
+      };
+
+      return updatedUserPackage;
+    })
+  );
+
+  return packagesWithProducts;
+};
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
@@ -374,4 +431,5 @@ module.exports = {
   getUserSbPackages,
   mergeSavingsPackages,
   updatePackageProduct,
+  getAllSbPackages,
 };

@@ -79,6 +79,7 @@ const managerPermissions = [
   'updateBranchStaff',
   'deactivateStaff',
   'charge',
+  'sbPackages',
 ];
 
 const adminPermissions = [
