@@ -30,7 +30,17 @@ const getOrder = catchAsync(async (req, res) => {
 const getAllOrders = catchAsync(async (req, res) => {
   const { status, branchId, createdBy } = req.query;
   const orders = await orderService.getAllOrders(status, branchId, createdBy);
-  res.status(httpStatus.OK).send(orders);
+
+  // Calculate the sum of withdrawal amounts
+  const totalAmount = orders.reduce((sum, sumOrders) => sum + sumOrders.totalAmount, 0);
+
+  // Add the totalAmount to the result object
+  const ordersWithTotalAmount = {
+    orders,
+    totalAmount,
+  };
+
+  res.status(httpStatus.OK).send(ordersWithTotalAmount);
 });
 
 const payOrderWithSbBalance = catchAsync(async (req, res) => {

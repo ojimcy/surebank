@@ -74,7 +74,7 @@ const rejectWithdrawalRequest = {
   }),
 };
 
-const getAllWithdrawals = {
+const getAllWithdrawalRequests = {
   query: Joi.object().keys({
     createdBy: Joi.string().optional().custom(objectId),
     branchId: Joi.string().optional().custom(objectId),
@@ -102,6 +102,6 @@ module.exports = {
   getCustomerwithdrawals,
   makeWithdrawalRequest,
   rejectWithdrawalRequest,
-  getAllWithdrawals,
+  getAllWithdrawalRequests,
   getWithdrawalRequestById,
 };

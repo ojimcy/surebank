@@ -260,7 +260,7 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
  * @param {string} [createdBy] - Optional createdBy to filter by
  * @returns {Promise<Array>} Array of ds withdrawals
  */
-const getAllWithdrawals = async (startDate, endDate, branchId, createdBy, status) => {
+const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy, status) => {
   const AccountTransactionModel = await AccountTransaction();
   try {
     const query = {};
@@ -308,7 +308,6 @@ const getAllWithdrawals = async (startDate, endDate, branchId, createdBy, status
       ])
       .sort({ date: -1 })
       .lean();
-
     return withdrawalRequests;
   } catch (error) {
     throw new ApiError('Failed to fetch withdrawal requests', error);
@@ -579,7 +578,7 @@ module.exports = {
   getCustomerwithdrawals,
   makeWithdrawalRequest,
   rejectWithdrawalRequest,
-  getAllWithdrawals,
+  getAllWithdrawalRequests,
   getWithdrawalRequestById,
   getHeldAmount,
 };
