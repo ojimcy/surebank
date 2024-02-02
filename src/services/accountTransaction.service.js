@@ -193,14 +193,18 @@ const getHeldAmount = async (accountNumber) => {
  * @param {number} amount - Amount to request
  * @param {string} createdBy - User making the request
  * @param {Object} session - Mongoose session
+ * @param {string} accountName - Account name for withdrawal request
+ * @param {number} number - Account number for withdrawal request
+ * @param {string} bankName - Bank name for withdrawal request
  * @returns {Promise<Object>} Result of the operation
  */
-const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
+const makeWithdrawalRequest = async (withdrawalInput) => {
   const AccountModel = await Account();
   const AccountTransactionModel = await AccountTransaction();
   const session = await mongoose.startSession();
   session.startTransaction();
 
+  const { accountNumber, amount, createdBy, bankName, bankAccountNumber, accountName } = withdrawalInput;
   try {
     // Ensure account exists
     const account = await AccountModel.findOne({ accountNumber }).session(session);
@@ -230,6 +234,9 @@ const makeWithdrawalRequest = async (accountNumber, amount, createdBy) => {
           direction: 'outflow',
           narration: 'Request Cash',
           userId: account.userId,
+          bankName,
+          bankAccountNumber,
+          accountName,
         },
       ],
       { session }

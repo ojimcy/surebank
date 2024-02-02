@@ -99,9 +99,16 @@ const getCustomerwithdrawals = catchAsync(async (req, res) => {
 });
 
 const makeWithdrawalRequest = catchAsync(async (req, res) => {
-  const { accountNumber, amount } = req.body;
+  const { accountNumber, amount, accountName, bankAccountNumber, bankName } = req.body;
   const createdBy = req.user._id;
-  const result = await accountTransactionService.makeWithdrawalRequest(accountNumber, amount, createdBy);
+  const result = await accountTransactionService.makeWithdrawalRequest({
+    accountNumber,
+    amount,
+    createdBy,
+    accountName,
+    bankAccountNumber,
+    bankName,
+  });
   res.status(httpStatus.OK).json(result);
 });
 

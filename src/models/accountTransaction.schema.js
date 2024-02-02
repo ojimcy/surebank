@@ -56,6 +56,18 @@ const accountTransactionSchema = mongoose.Schema(
       type: String,
       required: false,
     },
+    accountName: {
+      type: String,
+      required: false,
+    },
+    bankAccountNumber: {
+      type: Number,
+      required: false,
+    },
+    bankName: {
+      type: String,
+      required: false,
+    },
   },
   {
     timestamps: true,

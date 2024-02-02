@@ -62,6 +62,9 @@ const makeWithdrawalRequest = {
   body: Joi.object().keys({
     accountNumber: Joi.string().required(),
     amount: Joi.number().required(),
+    accountName: Joi.string().optional(),
+    bankAccountNumber: Joi.number().optional(),
+    bankName: Joi.string().optional(),
   }),
 };
 
