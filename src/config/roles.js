@@ -95,6 +95,7 @@ const adminPermissions = [
   'reports',
   'updateBranchManager',
   'manageOrders',
+  'sendSms',
 ];
 
 const superAdminPermissions = [...adminPermissions, 'createAdmin', 'assignManager', 'accounting'];

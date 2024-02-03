@@ -26,6 +26,7 @@ const fileUploadRoute = require('./fileUpload.route');
 const sbPackageRoute = require('./sbPackage.route');
 const chargeRoute = require('./charge.route');
 const orderRoute = require('./order.route');
+const smsRoute = require('./sms.route');
 
 const router = express.Router();
 
@@ -129,6 +130,10 @@ const defaultRoutes = [
   {
     path: '/orders',
     route: orderRoute,
+  },
+  {
+    path: '/sms',
+    route: smsRoute,
   },
 ];
 

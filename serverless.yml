@@ -4,7 +4,7 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs18.x
-  # timeout: 90
+  timeout: 90
   environment: ${file(env.json)}
 
 functions:

@@ -38,7 +38,7 @@ const getUserAccounts = catchAsync(async (req, res) => {
 });
 
 const getAllAccounts = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['branchId', 'accountManagerId']);
+  const filter = pick(req.query, ['branchId', 'accountManagerId', 'accountType', 'accountNumber']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await accountService.getAllAccounts(filter, options);
   res.send(result);

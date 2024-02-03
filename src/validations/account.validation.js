@@ -85,6 +85,7 @@ const getAllAccounts = {
     branchId: Joi.string().custom(objectId),
     accountManagerId: Joi.string().custom(objectId),
     accountNumber: Joi.number(),
+    accountType: Joi.string(),
     name: Joi.string(),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
