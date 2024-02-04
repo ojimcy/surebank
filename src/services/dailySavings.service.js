@@ -3,7 +3,7 @@ const { Package, Contribution, AccountTransaction, Account, Charge, User } = req
 const ApiError = require('../utils/ApiError');
 const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { getUserById } = require('./user.service');
-const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
+const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE, SMS_FFE } = require('../constants/account');
 const { sendSms } = require('./sms.service');
 const { dsContributionMessage } = require('../templates/sms/templates');
 const { addLedgerEntry } = require('./accounting.service');
@@ -158,18 +158,6 @@ const saveDailyContribution = async (contributionInput) => {
       { session }
     );
 
-    userPackage.totalContribution += contributionInput.amount;
-
-    // Consolidated update operations into a single findByIdAndUpdate call
-    await PackageModel.findByIdAndUpdate(
-      userPackageId,
-      {
-        $set: { totalCount },
-        $inc: { totalContribution: contributionInput.amount },
-      },
-      { session }
-    );
-
     // expected to take one in every CONTRIBUTION_CIRCLE
     let expectedDeduction = totalCount - (totalCount % CONTRIBUTION_CIRCLE);
 
@@ -235,9 +223,23 @@ const saveDailyContribution = async (contributionInput) => {
       userPackage.totalContribution,
       cashier.firstName
     );
-    await sendSms(phone, message);
 
+    await sendSms(phone, message);
     await chargeSmsFees(userAccount.phoneNumber, 1, contributionInput.createdBy, branch.branchId);
+
+    // Update total contribution and charge SMS fees atomically
+    userPackage.totalContribution += contributionInput.amount;
+    // Deduct SMS_FFE from contribution amount
+    const netContributionAmount = contributionInput.amount - SMS_FFE;
+
+    await PackageModel.findByIdAndUpdate(
+      userPackageId,
+      {
+        $set: { totalCount },
+        $inc: { totalContribution: netContributionAmount },
+      },
+      { session }
+    );
 
     await session.commitTransaction();
     session.endSession();

@@ -25,7 +25,6 @@ const sendSms = async (phone, message) => {
 const sendBulkSms = async (filterOptions, message) => {
   // Retrieve filtered accounts
   const accounts = await getAllAccounts(filterOptions);
-  console.log(accounts);
   const { branchId, accountType } = filterOptions;
   const query = {};
 
@@ -36,14 +35,15 @@ const sendBulkSms = async (filterOptions, message) => {
   if (accountType) {
     query.accountType = accountType;
   }
+
   // Extract phone numbers from accounts
   const phoneNumbers = accounts.map((account) => account.phoneNumber);
   // Send SMS to each account
-  // await Promise.all(
-  //   phoneNumbers.map(async (phoneNumber) => {
-  //     await sendSms(phoneNumber, message);
-  //   })
-  // );
+  await Promise.all(
+    phoneNumbers.map(async (phoneNumber) => {
+      await sendSms(phoneNumber, message);
+    })
+  );
 };
 
 module.exports = {
