@@ -212,6 +212,20 @@ const saveDailyContribution = async (contributionInput) => {
       { session }
     );
 
+    // Update total contribution and charge SMS fees atomically
+    userPackage.totalContribution += contributionInput.amount;
+    // Deduct SMS_FFE from contribution amount
+    const netContributionAmount = contributionInput.amount - SMS_FFE;
+
+    await PackageModel.findByIdAndUpdate(
+      userPackageId,
+      {
+        $set: { totalCount },
+        $inc: { totalContribution: netContributionAmount },
+      },
+      { session }
+    );
+
     const cashier = await UserModel.findById(contributionInput.createdBy);
 
     // Send credit SMS
@@ -226,20 +240,6 @@ const saveDailyContribution = async (contributionInput) => {
 
     await sendSms(phone, message);
     await chargeSmsFees(userAccount.phoneNumber, 1, contributionInput.createdBy, branch.branchId);
-
-    // Update total contribution and charge SMS fees atomically
-    userPackage.totalContribution += contributionInput.amount;
-    // Deduct SMS_FFE from contribution amount
-    const netContributionAmount = contributionInput.amount - SMS_FFE;
-
-    await PackageModel.findByIdAndUpdate(
-      userPackageId,
-      {
-        $set: { totalCount },
-        $inc: { totalContribution: netContributionAmount },
-      },
-      { session }
-    );
 
     await session.commitTransaction();
     session.endSession();

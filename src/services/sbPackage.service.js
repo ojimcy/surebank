@@ -126,6 +126,14 @@ const makeDailyContribution = async (contributionInput) => {
     userId: userAccount.userId,
   });
 
+  userPackage.totalContribution += contributionInput.amount;
+  userPackage.totalContribution -= SMS_FFE;
+
+  // Update total contribution and charge SMS fees atomically
+  await SbPackageModel.findByIdAndUpdate(userPackageId, {
+    totalContribution: userPackage.totalContribution,
+  });
+
   const cashier = await UserModel.findById(contributionInput.createdBy);
 
   // Send credit SMS
@@ -141,14 +149,6 @@ const makeDailyContribution = async (contributionInput) => {
 
   // Charge for SMS fees
   await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId);
-
-  userPackage.totalContribution += contributionInput.amount;
-  userPackage.totalContribution -= SMS_FFE;
-
-  // Update total contribution and charge SMS fees atomically
-  await SbPackageModel.findByIdAndUpdate(userPackageId, {
-    totalContribution: userPackage.totalContribution,
-  });
 
   return {
     newContribution,
