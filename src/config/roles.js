@@ -94,7 +94,7 @@ const adminPermissions = [
   'manageBrand',
   'reports',
   'updateBranchManager',
-  'manageOrders',
+  'manageOrder',
   'sendSms',
 ];
 

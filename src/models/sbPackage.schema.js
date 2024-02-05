@@ -39,7 +39,7 @@ const sbPackageSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['open', 'closed'],
+    enum: ['open', 'closed', 'paid', 'delivered'],
     default: 'open',
   },
   totalContribution: {
@@ -50,6 +50,11 @@ const sbPackageSchema = new mongoose.Schema({
   totalCount: {
     type: Number,
     default: 0,
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['cash', 'transfer'],
+    required: false,
   },
 });
 

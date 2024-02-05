@@ -20,6 +20,7 @@ const makeDailyContribution = {
   body: Joi.object().keys({
     amount: Joi.number().required(),
     accountNumber: Joi.number().required(),
+    paymentMethod: Joi.string().required(),
     product: Joi.string().required().custom(objectId),
   }),
 };
@@ -68,6 +69,7 @@ const updatePackageProduct = {
 const getAllSbPackages = {
   query: Joi.object().keys({
     branchId: Joi.string().optional().custom(objectId),
+    accountManagerId: Joi.string().optional().custom(objectId),
   }),
 };
 

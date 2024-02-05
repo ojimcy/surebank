@@ -54,7 +54,7 @@ const updatePackageProduct = catchAsync(async (req, res) => {
 });
 
 const getAllSbPackages = catchAsync(async (req, res) => {
-  const filterOptions = pick(req.query, ['branchId']);
+  const filterOptions = pick(req.query, ['branchId', 'accountManagerId']);
 
   const packages = await sbPackageService.getAllSbPackages(filterOptions);
 

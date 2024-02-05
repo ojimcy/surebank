@@ -97,6 +97,7 @@ const makeDailyContribution = async (contributionInput) => {
     accountNumber: contributionInput.accountNumber,
     packageId: userPackageId,
     date: currentDate,
+    paymentMethod: contributionInput.paymentMethod,
     narration: `SB contribution`,
   });
 
@@ -121,7 +122,8 @@ const makeDailyContribution = async (contributionInput) => {
     branchId: branch.branchId,
     date: transactionDate,
     direction: 'inflow',
-    narration: `SB Daily contribution`,
+    paymentMethod: contributionInput.paymentMethod,
+    narration: `SB Daily contribution - ${contributionInput.paymentMethod}`,
     userId: userAccount.userId,
   });
 
@@ -136,7 +138,7 @@ const makeDailyContribution = async (contributionInput) => {
     userPackage.totalContribution,
     cashier.firstName
   );
-  await sendSms(phone, message);
+  // await sendSms(phone, message);
 
   // Charge for SMS fees
   await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId);
@@ -368,13 +370,13 @@ const updatePackageProduct = async (packageId, newProductId) => {
 };
 
 /**
- * Get all sb packages. Filtering by branch and createdBy
- * @param {Object} filterOptions - Filtering options (branchId, createdBy)
+ * Get all sb packages. Filtering by branch and accountManagerId
+ * @param {Object} filterOptions - Filtering options (branchId, accountManagerId)
  * @returns {Promise<Array>} Sb packages with additional information
  */
 const getAllSbPackages = async (filterOptions) => {
   const SbPackageModel = await SbPackage();
-  const { branchId, createdBy } = filterOptions;
+  const { branchId, accountManagerId } = filterOptions;
 
   const query = {};
 
@@ -382,8 +384,8 @@ const getAllSbPackages = async (filterOptions) => {
     query.branchId = branchId;
   }
 
-  if (createdBy) {
-    query.createdBy = createdBy;
+  if (accountManagerId) {
+    query.accountManagerId = accountManagerId;
   }
 
   const packages = await SbPackageModel.find(query)
@@ -406,10 +408,9 @@ const getAllSbPackages = async (filterOptions) => {
   const packagesWithProducts = await Promise.all(
     packages.map(async (userPackage) => {
       const response = await getAccountByNumber(userPackage.accountNumber);
-      const userReps = await getUserById(response.accountManagerId);
+      const accountManager = await getUserById(response.accountManagerId);
 
       // Check if userReps is not null before accessing properties
-      const accountManager = userReps ? { firstName: userReps.firstName, lastName: userReps.lastName } : null;
 
       const updatedUserPackage = {
         ...userPackage.toObject(),

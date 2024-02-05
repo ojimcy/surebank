@@ -340,7 +340,6 @@ const getUserDailySavingsPackages = async (userId) => {
   const PackageModel = await Package();
   const userPackages = await PackageModel.find({
     userId,
-    status: 'open',
   });
 
   return userPackages;
