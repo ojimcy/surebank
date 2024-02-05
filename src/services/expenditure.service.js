@@ -206,6 +206,10 @@ const approveExpenditure = async (expenditureId, approvedBy) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Expenditure not found');
   }
 
+  if (expenditure.status === 'approved') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Expenditure is already approved');
+  }
+
   const user = await UserModel.findById(expenditure.createdBy);
 
   // Validate the role of the approving user
@@ -232,6 +236,11 @@ const rejectExpenditure = async (expenditureId, rejectedBy, reasonForRejection) 
   if (!expenditure) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Expenditure not found');
   }
+
+  if (expenditure.status === 'rejected') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Expenditure is already rejected');
+  }
+
   expenditure.status = 'rejected';
   expenditure.rejectedBy = rejectedBy;
   expenditure.reasonForRejection = reasonForRejection;

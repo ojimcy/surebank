@@ -51,6 +51,7 @@ const userRepsPermissions = [
   'dashboardReports',
   'mergePackages',
   'updatePackage',
+  'sbPackages',
 ];
 
 const managerPermissions = [

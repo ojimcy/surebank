@@ -56,6 +56,10 @@ const sbPackageSchema = new mongoose.Schema({
     enum: ['cash', 'transfer'],
     required: false,
   },
+  accountManagerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
 });
 
 module.exports = sbPackageSchema;

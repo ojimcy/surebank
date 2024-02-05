@@ -8,7 +8,6 @@ const { getProductCatalogueById } = require('./product.service');
 const { sendSms } = require('./sms.service');
 const { sbContributionMessage } = require('../templates/sms/templates');
 const { chargeSmsFees } = require('./charge.service');
-const { getUserById } = require('./user.service');
 
 const createSbPackage = async (sbPackageData) => {
   const SbPackageModel = await SbPackage();
@@ -38,7 +37,6 @@ const createSbPackage = async (sbPackageData) => {
   if (!product || !product.isSbAvailable) {
     throw new ApiError(400, 'The selected product is not available for Savings-Buying');
   }
-
   const startDate = new Date().getTime();
   const sbPackage = await SbPackageModel.create({
     ...sbPackageData,
@@ -47,6 +45,7 @@ const createSbPackage = async (sbPackageData) => {
     image: product.images[1],
     branchId: userAccount.branchId,
     startDate,
+    accountManagerId: userAccount.accountManagerId,
   });
 
   return sbPackage;
@@ -138,7 +137,7 @@ const makeDailyContribution = async (contributionInput) => {
     userPackage.totalContribution,
     cashier.firstName
   );
-  // await sendSms(phone, message);
+  await sendSms(phone, message);
 
   // Charge for SMS fees
   await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId);
@@ -387,7 +386,6 @@ const getAllSbPackages = async (filterOptions) => {
   if (accountManagerId) {
     query.accountManagerId = accountManagerId;
   }
-
   const packages = await SbPackageModel.find(query)
     .populate([
       {
@@ -402,26 +400,14 @@ const getAllSbPackages = async (filterOptions) => {
         path: 'product',
         model: 'ProductCatalogue',
       },
+      {
+        path: 'accountManagerId',
+        select: 'firstName lastName',
+      },
     ])
     .exec();
 
-  const packagesWithProducts = await Promise.all(
-    packages.map(async (userPackage) => {
-      const response = await getAccountByNumber(userPackage.accountNumber);
-      const accountManager = await getUserById(response.accountManagerId);
-
-      // Check if userReps is not null before accessing properties
-
-      const updatedUserPackage = {
-        ...userPackage.toObject(),
-        accountManager,
-      };
-
-      return updatedUserPackage;
-    })
-  );
-
-  return packagesWithProducts;
+  return packages;
 };
 
 module.exports = {
