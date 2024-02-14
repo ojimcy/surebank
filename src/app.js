@@ -38,21 +38,8 @@ app.use(mongoSanitize());
 app.use(compression());
 
 // enable cors
-const allowedOrigins = ['http://localhost3001', 'https://surebankstores.ng'];
-
-app.options(
-  '*',
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-  })
-);
+app.use(cors({ credentials: true }));
+app.options('*', cors({ credentials: true }));
 
 // enable cors with credentials for the specific frontend domain
 // const corsOptions = {
