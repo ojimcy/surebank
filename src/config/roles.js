@@ -99,7 +99,7 @@ const adminPermissions = [
   'sendSms',
 ];
 
-const superAdminPermissions = [...adminPermissions, 'createAdmin', 'assignManager', 'accounting'];
+const superAdminPermissions = [...adminPermissions, 'createAdmin', 'assignManager', 'accounting', 'updatePackage'];
 
 const allRoles = {
   user: userPermissions,

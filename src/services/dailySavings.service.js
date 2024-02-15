@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const httpStatus = require('http-status');
 const { Package, Contribution, AccountTransaction, Account, Charge, User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
@@ -376,6 +377,24 @@ const getDailySavingsWithdrawals = async (accountNumber, narration) => {
   return { withdrawals, createdBy };
 };
 
+/**
+ * Update package by id
+ * @param {ObjectId} packageId
+ * @param {Object} updateBody
+ * @returns {Promise<User>}
+ */
+const updatePackageById = async (packageId, updateBody) => {
+  const dsPackage = await getDailySavingsPackageById(packageId);
+
+  if (!dsPackage) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Package not found');
+  }
+
+  Object.assign(dsPackage, updateBody);
+  await dsPackage.save();
+  return dsPackage;
+};
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
@@ -384,4 +403,5 @@ module.exports = {
   getDailySavingsContributions,
   getDailySavingsWithdrawals,
   getDailySavingsPackageById,
+  updatePackageById,
 };

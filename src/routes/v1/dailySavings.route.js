@@ -41,6 +41,7 @@ router
     auth('getPackage'),
     validate(dailySavingsValidation.getDailySavingsPackageById),
     dailySavingsController.getDailySavingsPackageById
-  );
+  )
+  .patch(auth('updatePackage'), validate(dailySavingsValidation.updatedPackage), dailySavingsController.updatePackage);
 
 module.exports = router;

@@ -50,6 +50,14 @@ const getUserSavingsActivities = {
     accountNumber: Joi.string().required(),
   }),
 };
+
+const updatedPackage = {
+  body: Joi.object().keys({
+    amountPerDay: Joi.number().optional(),
+    target: Joi.string().optional(),
+  }),
+};
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
@@ -57,4 +65,5 @@ module.exports = {
   getDailySavingsPackageById,
   getUserSavingsActivities,
   getUserDailySavingsPackages,
+  updatedPackage,
 };

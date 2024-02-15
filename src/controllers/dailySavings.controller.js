@@ -50,10 +50,16 @@ const getUserDailySavingsPackages = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(userPackage);
 });
 
+const updatePackage = catchAsync(async (req, res) => {
+  const dsPackage = await dailySavingsService.updatePackageById(req.params.userId, req.body);
+  res.send(dsPackage);
+});
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
   makeDailySavingsWithdrawal,
   getUserDailySavingsPackages,
   getDailySavingsPackageById,
+  updatePackage,
 };
