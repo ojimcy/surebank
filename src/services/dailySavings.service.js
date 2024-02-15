@@ -384,8 +384,8 @@ const getDailySavingsWithdrawals = async (accountNumber, narration) => {
  * @returns {Promise<User>}
  */
 const updatePackageById = async (packageId, updateBody) => {
-  const dsPackage = await getDailySavingsPackageById(packageId);
-
+  const PackageModel = await Package();
+  const dsPackage = await PackageModel.findById(packageId);
   if (!dsPackage) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Package not found');
   }

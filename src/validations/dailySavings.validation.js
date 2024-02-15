@@ -52,6 +52,9 @@ const getUserSavingsActivities = {
 };
 
 const updatedPackage = {
+  params: Joi.object().keys({
+    packageId: Joi.required().custom(objectId),
+  }),
   body: Joi.object().keys({
     amountPerDay: Joi.number().optional(),
     target: Joi.string().optional(),

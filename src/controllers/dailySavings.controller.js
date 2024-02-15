@@ -51,7 +51,7 @@ const getUserDailySavingsPackages = catchAsync(async (req, res) => {
 });
 
 const updatePackage = catchAsync(async (req, res) => {
-  const dsPackage = await dailySavingsService.updatePackageById(req.params.userId, req.body);
+  const dsPackage = await dailySavingsService.updatePackageById(req.params.packageId, req.body);
   res.send(dsPackage);
 });
 
