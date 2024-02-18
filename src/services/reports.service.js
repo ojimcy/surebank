@@ -399,6 +399,21 @@ const getPackages = async (filter, options) => {
 };
 
 /**
+ * Query for sb packages
+ * @param {Object} filter - Mongo filter
+ * @param {Object} options - Query options
+ * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<QueryResult>}
+ */
+const getSbPackages = async (filter, options) => {
+  const SbPackageModel = await SbPackage();
+  const sbPackages = await SbPackageModel.paginate(filter, options);
+  return sbPackages;
+};
+
+/**
  * Get the sum of daily contributions across all packages within a date range
  * @param {number} startDate - Timestamp representing the start date
  * @param {number} endDate - Timestamp representing the end date
@@ -491,6 +506,7 @@ module.exports = {
   getSumOfSbCharges,
   getSumOfOtherCharges,
   getPackages,
+  getSbPackages,
   getSumOfDailyContributionsByDate,
   getOtherCharges,
 };

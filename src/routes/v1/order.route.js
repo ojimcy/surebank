@@ -8,7 +8,7 @@ const router = express.Router();
 router
   .route('/')
   .post(auth('orderOperations'), validate(orderValidation.createOrder), orderController.createOrder)
-  .get(auth('orderOperations'), validate(orderValidation.getOrders), orderController.getAllOrders);
+  .get(auth('orderOperations'), validate(orderValidation.getAllOrders), orderController.getAllOrders);
 
 router
   .route('/:orderId/sb-pay')

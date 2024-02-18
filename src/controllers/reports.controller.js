@@ -92,6 +92,13 @@ const getPackages = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+const getSbPackages = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['status', 'userReps', 'branchId']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const result = await reportService.getSbPackages(filter, options);
+  res.send(result);
+});
+
 const getSumOfDailyContributions = catchAsync(async (req, res) => {
   const { startDate, endDate, branchId, createdBy, narration } = req.query;
 
@@ -125,6 +132,7 @@ module.exports = {
   getSumOfSbCharges,
   getSumOfOtherCharges,
   getPackages,
+  getSbPackages,
   getSumOfDailyContributions,
   getOtherCharges,
 };

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { toJSON, paginate } = require('./plugins');
 
 const sbPackageSchema = new mongoose.Schema({
   accountNumber: {
@@ -61,5 +62,9 @@ const sbPackageSchema = new mongoose.Schema({
     ref: 'User',
   },
 });
+
+// add plugin that converts mongoose to json
+sbPackageSchema.plugin(toJSON);
+sbPackageSchema.plugin(paginate);
 
 module.exports = sbPackageSchema;

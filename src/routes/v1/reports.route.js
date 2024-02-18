@@ -17,6 +17,7 @@ router
     reportsController.getDailySavingsWithdrawals
   );
 
+router.route('/packages/sb').get(auth('reports'), validate(reportsValidation.getPackages), reportsController.getSbPackages);
 router.route('/packages').get(auth('reports'), validate(reportsValidation.getPackages), reportsController.getPackages);
 
 router
