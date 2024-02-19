@@ -1,7 +1,7 @@
 const axios = require('axios');
 const config = require('../config/config');
 const logger = require('../config/logger');
-const { getAllAccounts } = require('./account.service');
+const { Account } = require('../models');
 
 const sendSms = async (phone, message) => {
   try {
@@ -24,7 +24,8 @@ const sendSms = async (phone, message) => {
 
 const sendBulkSms = async (filterOptions, message) => {
   // Retrieve filtered accounts
-  const accounts = await getAllAccounts(filterOptions);
+  const accountModel = await Account();
+  const accounts = await accountModel.find(filterOptions);
   const { branchId, accountType } = filterOptions;
   const query = {};
 
