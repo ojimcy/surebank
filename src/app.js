@@ -38,8 +38,8 @@ app.use(mongoSanitize());
 app.use(compression());
 
 // enable cors
-app.use(cors({ credentials: true }));
-app.options('*', cors({ credentials: true }));
+// app.use(cors({ credentials: true }));
+// app.options('*', cors({ credentials: true }));
 
 // enable cors with credentials for the specific frontend domain
 // const corsOptions = {
@@ -47,6 +47,14 @@ app.options('*', cors({ credentials: true }));
 //   credentials: true,
 // };
 // app.use(cors(corsOptions));
+
+// Allow requests from surebankstores.ng
+const corsOptions = {
+  origin: 'https://surebankstores.ng',
+  // origin: 'http://localhost:3001',
+};
+
+app.use(cors(corsOptions));
 
 // jwt authentication
 app.use(passport.initialize());
