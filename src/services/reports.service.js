@@ -512,16 +512,7 @@ const getDailyContributions = async (startDate, endDate, branchId, createdBy, na
   if (createdBy) query.createdBy = createdBy;
   if (narration) query.narration = narration;
 
-  const contributions = await ContributionModel.find(query).populate([
-    {
-      path: 'branchId',
-      select: 'name',
-    },
-    {
-      path: 'createdBy',
-      select: 'firstName lastName',
-    },
-  ]);
+  const contributions = await ContributionModel.find(query);
   return contributions;
 };
 

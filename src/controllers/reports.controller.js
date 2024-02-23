@@ -86,14 +86,14 @@ const getSumOfOtherCharges = catchAsync(async (req, res) => {
 });
 
 const getPackages = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['status', 'userReps', 'branchId']);
+  const filter = pick(req.query, ['status', 'userReps', 'branchId', 'createdBy']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await reportService.getPackages(filter, options);
   res.send(result);
 });
 
 const getSbPackages = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['status', 'userReps', 'branchId']);
+  const filter = pick(req.query, ['status', 'userReps', 'branchId', 'createdBy']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await reportService.getSbPackages(filter, options);
   res.send(result);

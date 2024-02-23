@@ -53,6 +53,7 @@ const userRepsPermissions = [
   'updatePackage',
   'sbPackages',
   'contributionsReports',
+  'packageReports',
 ];
 
 const managerPermissions = [

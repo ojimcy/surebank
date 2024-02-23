@@ -37,6 +37,7 @@ const getPackages = {
     status: Joi.string(),
     branchId: Joi.string().optional().custom(objectId),
     userReps: Joi.string().optional().custom(objectId),
+    createdBy: Joi.string().optional().custom(objectId),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
