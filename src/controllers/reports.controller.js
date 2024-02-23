@@ -121,6 +121,14 @@ const getOtherCharges = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(totalCharge);
 });
 
+const getDailyContributions = catchAsync(async (req, res) => {
+  const { startDate, endDate, branchId, createdBy, narration } = req.query;
+
+  const dailyContributions = await reportService.getDailyContributions(startDate, endDate, branchId, createdBy, narration);
+
+  res.status(httpStatus.OK).send(dailyContributions);
+});
+
 module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
@@ -135,4 +143,5 @@ module.exports = {
   getSbPackages,
   getSumOfDailyContributions,
   getOtherCharges,
+  getDailyContributions,
 };

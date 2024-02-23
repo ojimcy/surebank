@@ -41,4 +41,6 @@ router.route('/contribution-incomes/ds/supperadmin').get(auth('reports'), report
 router.route('/contribution-incomes/sb/supperadmin').get(auth('reports'), reportsController.getSumOfSbCharges);
 router.route('/contribution-incomes/others/supperadmin').get(auth('reports'), reportsController.getSumOfOtherCharges);
 
+router.route('/packages/contributions').get(auth('contributionsReports'), reportsController.getDailyContributions);
+
 module.exports = router;

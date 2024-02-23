@@ -495,6 +495,36 @@ const getOtherCharges = async (filterOptions) => {
   }
 };
 
+/**
+ * Get the daily contributions across all packages within a date range
+ * @param {number} startDate - Timestamp representing the start date
+ * @param {number} endDate - Timestamp representing the end date
+ * @param {string} branchId - Branch ID (optional)
+ * @param {string} createdBy - User ID (optional)
+ * @returns {Promise<number>} Sum of daily contributions
+ */
+const getDailyContributions = async (startDate, endDate, branchId, createdBy, narration) => {
+  const ContributionModel = await Contribution();
+  const query = {};
+  if (startDate) query.date = { $gte: startDate };
+  if (endDate) query.date = { ...query.date, $lte: endDate };
+  if (branchId) query.branchId = branchId;
+  if (createdBy) query.createdBy = createdBy;
+  if (narration) query.narration = narration;
+
+  const contributions = await ContributionModel.find(query).populate([
+    {
+      path: 'branchId',
+      select: 'name',
+    },
+    {
+      path: 'createdBy',
+      select: 'firstName lastName',
+    },
+  ]);
+  return contributions;
+};
+
 module.exports = {
   getTotalDailySavingsWithdrawal,
   getTotalContributionsByUserReps,
@@ -509,4 +539,5 @@ module.exports = {
   getSbPackages,
   getSumOfDailyContributionsByDate,
   getOtherCharges,
+  getDailyContributions,
 };

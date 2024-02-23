@@ -42,17 +42,17 @@ app.use(compression());
 // app.options('*', cors({ credentials: true }));
 
 // enable cors with credentials for the specific frontend domain
-// const corsOptions = {
-//   origin: '*',
-//   credentials: true,
-// };
-// app.use(cors(corsOptions));
+const corsOptions = {
+  origin: '*',
+  credentials: true,
+};
+app.use(cors(corsOptions));
 
 // Allow requests from surebankstores.ng
-const corsOptions = {
-  origin: 'https://surebankstores.ng',
-  // origin: 'http://localhost:3001',
-};
+// const corsOptions = {
+//   origin: 'https://surebankstores.ng',
+//   origin: 'http://localhost:3001',
+// };
 
 app.use(cors(corsOptions));
 

@@ -43,9 +43,20 @@ const getPackages = {
   }),
 };
 
+const getDailyContributions = {
+  query: Joi.object().keys({
+    startDate: Joi.number(),
+    endDate: Joi.number(),
+    branchId: Joi.string().optional().custom(objectId),
+    narration: Joi.string(),
+    createdBy: Joi.string(),
+  }),
+};
+
 module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
   getCharges,
   getPackages,
+  getDailyContributions,
 };
