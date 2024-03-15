@@ -4,8 +4,25 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs18.x
-  # timeout: 90
+  timeout: 90
   environment: ${file(env.json)}
+  httpApi:
+    cors:
+      allowedOrigins:
+        - https://surebankstores.ng
+        - http://localhost:3001 
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+        - X-Requested-With
+      allowCredentials: true
 
 functions:
   api:

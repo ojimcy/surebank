@@ -3,8 +3,11 @@ const auth = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const accountTransactionValidation = require('../../validations/accountTransaction.validation');
 const accountTransactionController = require('../../controllers/accountTransaction.controller');
+const corsMiddleware = require('../../middlewares/cors');
 
 const router = express.Router();
+// cors middleware
+router.use(corsMiddleware);
 
 router
   .route('/')

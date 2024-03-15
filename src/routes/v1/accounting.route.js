@@ -5,8 +5,11 @@ const accountingValidation = require('../../validations/accounting.validation');
 const expenditureValidation = require('../../validations/expenditure.validation');
 const accountingController = require('../../controllers/accounting.controller');
 const expenditureController = require('../../controllers/expenditure.controller');
+const corsMiddleware = require('../../middlewares/cors');
 
 const router = express.Router();
+// cors middleware
+router.use(corsMiddleware);
 
 router
   .route('/entry')

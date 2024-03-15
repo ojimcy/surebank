@@ -3,8 +3,12 @@ const auth = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const reportsValidation = require('../../validations/reports.validation');
 const reportsController = require('../../controllers/reports.controller');
+const corsMiddleware = require('../../middlewares/cors');
 
 const router = express.Router();
+
+// cors middleware
+router.use(corsMiddleware);
 router
   .route('/total-contributions')
   .get(auth('dashboardReports'), validate(reportsValidation.getTotalContributions), reportsController.getTotalContributions);
