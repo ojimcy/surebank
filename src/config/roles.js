@@ -83,6 +83,7 @@ const managerPermissions = [
   'deactivateStaff',
   'charge',
   'sbPackages',
+  'manageNote',
 ];
 
 const adminPermissions = [

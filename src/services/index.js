@@ -25,3 +25,4 @@ module.exports.sbPackageService = require('./sbPackage.service');
 module.exports.chargeService = require('./charge.service');
 module.exports.orderService = require('./order.service');
 module.exports.smsService = require('./sms.service');
+module.exports.noteKeepingService = require('./noteKeeping.service');

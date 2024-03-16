@@ -33,3 +33,4 @@ module.exports.FileUpload = require('./fileUpload.model');
 module.exports.SbPackage = require('./sbPackage.model');
 module.exports.Charge = require('./charge.model');
 module.exports.Order = require('./order.model');
+module.exports.NoteKeeping = require('./noteKeeping.model');
