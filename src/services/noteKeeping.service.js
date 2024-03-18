@@ -34,18 +34,36 @@ const createNote = async (noteKeepingInput) => {
 };
 
 /**
- * Query for notes
- * @param {Object} filter - Mongo filter
- * @param {Object} options - Query options
- * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
- * @param {number} [options.limit] - Maximum number of results per page (default = 10)
- * @param {number} [options.page] - Current page (default = 1)
- * @returns {Promise<QueryResult>}
+ * Get paginated notes over a date range
+ * @param {Date} startDate - Start date for the range (optional)
+ * @param {Date} endDate - End date for the range (optional)
+ * @param {number} page - Page number for pagination
+ * @param {number} limit - Number of items per page
+ * @returns {Promise<Object>} Paginated notes within the date range
  */
-const queryNotes = async (filter, options) => {
-  const NoteKeepingModel = await NoteKeeping();
-  const notes = await NoteKeepingModel.paginate(filter, options);
-  return notes;
+const getNotesByDateRange = async (startDate, endDate, page, limit) => {
+  const NotesModel = await NoteKeeping();
+  const options = {
+    page,
+    limit,
+    sort: { date: 'desc' }, // Sort by date in descending order
+  };
+
+  const query = {};
+
+  if (startDate && endDate) {
+    // If both startDate and endDate are provided, get notes within the date range
+    query.date = { $gte: startDate, $lte: endDate };
+  } else if (startDate) {
+    // If only startDate is provided, get notes starting from the startDate
+    query.date = { $gte: startDate };
+  } else if (endDate) {
+    // If only endDate is provided, get notes up to the endDate
+    query.date = { $lte: endDate };
+  }
+
+  const paginatedNotes = await NotesModel.paginate(query, options);
+  return paginatedNotes;
 };
 
 /**
@@ -91,7 +109,7 @@ const deleteNote = async (noteId) => {
 
 module.exports = {
   createNote,
-  queryNotes,
+  getNotesByDateRange,
   getNoteById,
   updateNote,
   deleteNote,

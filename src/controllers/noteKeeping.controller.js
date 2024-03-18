@@ -1,7 +1,6 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 const { noteKeepingService } = require('../services');
-const pick = require('../utils/pick');
 
 const createNoteKeeping = catchAsync(async (req, res) => {
   const { amount, note } = req.body;
@@ -20,10 +19,17 @@ const createNoteKeeping = catchAsync(async (req, res) => {
 });
 
 const getNotes = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['name', 'branchId']);
-  const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  const result = await noteKeepingService.queryNotes(filter, options);
-  res.send(result);
+  // Extract start and end date from the request query
+  const { startDate, endDate } = req.query;
+
+  // Extract page and limit for pagination from the request query
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+
+  // Call the service function to get paginated expenditures within the date range
+  const paginatedExpenditures = await noteKeepingService.getNotesByDateRange(startDate, endDate, page, limit);
+
+  res.status(httpStatus.OK).send(paginatedExpenditures);
 });
 
 const getNoteById = catchAsync(async (req, res) => {
@@ -45,7 +51,7 @@ const updateNote = catchAsync(async (req, res) => {
 });
 
 const deleteNote = catchAsync(async (req, res) => {
-  await noteKeepingService.deleteNote(req.params.userId);
+  await noteKeepingService.deleteNote(req.params.noteId);
   res.status(httpStatus.NO_CONTENT).send();
 });
 

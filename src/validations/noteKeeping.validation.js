@@ -10,8 +10,8 @@ const createNote = {
 
 const getNotes = {
   query: Joi.object().keys({
-    name: Joi.string(),
-    branchId: Joi.string(),
+    startDate: Joi.number(),
+    endDate: Joi.number(),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),

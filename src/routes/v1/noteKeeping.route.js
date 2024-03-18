@@ -12,9 +12,9 @@ router
   .get(auth('manageNote'), validate(noteKeepingValidation.getNotes), noteKeepingController.getNotes);
 
 router
-  .route('/noteId')
+  .route('/:noteId')
   .patch(auth('manageNote'), validate(noteKeepingValidation.updateNote), noteKeepingController.updateNote)
-  .patch(auth('manageNote'), validate(noteKeepingValidation.deleteNote), noteKeepingController.deleteNote)
+  .delete(auth('manageNote'), validate(noteKeepingValidation.deleteNote), noteKeepingController.deleteNote)
   .get(auth('manageNote'), validate(noteKeepingValidation.getNoteById), noteKeepingController.getNoteById);
 
 module.exports = router;
