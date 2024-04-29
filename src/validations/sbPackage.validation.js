@@ -73,6 +73,17 @@ const getAllSbPackages = {
   }),
 };
 
+const makeSbCustomerWithdrawal = {
+  query: Joi.object().keys({
+    packageId: Joi.string().required().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    accountNumber: Joi.string().required(),
+    amount: Joi.number().required(),
+    product: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
@@ -82,4 +93,5 @@ module.exports = {
   mergeSavingsPackages,
   updatePackageProduct,
   getAllSbPackages,
+  makeSbCustomerWithdrawal,
 };

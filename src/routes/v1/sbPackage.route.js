@@ -25,7 +25,11 @@ router
 
 router
   .route('/withdraw')
-  .post(auth('sbWithdrawal'), validate(sbPackageValidation.makeSbWithdrawal), sbPackageController.makeSbWithdrawal);
+  .post(
+    auth('sbCustomerWithdrawal'),
+    validate(sbPackageValidation.makeSbCustomerWithdrawal),
+    sbPackageController.makeSbCustomerWithdrawal
+  );
 
 router
   .route('/package/merge/:targetPackageId')

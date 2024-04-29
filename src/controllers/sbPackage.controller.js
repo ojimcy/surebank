@@ -21,8 +21,8 @@ const makeDailyContribution = catchAsync(async (req, res) => {
 const makeSbWithdrawal = catchAsync(async (req, res) => {
   const withdrawal = req.body;
   const createdBy = req.user._id;
-  const packageId = req.query;
-  const withdrawalDetails = await sbPackageService.makeSbWithdrawal({ ...withdrawal, createdBy, packageId });
+  const { packageId } = req.query;
+  const withdrawalDetails = await sbPackageService.makeSbTransfer({ ...withdrawal, createdBy, packageId });
   res.status(httpStatus.OK).json(withdrawalDetails);
 });
 
@@ -61,6 +61,18 @@ const getAllSbPackages = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(packages);
 });
 
+const makeSbCustomerWithdrawal = catchAsync(async (req, res) => {
+  const withdrawal = req.body;
+  const createdBy = req.user._id;
+  const { packageId } = req.query;
+  const withdrawalDetails = await sbPackageService.makeSbCustomerWithdrawal({
+    ...withdrawal,
+    createdBy,
+    packageId,
+  });
+  res.status(httpStatus.OK).json(withdrawalDetails);
+});
+
 module.exports = {
   createSbPackage,
   makeDailyContribution,
@@ -70,4 +82,5 @@ module.exports = {
   mergeSavingsPackages,
   updatePackageProduct,
   getAllSbPackages,
+  makeSbCustomerWithdrawal,
 };

@@ -119,6 +119,7 @@ const updateAccount = {
   body: Joi.object().keys({
     firstName: Joi.string().optional(),
     lastName: Joi.string().optional(),
+    phoneNumber: Joi.string().optional(),
     accountType: Joi.string().optional(),
     branchId: Joi.string().optional().custom(objectId),
     accountManagerId: Joi.string().optional(),
