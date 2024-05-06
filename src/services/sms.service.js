@@ -14,7 +14,7 @@ const sendSms = async (phone, message) => {
       body,
       dnd: 1,
     };
-    const resp = await axios.post(url, data);
+    const resp = await axios.post(url, data, { timeout: 1500 });
     logger(resp.data);
   } catch (error) {
     // eslint-disable-next-line no-console
