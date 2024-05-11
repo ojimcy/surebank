@@ -436,24 +436,24 @@ const makeSbCustomerWithdrawal = async (withdrawalInput) => {
 
     // Create withdrawal transaction
     const withdrawal = await AccountTransactionModel.create(
-      {
-        accountNumber,
-        amount,
-        createdBy,
-        userReps: account.accountManagerId,
-        branchId: branch.branchId,
-        date: transactionDate,
-        status: 'approved',
-        direction: 'outflow',
-        narration: 'Withdrawal',
-        userId: account.userId,
-      },
+      [
+        {
+          accountNumber,
+          amount,
+          createdBy,
+          userReps: account.accountManagerId,
+          branchId: branch.branchId,
+          date: transactionDate,
+          status: 'approved',
+          direction: 'outflow',
+          narration: 'Withdrawal',
+          userId: account.userId,
+        },
+      ],
       { session }
     );
-
     // Deduct the withdrawal amount from the available balance
     const updatedBalance = await spendHeldAmount(accountNumber, amount);
-
     await session.commitTransaction();
 
     // Send withdrawal confirmation SMS
