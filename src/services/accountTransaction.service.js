@@ -396,7 +396,6 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
       narration = 'Request Cash SB';
     }
 
-
     // Update the withdrawal request transaction to represent the fulfilled withdrawal
     withdrawalRequest.direction = 'outflow';
     withdrawalRequest.narration = narration;
