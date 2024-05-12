@@ -2,11 +2,11 @@ const mongoose = require('mongoose');
 const { ACCOUNT_TYPE, DIRECTION_VALUE, SMS_FFE } = require('../constants/account');
 const { SbPackage, Account, Contribution, AccountTransaction, User, ProductCatalogue } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { getAccountByNumber, makeCustomerDeposit, spendHeldAmount } = require('./accountTransaction.service');
+const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
 const { getProductCatalogueById } = require('./product.service');
 const { sendSms } = require('./sms.service');
-const { sbContributionMessage, withdrawalMessage } = require('../templates/sms/templates');
+const { sbContributionMessage } = require('../templates/sms/templates');
 const { chargeSmsFees } = require('./charge.service');
 
 const createSbPackage = async (sbPackageData) => {
@@ -399,86 +399,6 @@ const getAllSbPackages = async (filterOptions) => {
   return packages;
 };
 
-/**
- * Make withdrawal for a customer
- * @param {Object} withdrawalInput - Withdrawal input
- * @returns {Promise<Object>} Result of the operation
- */
-const makeSbCustomerWithdrawal = async (withdrawalInput) => {
-  const AccountModel = await Account();
-  const AccountTransactionModel = await AccountTransaction();
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  const { accountNumber, amount, createdBy, product } = withdrawalInput;
-  try {
-    // Transfer from savings package to available balance
-    await makeSbTransfer({
-      accountNumber,
-      amount,
-      product,
-      createdBy,
-    });
-
-    // Ensure account exists
-    const account = await AccountModel.findOne({ accountNumber }).session(session);
-    if (!account) {
-      throw new ApiError(404, 'Account number does not exist.');
-    }
-
-    // Check if there is sufficient balance
-    if (account.availableBalance < amount) {
-      throw new ApiError(400, 'Insufficient balance to request cash.');
-    }
-
-    const branch = await AccountModel.findOne({ accountNumber }).session(session);
-    const transactionDate = new Date().getTime();
-
-    // Create withdrawal transaction
-    const withdrawal = await AccountTransactionModel.create(
-      [
-        {
-          accountNumber,
-          amount,
-          createdBy,
-          userReps: account.accountManagerId,
-          branchId: branch.branchId,
-          date: transactionDate,
-          status: 'approved',
-          direction: 'outflow',
-          narration: 'Withdrawal',
-          userId: account.userId,
-        },
-      ],
-      { session }
-    );
-    // Deduct the withdrawal amount from the available balance
-    const updatedBalance = await spendHeldAmount(accountNumber, amount);
-    await session.commitTransaction();
-
-    // Send withdrawal confirmation SMS
-    const phone = account.phoneNumber;
-    const message = withdrawalMessage(
-      account.firstName,
-      withdrawal.amount,
-      withdrawal.accountNumber,
-      account.availableBalance,
-      withdrawal.userReps.firstName
-    );
-    await sendSms(phone, message);
-
-    return {
-      withdrawal,
-      availableBalance: updatedBalance.availableBalance,
-    };
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
-  }
-};
-
 module.exports = {
   createSbPackage,
   makeDailyContribution,
@@ -488,5 +408,4 @@ module.exports = {
   mergeSavingsPackages,
   updatePackageProduct,
   getAllSbPackages,
-  makeSbCustomerWithdrawal,
 };

@@ -82,6 +82,7 @@ const getAllWithdrawalRequests = {
     createdBy: Joi.string().optional().custom(objectId),
     branchId: Joi.string().optional().custom(objectId),
     status: Joi.string().optional(),
+    narration: Joi.string().optional(),
     startDate: Joi.number().optional(),
     endDate: Joi.number().optional(),
     limit: Joi.number().integer(),

@@ -65,7 +65,7 @@ const makeSbCustomerWithdrawal = catchAsync(async (req, res) => {
   const withdrawal = req.body;
   const createdBy = req.user._id;
   const { packageId } = req.query;
-  const withdrawalDetails = await sbPackageService.makeSbCustomerWithdrawal({
+  const withdrawalDetails = await sbPackageService.makeSbTransfer({
     ...withdrawal,
     createdBy,
     packageId,

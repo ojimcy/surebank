@@ -219,6 +219,11 @@ const makeWithdrawalRequest = async (withdrawalInput) => {
     const branch = await AccountModel.findOne({ accountNumber }).session(session);
     const transactionDate = new Date().getTime();
 
+    let narration = 'Request Cash';
+    if (account.accountType === 'sb') {
+      narration = 'Request Cash SB';
+    }
+
     // Create withdrawal request transaction
     const withdrawalRequest = await AccountTransactionModel.create(
       [
@@ -231,7 +236,7 @@ const makeWithdrawalRequest = async (withdrawalInput) => {
           date: transactionDate,
           status: 'pending',
           direction: 'outflow',
-          narration: 'Request Cash',
+          narration,
           userId: account.userId,
           bankName,
           bankAccountNumber,
@@ -266,7 +271,7 @@ const makeWithdrawalRequest = async (withdrawalInput) => {
  * @param {string} [createdBy] - Optional createdBy to filter by
  * @returns {Promise<Array>} Array of ds withdrawals
  */
-const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy, status) => {
+const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy, status, narration) => {
   const AccountTransactionModel = await AccountTransaction();
   try {
     const query = {};
@@ -292,7 +297,10 @@ const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy,
     if (status) {
       query.status = status;
     }
-    query.narration = 'Request Cash';
+    // Optional narration filtering
+    if (narration) {
+      query.narration = narration;
+    }
     const withdrawalRequests = await AccountTransactionModel.find(query)
       .populate([
         {
@@ -368,7 +376,7 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
       throw new ApiError(400, 'Withdrawal request has been processed!!!.');
     }
 
-    if (withdrawalRequest.narration !== 'Request Cash') {
+    if (withdrawalRequest.narration !== 'Request Cash' && withdrawalRequest.narration !== 'Request Cash SB') {
       throw new ApiError(400, 'Invalid withdrawal request.');
     }
 
@@ -383,9 +391,15 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
 
     const transactionDate = new Date().getTime();
 
+    let narration = 'Request Cash';
+    if (account.accountType === 'sb') {
+      narration = 'Request Cash SB';
+    }
+
+
     // Update the withdrawal request transaction to represent the fulfilled withdrawal
     withdrawalRequest.direction = 'outflow';
-    withdrawalRequest.narration = 'Request Cash';
+    withdrawalRequest.narration = narration;
     withdrawalRequest.status = 'approved';
     withdrawalRequest.date = transactionDate;
     withdrawalRequest.approvedBy = approvedBy;
@@ -540,7 +554,7 @@ const getCustomerwithdrawals = async (
       query.accountNumber = accountNumber;
     }
 
-    query.narration = 'Request Cash' || narration;
+    query.narration = 'Request Cash' || 'Request Cash SB' || narration;
     const withdrawals = await AccountTransaction.find(query)
       .populate([
         {

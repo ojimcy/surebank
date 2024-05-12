@@ -120,7 +120,7 @@ const rejectWithdrawalRequest = catchAsync(async (req, res) => {
 });
 
 const getAllWithdrawalRequests = catchAsync(async (req, res) => {
-  const { startDate, endDate, branchId, createdBy, status, page = 1, limit = 20 } = req.query;
+  const { startDate, endDate, branchId, createdBy, status, narration, page = 1, limit = 20 } = req.query;
 
   const parsedPage = parseInt(page, 10);
   const parsedLimit = parseInt(limit, 10);
@@ -131,6 +131,7 @@ const getAllWithdrawalRequests = catchAsync(async (req, res) => {
     branchId,
     createdBy,
     status,
+    narration,
     parsedPage,
     parsedLimit
   );
