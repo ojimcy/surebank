@@ -467,7 +467,7 @@ const rejectWithdrawalRequest = async (requestId, narration) => {
  */
 const getAccountTransactions = async (options = {}) => {
   const AccountTransactionModel = await AccountTransaction();
-  const { accountNumber, createdBy, page = 1, limit, narration } = options;
+  const { accountNumber, createdBy, date, page = 1, limit, narration } = options;
   const skip = (page - 1) * limit;
 
   // Construct the query object
@@ -485,6 +485,10 @@ const getAccountTransactions = async (options = {}) => {
     query.narration = narration;
   }
 
+  if (date) {
+    query.date = date;
+  }
+
   const transactions = await AccountTransactionModel.find(query)
     .populate([
       {
@@ -500,7 +504,10 @@ const getAccountTransactions = async (options = {}) => {
     .limit(limit)
     .sort({ date: 'desc' });
 
-  return transactions;
+  // return the sum total of the transactions amount as well
+  const totalAmount = transactions.reduce((acc, transaction) => acc + transaction.amount, 0);
+
+  return { transactions, totalAmount };
 };
 
 /**

@@ -1,14 +1,11 @@
 const mongoose = require('mongoose');
 const httpStatus = require('http-status');
-const { Package, Contribution, AccountTransaction, Account, Charge, User } = require('../models');
+const { Package, Contribution, AccountTransaction, Account, Charge } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { getUserById } = require('./user.service');
-const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE, SMS_FFE } = require('../constants/account');
-const { sendSms } = require('./sms.service');
-const { dsContributionMessage } = require('../templates/sms/templates');
+const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 const { addLedgerEntry } = require('./accounting.service');
-const { chargeSmsFees } = require('./charge.service');
 
 /**
  * Save a charge and update the count in the associated package
@@ -89,7 +86,6 @@ const createDailySavingsPackage = async (dailyInput) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const saveDailyContribution = async (contributionInput) => {
-  console.log('saving daily contribution', contributionInput);
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -97,10 +93,8 @@ const saveDailyContribution = async (contributionInput) => {
   const ContributionModel = await Contribution();
   const AccountModel = await Account();
   const AccountTransactionModel = await AccountTransaction();
-  const UserModel = await User();
 
   try {
-    console.log('getting account by number for contributions');
     const userAccount = await getAccountByNumber(contributionInput.accountNumber);
     if (!userAccount) {
       throw new ApiError(404, 'Account number does not exist.');
@@ -170,7 +164,6 @@ const saveDailyContribution = async (contributionInput) => {
     // Check for first contribution in each circle
     if (userPackage.deductionCount < expectedDeduction) {
       // Charge the user amountPerDay on the first savings of each cycle
-      console.log('check for contribution and update totalContribution and total charge');
       await PackageModel.findByIdAndUpdate(
         userPackageId,
         {
@@ -195,11 +188,9 @@ const saveDailyContribution = async (contributionInput) => {
       branchId: branch.branchId,
     };
 
-    console.log('adding ledger entry');
     await addLedgerEntry(addLedgerEntryInput, session);
 
     const transactionDate = new Date().getTime();
-    console.log('creating contribution transaction');
     const contributionTransaction = await AccountTransactionModel.create(
       [
         {
@@ -220,31 +211,29 @@ const saveDailyContribution = async (contributionInput) => {
     userPackage.totalContribution += contributionInput.amount;
     // Deduct SMS_FFE from contribution amount
 
-    const netContributionAmount = contributionInput.amount - SMS_FFE;
-    console.log('updating package model, increasing total contribution');
+    // const netContributionAmount = contributionInput.amount - SMS_FFE;
     await PackageModel.findByIdAndUpdate(
       userPackageId,
       {
         $set: { totalCount },
-        $inc: { totalContribution: netContributionAmount },
+        $inc: { totalContribution: contributionInput.amount },
       },
       { session }
     );
 
-    const cashier = await UserModel.findById(contributionInput.createdBy);
+    // const cashier = await UserModel.findById(contributionInput.createdBy);
 
-    // Send credit SMS
-    const phone = userAccount.phoneNumber;
-    const message = dsContributionMessage(
-      userAccount.firstName,
-      contributionInput.amount,
-      contributionInput.accountNumber,
-      userPackage.totalContribution,
-      cashier.firstName
-    );
-    console.log('charging sms fee');
-    await sendSms(phone, message);
-    await chargeSmsFees(userAccount.phoneNumber, 1, contributionInput.createdBy, branch.branchId);
+    // // Send credit SMS
+    // const phone = userAccount.phoneNumber;
+    // const message = dsContributionMessage(
+    //   userAccount.firstName,
+    //   contributionInput.amount,
+    //   contributionInput.accountNumber,
+    //   userPackage.totalContribution,
+    //   cashier.firstName
+    // );
+    // // await sendSms(phone, message);
+    // await chargeSmsFees(userAccount.phoneNumber, 1, contributionInput.createdBy, branch.branchId);
 
     await session.commitTransaction();
     session.endSession();

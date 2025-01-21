@@ -1,13 +1,10 @@
 const mongoose = require('mongoose');
-const { ACCOUNT_TYPE, DIRECTION_VALUE, SMS_FFE } = require('../constants/account');
-const { SbPackage, Account, Contribution, AccountTransaction, User, ProductCatalogue } = require('../models');
+const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
+const { SbPackage, Account, Contribution, AccountTransaction, ProductCatalogue } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
 const { getProductCatalogueById } = require('./product.service');
-const { sendSms } = require('./sms.service');
-const { sbContributionMessage } = require('../templates/sms/templates');
-const { chargeSmsFees } = require('./charge.service');
 
 const createSbPackage = async (sbPackageData) => {
   const SbPackageModel = await SbPackage();
@@ -61,7 +58,6 @@ const makeDailyContribution = async (contributionInput) => {
   const ContributionModel = await Contribution();
   const AccountModel = await Account();
   const SbPackageModel = await SbPackage();
-  const UserModel = await User();
 
   const userAccount = await getAccountByNumber(contributionInput.accountNumber);
   if (!userAccount) {
@@ -127,28 +123,28 @@ const makeDailyContribution = async (contributionInput) => {
   });
 
   userPackage.totalContribution += contributionInput.amount;
-  userPackage.totalContribution -= SMS_FFE;
+  // userPackage.totalContribution -= SMS_FFE;
 
   // Update total contribution and charge SMS fees atomically
   await SbPackageModel.findByIdAndUpdate(userPackageId, {
     totalContribution: userPackage.totalContribution,
   });
 
-  const cashier = await UserModel.findById(contributionInput.createdBy);
+  // const cashier = await UserModel.findById(contributionInput.createdBy);
 
-  // Send credit SMS
-  const phone = userAccount.phoneNumber;
-  const message = sbContributionMessage(
-    userAccount.firstName,
-    contributionInput.amount,
-    contributionInput.accountNumber,
-    userPackage.totalContribution,
-    cashier.firstName
-  );
-  await sendSms(phone, message);
+  // // Send credit SMS
+  // const phone = userAccount.phoneNumber;
+  // const message = sbContributionMessage(
+  //   userAccount.firstName,
+  //   contributionInput.amount,
+  //   contributionInput.accountNumber,
+  //   userPackage.totalContribution,
+  //   cashier.firstName
+  // );
+  //  await sendSms(phone, message);
 
-  // Charge for SMS fees
-  await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId);
+  // // Charge for SMS fees
+  //  await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId);
 
   return {
     newContribution,
