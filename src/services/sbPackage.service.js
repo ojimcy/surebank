@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
-const { SbPackage, Account, Contribution, AccountTransaction, ProductCatalogue } = require('../models');
+const { SbPackage, Account, Contribution, AccountTransaction, ProductCatalogue, User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { addLedgerEntry } = require('./accounting.service');
 const { getProductCatalogueById } = require('./product.service');
+const { sendSms } = require('./sms.service');
+const { sbContributionMessage } = require('../templates/sms/templates');
 
 const createSbPackage = async (sbPackageData) => {
   const SbPackageModel = await SbPackage();
@@ -58,6 +60,7 @@ const makeDailyContribution = async (contributionInput) => {
   const ContributionModel = await Contribution();
   const AccountModel = await Account();
   const SbPackageModel = await SbPackage();
+  const UserModel = await User();
 
   const userAccount = await getAccountByNumber(contributionInput.accountNumber);
   if (!userAccount) {
@@ -130,18 +133,18 @@ const makeDailyContribution = async (contributionInput) => {
     totalContribution: userPackage.totalContribution,
   });
 
-  // const cashier = await UserModel.findById(contributionInput.createdBy);
+  const cashier = await UserModel.findById(contributionInput.createdBy);
 
-  // // Send credit SMS
-  // const phone = userAccount.phoneNumber;
-  // const message = sbContributionMessage(
-  //   userAccount.firstName,
-  //   contributionInput.amount,
-  //   contributionInput.accountNumber,
-  //   userPackage.totalContribution,
-  //   cashier.firstName
-  // );
-  //  await sendSms(phone, message);
+  // Send credit SMS
+  const phone = userAccount.phoneNumber;
+  const message = sbContributionMessage(
+    userAccount.firstName,
+    contributionInput.amount,
+    contributionInput.accountNumber,
+    userPackage.totalContribution,
+    cashier.firstName
+  );
+  await sendSms(phone, message);
 
   // // Charge for SMS fees
   //  await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId);
