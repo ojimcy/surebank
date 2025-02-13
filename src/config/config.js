@@ -38,6 +38,8 @@ const envVarsSchema = Joi.object()
     SMS_API_TOKEN: Joi.string().description('API token for SMS provider'),
     SMS_SENDER: Joi.string().description('Sender name for SMS'),
     SMS_TEMPLATE_DIRECTORY: Joi.string().description('directory where sms templates are stored'),
+    META_PHONE_NUMBER_ID: Joi.string().description('Meta phone number ID'),
+    META_ACCESS_TOKEN: Joi.string().description('Meta access token'),
   })
   .unknown();
 
@@ -96,5 +98,14 @@ module.exports = {
     clientId: envVars.RELOADLY_CLIENT_ID,
     clientSecret: envVars.RELOADLY_CLIENT_SECRET,
     topupsBaseUrl: envVars.RELOADLY_TOPUPS_BASE_URL,
+  },
+  twilio: {
+    accountSid: envVars.TWILIO_ACCOUNT_SID,
+    authToken: envVars.TWILIO_AUTH_TOKEN,
+    phoneNumber: envVars.TWILIO_PHONE_NUMBER,
+  },
+  meta: {
+    phoneNumberId: envVars.META_PHONE_NUMBER_ID,
+    accessToken: envVars.META_ACCESS_TOKEN,
   },
 };

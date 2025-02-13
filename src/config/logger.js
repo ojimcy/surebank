@@ -14,7 +14,14 @@ const logger = winston.createLogger({
     enumerateErrorFormat(),
     config.env === 'development' ? winston.format.colorize() : winston.format.uncolorize(),
     winston.format.splat(),
-    winston.format.printf(({ level, message }) => `${level}: ${message}`)
+    winston.format.json(),
+    winston.format.printf(({ level, message, ...metadata }) => {
+      let msg = `${level}: ${message}`;
+      if (Object.keys(metadata).length > 0) {
+        msg += ` ${JSON.stringify(metadata)}`;
+      }
+      return msg;
+    })
   ),
   transports: [
     new winston.transports.Console({

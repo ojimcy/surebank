@@ -91,6 +91,7 @@ const chargeSbCustomer = async (chargeInput) => {
           createdBy: chargeInput.createdBy,
           packageId: chargeInput.packageId,
           reasons: chargeInput.reasons,
+          productCatalogueId: chargeInput.productCatalogueId,
         },
       ],
       { session }
@@ -148,26 +149,37 @@ const chargeSmsFees = async (phoneNumber, numberOfSMS, createdBy, branchId) => {
 
 /**
  * Save SB profit and create a charge entry
- * @param {number} costPrice - The cost price of the product
- * @param {number} sellingPrice - The selling price of the product
+ * @param {number} costTotal - The cost price of the product
+ * @param {number} totalAmount - The selling price of the product
  * @param {string} userId - The ID of the user initiating the charge
  * @returns {Promise<Object>} Result of the operation
  */
-const saveSbProfit = async (costPrice, sellingPrice, userId, createdBy, branchId) => {
+const saveSbProfit = async (costTotal, totalAmount, userId, createdBy, branchId, productCatalogueId) => {
   const ChargeModel = await Charge();
+  const currentDate = new Date().getTime();
+  const profit = totalAmount - costTotal;
 
-  // Calculate profit
-  const profit = sellingPrice - costPrice;
-  // Create a charge record
+  if (profit <= 0) {
+    return null;
+  }
+
   const charge = await ChargeModel.create({
+    branchId,
     userId,
-    date: new Date().getTime(),
+    date: currentDate,
     amount: profit,
     createdBy,
-    branchId,
     reasons: 'Profit from SB',
+    productCatalogueId,
   });
-  return charge;
+
+  const populatedCharge = await ChargeModel.findById(charge._id).populate([
+    { path: 'branchId', select: 'name' },
+    { path: 'userId', select: 'firstName lastName' },
+    { path: 'productCatalogueId', select: 'name description' },
+  ]);
+
+  return populatedCharge;
 };
 
 module.exports = {

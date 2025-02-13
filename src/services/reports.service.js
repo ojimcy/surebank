@@ -299,6 +299,10 @@ const getCharges = async (filterOpts, paginationOpts) => {
         path: 'branchId',
         select: 'name',
       },
+      {
+        path: 'productCatalogueId',
+        select: 'name price description',
+      },
     ])
     .skip(skip)
     .limit(limit)
