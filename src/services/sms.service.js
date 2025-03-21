@@ -1,6 +1,5 @@
 const axios = require('axios');
 const config = require('../config/config');
-const logger = require('../config/logger');
 const { Account } = require('../models');
 
 const sendSms = async (phone, message) => {
@@ -15,7 +14,7 @@ const sendSms = async (phone, message) => {
       dnd: 1,
     };
     const resp = await axios.post(url, data, { timeout: 1500 });
-    logger(resp.data);
+    return resp.data;
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error);

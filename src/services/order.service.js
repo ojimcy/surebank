@@ -76,6 +76,7 @@ const createOrder = async (userId, orderDetails) => {
     // Calculate total price and create the order
     const totalAmount = products.cartItems.reduce((total, item) => total + item.subTotal, 0);
     const costTotal = products.cartItems.reduce((total, item) => total + item.costTotal, 0);
+
     const order = await OrderModel.create(
       [
         {
@@ -108,8 +109,23 @@ const createOrder = async (userId, orderDetails) => {
       ],
       { session }
     );
-    // save profit to charge
-    await saveSbProfit(costTotal, totalAmount, userId, userId, orderDetails.deliveryAddress.branchId);
+
+    // Save profit for each product in cart
+    await Promise.all(
+      products.cartItems.map(async (item) => {
+        const itemProfit = item.subTotal - item.costTotal;
+        if (itemProfit > 0) {
+          await saveSbProfit(
+            item.costTotal,
+            item.subTotal,
+            userId,
+            userId,
+            orderDetails.deliveryAddress.branchId,
+            item.productCatalogueId
+          );
+        }
+      })
+    );
 
     // Clear the user's cart
     await clearCart(userId, session);
