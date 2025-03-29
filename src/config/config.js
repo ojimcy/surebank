@@ -50,6 +50,7 @@ const envVarsSchema = Joi.object()
       .default('sb/prod/mongo')
       .description('Secret name for MongoDB certificate'),
     ENCRYPTION_KEY: Joi.string().required().description('Encryption key'),
+    CLIENT_URL: Joi.string().required().description('Client application URL'),
   })
   .unknown();
 
@@ -98,6 +99,7 @@ module.exports = {
     },
     from: envVars.EMAIL_FROM,
     templateDirectory: envVars.EMAIL_TEMPLATE_DIRECTORY.toString().trimEnd('/'),
+    clientUrl: envVars.CLIENT_URL,
   },
   sms: {
     apiToken: envVars.SMS_API_TOKEN,
