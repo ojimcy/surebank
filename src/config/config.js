@@ -40,6 +40,16 @@ const envVarsSchema = Joi.object()
     SMS_TEMPLATE_DIRECTORY: Joi.string().description('directory where sms templates are stored'),
     META_PHONE_NUMBER_ID: Joi.string().description('Meta phone number ID'),
     META_ACCESS_TOKEN: Joi.string().description('Meta access token'),
+    AWS_REGION: Joi.string().default('us-east-1').description('AWS Region for services'),
+    MONGODB_SECRET_NAME: Joi.string()
+      .when('NODE_ENV', {
+        is: 'production',
+        then: Joi.required(),
+        otherwise: Joi.optional(),
+      })
+      .default('sb/prod/mongo')
+      .description('Secret name for MongoDB certificate'),
+    ENCRYPTION_KEY: Joi.string().required().description('Encryption key'),
   })
   .unknown();
 
@@ -107,5 +117,12 @@ module.exports = {
   meta: {
     phoneNumberId: envVars.META_PHONE_NUMBER_ID,
     accessToken: envVars.META_ACCESS_TOKEN,
+  },
+  aws: {
+    region: envVars.AWS_REGION,
+    secretName: envVars.MONGODB_SECRET_NAME,
+  },
+  encryption: {
+    key: envVars.ENCRYPTION_KEY,
   },
 };

@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 const config = require('../config/config');
+const logger = require('../config/logger');
+const { getSecret } = require('../utils/secretsManager');
+
 const accountSchema = require('./account.schema');
 const accountTransactionSchema = require('./accountTransaction.schema');
 const bannerSchema = require('./banner.schema');
@@ -40,6 +43,18 @@ let conn = null;
 
 const getConnection = async () => {
   if (conn == null) {
+    let sslCA;
+
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        // Get the MongoDB certificate from Secrets Manager
+        sslCA = await getSecret(config.aws.secretName);
+      } catch (error) {
+        logger.error('Failed to retrieve MongoDB certificate from Secrets Manager:', error);
+        throw error;
+      }
+    }
+
     const options = {
       ...config.mongoose.options,
       ...{
@@ -52,8 +67,25 @@ const getConnection = async () => {
         // and tell the MongoDB driver to not wait more than 5 seconds
         // before erroring out if it isn't connected
         serverSelectionTimeoutMS: 5000,
+        // In production, use the certificate from Secrets Manager
+        ...(process.env.NODE_ENV === 'production' && {
+          ssl: true,
+          sslValidate: true,
+          sslCA: Buffer.from(sslCA, 'base64'),
+        }),
       },
     };
+
+    // Add event listeners for connection issues
+    mongoose.connection.on('error', (err) => {
+      logger.error('MongoDB connection error:', err);
+      process.exit(1);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      logger.warn('MongoDB disconnected. Attempting to reconnect...');
+    });
+
     conn = mongoose.createConnection(config.mongoose.url, options);
 
     // `await`ing connection after assigning to the `conn` variable

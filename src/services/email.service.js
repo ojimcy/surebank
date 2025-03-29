@@ -7,11 +7,7 @@ const logger = require('../config/logger');
 const client = new SESClient({ region: 'us-east-1' });
 
 const emailTemplates = {
-  OTP: 'defipay-otp',
-  WELCOME: 'defipay-welcome',
-  TRANSACTION_NOTIFICATION: 'defipay-transaction-notification',
-  TRANSACTION_COMPLETED: 'defipay-transaction-completed',
-  ELECTRICITY_TRANSACTION_COMPLETED: 'defipay-electricity-transaction-completed',
+  OTP: 'otp',
 };
 
 const compiledTempltes = {};

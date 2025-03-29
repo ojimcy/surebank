@@ -4,13 +4,13 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs18.x
-  # timeout: 90
+  timeout: 90
   environment: ${file(env.json)}
   httpApi:
     cors:
       allowedOrigins:
         - https://surebankstores.ng
-        - http://localhost:3001 
+        - http://localhost:3001
       allowedMethods:
         - GET
         - POST
@@ -23,6 +23,14 @@ provider:
         - Authorization
         - X-Requested-With
       allowCredentials: true
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+          Resource:
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:sb/prod/mongo-*
 
 functions:
   api:

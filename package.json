@@ -28,9 +28,10 @@
     "prepare": "husky install"
   },
   "keywords": [
-    "defipay"
+    "surebank"
   ],
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.775.0",
     "@aws-sdk/client-ses": "^3.335.0",
     "abi-decoder": "^2.4.0",
     "axios": "^1.4.0",

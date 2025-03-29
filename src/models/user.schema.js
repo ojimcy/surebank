@@ -83,9 +83,26 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isKycVerified: {
+      type: Boolean,
+      default: false,
+    },
+    lastPasswordChange: {
+      type: Date,
+      default: Date.now,
+    },
+    passwordAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true },
   }
 );
 
@@ -126,12 +143,16 @@ userSchema.methods.isPasswordMatch = async function (password) {
   return bcrypt.compare(password, user.password);
 };
 
-userSchema.pre('save', async function (next) {
-  const user = this;
-  if (user.isModified('password')) {
-    user.password = await bcrypt.hash(user.password, 8);
+// Add index with partial filter expression
+userSchema.index(
+  {
+    email: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: { email: { $exists: true } },
+    sparse: true,
   }
-  next();
-});
+);
 
 module.exports = userSchema;
