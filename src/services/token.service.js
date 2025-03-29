@@ -88,7 +88,7 @@ const generateAuthTokens = async (user) => {
 };
 
 /**
- * Generate reset password token
+ * Generate reset password OTP
  * @param {string} email
  * @returns {Promise<string>}
  */
@@ -97,22 +97,83 @@ const generateResetPasswordToken = async (email) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'No users found with this email');
   }
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
   const expires = moment().add(config.jwt.resetPasswordExpirationMinutes, 'minutes');
-  const resetPasswordToken = generateToken(user.id, expires, tokenTypes.RESET_PASSWORD);
-  await saveToken(resetPasswordToken, user.id, expires, tokenTypes.RESET_PASSWORD);
-  return resetPasswordToken;
+  const TokenModel = await Token();
+
+  // Delete any existing reset password tokens
+  await TokenModel.deleteMany({ user: user.id, type: tokenTypes.RESET_PASSWORD });
+
+  // Save OTP in token collection
+  await TokenModel.create({
+    token: otp,
+    user: user.id,
+    type: tokenTypes.RESET_PASSWORD,
+    expires,
+  });
+
+  return { otp, user };
 };
 
 /**
- * Generate verify email token
+ * Verify reset password OTP
+ * @param {string} otp
+ * @returns {Promise<Token>}
+ */
+const verifyResetPasswordToken = async (otp) => {
+  const TokenModel = await Token();
+  const token = await TokenModel.findOne({
+    token: otp,
+    type: tokenTypes.RESET_PASSWORD,
+    blacklisted: false,
+  });
+
+  if (!token || moment().isAfter(token.expires)) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid or expired reset password code');
+  }
+
+  return token;
+};
+
+/**
+ * Generate verify email OTP
  * @param {User} user
  * @returns {Promise<string>}
  */
 const generateVerifyEmailToken = async (user) => {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
   const expires = moment().add(config.jwt.verifyEmailExpirationMinutes, 'minutes');
-  const verifyEmailToken = generateToken(user.id, expires, tokenTypes.VERIFY_EMAIL);
-  await saveToken(verifyEmailToken, user.id, expires, tokenTypes.VERIFY_EMAIL);
-  return verifyEmailToken;
+  const TokenModel = await Token();
+
+  // Save OTP in token collection
+  await TokenModel.create({
+    token: otp,
+    user: user.id,
+    type: tokenTypes.VERIFY_EMAIL,
+    expires,
+  });
+
+  return otp;
+};
+
+/**
+ * Verify email OTP
+ * @param {string} otp
+ * @returns {Promise<Token>}
+ */
+const verifyEmailToken = async (otp) => {
+  const TokenModel = await Token();
+  const token = await TokenModel.findOne({
+    token: otp,
+    type: tokenTypes.VERIFY_EMAIL,
+    blacklisted: false,
+  });
+
+  if (!token || moment().isAfter(token.expires)) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid or expired OTP');
+  }
+
+  return token;
 };
 
 module.exports = {
@@ -121,5 +182,7 @@ module.exports = {
   verifyToken,
   generateAuthTokens,
   generateResetPasswordToken,
+  verifyResetPasswordToken,
   generateVerifyEmailToken,
+  verifyEmailToken,
 };

@@ -123,14 +123,14 @@ const refreshAuth = async (refreshToken) => {
 
 /**
  * Reset password
- * @param {string} resetPasswordToken
+ * @param {string} otp
  * @param {string} newPassword
  * @returns {Promise}
  */
-const resetPassword = async (resetPasswordToken, newPassword) => {
+const resetPassword = async (otp, newPassword) => {
   try {
     const TokenModel = await Token();
-    const resetPasswordTokenDoc = await tokenService.verifyToken(resetPasswordToken, tokenTypes.RESET_PASSWORD);
+    const resetPasswordTokenDoc = await tokenService.verifyResetPasswordToken(otp);
     const user = await userService.getUserById(resetPasswordTokenDoc.user);
     if (!user) {
       throw new Error();
@@ -144,17 +144,19 @@ const resetPassword = async (resetPasswordToken, newPassword) => {
 
 /**
  * Verify email
- * @param {string} verifyEmailToken
+ * @param {string} otp
  * @returns {Promise}
  */
-const verifyEmail = async (verifyEmailToken) => {
+const verifyEmail = async (otp) => {
   try {
     const TokenModel = await Token();
-    const verifyEmailTokenDoc = await tokenService.verifyToken(verifyEmailToken, tokenTypes.VERIFY_EMAIL);
+    const verifyEmailTokenDoc = await tokenService.verifyEmailToken(otp);
     const user = await userService.getUserById(verifyEmailTokenDoc.user);
+
     if (!user) {
       throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }
+
     await TokenModel.deleteMany({ user: user.id, type: tokenTypes.VERIFY_EMAIL });
     await userService.updateUserById(user.id, { isEmailVerified: true });
   } catch (error) {

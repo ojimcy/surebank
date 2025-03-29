@@ -4,7 +4,7 @@ module.exports = (data) => `
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email</title>
+    <title>Reset Your Password</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -52,17 +52,17 @@ module.exports = (data) => `
       <div class="logo">
         <h2>SureBank Stores</h2>
       </div>
-      <h2>Verify Your Email Address</h2>
+      <h2>Reset Your Password</h2>
       <p>Hello ${data.name},</p>
-      <p>Thank you for creating an account with SureBank Stores. To complete your registration and ensure the security of your account, please use the following verification code:</p>
+      <p>We received a request to reset your password. Use the following code to reset your password:</p>
       
       <div class="otp-container">
         <div class="otp-code">${data.otp}</div>
       </div>
       
-      <p>This verification code will expire in ${data.expiryTime} minutes.</p>
+      <p>This code will expire in ${data.expiryTime} minutes.</p>
       
-      <p>If you did not create an account with SureBank Stores, please ignore this email.</p>
+      <p>If you didn't request a password reset, please ignore this email or contact support if you have concerns.</p>
       
       <div class="footer">
         <p>This is an automated message, please do not reply to this email.</p>
