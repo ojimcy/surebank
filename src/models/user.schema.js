@@ -12,6 +12,11 @@ const userSchema = mongoose.Schema(
       required: true,
       trim: true,
     },
+    middleName: {
+      type: String,
+      required: false,
+      trim: true,
+    },
     lastName: {
       type: String,
       required: true,
@@ -21,6 +26,15 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    date_of_birth: {
+      type: Date,
+      required: false,
+    },
+    gender: {
+      type: String,
+      required: false,
+      enum: ['male', 'female'],
     },
     isTwoFactorAuthEnabled: {
       type: Boolean,
@@ -75,6 +89,16 @@ const userSchema = mongoose.Schema(
       required: true,
       default: true,
     },
+    kycStatus: {
+      type: String,
+      enum: ['unverified', 'pending', 'verified'],
+      default: 'unverified',
+    },
+    kycType: {
+      type: String,
+      enum: ['none', 'bvn', 'id'],
+      default: 'none',
+    },
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Branch',
@@ -82,10 +106,6 @@ const userSchema = mongoose.Schema(
     isEmailVerified: {
       type: Boolean,
       default: true,
-    },
-    isKycVerified: {
-      type: Boolean,
-      default: false,
     },
     lastPasswordChange: {
       type: Date,
@@ -142,6 +162,15 @@ userSchema.methods.isPasswordMatch = async function (password) {
   const user = this;
   return bcrypt.compare(password, user.password);
 };
+
+userSchema.pre('save', async function (next) {
+  const user = this;
+  if (user.isModified('password')) {
+    user.password = await bcrypt.hash(user.password, 8);
+  }
+
+  next();
+});
 
 // Add index with partial filter expression
 userSchema.index(

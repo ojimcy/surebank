@@ -25,6 +25,8 @@ const userPermissions = [
   'stores',
   'makeContribution',
   'orderOperations',
+  'getKycs',
+  'submitKyc',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];
@@ -84,6 +86,7 @@ const managerPermissions = [
   'charge',
   'sbPackages',
   'manageNote',
+  'manageKyc',
 ];
 
 const adminPermissions = [

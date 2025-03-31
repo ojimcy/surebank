@@ -123,6 +123,8 @@ module.exports = {
   aws: {
     region: envVars.AWS_REGION,
     secretName: envVars.MONGODB_SECRET_NAME,
+    accessKey: envVars.AWS_ACCESS_KEY_ID,
+    secretKey: envVars.AWS_SECRET_ACCESS_KEY,
   },
   encryption: {
     key: envVars.ENCRYPTION_KEY,

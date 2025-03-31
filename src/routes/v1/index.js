@@ -28,6 +28,7 @@ const chargeRoute = require('./charge.route');
 const orderRoute = require('./order.route');
 const smsRoute = require('./sms.route');
 const noteKeepingRoute = require('./noteKeeping.route');
+const kycRoute = require('./kyc.route');
 
 const router = express.Router();
 
@@ -139,6 +140,10 @@ const defaultRoutes = [
   {
     path: '/note-keeping',
     route: noteKeepingRoute,
+  },
+  {
+    path: '/kyc',
+    route: kycRoute,
   },
 ];
 
