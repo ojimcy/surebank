@@ -1,4 +1,4 @@
-const { Ledger, DailySummary, Expenditure, Package, BranchStaff } = require('../models');
+const { Ledger, DailySummary, Expenditure, BranchStaff, DsPackage } = require('../models');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 
 /**
@@ -106,7 +106,7 @@ const getDailySummary = async (filter, options) => {
  * @returns {Promise<number>} The sum of all first contributions
  */
 const getSumOfFirstContributions = async () => {
-  const PackageModel = await Package();
+  const PackageModel = await DsPackage();
   const firstContributions = await PackageModel.aggregate([
     {
       $match: {
@@ -131,7 +131,7 @@ const getSumOfFirstContributions = async () => {
 };
 
 const getBranchSumOfFirstContributions = async (branchAdmin) => {
-  const PackageModel = await Package();
+  const PackageModel = await DsPackage();
   const BranchStaffModel = await BranchStaff();
   const branch = await BranchStaffModel.findOne({ staffId: branchAdmin });
   const firstContributions = await PackageModel.aggregate([

@@ -93,6 +93,12 @@ const getAccount = catchAsync(async (req, res) => {
   res.send(account);
 });
 
+const createSelfAccount = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const account = await accountService.createSelfAccount(userId, req.body.accountType);
+  res.status(httpStatus.CREATED).send(account);
+});
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -105,4 +111,5 @@ module.exports = {
   deleteAccount,
   updateAccount,
   getAccount,
+  createSelfAccount,
 };

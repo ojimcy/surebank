@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const httpStatus = require('http-status');
-const { Package, Contribution, AccountTransaction, Account, Charge, User } = require('../models');
+const { DsPackage, Contribution, AccountTransaction, Account, Charge, User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { getUserById } = require('./user.service');
@@ -15,7 +15,7 @@ const { sendSms } = require('./sms.service');
  * @returns {Promise<Object>} Result of the operation
  */
 const saveCharge = async (packageId, amount, createdBy, session) => {
-  const PackageModel = await Package();
+  const PackageModel = await DsPackage();
   const ChargeModel = await Charge();
   // Fetch the package details to get the branchId
   const packageDetails = await PackageModel.findById(packageId);
@@ -56,7 +56,7 @@ const saveCharge = async (packageId, amount, createdBy, session) => {
  * @returns {Promise<Object>} Result of the operation
  */
 const createDailySavingsPackage = async (dailyInput) => {
-  const PackageModel = await Package();
+  const PackageModel = await DsPackage();
   const AccountModel = await Account();
   const userAccount = await getAccountByNumber(dailyInput.accountNumber);
   if (!userAccount) {
@@ -94,7 +94,7 @@ const saveDailyContribution = async (contributionInput) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
-  const PackageModel = await Package();
+  const PackageModel = await DsPackage();
   const ContributionModel = await Contribution();
   const AccountModel = await Account();
   const AccountTransactionModel = await AccountTransaction();
@@ -258,7 +258,7 @@ const saveDailyContribution = async (contributionInput) => {
  * @returns {Promise<Object>} Withdrawal details
  */
 const makeDailySavingsWithdrawal = async (withdrawal) => {
-  const PackageModel = await Package();
+  const PackageModel = await DsPackage();
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -323,7 +323,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
  * @returns {Promise<Object>} Daily savings package
  */
 const getDailySavingsPackageById = async (packageId) => {
-  const PackageModel = await Package();
+  const PackageModel = await DsPackage();
   const userPackage = await PackageModel.findById(packageId);
   if (!userPackage) {
     throw new ApiError(404, 'Daily savings package not found');
@@ -337,7 +337,7 @@ const getDailySavingsPackageById = async (packageId) => {
  * @returns {Promise<Array>} Array of user's daily savings packages
  */
 const getUserDailySavingsPackages = async (userId) => {
-  const PackageModel = await Package();
+  const PackageModel = await DsPackage();
   const userPackages = await PackageModel.find({
     userId,
   });
@@ -383,7 +383,7 @@ const getDailySavingsWithdrawals = async (accountNumber, narration) => {
  * @returns {Promise<User>}
  */
 const updatePackageById = async (packageId, updateBody) => {
-  const PackageModel = await Package();
+  const PackageModel = await DsPackage();
   const dsPackage = await PackageModel.findById(packageId);
   if (!dsPackage) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Package not found');

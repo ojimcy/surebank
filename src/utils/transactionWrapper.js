@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const withTransaction = async (callback) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -13,3 +15,5 @@ const withTransaction = async (callback) => {
     session.endSession();
   }
 };
+
+module.exports = withTransaction;

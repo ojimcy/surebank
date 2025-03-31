@@ -1,5 +1,5 @@
 const { getConnection } = require('./connection');
-const packageSchema = require('./package.schema');
+const packageSchema = require('./dsPackage.schema');
 
 let model = null;
 

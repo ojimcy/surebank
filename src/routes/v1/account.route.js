@@ -47,4 +47,6 @@ router
   .post(auth('addEntry'), validate(accountValidation.ledgerEntry), accountingController.ledgerEntry)
   .get(auth('getEntry'), validate(accountValidation.getLedgerEntries), accountingController.getLedgerEntries);
 
+router.route('/self').post(auth(), validate(accountValidation.createSelfAccount), accountController.createSelfAccount);
+
 module.exports = router;

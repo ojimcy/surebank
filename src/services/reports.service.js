@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Contribution, AccountTransaction, Package, SbPackage, Charge } = require('../models');
+const { Contribution, AccountTransaction, DsPackage, SbPackage, Charge } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -223,7 +223,7 @@ const getMyDsWithdrawals = async (createdBy, startDate, endDateParam, limit = 10
  */
 const getChargedPackages = async () => {
   try {
-    const PackageModel = await Package();
+    const PackageModel = await DsPackage();
     const chargedPackages = await PackageModel.find({ deductionCount: { $gt: 0 } }).populate([
       {
         path: 'userId',
@@ -397,7 +397,7 @@ const getSumOfOtherCharges = async (branchId) => {
  * @returns {Promise<QueryResult>}
  */
 const getPackages = async (filter, options) => {
-  const PackageModel = await Package();
+  const PackageModel = await DsPackage();
   const packages = await PackageModel.paginate(filter, options);
   return packages;
 };

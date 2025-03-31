@@ -1,4 +1,4 @@
-const ACCOUNT_TYPE = ['sales', 'ds', 'sb', 'general', 'expenditure'];
+const ACCOUNT_TYPE = ['sales', 'ds', 'sb', 'ibs', 'general', 'expenditure'];
 const DIRECTION_VALUE = ['inflow', 'outflow'];
 const SALES_PAYMENT_METHOD = ['cash', 'wallet', 'tranfer'];
 const PAYMENT_STATUS = ['approved', 'cancelled', 'pending'];

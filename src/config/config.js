@@ -51,6 +51,7 @@ const envVarsSchema = Joi.object()
       .description('Secret name for MongoDB certificate'),
     ENCRYPTION_KEY: Joi.string().required().description('Encryption key'),
     CLIENT_URL: Joi.string().required().description('Client application URL'),
+    ONLINE_BRANCH_ID: Joi.string().description('Online branch id'),
   })
   .unknown();
 
@@ -64,6 +65,7 @@ module.exports = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   systemAccountId: envVars.SYSTEM_ACCOUNT_ID,
+  onlineBranchId: envVars.ONLINE_BRANCH_ID,
   mongoose: {
     url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : ''),
     options: {

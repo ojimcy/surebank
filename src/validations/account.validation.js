@@ -7,7 +7,7 @@ const createAccount = {
     email: Joi.string().optional().email(),
     accountType: Joi.string().required(),
     phoneNumber: Joi.string().optional(),
-    branchId: Joi.string().required().custom(objectId),
+    branchId: Joi.string().optional().custom(objectId),
     createdBy: Joi.string().custom(objectId),
     accountManagerName: Joi.string(),
     role: Joi.string(),
@@ -132,6 +132,12 @@ const getAccount = {
   }),
 };
 
+const createSelfAccount = {
+  body: Joi.object().keys({
+    accountType: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -148,4 +154,5 @@ module.exports = {
   getAccountManager,
   updateAccount,
   getAccount,
+  createSelfAccount,
 };

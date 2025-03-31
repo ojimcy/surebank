@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 const mongoose = require('mongoose');
-const { Charge, Package, SbPackage, Account } = require('../models');
+const { Charge, DsPackage, SbPackage, Account } = require('../models');
 const { SMS_FFE } = require('../constants/account');
 const { getUserByPhoneNumber } = require('./user.service');
 
@@ -11,7 +11,7 @@ const { getUserByPhoneNumber } = require('./user.service');
  */
 const chargeDsCustomer = async (chargeInput) => {
   const ChargeModel = await Charge();
-  const PackageModel = await Package();
+  const PackageModel = await DsPackage();
   const session = await mongoose.startSession();
   session.startTransaction();
 

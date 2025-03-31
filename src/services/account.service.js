@@ -3,6 +3,7 @@ const { Account } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { generateAccountNumber } = require('../utils/account/accountUtils');
 const { getUserByEmail, getUserById, getUserByPhoneNumber } = require('./user.service');
+const config = require('../config/config');
 
 /**
  * Create an account
@@ -28,6 +29,10 @@ const createAccount = async (accountData, createdBy) => {
   const existingAccount = await accountModel.findOne({ userId, accountType });
   if (existingAccount) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'User already has an account of the specified type');
+  }
+
+  if (!branchId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Branch is required');
   }
 
   const accManager = await getUserById(createdBy);
@@ -265,6 +270,43 @@ const getAccountById = async (id) => {
     .lean();
 };
 
+/**
+ * Create a self-service account for logged in user
+ * @param {string} userId - User ID
+ * @param {string} accountType - Account type
+ * @returns {Promise<Account>} Created account
+ */
+const createSelfAccount = async (userId, accountType) => {
+  const accountModel = await Account();
+  const user = await getUserById(userId);
+
+  // Check if the user already has an account of the specified type
+  const existingAccount = await accountModel.findOne({ userId, accountType });
+  if (existingAccount) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'You already have an account of the specified type');
+  }
+
+  // Generate a unique account number
+  const accountNumber = await generateAccountNumber();
+
+  // Create the account object
+  const account = {
+    userId,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phoneNumber: user.phoneNumber,
+    accountNumber,
+    availableBalance: 0,
+    ledgerBalance: 0,
+    accountType,
+    createdBy: userId, // Self-created
+    branchId: config.onlineBranchId,
+    status: 'active',
+  };
+
+  return accountModel.create(account);
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -278,4 +320,5 @@ module.exports = {
   updateAccount,
   getAccountById,
   getUserAccounts,
+  createSelfAccount,
 };
