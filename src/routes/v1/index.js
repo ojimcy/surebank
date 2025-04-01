@@ -29,6 +29,7 @@ const orderRoute = require('./order.route');
 const smsRoute = require('./sms.route');
 const noteKeepingRoute = require('./noteKeeping.route');
 const kycRoute = require('./kyc.route');
+const ibSavingsRoute = require('./ibSavings.route');
 
 const router = express.Router();
 
@@ -144,6 +145,10 @@ const defaultRoutes = [
   {
     path: '/kyc',
     route: kycRoute,
+  },
+  {
+    path: '/ib-savings',
+    route: ibSavingsRoute,
   },
 ];
 

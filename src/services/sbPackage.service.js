@@ -18,7 +18,7 @@ const createSbPackage = async (sbPackageData) => {
   }
 
   if (userAccount.accountType !== 'sb') {
-    throw new ApiError(404, 'Provide a valid DS account number');
+    throw new ApiError(404, 'Provide a valid SB account number');
   }
 
   const userPackage = await SbPackageModel.findOne({

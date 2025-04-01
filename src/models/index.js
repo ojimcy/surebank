@@ -34,3 +34,4 @@ module.exports.SbPackage = require('./sbPackage.model');
 module.exports.Charge = require('./charge.model');
 module.exports.Order = require('./order.model');
 module.exports.NoteKeeping = require('./noteKeeping.model');
+module.exports.IbSavingsPackage = require('./ibSavingsPackage.model');

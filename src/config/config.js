@@ -52,6 +52,9 @@ const envVarsSchema = Joi.object()
     ENCRYPTION_KEY: Joi.string().required().description('Encryption key'),
     CLIENT_URL: Joi.string().required().description('Client application URL'),
     ONLINE_BRANCH_ID: Joi.string().description('Online branch id'),
+    MONIFY_API_KEY: Joi.string().required().description('Monify API key'),
+    MONIFY_SECRET_KEY: Joi.string().required().description('Monify secret key'),
+    MONIFY_BASE_URL: Joi.string().required().description('Monify base URL'),
   })
   .unknown();
 
@@ -130,5 +133,10 @@ module.exports = {
   },
   encryption: {
     key: envVars.ENCRYPTION_KEY,
+  },
+  monify: {
+    apiKey: envVars.MONIFY_API_KEY,
+    secretKey: envVars.MONIFY_SECRET_KEY,
+    baseUrl: envVars.MONIFY_BASE_URL,
   },
 };
