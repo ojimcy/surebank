@@ -394,6 +394,27 @@ const updatePackageById = async (packageId, updateBody) => {
   return dsPackage;
 };
 
+/**
+ * Get user's active daily savings package
+ * @param {Object} query - Query parameters
+ * @param {string} query.accountNumber - User's account number
+ * @param {string} query.target - Savings target
+ * @returns {Promise<Object>} User's active package
+ */
+const getUserPackage = async (query) => {
+  const PackageModel = await DsPackage();
+
+  const userPackage = await PackageModel.findOne({
+    accountNumber: query.accountNumber,
+    status: 'open',
+    target: query.target,
+  })
+    .populate('createdBy', 'firstName lastName')
+    .lean();
+
+  return userPackage;
+};
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
@@ -403,4 +424,5 @@ module.exports = {
   getDailySavingsWithdrawals,
   getDailySavingsPackageById,
   updatePackageById,
+  getUserPackage,
 };

@@ -6,12 +6,6 @@ const register = catchAsync(async (req, res) => {
   const user = await userService.createUser(req.body);
   const tokens = await tokenService.generateAuthTokens(user);
 
-  // Send verification email if user has email
-  if (user.email) {
-    const verifyEmailToken = await tokenService.generateVerifyEmailToken(user);
-    await emailService.sendVerificationEmail(user.email, verifyEmailToken);
-  }
-
   res.status(httpStatus.CREATED).send({ user, tokens });
 });
 

@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const { KYC } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { User } = require('../models');
-
+const { paystackService } = require('./paystack.service');
 /**
  * Create a KYC request
  * @param {Object} kycBody
@@ -82,9 +82,20 @@ const updateKycStatus = async (kycId, status, remarks, adminId) => {
   return kyc;
 };
 
+/**
+ * Verify BVN
+ * @param {string} bvn - Customer's BVN
+ * @returns {Promise<Object>} Verified BVN
+ */
+const verifyBvn = async (bvn) => {
+  const response = await paystackService.verifyBvn(bvn);
+  return response.data.data;
+};
+
 module.exports = {
   createKycRequest,
   queryKycRequests,
   getKycById,
   updateKycStatus,
+  verifyBvn,
 };

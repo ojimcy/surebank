@@ -28,6 +28,7 @@ const userPermissions = [
   'getKycs',
   'submitKyc',
   'createIbSavingsPackage',
+  'manageAccount',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];

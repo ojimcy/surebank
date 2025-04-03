@@ -138,6 +138,12 @@ const createSelfAccount = {
   }),
 };
 
+const updateAccountBvn = {
+  body: Joi.object().keys({
+    bvn: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -155,4 +161,5 @@ module.exports = {
   updateAccount,
   getAccount,
   createSelfAccount,
+  updateAccountBvn,
 };

@@ -45,9 +45,16 @@ const getKycRequests = {
   }),
 };
 
+const verifyBvn = {
+  body: Joi.object().keys({
+    bvn: Joi.string().required().length(11),
+  }),
+};
+
 module.exports = {
   submitKycBVN,
   submitKycID,
   approveKyc,
   getKycRequests,
+  verifyBvn,
 };

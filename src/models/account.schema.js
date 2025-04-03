@@ -58,6 +58,47 @@ const accountSchema = mongoose.Schema(
       enum: ['active', 'inactive'],
       default: 'active',
     },
+    bvn: {
+      type: String,
+      required: false,
+      trim: true,
+      validate(value) {
+        if (value && !/^\d{11}$/.test(value)) {
+          throw new Error('BVN must be 11 digits');
+        }
+      },
+    },
+    paystackCustomerId: {
+      type: String,
+      required: false,
+    },
+    // Virtual Account fields
+    virtualAccount: {
+      dedicatedAccountId: {
+        type: String,
+        required: false,
+      },
+      accountNumber: {
+        type: String,
+        required: false,
+      },
+      accountName: {
+        type: String,
+        required: false,
+      },
+      bankName: {
+        type: String,
+        required: false,
+      },
+      bankCode: {
+        type: String,
+        required: false,
+      },
+      assigned: {
+        type: Boolean,
+        default: false,
+      },
+    },
   },
   {
     timestamps: true,

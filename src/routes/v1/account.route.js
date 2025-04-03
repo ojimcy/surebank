@@ -49,4 +49,8 @@ router
 
 router.route('/self').post(auth(), validate(accountValidation.createSelfAccount), accountController.createSelfAccount);
 
+router
+  .route('/:accountId/bvn')
+  .post(auth('manageAccount'), validate(accountValidation.updateAccountBvn), accountController.updateAccountBvn);
+
 module.exports = router;
