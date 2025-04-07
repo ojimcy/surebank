@@ -38,7 +38,6 @@ const sbPackageSchema = require('./sbPackage.schema');
 const tokenSchema = require('./token.schema');
 const userSchema = require('./user.schema');
 const userRoleSchema = require('./userRole.schema');
-const ibSavingsPackageSchema = require('./ibSavingsPackage.schema');
 const notificationPreferenceSchema = require('./notificationPreference.schema');
 
 let conn = null;
@@ -130,7 +129,6 @@ const getConnection = async () => {
     conn.model('Token', tokenSchema);
     conn.model('User', userSchema);
     conn.model('UserRoles', userRoleSchema);
-    conn.model('IbSavingsPackage', ibSavingsPackageSchema);
     conn.model('NotificationPreference', notificationPreferenceSchema);
   }
 
