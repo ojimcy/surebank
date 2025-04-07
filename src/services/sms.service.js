@@ -1,24 +1,70 @@
+const httpStatus = require('http-status');
 const axios = require('axios');
 const config = require('../config/config');
+const ApiError = require('../utils/ApiError');
+const logger = require('../config/logger');
 const { Account } = require('../models');
 
-const sendSms = async (phone, message) => {
+const accountActivityTemplate = require('../templates/sms/account-activity.template');
+const transactionAlertTemplate = require('../templates/sms/transaction-alert.template');
+const securityAlertTemplate = require('../templates/sms/security-alert.template');
+const savingsReminderTemplate = require('../templates/sms/savings-reminder.template');
+const kycUpdateTemplate = require('../templates/sms/kyc-update.template');
+const loginAlertTemplate = require('../templates/sms/login-alert.template');
+const resetPasswordTemplate = require('../templates/sms/reset-password.template');
+
+const templates = {
+  account_activity: accountActivityTemplate,
+  transaction_alert: transactionAlertTemplate,
+  security_alert: securityAlertTemplate,
+  savings_reminder: savingsReminderTemplate,
+  kyc_update: kycUpdateTemplate,
+  login_alert: loginAlertTemplate,
+  reset_password: resetPasswordTemplate,
+};
+
+/**
+ * Send SMS using configured provider
+ * @param {string} to - Recipient phone number
+ * @param {string} message - Message content
+ * @returns {Promise<void>}
+ */
+const sendSMS = async (to, message) => {
   try {
-    const body = message;
-    const url = 'https://www.bulksmsnigeria.com/api/v2/sms';
-    const data = {
-      api_token: config.sms.apiToken,
+    const response = await axios.post(config.sms.providerUrl, {
+      apiKey: config.sms.apiKey,
       from: config.sms.smsSender,
-      to: phone,
-      body,
+      to,
+      body: message,
       dnd: 1,
-    };
-    const resp = await axios.post(url, data, { timeout: 1500 });
-    return resp.data;
+    });
+
+    logger.info(`SMS sent to ${to}`);
+    return response.data;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
+    logger.error('Error sending SMS:', error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send SMS');
   }
+};
+
+/**
+ * Send notification SMS based on template
+ * @param {string} to - Recipient phone number
+ * @param {string} template - Template name
+ * @param {Object} data - Template data
+ * @returns {Promise<void>}
+ */
+const sendNotificationSMS = async (to, template, data) => {
+  if (!templates[template]) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid SMS template');
+  }
+
+  const message = templates[template]({
+    ...data,
+    supportNumber: config.sms.supportNumber,
+  });
+
+  return sendSMS(to, message);
 };
 
 const sendBulkSms = async (filterOptions, message) => {
@@ -41,12 +87,13 @@ const sendBulkSms = async (filterOptions, message) => {
   // Send SMS to each account
   await Promise.all(
     phoneNumbers.map(async (phoneNumber) => {
-      await sendSms(phoneNumber, message);
+      await sendSMS(phoneNumber, message);
     })
   );
 };
 
 module.exports = {
-  sendSms,
+  sendSMS,
+  sendNotificationSMS,
   sendBulkSms,
 };

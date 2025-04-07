@@ -26,4 +26,12 @@ router
     notificationController.markNotificationAsRead
   );
 
+router
+  .route('/preferences')
+  .get(auth(), notificationController.getPreferences)
+  .put(auth(), validate(notificationValidation.updatePreferences), notificationController.updatePreferences);
+
+router.get('/types', auth(), notificationController.getNotificationTypes);
+router.post('/unsubscribe', auth(), notificationController.unsubscribeFromAll);
+
 module.exports = router;

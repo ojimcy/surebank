@@ -38,6 +38,7 @@ const envVarsSchema = Joi.object()
     SMS_API_TOKEN: Joi.string().description('API token for SMS provider'),
     SMS_SENDER: Joi.string().description('Sender name for SMS'),
     SMS_TEMPLATE_DIRECTORY: Joi.string().description('directory where sms templates are stored'),
+    SMS_PROVIDER_URL: Joi.string().description('SMS provider URL'),
     META_PHONE_NUMBER_ID: Joi.string().description('Meta phone number ID'),
     META_ACCESS_TOKEN: Joi.string().description('Meta access token'),
     AWS_REGION: Joi.string().default('us-east-1').description('AWS Region for services'),
@@ -109,6 +110,7 @@ module.exports = {
     apiToken: envVars.SMS_API_TOKEN,
     smsSender: envVars.SMS_SENDER,
     templateDirectory: envVars.SMS_TEMPLATE_DIRECTORY.toString().trimEnd('/'),
+    providerUrl: envVars.SMS_PROVIDER_URL,
   },
   reloadly: {
     clientId: envVars.RELOADLY_CLIENT_ID,

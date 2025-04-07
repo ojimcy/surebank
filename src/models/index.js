@@ -35,3 +35,4 @@ module.exports.Charge = require('./charge.model');
 module.exports.Order = require('./order.model');
 module.exports.NoteKeeping = require('./noteKeeping.model');
 module.exports.IbSavingsPackage = require('./ibSavingsPackage.model');
+module.exports.NotificationPreference = require('./notificationPreference.model');
