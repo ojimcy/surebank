@@ -4,8 +4,8 @@ const { authService, userService, tokenService, emailService } = require('../ser
 const { ApiError } = require('../utils/ApiError');
 
 const register = catchAsync(async (req, res) => {
-  // Set the role to 'appUser' for self-registered users
-  req.body.role = 'appUser';
+  // Set the role to 'user' for self-registered users
+  req.body.role = 'user';
 
   const user = await userService.createUser(req.body);
 

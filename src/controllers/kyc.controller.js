@@ -4,14 +4,14 @@ const { kycService } = require('../services');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 
+/**
+ * Enhanced KYC submission for self-registered users
+ */
 const submitKycRequest = catchAsync(async (req, res) => {
   const userId = req.user._id;
-  const kycData = {
-    ...req.body,
-    userId,
-    type: req.body.bvn ? 'bvn' : 'id',
-  };
-  const kyc = await kycService.createKycRequest(kycData);
+  const kycData = req.body;
+
+  const kyc = await kycService.submitKycRequest(userId, kycData);
   res.status(httpStatus.CREATED).send(kyc);
 });
 

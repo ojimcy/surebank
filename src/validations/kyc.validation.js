@@ -9,14 +9,50 @@ const submitKycBVN = {
   }),
 };
 
-const submitKycID = {
+// Enhanced KYC validation for self-registered users
+const submitKyc = {
   body: Joi.object().keys({
-    idType: Joi.string().required().valid('passport', 'drivers_license', 'national_id', 'voters_card'),
-    idNumber: Joi.string().required(),
-    idImage: Joi.string().required(), // URL/path to uploaded ID image
-    selfieImage: Joi.string().required(), // URL/path to uploaded selfie
+    kycType: Joi.string().required().valid('bvn', 'id'),
+    // BVN specific fields
+    bvn: Joi.string().length(11).when('kycType', {
+      is: 'bvn',
+      then: Joi.required(),
+      otherwise: Joi.forbidden(),
+    }),
+    // ID specific fields
+    idType: Joi.string().valid('passport', 'drivers_license', 'national_id', 'voters_card').when('kycType', {
+      is: 'id',
+      then: Joi.required(),
+      otherwise: Joi.forbidden(),
+    }),
+    idNumber: Joi.string().when('kycType', {
+      is: 'id',
+      then: Joi.required(),
+      otherwise: Joi.forbidden(),
+    }),
+    idImage: Joi.string().when('kycType', {
+      is: 'id',
+      then: Joi.required(),
+      otherwise: Joi.forbidden(),
+    }),
+    selfieImage: Joi.string().when('kycType', {
+      is: 'id',
+      then: Joi.required(),
+      otherwise: Joi.forbidden(),
+    }),
+    expiryDate: Joi.date().when('kycType', {
+      is: 'id',
+      then: Joi.required(),
+      otherwise: Joi.forbidden(),
+    }),
+    address: Joi.string().when('kycType', {
+      is: 'id',
+      then: Joi.required(),
+      otherwise: Joi.forbidden(),
+    }),
+    // Common fields
     dateOfBirth: Joi.date().required(),
-    expiryDate: Joi.date().required(),
+    phoneNumber: Joi.string().required(),
   }),
 };
 
@@ -60,6 +96,7 @@ const getKycById = {
 module.exports = {
   submitKycBVN,
   submitKycID,
+  submitKyc,
   approveKyc,
   getKycRequests,
   verifyBvn,

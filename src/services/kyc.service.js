@@ -2,29 +2,51 @@ const httpStatus = require('http-status');
 const { KYC } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { User } = require('../models');
-const { paystackService } = require('./paystack.service');
+
 /**
- * Create a KYC request
- * @param {Object} kycBody
+ * Submit enhanced KYC data for self-registered users
+ * @param {ObjectId} userId
+ * @param {Object} kycData
  * @returns {Promise<KYC>}
  */
-const createKycRequest = async (kycBody) => {
+const submitKycRequest = async (userId, kycData) => {
   // Check if user already has a pending or approved KYC
   const existingKyc = await KYC.findOne({
-    userId: kycBody.userId,
+    userId,
     status: { $in: ['pending', 'approved'] },
   });
 
   if (existingKyc) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'User already has a pending or approved KYC request');
+    throw new ApiError(httpStatus.BAD_REQUEST, 'You already have a pending or approved KYC request');
   }
 
+  // Prepare KYC data based on type
+  const kycBody = {
+    userId,
+    type: kycData.kycType,
+    dateOfBirth: kycData.dateOfBirth,
+    phoneNumber: kycData.phoneNumber,
+    status: 'pending',
+  };
+
+  // Add type-specific fields
+  if (kycData.kycType === 'bvn') {
+    kycBody.bvn = kycData.bvn;
+  } else if (kycData.kycType === 'id') {
+    kycBody.type = kycData.idType;
+    kycBody.idNumber = kycData.idNumber;
+    kycBody.idImage = kycData.idImage;
+    kycBody.selfieImage = kycData.selfieImage;
+    kycBody.expiryDate = kycData.expiryDate;
+  }
+
+  // Create KYC request
   const kyc = await KYC.create(kycBody);
 
   // Update user's KYC status
-  await User.findByIdAndUpdate(kycBody.userId, {
+  await User.findByIdAndUpdate(userId, {
     kycStatus: 'pending',
-    kycType: kycBody.type,
+    kycType: kycData.kycType,
   });
 
   return kyc;
@@ -82,20 +104,9 @@ const updateKycStatus = async (kycId, status, remarks, adminId) => {
   return kyc;
 };
 
-/**
- * Verify BVN
- * @param {string} bvn - Customer's BVN
- * @returns {Promise<Object>} Verified BVN
- */
-const verifyBvn = async (bvn) => {
-  const response = await paystackService.verifyBvn(bvn);
-  return response.data.data;
-};
-
 module.exports = {
-  createKycRequest,
+  submitKycRequest,
   queryKycRequests,
   getKycById,
   updateKycStatus,
-  verifyBvn,
 };

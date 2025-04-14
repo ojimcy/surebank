@@ -9,6 +9,7 @@ Extend the current admin-focused app's backend/API to support user-facing functi
 ### 1.1 User Role & Permission Updates
 
 **Already Completed:**
+
 - [✅] Basic role-based authentication middleware
 - [✅] Role hierarchy system
 - [✅] Permission management system
@@ -17,10 +18,11 @@ Extend the current admin-focused app's backend/API to support user-facing functi
 - [✅] Add new package-specific permissions (CREATE_PACKAGE, VIEW_PACKAGE, CONTRIBUTE_TO_PACKAGE, WITHDRAW_FROM_PACKAGE, INTEREST_PACKAGE_CREATE, INTEREST_PACKAGE_VIEW)
 - [✅] Add new payment-specific permissions (PAYMENT_INITIATE, PAYMENT_VERIFY, VIRTUAL_ACCOUNT_VIEW)
 - [✅] Add new product-specific permissions (PRODUCT_VIEW, PRODUCT_PURCHASE, CART_MANAGE)
-*(Note: 'appUser' role creation removed as per request)*
+  _(Note: 'appUser' role creation removed as per request)_
 
 **To Do:**
-- [ ] Update user registration API endpoints to support self-registration
+
+- [✅] Update user registration API endpoints to support self-registration
 - [ ] Enhance backend KYC verification system/logic for self-registered users
 - [ ] Implement backend logic for email verification during self-registration
 - [ ] Implement API endpoints for self-service password reset flow
@@ -147,6 +149,7 @@ Extend the current admin-focused app's backend/API to support user-facing functi
 ## Security Considerations Implementation
 
 ### Payment Security
+
 - [ ] Implement end-to-end encryption (TLS) for all payment-related API communication
 - [ ] Implement encryption at rest for sensitive payment identifiers/tokens
 - [ ] Ensure secure backend handling and storage of Paystack API keys and secrets
@@ -154,12 +157,14 @@ Extend the current admin-focused app's backend/API to support user-facing functi
 - [ ] Consider implementing transaction signing within backend processes if feasible and necessary
 
 ### User Security
+
 - [ ] Implement backend logic for Two-factor Authentication (2FA) option during login/sensitive actions
 - [ ] Implement secure session management policies (timeouts, rotation) on the backend
 - [ ] Implement comprehensive backend activity logging for user account changes and actions
 - [ ] Implement rate limiting on sensitive API endpoints (login, password reset, payments)
 
 ### Data Protection
+
 - [ ] Implement encryption at rest for Personally Identifiable Information (PII) and financial data in the database
 - [ ] Ensure all backend-to-backend and external API communication uses secure protocols (HTTPS/TLS)
 - [ ] Strictly enforce role-based access control (RBAC) within the backend API logic for all data access

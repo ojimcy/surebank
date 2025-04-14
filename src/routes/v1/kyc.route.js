@@ -7,8 +7,8 @@ const kycController = require('../../controllers/kyc.controller');
 const router = express.Router();
 
 router
-  .route('/')
-  .post(auth('submitKyc'), validate(kycValidation.submitKycBVN), kycController.submitKycRequest)
+  .route('/submit')
+  .post(auth('submitKyc'), validate(kycValidation.submitKyc), kycController.submitKycRequest)
   .get(auth('getKycs'), validate(kycValidation.getKycRequests), kycController.getKycRequests);
 
 router
