@@ -6,6 +6,7 @@ const userService = require('./user.service');
 const Token = require('../models/token.model');
 const ApiError = require('../utils/ApiError');
 const { tokenTypes } = require('../config/tokens');
+const logger = require('../config/logger');
 
 /**
  * Login with email and password
@@ -132,13 +133,40 @@ const resetPassword = async (otp, newPassword) => {
     const TokenModel = await Token();
     const resetPasswordTokenDoc = await tokenService.verifyResetPasswordToken(otp);
     const user = await userService.getUserById(resetPasswordTokenDoc.user);
+    
     if (!user) {
-      throw new Error();
+      throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }
-    await userService.updateUserById(user.id, { password: newPassword, lastPasswordReset: new Date() });
+    
+    // Validate password strength
+    if (newPassword.length < 8) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Password must be at least 8 characters long');
+    }
+    
+    // Check if password has common patterns
+    const commonPatterns = ['password', '12345678', 'qwerty', user.email?.split('@')[0]];
+    if (commonPatterns.some(pattern => newPassword.toLowerCase().includes(pattern))) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Password is too common or contains personal information');
+    }
+
+    // Update user's password and record the change time
+    await userService.updateUserById(user.id, { 
+      password: newPassword, 
+      lastPasswordReset: new Date(),
+      passwordResetCount: (user.passwordResetCount || 0) + 1 
+    });
+    
+    // Delete all reset password tokens for this user
     await TokenModel.deleteMany({ user: user.id, type: tokenTypes.RESET_PASSWORD });
+    
+    // Log the password reset for security auditing
+    logger.info(`Password reset successful for user: ${user.id}`);
+    
   } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Password reset failed');
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Password reset failed. Try again with a new reset code.');
   }
 };
 

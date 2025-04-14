@@ -1,7 +1,6 @@
 const httpStatus = require('http-status');
-const { KYC } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { User } = require('../models');
+const { User, KYC } = require('../models');
 
 /**
  * Submit enhanced KYC data for self-registered users
@@ -10,14 +9,23 @@ const { User } = require('../models');
  * @returns {Promise<KYC>}
  */
 const submitKycRequest = async (userId, kycData) => {
+  const KYCModel = await KYC();
+  const UserModel = await User();
+  
   // Check if user already has a pending or approved KYC
-  const existingKyc = await KYC.findOne({
+  const existingKyc = await KYCModel.findOne({
     userId,
     status: { $in: ['pending', 'approved'] },
   });
 
   if (existingKyc) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'You already have a pending or approved KYC request');
+  }
+
+  // Get user to verify existence
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
   // Prepare KYC data based on type
@@ -27,26 +35,39 @@ const submitKycRequest = async (userId, kycData) => {
     dateOfBirth: kycData.dateOfBirth,
     phoneNumber: kycData.phoneNumber,
     status: 'pending',
+    submittedAt: new Date(),
   };
 
   // Add type-specific fields
   if (kycData.kycType === 'bvn') {
     kycBody.bvn = kycData.bvn;
+    
+    // Additional validation could be added here
+    if (kycData.bvn.length !== 11) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'BVN must be 11 digits');
+    }
   } else if (kycData.kycType === 'id') {
-    kycBody.type = kycData.idType;
+    kycBody.idType = kycData.idType;
     kycBody.idNumber = kycData.idNumber;
     kycBody.idImage = kycData.idImage;
     kycBody.selfieImage = kycData.selfieImage;
     kycBody.expiryDate = kycData.expiryDate;
+    kycBody.address = kycData.address;
+    
+    // Validate ID expiry date
+    if (new Date(kycData.expiryDate) < new Date()) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'ID has expired');
+    }
   }
 
   // Create KYC request
-  const kyc = await KYC.create(kycBody);
+  const kyc = await KYCModel.create(kycBody);
 
   // Update user's KYC status
-  await User.findByIdAndUpdate(userId, {
+  await UserModel.findByIdAndUpdate(userId, {
     kycStatus: 'pending',
     kycType: kycData.kycType,
+    kycSubmittedAt: new Date(),
   });
 
   return kyc;
@@ -59,7 +80,8 @@ const submitKycRequest = async (userId, kycData) => {
  * @returns {Promise<QueryResult>}
  */
 const queryKycRequests = async (filter, options) => {
-  const kycs = await KYC.paginate(filter, options);
+  const KYCModel = await KYC();
+  const kycs = await KYCModel.paginate(filter, options);
   return kycs;
 };
 
@@ -69,7 +91,8 @@ const queryKycRequests = async (filter, options) => {
  * @returns {Promise<KYC>}
  */
 const getKycById = async (id) => {
-  return KYC.findById(id);
+  const KYCModel = await KYC();
+  return KYCModel.findById(id);
 };
 
 /**
@@ -81,7 +104,10 @@ const getKycById = async (id) => {
  * @returns {Promise<KYC>}
  */
 const updateKycStatus = async (kycId, status, remarks, adminId) => {
-  const kyc = await getKycById(kycId);
+  const KYCModel = await KYC();
+  const UserModel = await User();
+  
+  const kyc = await KYCModel.findById(kycId);
   if (!kyc) {
     throw new ApiError(httpStatus.NOT_FOUND, 'KYC request not found');
   }
@@ -97,7 +123,7 @@ const updateKycStatus = async (kycId, status, remarks, adminId) => {
   await kyc.save();
 
   // Update user's KYC status
-  await User.findByIdAndUpdate(kyc.userId, {
+  await UserModel.findByIdAndUpdate(kyc.userId, {
     kycStatus: status === 'approved' ? 'verified' : 'unverified',
   });
 
