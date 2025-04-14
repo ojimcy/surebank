@@ -47,7 +47,10 @@ router
   .post(auth('addEntry'), validate(accountValidation.ledgerEntry), accountingController.ledgerEntry)
   .get(auth('getEntry'), validate(accountValidation.getLedgerEntries), accountingController.getLedgerEntries);
 
-router.route('/self').post(auth(), validate(accountValidation.createSelfAccount), accountController.createSelfAccount);
+router
+  .route('/self')
+  .post(auth(), validate(accountValidation.createSelfAccount), accountController.createSelfAccount)
+  .get(auth(), accountController.getSelfAccount);
 
 router
   .route('/:accountId/bvn')

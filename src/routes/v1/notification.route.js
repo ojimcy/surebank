@@ -33,5 +33,5 @@ router
 
 router.get('/types', auth(), notificationController.getNotificationTypes);
 router.post('/unsubscribe', auth(), notificationController.unsubscribeFromAll);
-
+router.post('/unsubscribe/:type', auth(), notificationController.unsubscribeFromNotificationType);
 module.exports = router;

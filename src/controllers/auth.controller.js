@@ -4,10 +4,22 @@ const { authService, userService, tokenService, emailService } = require('../ser
 const { ApiError } = require('../utils/ApiError');
 
 const register = catchAsync(async (req, res) => {
+  // Set the role to 'appUser' for self-registered users
+  req.body.role = 'appUser';
+
   const user = await userService.createUser(req.body);
+
+  // Generate verification token and send verification email
+  const verifyEmailOTP = await tokenService.generateVerifyEmailToken(user);
+  await emailService.sendVerificationEmail(user.email, verifyEmailOTP);
+
   const tokens = await tokenService.generateAuthTokens(user);
 
-  res.status(httpStatus.CREATED).send({ user, tokens });
+  res.status(httpStatus.CREATED).send({
+    user,
+    tokens,
+    message: 'Registration successful. Please check your email to verify your account.',
+  });
 });
 
 const login = catchAsync(async (req, res) => {

@@ -24,92 +24,44 @@ const notificationPreferenceSchema = mongoose.Schema(
     },
     preferences: {
       account_activity: {
-        channel: {
-          type: String,
-          enum: NOTIFICATION_CHANNELS,
-          default: 'both',
-        },
-        enabled: {
-          type: Boolean,
-          default: true,
-        },
+        type: String,
+        enum: NOTIFICATION_CHANNELS,
+        default: 'both',
       },
       security_alerts: {
-        channel: {
-          type: String,
-          enum: NOTIFICATION_CHANNELS,
-          default: 'both',
-        },
-        enabled: {
-          type: Boolean,
-          default: true,
-        },
+        type: String,
+        enum: NOTIFICATION_CHANNELS,
+        default: 'both',
       },
       transaction_alerts: {
-        channel: {
-          type: String,
-          enum: NOTIFICATION_CHANNELS,
-          default: 'both',
-        },
-        enabled: {
-          type: Boolean,
-          default: true,
-        },
+        type: String,
+        enum: NOTIFICATION_CHANNELS,
+        default: 'both',
       },
       marketing_updates: {
-        channel: {
-          type: String,
-          enum: NOTIFICATION_CHANNELS,
-          default: 'email',
-        },
-        enabled: {
-          type: Boolean,
-          default: true,
-        },
+        type: String,
+        enum: NOTIFICATION_CHANNELS,
+        default: 'email',
       },
       savings_reminders: {
-        channel: {
-          type: String,
-          enum: NOTIFICATION_CHANNELS,
-          default: 'both',
-        },
-        enabled: {
-          type: Boolean,
-          default: true,
-        },
+        type: String,
+        enum: NOTIFICATION_CHANNELS,
+        default: 'both',
       },
       kyc_updates: {
-        channel: {
-          type: String,
-          enum: NOTIFICATION_CHANNELS,
-          default: 'both',
-        },
-        enabled: {
-          type: Boolean,
-          default: true,
-        },
+        type: String,
+        enum: NOTIFICATION_CHANNELS,
+        default: 'both',
       },
       withdrawal_alerts: {
-        channel: {
-          type: String,
-          enum: NOTIFICATION_CHANNELS,
-          default: 'both',
-        },
-        enabled: {
-          type: Boolean,
-          default: true,
-        },
+        type: String,
+        enum: NOTIFICATION_CHANNELS,
+        default: 'both',
       },
       login_alerts: {
-        channel: {
-          type: String,
-          enum: NOTIFICATION_CHANNELS,
-          default: 'both',
-        },
-        enabled: {
-          type: Boolean,
-          default: true,
-        },
+        type: String,
+        enum: NOTIFICATION_CHANNELS,
+        default: 'both',
       },
     },
     unsubscribedFromAll: {

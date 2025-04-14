@@ -51,10 +51,17 @@ const verifyBvn = {
   }),
 };
 
+const getKycById = {
+  params: Joi.object().keys({
+    kycId: Joi.string().custom(objectId).required(),
+  }),
+};
+
 module.exports = {
   submitKycBVN,
   submitKycID,
   approveKyc,
   getKycRequests,
   verifyBvn,
+  getKycById,
 };

@@ -45,6 +45,11 @@ const userSchema = mongoose.Schema(
       required: false,
       trim: true,
     },
+    paystackCustomerCode: {
+      type: String,
+      required: false,
+      trim: true,
+    },
     email: {
       type: String,
       required: false,
@@ -105,7 +110,7 @@ const userSchema = mongoose.Schema(
     },
     isEmailVerified: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     lastPasswordChange: {
       type: Date,

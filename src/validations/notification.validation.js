@@ -1,6 +1,6 @@
 const Joi = require('joi');
 const { objectId } = require('./custom.validation');
-const { NotificationPreference } = require('../models');
+const notificationPreferenceSchema = require('../models/notificationPreference.schema');
 
 const getNotifications = {
   query: Joi.object().keys({
@@ -26,13 +26,16 @@ const markNotificationAsRead = {
 const updatePreferences = {
   body: Joi.object().keys({
     preferences: Joi.object().pattern(
-      Joi.string().valid(...NotificationPreference.NOTIFICATION_TYPES),
-      Joi.object({
-        channel: Joi.string().valid(...NotificationPreference.NOTIFICATION_CHANNELS),
-        enabled: Joi.boolean(),
-      })
+      Joi.string().valid(...notificationPreferenceSchema.statics.NOTIFICATION_TYPES),
+      Joi.string().valid(...notificationPreferenceSchema.statics.NOTIFICATION_CHANNELS)
     ),
     unsubscribedFromAll: Joi.boolean(),
+  }),
+};
+
+const unsubscribeFromNotificationType = {
+  params: Joi.object().keys({
+    type: Joi.string().valid(...notificationPreferenceSchema.statics.NOTIFICATION_TYPES),
   }),
 };
 
@@ -41,4 +44,5 @@ module.exports = {
   pendingNotificationCount,
   markNotificationAsRead,
   updatePreferences,
+  unsubscribeFromNotificationType,
 };

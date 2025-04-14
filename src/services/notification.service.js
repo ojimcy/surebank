@@ -1,10 +1,10 @@
 const httpStatus = require('http-status');
-const Notification = require('../models/notification.model');
 const ApiError = require('../utils/ApiError');
-const { NotificationPreference } = require('../models');
+const { Notification, NotificationPreference } = require('../models');
 const emailService = require('./email.service');
 const smsService = require('./sms.service');
 const logger = require('../config/logger');
+const notificationPreferenceSchema = require('../models/notificationPreference.schema');
 
 const createNotification = async (input) => {
   const NotificationModel = await Notification();
@@ -44,10 +44,12 @@ const markNotificationAsRead = async (userId, notificationId) => {
  * @returns {Promise<NotificationPreference>}
  */
 const getUserPreferences = async (userId) => {
-  const preferences = await NotificationPreference.findOne({ userId });
+  const NotificationPreferenceModel = await NotificationPreference();
+
+  const preferences = await NotificationPreferenceModel.findOne({ userId });
   if (!preferences) {
     // Create default preferences if none exist
-    return NotificationPreference.create({ userId });
+    return NotificationPreferenceModel.create({ userId });
   }
   return preferences;
 };
@@ -59,14 +61,15 @@ const getUserPreferences = async (userId) => {
  * @returns {Promise<NotificationPreference>}
  */
 const updateUserPreferences = async (userId, updateBody) => {
-  const preferences = await NotificationPreference.findOne({ userId });
+  const NotificationPreferenceModel = await NotificationPreference();
+  const preferences = await NotificationPreferenceModel.findOne({ userId });
   if (!preferences) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Notification preferences not found');
   }
 
   // Validate notification types
   Object.keys(updateBody.preferences || {}).forEach((type) => {
-    if (!NotificationPreference.NOTIFICATION_TYPES.includes(type)) {
+    if (!notificationPreferenceSchema.statics.NOTIFICATION_TYPES.includes(type)) {
       throw new ApiError(httpStatus.BAD_REQUEST, `Invalid notification type: ${type}`);
     }
   });
@@ -93,14 +96,13 @@ const sendNotification = async (userId, type, data) => {
       return;
     }
 
-    // Get specific preference for this notification type
-    const preference = preferences.preferences[type];
-    if (!preference || !preference.enabled) {
+    // Get channel preference for this notification type
+    const channel = preferences.preferences[type];
+    if (!channel || channel === 'none') {
       logger.info(`Notifications of type ${type} are disabled for user ${userId}`);
       return;
     }
 
-    const { channel } = preference;
     const { subject, message, templateData } = data;
 
     switch (channel) {
@@ -152,12 +154,25 @@ const sendNotification = async (userId, type, data) => {
  * @returns {Promise<NotificationPreference>}
  */
 const unsubscribeFromAll = async (userId) => {
-  const preferences = await NotificationPreference.findOne({ userId });
+  const NotificationPreferenceModel = await NotificationPreference();
+  const preferences = await NotificationPreferenceModel.findOne({ userId });
   if (!preferences) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Notification preferences not found');
   }
 
   preferences.unsubscribedFromAll = true;
+  await preferences.save();
+  return preferences;
+};
+
+/** unsubscribe from a specific notification type */
+const unsubscribeFromNotificationType = async (userId, type) => {
+  const NotificationPreferenceModel = await NotificationPreference();
+  const preferences = await NotificationPreferenceModel.findOne({ userId });
+  if (!preferences) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Notification preferences not found');
+  }
+  preferences.preferences[type] = 'none';
   await preferences.save();
   return preferences;
 };
@@ -171,6 +186,7 @@ module.exports = {
   updateUserPreferences,
   sendNotification,
   unsubscribeFromAll,
-  NOTIFICATION_TYPES: NotificationPreference.NOTIFICATION_TYPES,
-  NOTIFICATION_CHANNELS: NotificationPreference.NOTIFICATION_CHANNELS,
+  unsubscribeFromNotificationType,
+  NOTIFICATION_TYPES: notificationPreferenceSchema.statics.NOTIFICATION_TYPES,
+  NOTIFICATION_CHANNELS: notificationPreferenceSchema.statics.NOTIFICATION_CHANNELS,
 };

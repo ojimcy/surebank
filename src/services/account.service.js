@@ -4,8 +4,6 @@ const ApiError = require('../utils/ApiError');
 const { generateAccountNumber } = require('../utils/account/accountUtils');
 const { getUserByEmail, getUserById, getUserByPhoneNumber } = require('./user.service');
 const config = require('../config/config');
-const { createCustomer, verifyBvn } = require('./paystack.service');
-const logger = require('../config/logger');
 
 /**
  * Create an account
@@ -42,13 +40,6 @@ const createAccount = async (accountData, createdBy) => {
   // Generate a unique account number
   const accountNumber = await generateAccountNumber();
 
-  // Create a customer in Paystack
-  const paystackCustomer = await createCustomer({
-    email: user.email,
-    first_name: user.firstName,
-    last_name: user.lastName,
-  });
-
   // Create the account object
   const account = {
     userId,
@@ -63,7 +54,6 @@ const createAccount = async (accountData, createdBy) => {
     accountManagerId: accManager.role === 'userReps' ? createdBy : null,
     branchId,
     status: 'active',
-    paystackCustomerId: paystackCustomer.id,
   };
 
   return accountModel.create(account);
@@ -317,27 +307,6 @@ const createSelfAccount = async (userId, accountType) => {
   return accountModel.create(account);
 };
 
-/**
- * Update user's account bvn
- * @param {string} accountId - Account ID
- * @param {string} bvn - BVN
- * @returns {Promise<Account>} Updated account
- */
-const updateAccountBvn = async (accountId, bvn) => {
-  const accountModel = await Account();
-  // verify bvn
-  const bvnResponse = await verifyBvn(bvn);
-  if (bvnResponse.status !== 'success') {
-    logger.error(bvnResponse);
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid BVN');
-  }
-  const account = await accountModel.findByIdAndUpdate(accountId, { $set: { bvn: bvnResponse.data.bvn } }, { new: true });
-  if (!account) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
-  }
-  return account;
-};
-
 module.exports = {
   createAccount,
   assignBranch,
@@ -352,5 +321,4 @@ module.exports = {
   getAccountById,
   getUserAccounts,
   createSelfAccount,
-  updateAccountBvn,
 };

@@ -43,6 +43,11 @@ const getNotificationTypes = catchAsync(async (req, res) => {
   });
 });
 
+const unsubscribeFromNotificationType = catchAsync(async (req, res) => {
+  const preferences = await notificationService.unsubscribeFromNotificationType(req.user.id, req.params.type);
+  res.send(preferences);
+});
+
 module.exports = {
   getNotifications,
   pendingNotificationCount,
@@ -51,4 +56,5 @@ module.exports = {
   updatePreferences,
   unsubscribeFromAll,
   getNotificationTypes,
+  unsubscribeFromNotificationType,
 };
