@@ -2,6 +2,7 @@ const httpStatus = require('http-status');
 const { v4: uuidv4 } = require('uuid');
 const ApiError = require('../utils/ApiError');
 const paystackService = require('./paystack.service');
+const userService = require('./user.service');
 const logger = require('../config/logger');
 const { PaymentTransaction } = require('../models');
 
@@ -12,19 +13,38 @@ const { PaymentTransaction } = require('../models');
  * @param {number} transactionData.amount - Amount in Naira (will be converted to kobo)
  * @param {string} transactionData.callbackUrl - URL to redirect after payment (optional)
  * @param {string} transactionData.metadata - Additional transaction data (optional)
+ * @param {string} transactionData.userId - User ID for the transaction
  * @returns {Promise<Object>} Transaction initialization response
  */
 const initializeTransaction = async (transactionData) => {
   try {
-    const { email, amount, callbackUrl, metadata = {} } = transactionData;
+    const { email, amount, callbackUrl, metadata = {}, userId } = transactionData;
 
-    const paymentType = ['ds', 'sb', 'is'];
     // Generate a unique reference
+    const paymentType = ['ds', 'sb', 'is'];
     const reference = `${paymentType[Math.floor(Math.random() * paymentType.length)]}_${uuidv4()}`;
 
     // Convert amount to kobo (Paystack uses kobo not Naira)
     const amountInKobo = Math.round(amount * 100);
 
+    // Ensure user has a Paystack customer record if userId is provided
+    let customerCode = null;
+    if (userId) {
+      try {
+        const user = await userService.getUserById(userId);
+        if (user) {
+          const customer = await userService.ensurePaystackCustomer(user);
+          if (customer && customer.status) {
+            customerCode = customer.data.customer_code;
+          }
+        }
+      } catch (error) {
+        logger.warn(`Could not get/create Paystack customer for user ${userId}:`, error);
+        // Continue without customer code if it fails
+      }
+    }
+
+    // Build payment data
     const paymentData = {
       email,
       amount: amountInKobo,
@@ -33,8 +53,14 @@ const initializeTransaction = async (transactionData) => {
       metadata: {
         ...metadata,
         custom_reference: reference,
+        userId,
       },
     };
+
+    // Add customer if available
+    if (customerCode) {
+      paymentData.customer = customerCode;
+    }
 
     const response = await paystackService.initializeTransaction(paymentData);
 

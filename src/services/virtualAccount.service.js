@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const { VirtualAccount, User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const paystackService = require('./paystack.service');
+const userService = require('./user.service');
 const logger = require('../config/logger');
 
 /**
@@ -35,7 +36,19 @@ const createVirtualAccount = async (userId) => {
     // Generate a unique reference
     const reference = `va_${uuidv4()}`;
 
-    // Call Paystack API to create a dedicated virtual account
+    // Ensure user has a Paystack customer record
+    let customerCode = null;
+    try {
+      const customer = await userService.ensurePaystackCustomer(user);
+      if (customer && customer.status) {
+        customerCode = customer.data.customer_code;
+      }
+    } catch (error) {
+      logger.warn(`Could not ensure Paystack customer for virtual account creation (user ${userId}):`, error);
+      // Continue without customer code if it fails
+    }
+
+    // Prepare payload for virtual account creation
     const payload = {
       email: user.email,
       first_name: user.firstName,
@@ -44,8 +57,13 @@ const createVirtualAccount = async (userId) => {
       preferred_bank: 'wema-bank', // Can be configurable or based on user preference
     };
 
+    // Add customer code if available
+    if (customerCode) {
+      payload.customer = customerCode;
+    }
+
     // Call Paystack to create a dedicated virtual account
-    const response = await paystackService.paystackClient.dedicatedVirtualAccount.create(payload);
+    const response = await paystackService.createDedicatedVirtualAccount(payload);
 
     if (!response || !response.status) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'Failed to create virtual account');
@@ -71,6 +89,13 @@ const createVirtualAccount = async (userId) => {
 
     // Save to database
     const createdAccount = await VirtualAccountModel.create(virtualAccount);
+
+    // Update user with Paystack customer ID if not already set
+    if (response.data.customer.customer_code && !user.paystackCustomerId) {
+      await UserModel.findByIdAndUpdate(userId, {
+        paystackCustomerId: response.data.customer.customer_code,
+      });
+    }
 
     return createdAccount;
   } catch (error) {

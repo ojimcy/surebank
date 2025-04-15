@@ -2,6 +2,8 @@ const httpStatus = require('http-status');
 const parsePhoneNumber = require('libphonenumber-js');
 const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
+const paystackService = require('./paystack.service');
+const logger = require('../config/logger');
 
 /**
  * Normalize the provided phone number
@@ -188,6 +190,58 @@ const resetPassword = async (userId, password, newPassword, confirmNewPassword) 
   await user.save();
 };
 
+/**
+ * Ensure user has a Paystack customer record
+ * @param {Object} user - User object
+ * @returns {Promise<Object>} Paystack customer data
+ */
+const ensurePaystackCustomer = async (user) => {
+  try {
+    // Skip if user already has a Paystack customer ID
+    if (user.paystackCustomerId) {
+      // Return existing customer data
+      return await paystackService.fetchCustomer(user.paystackCustomerId);
+    }
+
+    // Try to fetch customer by email first
+    try {
+      const existingCustomer = await paystackService.fetchCustomer(user.email);
+      if (existingCustomer && existingCustomer.status) {
+        // Update user with customer code
+        await updateUserById(user.id, { paystackCustomerId: existingCustomer.data.customer_code });
+        return existingCustomer;
+      }
+    } catch (error) {
+      // Customer doesn't exist, we'll create a new one
+      logger.debug(`No existing Paystack customer found for email ${user.email}`);
+    }
+
+    // Create new customer in Paystack
+    const customerData = {
+      email: user.email,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      phone: user.phoneNumber,
+      metadata: {
+        userId: user.id,
+      },
+    };
+
+    const response = await paystackService.createCustomer(customerData);
+
+    if (response && response.status) {
+      // Update user with customer code
+      await updateUserById(user.id, { paystackCustomerId: response.data.customer_code });
+      return response;
+    }
+
+    throw new Error('Failed to create Paystack customer');
+  } catch (error) {
+    logger.error(`Error ensuring Paystack customer for user ${user.id}:`, error);
+    throw error;
+  }
+};
+
 module.exports = {
   createUser,
   queryUsers,
@@ -198,4 +252,5 @@ module.exports = {
   deleteUserById,
   updateProfile,
   resetPassword,
+  ensurePaystackCustomer,
 };

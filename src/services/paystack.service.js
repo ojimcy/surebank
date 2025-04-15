@@ -158,6 +158,47 @@ const requeryTransaction = async (reference) => {
   }
 };
 
+/**
+ * Create a customer in Paystack
+ * @param {Object} data - Customer data
+ * @param {string} data.email - Customer email (required)
+ * @param {string} data.first_name - Customer first name (optional)
+ * @param {string} data.last_name - Customer last name (optional)
+ * @param {string} data.phone - Customer phone number (optional)
+ * @param {string} data.metadata - Additional customer data (optional)
+ * @returns {Promise<Object>} Customer creation response
+ */
+const createCustomer = async (data) => {
+  try {
+    return await paystackClient.customer.create(data);
+  } catch (error) {
+    logger.error('Error creating Paystack customer:', error);
+    throw error;
+  }
+};
+
+/**
+ * List customers from Paystack
+ * @param {Object} options - Query options
+ * @param {number} options.perPage - Number of records per page
+ * @param {number} options.page - Page number
+ * @param {string} options.from - Start date (YYYY-MM-DD)
+ * @param {string} options.to - End date (YYYY-MM-DD)
+ * @returns {Promise<Object>} List customers response
+ */
+const listCustomers = async (options = {}) => {
+  return paystackClient.customer.list(options);
+};
+
+/**
+ * Fetch a customer by email or code
+ * @param {string} identifier - Customer email or code
+ * @returns {Promise<Object>} Customer data
+ */
+const fetchCustomer = async (identifier) => {
+  return paystackClient.customer.fetch(identifier);
+};
+
 module.exports = {
   paystackClient,
   verifyPaystackInitialization,
@@ -170,4 +211,7 @@ module.exports = {
   listDedicatedVirtualAccounts,
   deactivateDedicatedVirtualAccount,
   requeryTransaction,
+  createCustomer,
+  listCustomers,
+  fetchCustomer,
 };

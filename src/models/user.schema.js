@@ -103,6 +103,10 @@ const userSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Branch',
     },
+    paystackCustomerId: {
+      type: String,
+      required: false,
+    },
     isEmailVerified: {
       type: Boolean,
       default: false,
