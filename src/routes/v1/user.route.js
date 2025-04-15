@@ -3,6 +3,7 @@ const auth = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const userValidation = require('../../validations/user.validation');
 const userController = require('../../controllers/user.controller');
+const kycValidation = require('../../validations/kyc.validation');
 
 const router = express.Router();
 
@@ -15,6 +16,10 @@ router
 router
   .route('/reset-password')
   .post(auth('updateProfile'), validate(userValidation.resetPassword), userController.resetPassword);
+
+router.route('/update-bvn').post(auth(), validate(kycValidation.verifyBvn), userController.updateBvn);
+
+router.route('/bvn-status').get(auth(), userController.getBvnStatus);
 
 router.get('/me', auth(), userController.me);
 

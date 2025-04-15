@@ -19,7 +19,11 @@ const kycSchema = mongoose.Schema(
       default: 'pending',
     },
     // BVN specific fields
-    bvn: {
+    bvnVerified: {
+      type: Boolean,
+      default: false,
+    },
+    bvnVerificationReference: {
       type: String,
       trim: true,
     },

@@ -61,6 +61,24 @@ const sbPackageSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
+  lastContributionDate: {
+    type: Date,
+  },
+  lastWithdrawalDate: {
+    type: Date,
+  },
+  withdrawalRequests: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'WithdrawalRequest',
+    },
+  ],
+  paymentTransactions: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'PaymentTransaction',
+    },
+  ],
 });
 
 // add plugin that converts mongoose to json

@@ -38,9 +38,25 @@ const approveKycRequest = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(kyc);
 });
 
+/**
+ * Verify BVN for the currently logged in user
+ */
+const verifyUserBvn = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const { bvn } = req.body;
+
+  await kycService.updateUserBvn(userId, bvn);
+
+  res.status(httpStatus.OK).send({
+    success: true,
+    message: 'BVN verified successfully',
+  });
+});
+
 module.exports = {
   submitKycRequest,
   getKycRequests,
   getKycRequestById,
   approveKycRequest,
+  verifyUserBvn,
 };

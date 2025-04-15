@@ -242,6 +242,26 @@ const ensurePaystackCustomer = async (user) => {
   }
 };
 
+/**
+ * Check if a user has a verified BVN
+ * @param {ObjectId} userId - User ID
+ * @returns {Promise<Object>} BVN verification status
+ */
+const checkBvnVerificationStatus = async (userId) => {
+  const user = await getUserById(userId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  return {
+    bvnVerified: user.bvnVerified || false,
+    kycStatus: user.kycStatus,
+    kycType: user.kycType,
+    verifiedAt: user.bvnVerifiedAt,
+  };
+};
+
 module.exports = {
   createUser,
   queryUsers,
@@ -253,4 +273,5 @@ module.exports = {
   updateProfile,
   resetPassword,
   ensurePaystackCustomer,
+  checkBvnVerificationStatus,
 };

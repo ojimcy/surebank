@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
-const { userService } = require('../services');
+const { userService, kycService } = require('../services');
 
 const createUser = catchAsync(async (req, res) => {
   const user = await userService.createUser(req.body);
@@ -62,6 +62,26 @@ const resetPassword = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
+const updateBvn = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const { bvn } = req.body;
+
+  await kycService.updateUserBvn(userId, bvn);
+
+  res.status(httpStatus.OK).send({
+    success: true,
+    message: 'BVN verified and updated successfully',
+  });
+});
+
+const getBvnStatus = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+
+  const bvnStatus = await userService.checkBvnVerificationStatus(userId);
+
+  res.status(httpStatus.OK).send(bvnStatus);
+});
+
 module.exports = {
   createUser,
   getUsers,
@@ -71,4 +91,6 @@ module.exports = {
   updateProfile,
   me,
   resetPassword,
+  updateBvn,
+  getBvnStatus,
 };

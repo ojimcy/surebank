@@ -38,10 +38,10 @@ Extend the current admin-focused app's backend/API to support user-facing functi
 
 ### 1.3 Database Schema Updates
 
-- [ ] Design and implement additions of payment-related fields to existing schemas (e.g., User, Package)
-- [ ] Design and implement new schema for Interest-based savings packages
-- [ ] Design and implement new schema for Payment transactions
-- [ ] Design and implement new schema for Withdrawal requests
+- [✅] Design and implement additions of payment-related fields to existing schemas (e.g., User, Package)
+- [✅] Design and implement new schema for Interest-based savings packages
+- [✅] Design and implement new schema for Payment transactions
+- [✅] Design and implement new schema for Withdrawal requests
 
 ## Phase 2: Package Management System (API Logic)
 

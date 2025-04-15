@@ -67,6 +67,24 @@ const packageSchema = mongoose.Schema(
       type: Number,
       default: 0,
     },
+    lastContributionDate: {
+      type: Date,
+    },
+    lastWithdrawalDate: {
+      type: Date,
+    },
+    withdrawalRequests: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'WithdrawalRequest',
+      },
+    ],
+    paymentTransactions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'PaymentTransaction',
+      },
+    ],
   },
   {
     timestamps: true,

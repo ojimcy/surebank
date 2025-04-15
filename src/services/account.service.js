@@ -4,6 +4,7 @@ const ApiError = require('../utils/ApiError');
 const { generateAccountNumber } = require('../utils/account/accountUtils');
 const { getUserByEmail, getUserById, getUserByPhoneNumber } = require('./user.service');
 const config = require('../config/config');
+const { kycService } = require('.');
 
 /**
  * Create an account
@@ -307,6 +308,38 @@ const createSelfAccount = async (userId, accountType) => {
   return accountModel.create(account);
 };
 
+/**
+ * Updates an account's BVN and verifies it
+ * @param {string} accountId - Account ID
+ * @param {string} bvn - Bank Verification Number
+ * @returns {Promise<Account>} Updated account
+ */
+const updateAccountBvn = async (accountId, bvn) => {
+  const accountModel = await Account();
+
+  // Validate BVN format
+  if (bvn.length !== 11) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'BVN must be 11 digits');
+  }
+
+  // Find the account
+  const account = await accountModel.findById(accountId);
+  if (!account) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
+  }
+
+  // Get the user associated with this account
+  const user = await getUserById(account.userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // Update and verify the user's BVN instead of the account's
+  await kycService.updateUserBvn(account.userId, bvn);
+
+  return accountModel.findById(accountId);
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -321,4 +354,5 @@ module.exports = {
   getAccountById,
   getUserAccounts,
   createSelfAccount,
+  updateAccountBvn,
 };

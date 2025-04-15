@@ -99,6 +99,13 @@ const userSchema = mongoose.Schema(
       enum: ['none', 'bvn', 'id'],
       default: 'none',
     },
+    bvnVerified: {
+      type: Boolean,
+      default: false,
+    },
+    bvnVerifiedAt: {
+      type: Date,
+    },
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Branch',
@@ -106,6 +113,64 @@ const userSchema = mongoose.Schema(
     paystackCustomerId: {
       type: String,
       required: false,
+    },
+    paystackRecipientCode: {
+      type: String,
+      required: false,
+    },
+    withdrawalBank: {
+      bankName: {
+        type: String,
+        trim: true,
+      },
+      accountNumber: {
+        type: String,
+        trim: true,
+      },
+      accountName: {
+        type: String,
+        trim: true,
+      },
+      bankCode: {
+        type: String,
+        trim: true,
+      },
+    },
+    virtualAccounts: [
+      {
+        accountNumber: {
+          type: String,
+          trim: true,
+        },
+        bankName: {
+          type: String,
+          trim: true,
+        },
+        accountName: {
+          type: String,
+          trim: true,
+        },
+        bankCode: {
+          type: String,
+          trim: true,
+        },
+        reference: {
+          type: String,
+          trim: true,
+        },
+        isActive: {
+          type: Boolean,
+          default: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    walletBalance: {
+      type: Number,
+      default: 0,
     },
     isEmailVerified: {
       type: Boolean,

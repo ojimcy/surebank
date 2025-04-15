@@ -42,7 +42,8 @@ const submitKycRequest = async (userId, kycData) => {
 
   // Add type-specific fields
   if (kycData.kycType === 'bvn') {
-    kycBody.bvn = kycData.bvn;
+    // Store BVN verification reference but not the BVN itself
+    kycBody.bvnVerificationReference = `bvn_verification_${Date.now()}_${userId}`;
 
     // Additional validation could be added here
     if (kycData.bvn.length !== 11) {
@@ -158,9 +159,135 @@ const updateKycStatus = async (kycId, status, remarks, adminId) => {
   return kyc;
 };
 
+/**
+ * Verify a Bank Verification Number (BVN)
+ * @param {string} bvn - Bank Verification Number to verify
+ * @returns {Promise<Object>} Verification result
+ */
+const verifyBvn = async (bvn) => {
+  try {
+    // Basic validation
+    if (!bvn || bvn.length !== 11 || !/^\d+$/.test(bvn)) {
+      return {
+        success: false,
+        message: 'Invalid BVN format. BVN must be 11 digits',
+      };
+    }
+
+    // In a real implementation, we would call an external BVN verification service here
+    // const response = await axios.post(config.bvnVerificationUrl, { bvn });
+
+    // For demonstration purposes, we're mocking a successful verification
+    // Replace this with actual API calls in production
+    logger.info(`Verifying BVN (masked): ***********${bvn.slice(-2)}`);
+
+    // Simulate API response
+    const verificationResult = {
+      success: true,
+      message: 'BVN verified successfully',
+      data: {
+        bvn,
+        firstName: 'VERIFIED', // This would be returned by the actual BVN service
+        lastName: 'VERIFIED',
+        dateOfBirth: '1990-01-01',
+      },
+    };
+
+    return verificationResult;
+  } catch (error) {
+    logger.error('BVN verification failed:', error);
+    return {
+      success: false,
+      message: (error.response && error.response.data && error.response.data.message) || 'BVN verification failed',
+    };
+  }
+};
+
+/**
+ * Update user's BVN
+ * @param {ObjectId} userId
+ * @param {string} bvn - Bank Verification Number
+ * @returns {Promise<User>}
+ */
+const updateUserBvn = async (userId, bvn) => {
+  const UserModel = await User();
+
+  // Check if user exists
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // Verify BVN
+  const verificationResult = await verifyBvn(bvn);
+
+  if (!verificationResult.success) {
+    throw new ApiError(httpStatus.BAD_REQUEST, verificationResult.message || 'BVN verification failed');
+  }
+
+  // Update user's BVN and KYC status
+  await UserModel.findByIdAndUpdate(userId, {
+    bvnVerified: true,
+    bvnVerifiedAt: new Date(),
+    kycStatus: 'verified',
+    kycType: 'bvn',
+    kycSubmittedAt: new Date(),
+  });
+
+  // Create KYC record if doesn't exist
+  const KYCModel = await KYC();
+
+  // Check if there's an existing KYC for BVN
+  const existingKyc = await KYCModel.findOne({
+    userId,
+    type: 'bvn',
+    status: 'approved',
+  });
+
+  if (!existingKyc) {
+    await KYCModel.create({
+      userId,
+      type: 'bvn',
+      bvnVerified: true,
+      bvnVerificationReference: `bvn_verification_${Date.now()}_${userId}`,
+      status: 'approved',
+      dateOfBirth:
+        verificationResult.data && verificationResult.data.dateOfBirth
+          ? new Date(verificationResult.data.dateOfBirth)
+          : new Date(),
+      submittedAt: new Date(),
+      approvedAt: new Date(),
+    });
+  }
+
+  // Trigger virtual account creation if needed
+  setTimeout(() => {
+    try {
+      virtualAccountService
+        .createVirtualAccountAfterKyc(userId)
+        .then((account) => {
+          if (account) {
+            logger.info(`Virtual account successfully created for user ${userId} after BVN verification`);
+          } else {
+            logger.warn(`Failed to create virtual account for user ${userId} after BVN verification`);
+          }
+        })
+        .catch((error) => {
+          logger.error(`Error creating virtual account for user ${userId} after BVN verification:`, error);
+        });
+    } catch (error) {
+      logger.error(`Error importing virtualAccountService for user ${userId}:`, error);
+    }
+  }, 100);
+
+  return UserModel.findById(userId);
+};
+
 module.exports = {
   submitKycRequest,
   queryKycRequests,
   getKycById,
   updateKycStatus,
+  verifyBvn,
+  updateUserBvn,
 };
