@@ -35,7 +35,7 @@ const registrationLimiter = isTestEnv
   ? (req, res, next) => next()
   : rateLimit({
       windowMs: 60 * 60 * 1000, // 1 hour
-      max: 3, // limit each IP to 3 registration attempts per hour
+      max: 5, // limit each IP to 3 registration attempts per hour
       message: { 
         status: httpStatus.TOO_MANY_REQUESTS,
         message: 'Too many registration attempts, please try again after an hour' 

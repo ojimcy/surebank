@@ -1,28 +1,6 @@
 const Joi = require('joi');
 const { objectId } = require('./custom.validation');
 
-const submitKycBVN = {
-  body: Joi.object().keys({
-    bvn: Joi.string().required().length(11),
-    dateOfBirth: Joi.date().required(),
-    phoneNumber: Joi.string().required(),
-  }),
-};
-
-// ID-specific KYC validation
-const submitKycID = {
-  body: Joi.object().keys({
-    idType: Joi.string().required().valid('passport', 'drivers_license', 'national_id', 'voters_card'),
-    idNumber: Joi.string().required(),
-    idImage: Joi.string().required(),
-    selfieImage: Joi.string().required(),
-    expiryDate: Joi.date().required(),
-    address: Joi.string().required(),
-    dateOfBirth: Joi.date().required(),
-    phoneNumber: Joi.string().required(),
-  }),
-};
-
 // Enhanced KYC validation for self-registered users
 const submitKyc = {
   body: Joi.object().keys({
@@ -108,8 +86,6 @@ const getKycById = {
 };
 
 module.exports = {
-  submitKycBVN,
-  submitKycID,
   submitKyc,
   approveKyc,
   getKycRequests,

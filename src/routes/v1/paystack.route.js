@@ -1,7 +1,5 @@
 const express = require('express');
 const { paystackController } = require('../../controllers');
-const validate = require('../../middlewares/validate');
-const { paystackValidation } = require('../../validations');
 
 const router = express.Router();
 
