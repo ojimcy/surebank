@@ -19,3 +19,4 @@ module.exports.chargeController = require('./charge.controller');
 module.exports.orderController = require('./order.controller');
 module.exports.smsController = require('./sms.controller');
 module.exports.noteKeepingController = require('./noteKeeping.controller');
+module.exports.paystackController = require('./paystack.controller');

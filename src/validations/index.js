@@ -19,3 +19,4 @@ module.exports.collectionValidation = require('./collections.validation');
 module.exports.sbPackageValidation = require('./sbPackage.validation');
 module.exports.chargerValidation = require('./charge.validation');
 module.exports.orderValidation = require('./order.validation');
+module.exports.paystackValidation = require('./paystack.validation');

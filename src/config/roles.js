@@ -29,6 +29,8 @@ const userPermissions = [
   'submitKyc',
   'createIbSavingsPackage',
   'manageAccount',
+  'VIRTUAL_ACCOUNT_VIEW',
+  'VIRTUAL_ACCOUNT_CREATE',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];
@@ -105,6 +107,7 @@ const adminPermissions = [
   'updateBranchManager',
   'manageOrder',
   'sendSms',
+  'VIRTUAL_ACCOUNT_MANAGE',
 ];
 
 const superAdminPermissions = [

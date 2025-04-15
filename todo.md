@@ -17,24 +17,24 @@ Extend the current admin-focused app's backend/API to support user-facing functi
 - [✅] Basic user permissions
 - [✅] Add new package-specific permissions (CREATE_PACKAGE, VIEW_PACKAGE, CONTRIBUTE_TO_PACKAGE, WITHDRAW_FROM_PACKAGE, INTEREST_PACKAGE_CREATE, INTEREST_PACKAGE_VIEW)
 - [✅] Add new payment-specific permissions (PAYMENT_INITIATE, PAYMENT_VERIFY, VIRTUAL_ACCOUNT_VIEW)
-- [✅] Add new product-specific permissions (PRODUCT_VIEW, PRODUCT_PURCHASE, CART_MANAGE)
-  _(Note: 'appUser' role creation removed as per request)_
+- [✅] Add new product-specific permissions (PRODUCT*VIEW, PRODUCT_PURCHASE, CART_MANAGE)
+  *(Note: 'appUser' role creation removed as per request)\_
 
 **To Do:**
 
 - [✅] Update user registration API endpoints to support self-registration
-- [ ] Enhance backend KYC verification system/logic for self-registered users
-- [ ] Implement backend logic for email verification during self-registration
-- [ ] Implement API endpoints for self-service password reset flow
-- [ ] Add rate limiting logic to registration and authentication API endpoints
+- [✅] Enhance backend KYC verification system/logic for self-registered users
+- [✅] Implement backend logic for email verification during self-registration
+- [✅] Implement API endpoints for self-service password reset flow
+- [✅] Add rate limiting logic to registration and authentication API endpoints
 
 ### 1.2 Payment Gateway Integration (Paystack)
 
-- [ ] Set up Paystack configuration (API keys, environment variables) in backend
-- [ ] Implement payment service layer/module in backend
-- [ ] Create backend webhook handlers for Paystack events (e.g., `charge.success`, `transfer.success`, etc.)
-- [ ] Implement backend payment verification logic (query Paystack API to confirm transaction status)
-- [ ] Set up backend logic for virtual account system integration (Paystack's or internal), which should be generated upon KYC completion (and BVN update if user chose different KYC type)
+- [✅] Set up Paystack configuration (API keys, environment variables) in backend
+- [✅] Implement payment service layer/module in backend
+- [✅] Create backend webhook handlers for Paystack events (e.g., `charge.success`, `transfer.success`, etc.)
+- [✅] Implement backend payment verification logic (query Paystack API to confirm transaction status)
+- [✅] Implement backend logic for virtual account system integration (Paystack's or internal), which should be generated upon KYC completion (and BVN update if user chose different KYC type)
 
 ### 1.3 Database Schema Updates
 

@@ -27,3 +27,6 @@ module.exports.orderService = require('./order.service');
 module.exports.smsService = require('./sms.service');
 module.exports.noteKeepingService = require('./noteKeeping.service');
 module.exports.kycService = require('./kyc.service');
+module.exports.paystackService = require('./paystack.service');
+module.exports.paymentService = require('./payment.service');
+module.exports.virtualAccountService = require('./virtualAccount.service');

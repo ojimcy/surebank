@@ -1,6 +1,8 @@
 const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
 const { User, KYC } = require('../models');
+const logger = require('../config/logger');
+const { virtualAccountService } = require('.');
 
 /**
  * Submit enhanced KYC data for self-registered users
@@ -11,7 +13,7 @@ const { User, KYC } = require('../models');
 const submitKycRequest = async (userId, kycData) => {
   const KYCModel = await KYC();
   const UserModel = await User();
-  
+
   // Check if user already has a pending or approved KYC
   const existingKyc = await KYCModel.findOne({
     userId,
@@ -41,7 +43,7 @@ const submitKycRequest = async (userId, kycData) => {
   // Add type-specific fields
   if (kycData.kycType === 'bvn') {
     kycBody.bvn = kycData.bvn;
-    
+
     // Additional validation could be added here
     if (kycData.bvn.length !== 11) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'BVN must be 11 digits');
@@ -53,7 +55,7 @@ const submitKycRequest = async (userId, kycData) => {
     kycBody.selfieImage = kycData.selfieImage;
     kycBody.expiryDate = kycData.expiryDate;
     kycBody.address = kycData.address;
-    
+
     // Validate ID expiry date
     if (new Date(kycData.expiryDate) < new Date()) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'ID has expired');
@@ -106,7 +108,7 @@ const getKycById = async (id) => {
 const updateKycStatus = async (kycId, status, remarks, adminId) => {
   const KYCModel = await KYC();
   const UserModel = await User();
-  
+
   const kyc = await KYCModel.findById(kycId);
   if (!kyc) {
     throw new ApiError(httpStatus.NOT_FOUND, 'KYC request not found');
@@ -126,6 +128,32 @@ const updateKycStatus = async (kycId, status, remarks, adminId) => {
   await UserModel.findByIdAndUpdate(kyc.userId, {
     kycStatus: status === 'approved' ? 'verified' : 'unverified',
   });
+
+  // If KYC is approved, create a virtual account for the user
+  if (status === 'approved') {
+    // Schedule virtual account creation as a separate async process
+    // This allows us to avoid circular dependencies and not block the KYC approval
+    setTimeout(() => {
+      try {
+        // Require the service only when needed to avoid circular dependency
+
+        virtualAccountService
+          .createVirtualAccountAfterKyc(kyc.userId)
+          .then((account) => {
+            if (account) {
+              logger.info(`Virtual account successfully created for user ${kyc.userId} after KYC approval`);
+            } else {
+              logger.warn(`Failed to create virtual account for user ${kyc.userId} after KYC approval`);
+            }
+          })
+          .catch((error) => {
+            logger.error(`Error creating virtual account for user ${kyc.userId} after KYC approval:`, error);
+          });
+      } catch (error) {
+        logger.error(`Error importing virtualAccountService for user ${kyc.userId}:`, error);
+      }
+    }, 100); // Small delay to ensure KYC update completes first
+  }
 
   return kyc;
 };
