@@ -31,6 +31,7 @@ const noteKeepingRoute = require('./noteKeeping.route');
 const kycRoute = require('./kyc.route');
 const paystackRoute = require('./paystack.route');
 const virtualAccountRoute = require('./virtualAccount.route');
+const paymentRoute = require('./payment.route');
 
 const router = express.Router();
 
@@ -154,6 +155,10 @@ const defaultRoutes = [
   {
     path: '/virtual-accounts',
     route: virtualAccountRoute,
+  },
+  {
+    path: '/payments',
+    route: paymentRoute,
   },
 ];
 

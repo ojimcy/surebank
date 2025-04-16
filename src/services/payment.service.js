@@ -5,6 +5,7 @@ const paystackService = require('./paystack.service');
 const userService = require('./user.service');
 const logger = require('../config/logger');
 const { PaymentTransaction } = require('../models');
+const { getDailySavingsPackageById, processPaystackContribution } = require('./dailySavings.service');
 
 /**
  * Initialize a payment transaction
@@ -85,6 +86,64 @@ const initializeTransaction = async (transactionData) => {
 };
 
 /**
+ * Initialize a Daily Savings Contribution via Paystack
+ * @param {Object} contributionData
+ * @param {string} contributionData.userId - User initiating the contribution
+ * @param {string} contributionData.packageId - Target Daily Savings package ID
+ * @param {number} contributionData.amount - Amount to contribute
+ * @param {string} [contributionData.callbackUrl] - Optional callback URL
+ * @returns {Promise<Object>} Paystack initialization response
+ */
+const initializeDailySavingsContribution = async (contributionData) => {
+  const { userId, packageId, amount, callbackUrl } = contributionData;
+
+  if (!userId || !packageId || !amount) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User ID, Package ID, and Amount are required.');
+  }
+
+  // Fetch user details (for email) and package details (optional validation)
+  const user = await userService.getUserById(userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  // Optional: Fetch package to ensure it exists before initializing
+  const userPackage = await getDailySavingsPackageById(packageId);
+  if (!userPackage) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Daily Savings package not found');
+  }
+
+  const metadata = {
+    userId,
+    packageId,
+    contributionType: 'ds', // Identify the type of contribution
+    custom_fields: [
+      // Example Paystack standard metadata
+      {
+        display_name: 'Package ID',
+        variable_name: 'package_id',
+        value: packageId,
+      },
+      {
+        display_name: 'Contribution Type',
+        variable_name: 'contribution_type',
+        value: 'Daily Savings',
+      },
+    ],
+  };
+
+  const transactionData = {
+    email: user.email,
+    amount,
+    callbackUrl,
+    metadata,
+    userId, // Pass userId for customer linking in initializeTransaction
+  };
+
+  // Call the generic initialization function
+  return initializeTransaction(transactionData);
+};
+
+/**
  * Verify a payment transaction
  * @param {string} reference - Transaction reference
  * @returns {Promise<Object>} Verification response
@@ -110,19 +169,23 @@ const verifyTransaction = async (reference) => {
 
     // Check if we already have this transaction recorded
     let transaction = await PaymentTransactionModel.findOne({ reference });
+    const isNewTransaction = !transaction;
 
     if (transaction) {
       // Update the transaction status if it has changed
-      if (transaction.status !== response.data.status) {
+      if (transaction.status !== response.data.status && transaction.status !== 'processed') {
+        // Don't re-update if already processed
         transaction.status = response.data.status;
         transaction.lastVerificationDate = new Date();
         transaction.verificationAttempts += 1;
         transaction.gatewayResponse = response.data.gateway_response;
-        await transaction.save();
+        // Only save here if not processing contribution below
+        // await transaction.save();
       }
     } else {
       // Create a new transaction record if it doesn't exist
-      transaction = await PaymentTransactionModel.create({
+      transaction = new PaymentTransactionModel({
+        // Use 'new' instead of 'create' to control saving
         reference: response.data.reference,
         amount: response.data.amount / 100, // Convert from kobo to Naira
         status: response.data.status,
@@ -140,16 +203,41 @@ const verifyTransaction = async (reference) => {
       });
     }
 
-    // Process payment based on status (if successful)
-    if (isVerified && response.data.metadata.packageId) {
-      // Here we would handle crediting the user's package
-      // This is a placeholder - actual implementation would depend on your package model
-      const { packageId } = response.data.metadata;
+    // Process payment based on status (if successful) and if not already processed
+    // Check metadata for packageId and ensure status is success and not already processed by us
+    if (isVerified && transaction.status !== 'processed' && response.data.metadata && response.data.metadata.packageId) {
+      const { packageId, contributionType, userId } = response.data.metadata;
       const amount = response.data.amount / 100; // Convert to Naira
 
-      // TODO: Credit the package balance
-      // This would be implemented in another service, e.g., packageService.creditPackage()
-      logger.info(`Payment verified: Crediting package ${packageId} with ${amount} Naira`);
+      logger.info(`Payment verified: Ref ${reference}, Type: ${contributionType}, Package: ${packageId}, Amount: ${amount}`);
+
+      try {
+        // Use a flag or status on the transaction to prevent reprocessing
+        if (contributionType === 'daily_savings') {
+          // Call the daily savings service to handle crediting the package
+          await processPaystackContribution(packageId, amount, userId, reference, transaction.paymentDate);
+          logger.info(`Successfully processed Daily Savings contribution for package ${packageId}`);
+          transaction.status = 'processed'; // Mark as processed in our system
+        }
+        // TODO: Add handlers for other contribution types (SB, Interest) here using else if
+        // else if (contributionType === 'sb_package') { ... }
+
+        transaction.lastVerificationDate = new Date(); // Update verification time even if already existed
+        await transaction.save(); // Save transaction changes (new or updated status)
+      } catch (processingError) {
+        logger.error(`Error processing contribution for reference ${reference}, package ${packageId}:`, processingError);
+        // Don't change transaction status, allow retry? Or set to 'failed_processing'?
+        // For now, save the transaction with its current 'success' status from Paystack, but log the processing error.
+        if (isNewTransaction || transaction.isModified()) {
+          // Save if new or status changed before error
+          await transaction.save();
+        }
+        // Re-throw or handle depending on desired retry mechanism
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to process contribution: ${processingError.message}`);
+      }
+    } else if (transaction.isModified() || isNewTransaction) {
+      // Save transaction if it's new or status was updated (and not processed above)
+      await transaction.save();
     }
 
     return {
@@ -371,6 +459,7 @@ const getBanks = async (country = 'nigeria') => {
 
 module.exports = {
   initializeTransaction,
+  initializeDailySavingsContribution,
   verifyTransaction,
   getTransactionHistory,
   createTransferRecipient,

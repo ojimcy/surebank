@@ -8,6 +8,11 @@ const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE } = require('../const
 const { addLedgerEntry } = require('./accounting.service');
 const { dsContributionMessage, welcomeMessage } = require('../templates/sms/templates');
 const { sendSms } = require('./sms.service');
+const { getAccountByUserId } = require('./account.service');
+const logger = require('../config/logger');
+const { sendEmail } = require('./email.service');
+const { sendNotification } = require('./notification.service');
+const dailySavingsContributionTemplate = require('../templates/emails/daily-savings-contribution.template');
 
 /**
  * Save a charge and update the count in the associated package
@@ -415,6 +420,295 @@ const getUserPackage = async (query) => {
   return userPackage;
 };
 
+/**
+ * Fallback method to send notifications directly if the notification service fails
+ * @param {Object} notificationData - Data needed for notifications
+ * @returns {Promise<void>}
+ */
+const sendDirectNotifications = async (notificationData) => {
+  const { user, userAccount, packageData, amount, reference } = notificationData;
+
+  try {
+    // Check user notification preferences
+    const notificationPreferences = user.notificationPreferences || {
+      sms: true, // Default to true if not specified
+      email: true, // Default to true if not specified
+    };
+
+    // Send SMS notification if enabled
+    if (notificationPreferences.sms !== false && userAccount.phoneNumber) {
+      const message = dsContributionMessage(
+        user.firstName,
+        amount,
+        packageData.accountNumber,
+        packageData.totalContribution,
+        'Online Payment'
+      );
+
+      try {
+        await sendSms(userAccount.phoneNumber, message);
+        logger.info(`SMS notification sent for contribution ${reference} to ${userAccount.phoneNumber}`);
+      } catch (smsError) {
+        logger.error(`Failed to send SMS notification for contribution ${reference}:`, smsError);
+        // Continue execution even if SMS fails
+      }
+    }
+
+    // Send Email notification if enabled
+    if (notificationPreferences.email !== false && user.email) {
+      try {
+        const emailData = {
+          fullName: `${user.firstName} ${user.lastName}`,
+          amount,
+          accountNumber: packageData.accountNumber,
+          totalContribution: packageData.totalContribution,
+          reference,
+          paymentMethod: 'Online Payment',
+        };
+
+        await sendEmail({
+          to: user.email,
+          subject: 'Daily Savings Contribution Confirmation',
+          html: dailySavingsContributionTemplate(emailData),
+        });
+
+        logger.info(`Email notification sent for contribution ${reference} to ${user.email}`);
+      } catch (emailError) {
+        logger.error(`Failed to send email notification for contribution ${reference}:`, emailError);
+        // Continue execution even if email fails
+      }
+    }
+  } catch (error) {
+    logger.error(`Error in fallback notifications for contribution ${reference}:`, error);
+    // Don't throw the error as notifications are non-critical
+  }
+};
+
+/**
+ * Send notifications for a successful contribution based on user preferences
+ * @param {Object} notificationData - Data needed for notifications
+ * @returns {Promise<void>}
+ */
+const sendNotifications = async (notificationData) => {
+  const { user, userAccount, packageData, amount, reference } = notificationData;
+
+  try {
+    // Store notification in database for user's inbox
+    await sendNotification(user._id, 'account_activity', {
+      email: user.email,
+      phoneNumber: userAccount.phoneNumber,
+      subject: 'Daily Savings Contribution Confirmation',
+      message: dsContributionMessage(
+        user.firstName,
+        amount,
+        packageData.accountNumber,
+        packageData.totalContribution,
+        'Online Payment'
+      ),
+      template: 'DAILY_SAVINGS_CONTRIBUTION',
+      templateData: {
+        fullName: `${user.firstName} ${user.lastName}`,
+        amount,
+        accountNumber: packageData.accountNumber,
+        totalContribution: packageData.totalContribution,
+        reference,
+        paymentMethod: 'Online Payment',
+      },
+      reference,
+      relatedEntityId: packageData._id,
+      relatedEntityType: 'contribution',
+    });
+
+    logger.info(`Notification record created for contribution ${reference} for user ${user._id}`);
+  } catch (error) {
+    logger.error(`Error sending notifications for contribution ${reference}:`, error);
+    // Fallback to direct notification if the notification service fails
+    sendDirectNotifications(notificationData);
+  }
+};
+
+/**
+ * Process a contribution received via Paystack
+ * @param {string} packageId - The ID of the package to credit
+ * @param {number} amount - The amount contributed (in Naira)
+ * @param {string} userId - The ID of the user who made the contribution
+ * @param {string} reference - The Paystack transaction reference
+ * @param {Date} paymentDate - The date the payment was made
+ * @returns {Promise<void>}
+ */
+const processPaystackContribution = async (packageId, amount, userId, reference, paymentDate) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  const PackageModel = await DsPackage();
+  const ContributionModel = await Contribution();
+  const AccountTransactionModel = await AccountTransaction();
+  const UserModel = await User();
+
+  // Variables to store notification data that will be used outside transaction
+  let notificationData = null;
+
+  try {
+    // 1. Find the package
+    const userPackage = await PackageModel.findById(packageId).session(session);
+    if (!userPackage) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Daily Savings package not found');
+    }
+    if (userPackage.userId.toString() !== userId) {
+      // Security check: ensure the user ID from metadata matches the package owner
+      throw new ApiError(httpStatus.FORBIDDEN, 'User mismatch for package contribution');
+    }
+    if (userPackage.status === 'closed') {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot contribute to a closed package');
+    }
+
+    // 2. Check if this contribution reference has already been processed for this package
+    const existingContribution = await ContributionModel.findOne({
+      paystackReference: reference,
+      packageId,
+    }).session(session);
+    if (existingContribution) {
+      logger.warn(`Contribution with reference ${reference} already processed for package ${packageId}. Skipping.`);
+      await session.abortTransaction();
+      session.endSession();
+      return; // Avoid duplicate processing
+    }
+
+    // 3. Find user account details
+    const userAccount = await getAccountByUserId(userId);
+    if (!userAccount) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'User account details not found.');
+    }
+
+    // 4. Validate Amount (Optional - Paystack confirms amount, but we might have package rules)
+    if (amount % userPackage.amountPerDay !== 0) {
+      throw new ApiError(400, `Amount ${amount} is not valid for ${userPackage.amountPerDay} daily savings package`);
+    }
+    const contributionDaysCount = Math.round(amount / userPackage.amountPerDay); // Use Math.round for potential floating point issues
+    if (contributionDaysCount <= 0) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Contribution amount is too small for the package daily amount.');
+    }
+
+    // 5. Create Contribution Record
+    const totalCount = userPackage.totalCount + contributionDaysCount;
+    const contributionDate = paymentDate || new Date(); // Use payment date from Paystack if available
+
+    // Create contribution record but don't assign to variable since it's not used
+    await ContributionModel.create(
+      [
+        {
+          userId,
+          amount,
+          branchId: userPackage.branchId,
+          accountNumber: userPackage.accountNumber,
+          packageId,
+          count: contributionDaysCount,
+          totalCount,
+          date: contributionDate,
+          narration: `Daily contribution via Paystack`,
+          paystackReference: reference,
+          paymentMethod: 'paystack',
+        },
+      ],
+      { session }
+    );
+
+    // 6. Handle Charges/Deductions
+    let expectedDeduction = totalCount - (totalCount % CONTRIBUTION_CIRCLE);
+    if (totalCount % CONTRIBUTION_CIRCLE > 0) {
+      expectedDeduction += 1;
+    }
+
+    let chargeAmount = 0;
+    if (userPackage.deductionCount < expectedDeduction) {
+      chargeAmount = userPackage.amountPerDay;
+      await saveCharge(packageId, chargeAmount, userId, session); // Assuming saveCharge is appropriate, pass userId
+    }
+
+    // 7. Create Account Transaction Record
+    const transactionDate = contributionDate;
+    const contributionTransaction = await AccountTransactionModel.create(
+      [
+        {
+          accountNumber: userPackage.accountNumber,
+          amount,
+          createdBy: userId,
+          branchId: userPackage.branchId,
+          date: transactionDate,
+          direction: 'inflow',
+          narration: `Daily contribution via Paystack (Ref: ${reference})`,
+          paymentReference: reference,
+          transactionType: 'contribution_ds_paystack',
+          userId,
+        },
+      ],
+      { session }
+    );
+
+    // 8. Update Package Totals
+    await PackageModel.findByIdAndUpdate(
+      packageId,
+      {
+        $set: { totalCount }, // Update the total count definitively
+        $inc: {
+          totalContribution: amount - chargeAmount,
+          deductionCount: chargeAmount > 0 ? expectedDeduction - userPackage.deductionCount : 0,
+          totalCharge: chargeAmount,
+        },
+      },
+      { session }
+    );
+
+    // 9. Add Ledger Entry
+    const addLedgerEntryInput = {
+      type: ACCOUNT_TYPE[1], // DS Account
+      direction: DIRECTION_VALUE[0], // Credit
+      date: transactionDate,
+      narration: `Daily contribution via Paystack (Ref: ${reference})`,
+      amount,
+      userId,
+      branchId: userPackage.branchId,
+      transactionId: contributionTransaction[0]._id,
+      reference,
+    };
+    await addLedgerEntry(addLedgerEntryInput, session);
+
+    // Store data for notifications after transaction completes
+    const updatedPackage = await PackageModel.findById(packageId).session(session);
+    const user = await UserModel.findById(userId).session(session);
+
+    if (user && userAccount) {
+      notificationData = {
+        user,
+        userAccount,
+        packageData: {
+          accountNumber: userPackage.accountNumber,
+          totalContribution: updatedPackage.totalContribution,
+        },
+        amount,
+        reference,
+      };
+    }
+
+    // 11. Commit Transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    logger.info(`Successfully processed Paystack contribution: Ref ${reference}, Package ${packageId}, Amount ${amount}`);
+
+    // Send notifications outside of transaction
+    if (notificationData) {
+      await sendNotifications(notificationData);
+    }
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    logger.error(`Error processing Paystack contribution Ref ${reference} for package ${packageId}:`, error);
+    // Re-throw the error so verifyTransaction knows processing failed
+    throw error;
+  }
+};
+
 module.exports = {
   createDailySavingsPackage,
   saveDailyContribution,
@@ -425,4 +719,6 @@ module.exports = {
   getDailySavingsPackageById,
   updatePackageById,
   getUserPackage,
+  processPaystackContribution,
+  sendNotifications,
 };

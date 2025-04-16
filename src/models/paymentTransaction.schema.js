@@ -15,9 +15,9 @@ const paymentTransactionSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      required: true,
-      enum: ['pending', 'success', 'failed', 'abandoned'],
+      enum: ['pending', 'success', 'failed', 'reversed', 'abandoned', 'processed'],
       default: 'pending',
+      index: true,
     },
     channel: {
       type: String,
@@ -27,11 +27,10 @@ const paymentTransactionSchema = mongoose.Schema(
     currency: {
       type: String,
       required: true,
-      default: 'NGN',
     },
     paymentGateway: {
       type: String,
-      required: true,
+      required: false,
       enum: ['paystack', 'manual'],
       default: 'paystack',
     },
@@ -51,9 +50,11 @@ const paymentTransactionSchema = mongoose.Schema(
     packageId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Package',
+      index: true,
     },
     metadata: {
       type: Object,
+      required: false,
     },
     verificationAttempts: {
       type: Number,

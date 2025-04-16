@@ -103,7 +103,18 @@ const sendNotification = async (userId, type, data) => {
       return;
     }
 
-    const { subject, message, templateData } = data;
+    const { subject, message, templateData, reference, relatedEntityId, relatedEntityType } = data;
+
+    // Save the notification in the database
+    await createNotification({
+      userId,
+      title: subject,
+      body: message,
+      type: notificationPreferenceSchema.statics.NOTIFICATION_TYPES.indexOf(type),
+      reference,
+      relatedEntityId,
+      relatedEntityType,
+    });
 
     switch (channel) {
       case 'email':

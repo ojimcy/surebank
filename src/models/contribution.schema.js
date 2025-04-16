@@ -40,6 +40,17 @@ const contributionSchema = mongoose.Schema(
     narration: {
       type: String,
     },
+    paystackReference: {
+      type: String,
+      index: true,
+      sparse: true,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ['cash', 'paystack', 'transfer', 'adjustment'],
+      default: 'cash',
+      required: true,
+    },
   },
   {
     timestamps: true,

@@ -24,6 +24,19 @@ const notificationSchema = mongoose.Schema(
       type: String,
       trim: true,
     },
+    reference: {
+      type: String,
+      trim: true,
+    },
+    relatedEntityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      trim: true,
+    },
+    relatedEntityType: {
+      type: String,
+      trim: true,
+      enum: ['transaction', 'account', 'user', 'package', 'withdrawal', 'contribution'],
+    },
     isRead: {
       type: Boolean,
       default: false,
