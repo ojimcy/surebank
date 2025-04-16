@@ -2,7 +2,6 @@ const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
 const { User, KYC } = require('../models');
 const logger = require('../config/logger');
-const { virtualAccountService } = require('.');
 
 /**
  * Submit enhanced KYC data for self-registered users
@@ -130,32 +129,6 @@ const updateKycStatus = async (kycId, status, remarks, adminId) => {
     kycStatus: status === 'approved' ? 'verified' : 'unverified',
   });
 
-  // If KYC is approved, create a virtual account for the user
-  if (status === 'approved') {
-    // Schedule virtual account creation as a separate async process
-    // This allows us to avoid circular dependencies and not block the KYC approval
-    setTimeout(() => {
-      try {
-        // Require the service only when needed to avoid circular dependency
-
-        virtualAccountService
-          .createVirtualAccountAfterKyc(kyc.userId)
-          .then((account) => {
-            if (account) {
-              logger.info(`Virtual account successfully created for user ${kyc.userId} after KYC approval`);
-            } else {
-              logger.warn(`Failed to create virtual account for user ${kyc.userId} after KYC approval`);
-            }
-          })
-          .catch((error) => {
-            logger.error(`Error creating virtual account for user ${kyc.userId} after KYC approval:`, error);
-          });
-      } catch (error) {
-        logger.error(`Error importing virtualAccountService for user ${kyc.userId}:`, error);
-      }
-    }, 100); // Small delay to ensure KYC update completes first
-  }
-
   return kyc;
 };
 
@@ -259,26 +232,6 @@ const updateUserBvn = async (userId, bvn) => {
       approvedAt: new Date(),
     });
   }
-
-  // Trigger virtual account creation if needed
-  setTimeout(() => {
-    try {
-      virtualAccountService
-        .createVirtualAccountAfterKyc(userId)
-        .then((account) => {
-          if (account) {
-            logger.info(`Virtual account successfully created for user ${userId} after BVN verification`);
-          } else {
-            logger.warn(`Failed to create virtual account for user ${userId} after BVN verification`);
-          }
-        })
-        .catch((error) => {
-          logger.error(`Error creating virtual account for user ${userId} after BVN verification:`, error);
-        });
-    } catch (error) {
-      logger.error(`Error importing virtualAccountService for user ${userId}:`, error);
-    }
-  }, 100);
 
   return UserModel.findById(userId);
 };
