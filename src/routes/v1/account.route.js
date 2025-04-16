@@ -50,7 +50,9 @@ router
 router
   .route('/self')
   .post(auth(), validate(accountValidation.createSelfAccount), accountController.createSelfAccount)
-  .get(auth(), accountController.getSelfAccount);
+  .get(auth(), validate(accountValidation.getSelfAccount), accountController.getSelfAccount);
+
+router.route('/self/all').get(auth(), accountController.getSelfAllAccounts);
 
 router
   .route('/:accountId/bvn')

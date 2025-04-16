@@ -138,6 +138,12 @@ const createSelfAccount = {
   }),
 };
 
+const getSelfAccount = {
+  query: Joi.object().keys({
+    accountType: Joi.string().required(),
+  }),
+};
+
 const updateAccountBvn = {
   body: Joi.object().keys({
     bvn: Joi.string().required(),
@@ -162,4 +168,5 @@ module.exports = {
   getAccount,
   createSelfAccount,
   updateAccountBvn,
+  getSelfAccount,
 };
