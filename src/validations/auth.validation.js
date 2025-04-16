@@ -10,7 +10,6 @@ const register = {
     address: Joi.string().required(),
     phoneNumber: Joi.string().required(),
     branch: Joi.string(),
-    acceptTerms: Joi.boolean().required().valid(true),
   }),
 };
 

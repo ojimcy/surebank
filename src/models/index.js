@@ -39,3 +39,4 @@ module.exports.Notification = require('./notification.model');
 module.exports.PaymentTransaction = require('./paymentTransaction.model');
 module.exports.InterestPackage = require('./interestPackage.model');
 module.exports.WithdrawalRequest = require('./withdrawalRequest.model');
+module.exports.KYC = require('./kyc.model');

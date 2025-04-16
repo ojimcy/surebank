@@ -32,7 +32,7 @@ router.post('/reset-password', validate(authValidation.resetPassword), authContr
 
 // Apply verification email rate limiter
 router.post(
-  '/send-verification-code',
+  '/send-verification-email',
   verificationEmailLimiter,
   validate(authValidation.sendVerificationEmail),
   authController.sendVerificationEmail
