@@ -33,6 +33,7 @@ const paystackRoute = require('./paystack.route');
 const virtualAccountRoute = require('./virtualAccount.route');
 const paymentRoute = require('./payment.route');
 const selfAccountRoute = require('./selfAccount.route');
+const interestPackageRoute = require('./interestPackage.route');
 
 const router = express.Router();
 
@@ -164,6 +165,10 @@ const defaultRoutes = [
   {
     path: '/self-accounts',
     route: selfAccountRoute,
+  },
+  {
+    path: '/interest-savings',
+    route: interestPackageRoute,
   },
 ];
 

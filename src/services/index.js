@@ -30,3 +30,4 @@ module.exports.kycService = require('./kyc.service');
 module.exports.paystackService = require('./paystack.service');
 module.exports.paymentService = require('./payment.service');
 module.exports.virtualAccountService = require('./virtualAccount.service');
+module.exports.interestPackageService = require('./interestPackage.service');

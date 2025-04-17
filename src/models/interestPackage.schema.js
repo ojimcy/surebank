@@ -31,10 +31,14 @@ const interestPackageSchema = mongoose.Schema(
     principalAmount: {
       type: Number,
       required: true,
+      min: 0,
+      comment: 'Initial amount deposited into the package',
     },
     currentBalance: {
       type: Number,
       required: true,
+      min: 0,
+      comment: 'Current balance of the package',
     },
     interestRate: {
       type: Number,
@@ -47,8 +51,9 @@ const interestPackageSchema = mongoose.Schema(
     },
     compoundingFrequency: {
       type: String,
-      enum: ['daily', 'weekly', 'monthly', 'quarterly', 'annually'],
-      default: 'monthly',
+      enum: ['quarterly', 'annually'],
+      default: 'quarterly',
+      comment: 'How often interest is compounded',
     },
     lastInterestCalculationDate: {
       type: Date,
@@ -77,10 +82,6 @@ const interestPackageSchema = mongoose.Schema(
       type: String,
       enum: ['active', 'matured', 'closed', 'pending_withdrawal'],
       default: 'active',
-    },
-    isAutomaticRollover: {
-      type: Boolean,
-      default: false,
     },
     paymentReference: {
       type: String,

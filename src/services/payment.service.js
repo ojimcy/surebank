@@ -6,6 +6,7 @@ const userService = require('./user.service');
 const logger = require('../config/logger');
 const { PaymentTransaction } = require('../models');
 const { getDailySavingsPackageById, processPaystackContribution } = require('./dailySavings.service');
+const { getUserAccount } = require('./account.service');
 
 /**
  * Initialize a payment transaction
@@ -141,6 +142,52 @@ const initializeDailySavingsContribution = async (contributionData) => {
 
   // Call the generic initialization function
   return initializeTransaction(transactionData);
+};
+
+/**
+ * Initiate payment for interest-based savings package
+ * @param {Object} packageData - Interest package input data
+ * @returns {Promise<Object>} Payment initialization response
+ */
+const initiateInterestPackagePayment = async (packageData) => {
+  // Get user's account from userId to verify it exists
+  const userAccount = await getUserAccount(packageData.userId, 'ibs');
+  if (!userAccount) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Account not found. Please create one to continue.');
+  }
+
+  // Prepare payment data
+  const paymentData = {
+    userId: packageData.userId,
+    packageId: null, // Will be populated after verification
+    amount: packageData.principalAmount,
+    callbackUrl: packageData.callbackUrl,
+    metadata: {
+      contributionType: 'interest_savings',
+      principalAmount: packageData.principalAmount,
+      interestRate: packageData.interestRate,
+      lockPeriod: packageData.lockPeriod,
+      name: packageData.name,
+      earlyWithdrawalPenalty: packageData.earlyWithdrawalPenalty,
+      isPackagePending: true, // Flag to indicate the package should be created on verification
+    },
+  };
+
+  try {
+    // Initialize transaction
+    const response = await initializeTransaction(paymentData);
+
+    // Store pending package data in a temporary storage or session if needed
+    // This is optional if all data is in the payment metadata
+
+    return response;
+  } catch (error) {
+    logger.error('Error initializing interest package payment:', error);
+    throw new ApiError(
+      error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to initialize interest package payment'
+    );
+  }
 };
 
 /**
@@ -460,6 +507,7 @@ const getBanks = async (country = 'nigeria') => {
 module.exports = {
   initializeTransaction,
   initializeDailySavingsContribution,
+  initiateInterestPackagePayment,
   verifyTransaction,
   getTransactionHistory,
   createTransferRecipient,

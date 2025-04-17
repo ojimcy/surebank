@@ -1,6 +1,18 @@
-const mongoose = require('mongoose');
+const { getConnection } = require('./connection');
 const interestPackageSchema = require('./interestPackage.schema');
 
-const InterestPackage = mongoose.model('InterestPackage', interestPackageSchema);
+let model = null;
+
+/**
+ * @returns InterestPackage
+ */
+const InterestPackage = async () => {
+  if (!model) {
+    const conn = await getConnection();
+    model = conn.model('InterestPackage', interestPackageSchema);
+  }
+
+  return model;
+};
 
 module.exports = InterestPackage;
