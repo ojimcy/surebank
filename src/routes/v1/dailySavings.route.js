@@ -20,6 +20,14 @@ router
   );
 
 router
+  .route('/self-package')
+  .post(
+    auth('selfAccount'),
+    validate(dailySavingsValidation.createUserInitiatedDailySavingsPackage),
+    dailySavingsController.createUserInitiatedDailySavingsPackage
+  );
+
+router
   .route('/make-contribution')
   .post(
     auth('manageContributions'),

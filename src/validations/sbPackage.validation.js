@@ -13,6 +13,13 @@ const createSbPackage = {
   }),
 };
 
+const createUserInitiatedSbPackage = {
+  body: Joi.object().keys({
+    product: Joi.string().required().custom(objectId),
+    targetAmount: Joi.number().optional(),
+  }),
+};
+
 const makeDailyContribution = {
   query: Joi.object().keys({
     packageId: Joi.string().required().custom(objectId),
@@ -86,6 +93,7 @@ const makeSbCustomerWithdrawal = {
 
 module.exports = {
   createSbPackage,
+  createUserInitiatedSbPackage,
   makeDailyContribution,
   makeSbWithdrawal,
   getPackageById,

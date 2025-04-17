@@ -8,7 +8,7 @@ const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE } = require('../const
 const { addLedgerEntry } = require('./accounting.service');
 const { dsContributionMessage, welcomeMessage } = require('../templates/sms/templates');
 const { sendSms } = require('./sms.service');
-const { getAccountByUserId } = require('./account.service');
+const { getAccountByUserId, getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
 const { sendEmail } = require('./email.service');
 const { sendNotification } = require('./notification.service');
@@ -86,6 +86,64 @@ const createDailySavingsPackage = async (dailyInput) => {
   const phone = userAccount.phoneNumber;
   const message = welcomeMessage(userAccount.firstName, userAccount.accountNumber);
   await sendSms(phone, message);
+
+  return createdPackage;
+};
+
+/**
+ * Create a user-initiated daily savings package
+ * @param {Object} dailyInput - Daily savings package input
+ * @returns {Promise<Object>} Result of the operation
+ */
+const createUserInitiatedDailySavingsPackage = async (dailyInput) => {
+  const PackageModel = await DsPackage();
+  const AccountModel = await Account();
+
+  // Get user's DS account from userId
+  const userAccount = await getUserAccount(dailyInput.userId, 'ds');
+  if (!userAccount) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Daily Savings account not found. Please create one to continue.');
+  }
+
+  const { accountNumber } = userAccount;
+
+  // Check if user already has an active package for the same target
+  const userPackageExist = await PackageModel.findOne({
+    accountNumber,
+    status: 'open',
+    target: dailyInput.target,
+  });
+
+  if (userPackageExist) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'You already have an active package for this target');
+  }
+
+  // Get branch information
+  const branch = await AccountModel.findOne({ accountNumber });
+  if (!branch) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Branch information not found');
+  }
+
+  // Create the package
+  const createdPackage = await PackageModel.create({
+    ...dailyInput,
+    accountNumber,
+    userId: dailyInput.userId,
+    branchId: branch.branchId,
+  });
+
+  try {
+    // Send notification
+    await sendNotification({
+      title: 'Package Created Successfully',
+      message: `Your Daily Savings package for ${dailyInput.target} has been created successfully.`,
+      userId: dailyInput.userId,
+      type: 'package',
+    });
+  } catch (error) {
+    logger.error('Error sending notification:', error);
+    // Continue execution even if notification fails
+  }
 
   return createdPackage;
 };
@@ -711,6 +769,7 @@ const processPaystackContribution = async (packageId, amount, userId, reference,
 
 module.exports = {
   createDailySavingsPackage,
+  createUserInitiatedDailySavingsPackage,
   saveDailyContribution,
   makeDailySavingsWithdrawal,
   getUserDailySavingsPackages,

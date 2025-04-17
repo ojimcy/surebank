@@ -18,6 +18,26 @@ const createDailySavingsPackage = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(createdPackage);
 });
 
+const createUserInitiatedDailySavingsPackage = catchAsync(async (req, res) => {
+  const dailyInput = req.body;
+  const startDate = new Date().getTime();
+  const createdBy = req.user._id;
+  const userId = req.user._id;
+  const totalContribution = 0;
+  const status = 'open';
+
+  const createdPackage = await dailySavingsService.createUserInitiatedDailySavingsPackage({
+    ...dailyInput,
+    startDate,
+    createdBy,
+    userId,
+    totalContribution,
+    status,
+  });
+
+  res.status(httpStatus.CREATED).json(createdPackage);
+});
+
 const saveDailyContribution = catchAsync(async (req, res) => {
   const contributionInput = req.body;
   const createdBy = req.user._id;
@@ -57,6 +77,7 @@ const updatePackage = catchAsync(async (req, res) => {
 
 module.exports = {
   createDailySavingsPackage,
+  createUserInitiatedDailySavingsPackage,
   saveDailyContribution,
   makeDailySavingsWithdrawal,
   getUserDailySavingsPackages,

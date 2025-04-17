@@ -7,6 +7,9 @@ const { addLedgerEntry } = require('./accounting.service');
 const { getProductCatalogueById } = require('./product.service');
 const { sendSms } = require('./sms.service');
 const { sbContributionMessage } = require('../templates/sms/templates');
+const { getUserAccount } = require('./account.service');
+const logger = require('../config/logger');
+const { sendNotification } = require('./notification.service');
 
 const createSbPackage = async (sbPackageData) => {
   const SbPackageModel = await SbPackage();
@@ -46,6 +49,75 @@ const createSbPackage = async (sbPackageData) => {
     startDate,
     accountManagerId: userAccount.accountManagerId,
   });
+
+  return sbPackage;
+};
+
+/**
+ * Create a user-initiated SB package
+ * @param {Object} sbPackageData - SB package input
+ * @returns {Promise<Object>} Result of the operation
+ */
+const createUserInitiatedSbPackage = async (sbPackageData) => {
+  const SbPackageModel = await SbPackage();
+
+  // Get user's SB account from userId
+  const userAccount = await getUserAccount(sbPackageData.userId, 'sb');
+  if (!userAccount) {
+    throw new ApiError(404, 'SB account not found. Please create one to continue.');
+  }
+
+  const { accountNumber } = userAccount;
+
+  // Get product details
+  const product = await getProductCatalogueById(sbPackageData.product);
+  if (!product) {
+    throw new ApiError(404, 'Product not found');
+  }
+
+  if (!product.isSbAvailable) {
+    throw new ApiError(400, 'The selected product is not available for Savings-Buying');
+  }
+
+  // Check if user already has an active package for the same product
+  const userPackageExist = await SbPackageModel.findOne({
+    accountNumber,
+    status: 'open',
+    product: sbPackageData.product,
+  });
+
+  if (userPackageExist) {
+    throw new ApiError(400, 'You already have an active package running for this product');
+  }
+
+  // Create the package
+  const startDate = new Date().getTime();
+  const sbPackage = await SbPackageModel.create({
+    accountNumber,
+    product: sbPackageData.product,
+    userId: sbPackageData.userId,
+    createdBy: sbPackageData.createdBy,
+    targetAmount: product.sellingPrice,
+    image: product.images && product.images.length > 0 ? product.images[0] : null,
+    branchId: userAccount.branchId,
+    startDate,
+    accountManagerId: userAccount.accountManagerId,
+    status: 'open',
+    totalContribution: 0,
+  });
+
+  // Send notification
+  try {
+    await sendNotification({
+      title: 'Package Created Successfully',
+      message: `Your SB package for "${product.name}" has been created successfully.`,
+      userId: sbPackageData.userId,
+      type: 'package',
+    });
+  } catch (error) {
+    logger.error('Error sending notification:', error);
+    // Continue execution even if notification fails
+  }
 
   return sbPackage;
 };
@@ -400,6 +472,7 @@ const getAllSbPackages = async (filterOptions) => {
 
 module.exports = {
   createSbPackage,
+  createUserInitiatedSbPackage,
   makeDailyContribution,
   makeSbTransfer,
   getPackageById,

@@ -10,6 +10,20 @@ const createSbPackage = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(createdSavingsBuyingPackage);
 });
 
+const createUserInitiatedSbPackage = catchAsync(async (req, res) => {
+  const sbPackageData = req.body;
+  const userId = req.user._id;
+  const createdBy = userId;
+
+  const createdSavingsBuyingPackage = await sbPackageService.createUserInitiatedSbPackage({
+    ...sbPackageData,
+    userId,
+    createdBy,
+  });
+
+  res.status(httpStatus.CREATED).json(createdSavingsBuyingPackage);
+});
+
 const makeDailyContribution = catchAsync(async (req, res) => {
   const contributionInput = req.body;
   const createdBy = req.user._id;
@@ -75,6 +89,7 @@ const makeSbCustomerWithdrawal = catchAsync(async (req, res) => {
 
 module.exports = {
   createSbPackage,
+  createUserInitiatedSbPackage,
   makeDailyContribution,
   makeSbWithdrawal,
   getPackageById,

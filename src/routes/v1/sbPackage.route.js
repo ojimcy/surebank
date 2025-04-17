@@ -16,6 +16,14 @@ router
   .get(auth('userPackage'), validate(sbPackageValidation.getUserSbPackages), sbPackageController.getUserSbPackages);
 
 router
+  .route('/self-package')
+  .post(
+    auth('selfAccount'),
+    validate(sbPackageValidation.createUserInitiatedSbPackage),
+    sbPackageController.createUserInitiatedSbPackage
+  );
+
+router
   .route('/make-contribution')
   .post(
     auth('makeContribution'),
