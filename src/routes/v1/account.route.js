@@ -48,13 +48,6 @@ router
   .get(auth('getEntry'), validate(accountValidation.getLedgerEntries), accountingController.getLedgerEntries);
 
 router
-  .route('/self')
-  .post(auth(), validate(accountValidation.createSelfAccount), accountController.createSelfAccount)
-  .get(auth(), validate(accountValidation.getSelfAccount), accountController.getSelfAccount);
-
-router.route('/self/all').get(auth(), accountController.getSelfAllAccounts);
-
-router
   .route('/:accountId/bvn')
   .post(auth('manageAccount'), validate(accountValidation.updateAccountBvn), accountController.updateAccountBvn);
 

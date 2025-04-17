@@ -3,7 +3,6 @@ const { accountService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
-const logger = require('../config/logger');
 
 const createAccount = catchAsync(async (req, res) => {
   const createdBy = req.user._id;
@@ -95,15 +94,14 @@ const getAccount = catchAsync(async (req, res) => {
 });
 
 const createSelfAccount = catchAsync(async (req, res) => {
-  const userId = req.user._id;
-  const account = await accountService.createSelfAccount(userId, req.body.accountType);
+  const { user } = req;
+  const account = await accountService.createSelfAccount(user._id, req.body.accountType);
   res.status(httpStatus.CREATED).send(account);
 });
 
 const getSelfAccount = catchAsync(async (req, res) => {
-  logger.info('req.user', req.user);
-  const userId = req.user._id;
-  const account = await accountService.getUserAccount(userId, req.query.accountType);
+  const { user } = req;
+  const account = await accountService.getUserAccount(user._id, req.query.accountType);
   res.status(httpStatus.OK).send(account);
 });
 

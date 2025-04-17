@@ -31,6 +31,7 @@ const userPermissions = [
   'manageAccount',
   'VIRTUAL_ACCOUNT_VIEW',
   'VIRTUAL_ACCOUNT_CREATE',
+  'selfAccount',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];

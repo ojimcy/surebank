@@ -144,6 +144,13 @@ const getSelfAccount = {
   }),
 };
 
+const getSelfAllAccounts = {
+  // Empty schema as userId comes from auth middleware
+  // No validation on params, query or body needed
+  params: Joi.object().keys({}),
+  query: Joi.object().keys({}),
+};
+
 const updateAccountBvn = {
   body: Joi.object().keys({
     bvn: Joi.string().required(),
@@ -169,4 +176,5 @@ module.exports = {
   createSelfAccount,
   updateAccountBvn,
   getSelfAccount,
+  getSelfAllAccounts,
 };
