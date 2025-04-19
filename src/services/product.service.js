@@ -457,6 +457,11 @@ const getProductCatalogue = async (filter, options) => {
       aggregationPipeline.push({ $match: productMatchConditions });
     }
 
+    // First, count total documents for pagination
+    const countPipeline = [...aggregationPipeline];
+    const countResult = await ProductCatalogueModel.aggregate([...countPipeline, { $count: 'total' }]);
+    const totalResults = countResult.length > 0 ? countResult[0].total : 0;
+
     // Add sorting, pagination
     if (sortBy) {
       const sortParts = sortBy.split(':');
@@ -488,9 +493,18 @@ const getProductCatalogue = async (filter, options) => {
     });
 
     const products = await ProductCatalogueModel.aggregate(aggregationPipeline);
-    return products;
+
+    // Return paginated results
+    return {
+      results: products,
+      page,
+      limit,
+      totalPages: Math.ceil(totalResults / limit),
+      totalResults,
+    };
   }
-  // If no product filtering needed, use the standard populate approach
+
+  // If no product filtering needed, use the standard approach
   const populateOptions = {
     path: 'productId',
     model: 'Product',
@@ -500,9 +514,20 @@ const getProductCatalogue = async (filter, options) => {
     ],
   };
 
+  // Count total documents for pagination
+  const totalResults = await ProductCatalogueModel.countDocuments(query);
+
+  // Get paginated results
   const products = await ProductCatalogueModel.find(query).populate(populateOptions).skip(skip).limit(limit).sort(sortBy);
 
-  return products;
+  // Return paginated results
+  return {
+    results: products,
+    page,
+    limit,
+    totalPages: Math.ceil(totalResults / limit),
+    totalResults,
+  };
 };
 
 const viewMyProductCatalogue = async (userId) => {
