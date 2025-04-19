@@ -57,7 +57,7 @@ const rejectProduct = catchAsync(async (req, res) => {
 });
 
 const viewProducts = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['merchantId']);
+  const filter = pick(req.query, ['merchantId', 'search', 'categoryId', 'subCategoryId', 'brand']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
 
   options.limit = parseInt(options.limit, 10) || 20;
@@ -103,11 +103,11 @@ const getProductsBySlug = catchAsync(async (req, res) => {
 });
 
 const getProductCatalogue = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['merchantId']);
+  const filter = pick(req.query, ['merchantId', 'search', 'categoryId', 'subCategoryId', 'brand']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
 
-  options.limit = parseInt(options.limit, 10);
-  options.page = parseInt(options.page, 10);
+  options.limit = parseInt(options.limit, 20) || 20;
+  options.page = parseInt(options.page, 20) || 1;
   const result = await productService.getProductCatalogue(filter, options);
   res.status(httpStatus.OK).send(result);
 });

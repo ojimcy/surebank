@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const mongoose = require('mongoose');
 const { ProductRequest, Product, ProductCatalogue, ProductCollection, Collection, Category } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getMerchantByUserId } = require('./merchant.service');
@@ -214,7 +215,39 @@ const rejectProduct = async (requestId, reasonForRejection) => {
  */
 const viewProducts = async (filter, options) => {
   const ProductModel = await Product();
-  const product = await ProductModel.paginate(filter, options);
+
+  // Create a new query object from the filter
+  const query = { ...filter };
+
+  // Add filter by categoryId, subCategoryId, and brand if provided
+  if (query.categoryId) {
+    query.categoryId = mongoose.Types.ObjectId(query.categoryId);
+  }
+
+  if (query.subCategoryId) {
+    query.subCategoryId = mongoose.Types.ObjectId(query.subCategoryId);
+  }
+
+  if (query.brand) {
+    query.brand = mongoose.Types.ObjectId(query.brand);
+  }
+
+  // Add search functionality
+  if (query.search) {
+    const searchRegex = new RegExp(query.search, 'i');
+    query.$or = [
+      { name: searchRegex },
+      { description: searchRegex },
+      { 'brand.name': searchRegex },
+      { 'categoryId.title': searchRegex },
+      { tags: searchRegex },
+    ];
+
+    // Remove the search parameter from query since we've processed it
+    delete query.search;
+  }
+
+  const product = await ProductModel.paginate(query, options);
   return product;
 };
 
@@ -351,28 +384,125 @@ const getProductCatalogue = async (filter, options) => {
   const { limit, page, sortBy } = options;
   const skip = (page - 1) * limit;
 
+  // Create a new query object
   const query = {};
 
   if (filter.merchantId) {
     query['merchantId.id'] = filter.merchantId.id;
   }
 
-  const product = await ProductCatalogueModel.find(query)
-    .populate([
-      {
-        path: 'productId',
-        model: 'Product',
-        populate: [
-          { path: 'brand', model: 'Brand', select: 'name' },
-          { path: 'categoryId', model: 'Category', select: 'title' },
-        ],
-      },
-    ])
-    .skip(skip)
-    .limit(limit)
-    .sort(sortBy);
+  // Add search functionality
+  if (filter.search) {
+    const searchRegex = new RegExp(filter.search, 'i');
+    query.$or = [
+      { name: searchRegex },
+      { description: searchRegex },
+      { 'productId.name': searchRegex },
+      { 'productId.description': searchRegex },
+      { tags: searchRegex },
+    ];
+  }
 
-  return product;
+  // Determine if we need to filter by category, subCategory, or brand
+  const needsProductFiltering = filter.categoryId || filter.subCategoryId || filter.brand;
+
+  if (needsProductFiltering) {
+    // Use aggregation pipeline for efficient category filtering
+    const aggregationPipeline = [
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'productId',
+          foreignField: '_id',
+          as: 'productData',
+        },
+      },
+      { $unwind: '$productData' },
+      // Add lookups for brand and category
+      {
+        $lookup: {
+          from: 'brands',
+          localField: 'productData.brand',
+          foreignField: '_id',
+          as: 'brandData',
+        },
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'productData.categoryId',
+          foreignField: '_id',
+          as: 'categoryData',
+        },
+      },
+      { $match: query },
+    ];
+
+    // Add filtering conditions for category, subCategory, and brand
+    const productMatchConditions = {};
+
+    if (filter.categoryId) {
+      productMatchConditions['productData.categoryId'] = mongoose.Types.ObjectId(filter.categoryId);
+    }
+
+    if (filter.subCategoryId) {
+      productMatchConditions['productData.subCategoryId'] = mongoose.Types.ObjectId(filter.subCategoryId);
+    }
+
+    if (filter.brand) {
+      productMatchConditions['productData.brand'] = mongoose.Types.ObjectId(filter.brand);
+    }
+
+    if (Object.keys(productMatchConditions).length > 0) {
+      aggregationPipeline.push({ $match: productMatchConditions });
+    }
+
+    // Add sorting, pagination
+    if (sortBy) {
+      const sortParts = sortBy.split(':');
+      const sortField = sortParts[0];
+      const sortOrder = sortParts[1] === 'desc' ? -1 : 1;
+      aggregationPipeline.push({ $sort: { [sortField]: sortOrder } });
+    }
+
+    aggregationPipeline.push({ $skip: skip });
+    aggregationPipeline.push({ $limit: limit });
+
+    // Project the data in the desired format
+    aggregationPipeline.push({
+      $project: {
+        _id: 1,
+        name: 1,
+        price: 1,
+        discount: 1,
+        quantity: 1,
+        merchantId: 1,
+        productId: {
+          _id: '$productData._id',
+          name: '$productData.name',
+          description: '$productData.description',
+          brand: { $arrayElemAt: ['$brandData', 0] },
+          categoryId: { $arrayElemAt: ['$categoryData', 0] },
+        },
+      },
+    });
+
+    const products = await ProductCatalogueModel.aggregate(aggregationPipeline);
+    return products;
+  }
+  // If no product filtering needed, use the standard populate approach
+  const populateOptions = {
+    path: 'productId',
+    model: 'Product',
+    populate: [
+      { path: 'brand', model: 'Brand', select: 'name' },
+      { path: 'categoryId', model: 'Category', select: 'title' },
+    ],
+  };
+
+  const products = await ProductCatalogueModel.find(query).populate(populateOptions).skip(skip).limit(limit).sort(sortBy);
+
+  return products;
 };
 
 const viewMyProductCatalogue = async (userId) => {
@@ -446,7 +576,7 @@ const getProductsByCategory = async (categorySlug) => {
     throw new ApiError(404, 'category not found');
   }
 
-  const products = await ProductModel.find({ categories: category._id });
+  const products = await ProductModel.find({ categoryId: category._id });
   return products;
 };
 

@@ -84,6 +84,11 @@ const viewProducts = {
   query: Joi.object().keys({
     name: Joi.string(),
     role: Joi.string(),
+    search: Joi.string(),
+    merchantId: Joi.string().custom(objectId),
+    categoryId: Joi.string().custom(objectId),
+    subCategoryId: Joi.string().custom(objectId),
+    brand: Joi.string().custom(objectId),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
