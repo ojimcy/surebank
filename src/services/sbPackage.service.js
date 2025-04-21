@@ -10,6 +10,7 @@ const { sbContributionMessage } = require('../templates/sms/templates');
 const { getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
 const { sendNotification } = require('./notification.service');
+const config = require('../config/config');
 
 const createSbPackage = async (sbPackageData) => {
   const SbPackageModel = await SbPackage();
@@ -108,14 +109,33 @@ const createUserInitiatedSbPackage = async (sbPackageData) => {
 
   // Send notification
   try {
-    await sendNotification({
-      title: 'Package Created Successfully',
-      message: `Your SB package for "${product.name}" has been created successfully.`,
-      userId: sbPackageData.userId,
-      type: 'package',
-    });
+    // Get user details to include email and phone number
+    const UserModel = await User();
+    const user = await UserModel.findById(sbPackageData.userId);
+
+    if (user) {
+      await sendNotification(sbPackageData.userId, 'package_created', {
+        subject: 'Package Created Successfully',
+        message: `Your SB package for "${product.name}" has been created successfully.`,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        template: 'PACKAGE_CREATED',
+        templateData: {
+          name: user.firstName || user.email.split('@')[0],
+          productName: product.name,
+          targetAmount: product.sellingPrice,
+          currentContribution: 0,
+          accountNumber,
+          productImage: product.images && product.images.length > 0 ? product.images[0] : null,
+          date: Date.now(),
+          dashboardUrl: `${config.email.clientUrl}/dashboard/packages`,
+        },
+      });
+    } else {
+      logger.warn(`Could not send notification: User ${sbPackageData.userId} not found`);
+    }
   } catch (error) {
-    logger.error('Error sending notification:', error);
+    logger.error('Error sending notification:', { message: error.message });
     // Continue execution even if notification fails
   }
 
@@ -127,105 +147,7 @@ const createUserInitiatedSbPackage = async (sbPackageData) => {
  * @param {Object} contributionInput - Contribution input
  * @returns {Promise<Object>} Result of the operation
  */
-const makeDailyContribution = async (contributionInput) => {
-  const AccountTransactionModel = await AccountTransaction();
-  const ContributionModel = await Contribution();
-  const AccountModel = await Account();
-  const SbPackageModel = await SbPackage();
-  const UserModel = await User();
-
-  const userAccount = await getAccountByNumber(contributionInput.accountNumber);
-  if (!userAccount) {
-    throw new ApiError(404, 'Account number does not exist.');
-  }
-
-  const userPackage = await SbPackageModel.findOne({
-    accountNumber: contributionInput.accountNumber,
-    status: 'open',
-    product: contributionInput.product,
-  });
-
-  if (!userPackage) {
-    throw new ApiError(409, 'Customer does not have an active package');
-  }
-
-  const userPackageId = userPackage._id;
-  const currentDate = new Date().getTime();
-
-  if (userPackage.status === 'closed') {
-    throw new ApiError(403, 'This package has been closed');
-  }
-
-  const branch = await AccountModel.findOne({
-    accountNumber: contributionInput.accountNumber,
-  });
-
-  const newContribution = await ContributionModel.create({
-    createdBy: contributionInput.createdBy,
-    amount: contributionInput.amount,
-    branchId: branch.branchId,
-    accountNumber: contributionInput.accountNumber,
-    packageId: userPackageId,
-    date: currentDate,
-    paymentMethod: contributionInput.paymentMethod,
-    narration: `SB contribution`,
-  });
-
-  const addLedgerEntryInput = {
-    type: ACCOUNT_TYPE[2],
-    direction: DIRECTION_VALUE[0],
-    date: currentDate,
-    narration: 'SB contribution',
-    amount: contributionInput.amount,
-    userId: userPackage.createdBy,
-    branchId: branch.branchId,
-  };
-
-  await addLedgerEntry(addLedgerEntryInput);
-
-  const transactionDate = new Date().getTime();
-
-  const contributionTransaction = await AccountTransactionModel.create({
-    accountNumber: userPackage.accountNumber,
-    amount: contributionInput.amount,
-    createdBy: contributionInput.createdBy,
-    branchId: branch.branchId,
-    date: transactionDate,
-    direction: 'inflow',
-    paymentMethod: contributionInput.paymentMethod,
-    narration: `SB Daily contribution - ${contributionInput.paymentMethod}`,
-    userId: userAccount.userId,
-  });
-
-  userPackage.totalContribution += contributionInput.amount;
-  // userPackage.totalContribution -= SMS_FFE;
-
-  // Update total contribution and charge SMS fees atomically
-  await SbPackageModel.findByIdAndUpdate(userPackageId, {
-    totalContribution: userPackage.totalContribution,
-  });
-
-  const cashier = await UserModel.findById(contributionInput.createdBy);
-
-  // Send credit SMS
-  const phone = userAccount.phoneNumber;
-  const message = sbContributionMessage(
-    userAccount.firstName,
-    contributionInput.amount,
-    contributionInput.accountNumber,
-    userPackage.totalContribution,
-    cashier.firstName
-  );
-  await sendSms(phone, message);
-
-  // // Charge for SMS fees
-  //  await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId);
-
-  return {
-    newContribution,
-    contributionTransaction,
-  };
-};
+const makeDailyContribution = async (contributionInput) => {};
 
 /**
  * Make a sb transfer

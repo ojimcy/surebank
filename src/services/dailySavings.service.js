@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const httpStatus = require('http-status');
 const { DsPackage, Contribution, AccountTransaction, Account, Charge, User } = require('../models');
 const ApiError = require('../utils/ApiError');
+
 const { getAccountByNumber, makeCustomerDeposit } = require('./accountTransaction.service');
 const { getUserById } = require('./user.service');
 const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
@@ -138,7 +139,7 @@ const createUserInitiatedDailySavingsPackage = async (dailyInput) => {
       title: 'Package Created Successfully',
       message: `Your Daily Savings package for ${dailyInput.target} has been created successfully.`,
       userId: dailyInput.userId,
-      type: 'package',
+      type: 'account_activity',
     });
   } catch (error) {
     logger.error('Error sending notification:', error);

@@ -12,6 +12,7 @@ const savingsReminderTemplate = require('../templates/sms/savings-reminder.templ
 const kycUpdateTemplate = require('../templates/sms/kyc-update.template');
 const loginAlertTemplate = require('../templates/sms/login-alert.template');
 const resetPasswordTemplate = require('../templates/sms/reset-password.template');
+const packageCreatedTemplate = require('../templates/sms/package-created.template');
 
 const templates = {
   account_activity: accountActivityTemplate,
@@ -21,6 +22,7 @@ const templates = {
   kyc_update: kycUpdateTemplate,
   login_alert: loginAlertTemplate,
   reset_password: resetPasswordTemplate,
+  package_created: packageCreatedTemplate,
 };
 
 /**
@@ -42,7 +44,13 @@ const sendSMS = async (to, message) => {
     logger.info(`SMS sent to ${to}`);
     return response.data;
   } catch (error) {
-    logger.error('Error sending SMS:', error);
+    // Extract only necessary error information to avoid circular references
+    const errorInfo = {
+      message: error.message,
+      status: error.response && error.response.status,
+      data: error.response && error.response.data,
+    };
+    logger.error('Error sending SMS:', errorInfo);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send SMS');
   }
 };

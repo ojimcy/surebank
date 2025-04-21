@@ -388,19 +388,13 @@ const getProductCatalogue = async (filter, options) => {
   const query = {};
 
   if (filter.merchantId) {
-    query['merchantId.id'] = filter.merchantId.id;
+    query.merchantId = filter.merchantId;
   }
 
   // Add search functionality
   if (filter.search) {
     const searchRegex = new RegExp(filter.search, 'i');
-    query.$or = [
-      { name: searchRegex },
-      { description: searchRegex },
-      { 'productId.name': searchRegex },
-      { 'productId.description': searchRegex },
-      { tags: searchRegex },
-    ];
+    query.$or = [{ name: searchRegex }, { description: searchRegex }, { tags: searchRegex }];
   }
 
   // Determine if we need to filter by category, subCategory, or brand
@@ -435,8 +429,12 @@ const getProductCatalogue = async (filter, options) => {
           as: 'categoryData',
         },
       },
-      { $match: query },
     ];
+
+    // Add basic query conditions
+    if (Object.keys(query).length > 0) {
+      aggregationPipeline.push({ $match: query });
+    }
 
     // Add filtering conditions for category, subCategory, and brand
     const productMatchConditions = {};
@@ -468,24 +466,46 @@ const getProductCatalogue = async (filter, options) => {
       const sortField = sortParts[0];
       const sortOrder = sortParts[1] === 'desc' ? -1 : 1;
       aggregationPipeline.push({ $sort: { [sortField]: sortOrder } });
+    } else {
+      // Default sorting if none specified
+      aggregationPipeline.push({ $sort: { createdAt: -1 } });
     }
 
     aggregationPipeline.push({ $skip: skip });
     aggregationPipeline.push({ $limit: limit });
 
-    // Project the data in the desired format
+    // Project the data in the desired format, including ALL fields from product catalogue
     aggregationPipeline.push({
       $project: {
         _id: 1,
         name: 1,
-        price: 1,
+        description: 1,
+        images: 1,
+        costPrice: 1,
+        sellingPrice: 1,
         discount: 1,
         quantity: 1,
+        tags: 1,
+        isSbAvailable: 1,
+        reviews: 1,
+        variations: 1,
         merchantId: 1,
+        createdAt: 1,
+        updatedAt: 1,
         productId: {
           _id: '$productData._id',
+          status: '$productData.status',
           name: '$productData.name',
           description: '$productData.description',
+          features: '$productData.features',
+          tags: '$productData.tags',
+          isFeatured: '$productData.isFeatured',
+          isOutOfStock: '$productData.isOutOfStock',
+          isSbAvailable: '$productData.isSbAvailable',
+          barcode: '$productData.barcode',
+          slug: '$productData.slug',
+          createdAt: '$productData.createdAt',
+          updatedAt: '$productData.updatedAt',
           brand: { $arrayElemAt: ['$brandData', 0] },
           categoryId: { $arrayElemAt: ['$categoryData', 0] },
         },
@@ -504,7 +524,32 @@ const getProductCatalogue = async (filter, options) => {
     };
   }
 
-  // If no product filtering needed, use the standard approach
+  // If no product filtering needed, use the standard approach with populate
+  // First get products with filter criteria to get their IDs
+  if (filter.categoryId || filter.subCategoryId || filter.brand) {
+    const ProductModel = await Product();
+    const productQuery = {};
+
+    if (filter.categoryId) {
+      productQuery.categoryId = mongoose.Types.ObjectId(filter.categoryId);
+    }
+
+    if (filter.subCategoryId) {
+      productQuery.subCategoryId = mongoose.Types.ObjectId(filter.subCategoryId);
+    }
+
+    if (filter.brand) {
+      productQuery.brand = mongoose.Types.ObjectId(filter.brand);
+    }
+
+    // Find all product IDs that match the criteria
+    const matchingProducts = await ProductModel.find(productQuery).select('_id');
+    const productIds = matchingProducts.map((product) => product._id);
+
+    // Add the productId filter to the main query
+    query.productId = { $in: productIds };
+  }
+
   const populateOptions = {
     path: 'productId',
     model: 'Product',
@@ -518,7 +563,11 @@ const getProductCatalogue = async (filter, options) => {
   const totalResults = await ProductCatalogueModel.countDocuments(query);
 
   // Get paginated results
-  const products = await ProductCatalogueModel.find(query).populate(populateOptions).skip(skip).limit(limit).sort(sortBy);
+  const products = await ProductCatalogueModel.find(query)
+    .populate(populateOptions)
+    .skip(skip)
+    .limit(limit)
+    .sort(sortBy || { createdAt: -1 });
 
   // Return paginated results
   return {

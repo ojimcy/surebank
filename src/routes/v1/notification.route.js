@@ -7,7 +7,7 @@ const notificationController = require('../../controllers/notification.controlle
 const router = express.Router();
 
 router
-  .route('/')
+  .route('/all')
   .get(auth('getNitifications'), validate(notificationValidation.getNotifications), notificationController.getNotifications);
 
 router

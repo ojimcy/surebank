@@ -5,6 +5,8 @@ const logger = require('../config/logger');
 const verifyEmailTemplate = require('../templates/emails/verify-email.template');
 const resetPasswordTemplate = require('../templates/emails/reset-password.template');
 const dailySavingsContributionTemplate = require('../templates/emails/daily-savings-contribution.template');
+const accountActivityTemplate = require('../templates/emails/account-activity.template');
+const packageCreatedTemplate = require('../templates/emails/package-created.template');
 const ApiError = require('../utils/ApiError');
 
 const client = new SESClient({ region: 'us-east-1' });
@@ -21,6 +23,14 @@ const emailTemplates = {
   DAILY_SAVINGS_CONTRIBUTION: {
     subject: 'Daily Savings Contribution Confirmation',
     html: dailySavingsContributionTemplate,
+  },
+  ACCOUNT_ACTIVITY: {
+    subject: 'Account Activity Notification',
+    html: accountActivityTemplate,
+  },
+  PACKAGE_CREATED: {
+    subject: 'Package Created Successfully',
+    html: packageCreatedTemplate,
   },
 };
 
@@ -124,32 +134,39 @@ const sendEmail = async (options) => {
 
   if (template && emailTemplates[template.toUpperCase()]) {
     const templateData = emailTemplates[template.toUpperCase()];
+    const renderedHtml = templateData.html(data || {});
     emailContent = {
       Subject: {
         Data: templateData.subject,
       },
       Body: {
         Html: {
-          Data: templateData.html(data),
+          Data: renderedHtml || 'No content provided',
         },
       },
     };
   } else {
+    // Ensure at least one body type is provided
+    const defaultText = 'No content provided';
     emailContent = {
       Subject: {
-        Data: subject,
+        Data: subject || 'No subject',
       },
       Body: {
-        ...(text && {
-          Text: {
-            Data: text,
-          },
-        }),
-        ...(html && {
-          Html: {
-            Data: html,
-          },
-        }),
+        ...(text || !html
+          ? {
+              Text: {
+                Data: text || defaultText,
+              },
+            }
+          : {}),
+        ...(html
+          ? {
+              Html: {
+                Data: html,
+              },
+            }
+          : {}),
       },
     };
   }

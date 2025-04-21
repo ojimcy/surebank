@@ -12,6 +12,7 @@ const NOTIFICATION_TYPES = [
   'loan_updates',
   'withdrawal_alerts',
   'login_alerts',
+  'package_created',
 ];
 
 const notificationPreferenceSchema = mongoose.Schema(
@@ -59,6 +60,11 @@ const notificationPreferenceSchema = mongoose.Schema(
         default: 'both',
       },
       login_alerts: {
+        type: String,
+        enum: NOTIFICATION_CHANNELS,
+        default: 'both',
+      },
+      package_created: {
         type: String,
         enum: NOTIFICATION_CHANNELS,
         default: 'both',

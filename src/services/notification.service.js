@@ -105,56 +105,108 @@ const sendNotification = async (userId, type, data) => {
 
     const { subject, message, templateData, reference, relatedEntityId, relatedEntityType } = data;
 
-    // Save the notification in the database
-    await createNotification({
-      userId,
-      title: subject,
-      body: message,
-      type: notificationPreferenceSchema.statics.NOTIFICATION_TYPES.indexOf(type),
-      reference,
-      relatedEntityId,
-      relatedEntityType,
-    });
-
-    switch (channel) {
-      case 'email':
-        await emailService.sendEmail({
-          to: data.email,
-          subject,
-          template: data.template,
-          data: templateData,
-        });
-        break;
-
-      case 'sms':
-        await smsService.sendSMS({
-          to: data.phoneNumber,
-          message,
-        });
-        break;
-
-      case 'both':
-        await Promise.all([
-          emailService.sendEmail({
-            to: data.email,
-            subject,
-            template: data.template,
-            data: templateData,
-          }),
-          smsService.sendSMS({
-            to: data.phoneNumber,
-            message,
-          }),
-        ]);
-        break;
-
-      default:
-        logger.info(`No notifications sent for channel: ${channel}`);
+    // Validate required fields based on channel
+    if ((channel === 'email' || channel === 'both') && !data.email) {
+      logger.warn(`Email notification requested but no email address provided for user ${userId}`);
+      return;
     }
 
-    logger.info(`Successfully sent ${type} notification to user ${userId} via ${channel}`);
+    if ((channel === 'sms' || channel === 'both') && !data.phoneNumber) {
+      logger.warn(`SMS notification requested but no phone number provided for user ${userId}`);
+      return;
+    }
+
+    // Save the notification in the database
+    try {
+      await createNotification({
+        userId,
+        title: subject,
+        body: message,
+        type: notificationPreferenceSchema.statics.NOTIFICATION_TYPES.indexOf(type),
+        reference,
+        relatedEntityId,
+        relatedEntityType,
+      });
+    } catch (error) {
+      logger.error('Error saving notification to database:', {
+        message: error.message,
+        userId,
+        type,
+      });
+      // Continue with sending, even if saving to DB fails
+    }
+
+    try {
+      switch (channel) {
+        case 'email':
+          if (data.email) {
+            await emailService.sendEmail({
+              to: data.email,
+              subject: subject || 'Notification',
+              template: data.template,
+              data: templateData || {},
+            });
+          }
+          break;
+
+        case 'sms':
+          if (data.phoneNumber && message) {
+            await smsService.sendSMS({
+              to: data.phoneNumber,
+              message,
+            });
+          }
+          break;
+
+        case 'both': {
+          const promises = [];
+
+          if (data.email) {
+            promises.push(
+              emailService.sendEmail({
+                to: data.email,
+                subject: subject || 'Notification',
+                template: data.template,
+                data: templateData || {},
+              })
+            );
+          }
+
+          if (data.phoneNumber && message) {
+            promises.push(
+              smsService.sendSMS({
+                to: data.phoneNumber,
+                message,
+              })
+            );
+          }
+
+          if (promises.length > 0) {
+            await Promise.allSettled(promises);
+          }
+          break;
+        }
+
+        default:
+          logger.info(`No notifications sent for channel: ${channel}`);
+      }
+
+      logger.info(`Successfully sent ${type} notification to user ${userId} via ${channel}`);
+    } catch (error) {
+      // Log error but don't throw to prevent blocking the main process
+      logger.error('Error sending notification through channel:', {
+        channel,
+        error: error.message,
+        userId,
+        type,
+      });
+    }
   } catch (error) {
-    logger.error('Error sending notification:', error);
+    logger.error('Error in notification process:', {
+      message: error.message,
+      userId,
+      type,
+    });
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send notification');
   }
 };
