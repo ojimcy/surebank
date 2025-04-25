@@ -120,6 +120,9 @@ const createUserInitiatedSbPackage = async (sbPackageData) => {
         email: user.email,
         phoneNumber: user.phoneNumber,
         template: 'PACKAGE_CREATED',
+        smsTemplate: 'package_created',
+        relatedEntityId: sbPackage._id,
+        relatedEntityType: 'package',
         templateData: {
           name: user.firstName || user.email.split('@')[0],
           productName: product.name,

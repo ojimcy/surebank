@@ -81,12 +81,28 @@ const updateUserPreferences = async (userId, updateBody) => {
 
 /**
  * Send notification based on user preferences
- * @param {ObjectId} userId
- * @param {string} type - Notification type
- * @param {Object} data - Notification data
+ * @param {ObjectId|Object} userIdOrData - Either the userId or a full notification object (for backward compatibility)
+ * @param {string} [type] - Notification type (only needed if first param is userId)
+ * @param {Object} [data] - Notification data (only needed if first param is userId)
  * @returns {Promise<void>}
  */
-const sendNotification = async (userId, type, data) => {
+const sendNotification = async (userIdOrData, type, data) => {
+  // Handle legacy calling convention (object as first parameter)
+  if (typeof userIdOrData === 'object' && userIdOrData !== null && !type && !data) {
+    const legacyData = userIdOrData;
+    logger.info(`Using legacy notification format for user ${legacyData.userId}`);
+
+    // Extract parameters from legacy format
+    return sendNotification(legacyData.userId, legacyData.type || 'account_activity', {
+      subject: legacyData.title,
+      message: legacyData.message,
+      // Other fields may not be present in legacy format
+    });
+  }
+
+  // New format handling
+  const userId = userIdOrData;
+
   try {
     const preferences = await getUserPreferences(userId);
 
@@ -103,7 +119,7 @@ const sendNotification = async (userId, type, data) => {
       return;
     }
 
-    const { subject, message, templateData, reference, relatedEntityId, relatedEntityType } = data;
+    const { subject, message, templateData, reference, relatedEntityId, relatedEntityType, template, smsTemplate } = data;
 
     // Validate required fields based on channel
     if ((channel === 'email' || channel === 'both') && !data.email) {
@@ -143,18 +159,22 @@ const sendNotification = async (userId, type, data) => {
             await emailService.sendEmail({
               to: data.email,
               subject: subject || 'Notification',
-              template: data.template,
+              template,
               data: templateData || {},
             });
           }
           break;
 
         case 'sms':
-          if (data.phoneNumber && message) {
-            await smsService.sendSMS({
-              to: data.phoneNumber,
-              message,
-            });
+          if (data.phoneNumber) {
+            if (smsTemplate) {
+              await smsService.sendNotificationSMS(data.phoneNumber, smsTemplate, templateData || {});
+            } else if (message) {
+              await smsService.sendSMS({
+                to: data.phoneNumber,
+                message,
+              });
+            }
           }
           break;
 
@@ -166,19 +186,23 @@ const sendNotification = async (userId, type, data) => {
               emailService.sendEmail({
                 to: data.email,
                 subject: subject || 'Notification',
-                template: data.template,
+                template,
                 data: templateData || {},
               })
             );
           }
 
-          if (data.phoneNumber && message) {
-            promises.push(
-              smsService.sendSMS({
-                to: data.phoneNumber,
-                message,
-              })
-            );
+          if (data.phoneNumber) {
+            if (smsTemplate) {
+              promises.push(smsService.sendNotificationSMS(data.phoneNumber, smsTemplate, templateData || {}));
+            } else if (message) {
+              promises.push(
+                smsService.sendSMS({
+                  to: data.phoneNumber,
+                  message,
+                })
+              );
+            }
           }
 
           if (promises.length > 0) {

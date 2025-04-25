@@ -41,8 +41,6 @@ module.exports = (data) =>
       <strong>Current Contribution:</strong>
       <span>₦${Number(data.currentContribution || 0).toLocaleString()}</span>
 
-      <strong>Account Number:</strong>
-      <span>${data.accountNumber}</span>
     </div>
   </div>
 

@@ -32,6 +32,13 @@ const userPermissions = [
   'VIRTUAL_ACCOUNT_VIEW',
   'VIRTUAL_ACCOUNT_CREATE',
   'selfAccount',
+  'getNotifications',
+  'getPendingNotificationCount',
+  'markNotificationAsRead',
+  'getPreferences',
+  'updatePreferences',
+  'unsubscribeFromAll',
+  'unsubscribeFromNotificationType',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];
