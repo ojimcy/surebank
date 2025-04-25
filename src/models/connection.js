@@ -41,6 +41,70 @@ const userRoleSchema = require('./userRole.schema');
 const notificationPreferenceSchema = require('./notificationPreference.schema');
 
 let conn = null;
+let retryCount = 0;
+const MAX_RETRIES = 5;
+const RETRY_INTERVAL = 5000; // 5 seconds
+
+const connectWithRetry = async (options) => {
+  try {
+    conn = mongoose.createConnection(config.mongoose.url, options);
+
+    // Connection event handlers
+    conn.on('connected', () => {
+      logger.info('MongoDB connected successfully');
+      retryCount = 0; // Reset retry count on successful connection
+    });
+
+    conn.on('error', (err) => {
+      logger.error('MongoDB connection error:', err);
+      if (retryCount < MAX_RETRIES) {
+        retryCount += 1;
+        logger.info(`Retrying connection... Attempt ${retryCount} of ${MAX_RETRIES}`);
+        setTimeout(() => connectWithRetry(options), RETRY_INTERVAL);
+      } else {
+        logger.error('Max retry attempts reached. Exiting process.');
+        process.exit(1);
+      }
+    });
+
+    conn.on('disconnected', () => {
+      logger.warn('MongoDB disconnected');
+      if (retryCount < MAX_RETRIES) {
+        retryCount += 1;
+        logger.info(`Attempting to reconnect... Attempt ${retryCount} of ${MAX_RETRIES}`);
+        setTimeout(() => connectWithRetry(options), RETRY_INTERVAL);
+      }
+    });
+
+    // Monitor connection states
+    conn.on('reconnected', () => {
+      logger.info('MongoDB reconnected');
+      retryCount = 0; // Reset retry count on successful reconnection
+    });
+
+    conn.on('close', () => {
+      logger.info('MongoDB connection closed');
+    });
+
+    // Monitor performance events
+    conn.on('slow', (data) => {
+      logger.warn('MongoDB slow query detected:', data);
+    });
+
+    await conn;
+    return conn;
+  } catch (error) {
+    logger.error('Error connecting to MongoDB:', error);
+    if (retryCount < MAX_RETRIES) {
+      retryCount += 1;
+      logger.info(`Retrying connection... Attempt ${retryCount} of ${MAX_RETRIES}`);
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(connectWithRetry(options)), RETRY_INTERVAL);
+      });
+    }
+    throw error;
+  }
+};
 
 const getConnection = async () => {
   if (conn == null) {
@@ -48,7 +112,6 @@ const getConnection = async () => {
 
     if (process.env.NODE_ENV === 'production') {
       try {
-        // Get the MongoDB certificate from Secrets Manager
         sslCA = await getSecret(config.aws.secretName);
       } catch (error) {
         logger.error('Failed to retrieve MongoDB certificate from Secrets Manager:', error);
@@ -58,40 +121,22 @@ const getConnection = async () => {
 
     const options = {
       ...config.mongoose.options,
-      ...{
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        // Buffering means mongoose will queue up operations if it gets
-        // disconnected from MongoDB and send them when it reconnects.
-        // With serverless, better to fail fast if not connected.
-        bufferCommands: false, // Disable mongoose buffering
-        // and tell the MongoDB driver to not wait more than 5 seconds
-        // before erroring out if it isn't connected
-        serverSelectionTimeoutMS: 5000,
-        // In production, use the certificate from Secrets Manager
-        ...(process.env.NODE_ENV === 'production' && {
-          ssl: true,
-          sslValidate: true,
-          sslCA: Buffer.from(sslCA, 'base64'),
-        }),
-      },
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
+      heartbeatFrequencyMS: 2000, // Check server status every 2 seconds
+      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      maxPoolSize: 10, // Maximum number of connections in the pool
+      minPoolSize: 2, // Minimum number of connections in the pool
+      ...(process.env.NODE_ENV === 'production' && {
+        ssl: true,
+        sslValidate: true,
+        sslCA: Buffer.from(sslCA, 'base64'),
+      }),
     };
 
-    // Add event listeners for connection issues
-    mongoose.connection.on('error', (err) => {
-      logger.error('MongoDB connection error:', err);
-      process.exit(1);
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      logger.warn('MongoDB disconnected. Attempting to reconnect...');
-    });
-
-    conn = mongoose.createConnection(config.mongoose.url, options);
-
-    // `await`ing connection after assigning to the `conn` variable
-    // to avoid multiple function calls creating new connections
-    await conn;
+    await connectWithRetry(options);
 
     // Schema registration
     conn.model('Account', accountSchema);
@@ -135,4 +180,10 @@ const getConnection = async () => {
   return conn;
 };
 
-module.exports = { getConnection };
+// Add a health check function
+const checkConnection = () => {
+  if (!conn) return false;
+  return conn.readyState === 1; // 1 = connected
+};
+
+module.exports = { getConnection, checkConnection };

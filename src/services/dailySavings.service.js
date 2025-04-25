@@ -14,6 +14,7 @@ const logger = require('../config/logger');
 const { sendEmail } = require('./email.service');
 const { sendNotification } = require('./notification.service');
 const dailySavingsContributionTemplate = require('../templates/emails/daily-savings-contribution.template');
+const config = require('../config/config');
 
 /**
  * Save a charge and update the count in the associated package
@@ -134,15 +135,33 @@ const createUserInitiatedDailySavingsPackage = async (dailyInput) => {
   });
 
   try {
-    // Send notification
-    await sendNotification({
-      title: 'Package Created Successfully',
-      message: `Your Daily Savings package for ${dailyInput.target} has been created successfully.`,
-      userId: dailyInput.userId,
-      type: 'account_activity',
-    });
+    // Get user details to include email and phone number
+    const UserModel = await User();
+    const user = await UserModel.findById(dailyInput.userId);
+
+    if (user) {
+      await sendNotification(dailyInput.userId, 'package_created', {
+        subject: 'Package Created Successfully',
+        message: `Your Daily Savings package for ${dailyInput.target} has been created successfully.`,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        template: 'PACKAGE_CREATED',
+        smsTemplate: 'package_created',
+        templateData: {
+          name: user.firstName || user.email.split('@')[0],
+          productName: `Daily Savings - ${dailyInput.target}`,
+          targetAmount: dailyInput.targetAmount || 0,
+          currentContribution: 0,
+          accountNumber,
+          date: Date.now(),
+          dashboardUrl: `${config.email.clientUrl}/dashboard/daily-savings`,
+        },
+      });
+    } else {
+      logger.warn(`Could not send notification: User ${dailyInput.userId} not found`);
+    }
   } catch (error) {
-    logger.error('Error sending notification:', error);
+    logger.error('Error sending notification:', { message: error.message });
     // Continue execution even if notification fails
   }
 
@@ -552,19 +571,23 @@ const sendNotifications = async (notificationData) => {
   const { user, userAccount, packageData, amount, reference } = notificationData;
 
   try {
+    // Message for SMS
+    const smsMessage = dsContributionMessage(
+      user.firstName,
+      amount,
+      packageData.accountNumber,
+      packageData.totalContribution,
+      'Online Payment'
+    );
+
     // Store notification in database for user's inbox
     await sendNotification(user._id, 'account_activity', {
       email: user.email,
       phoneNumber: userAccount.phoneNumber,
       subject: 'Daily Savings Contribution Confirmation',
-      message: dsContributionMessage(
-        user.firstName,
-        amount,
-        packageData.accountNumber,
-        packageData.totalContribution,
-        'Online Payment'
-      ),
+      message: smsMessage,
       template: 'DAILY_SAVINGS_CONTRIBUTION',
+      // Don't use smsTemplate, use direct message
       templateData: {
         fullName: `${user.firstName} ${user.lastName}`,
         amount,

@@ -131,7 +131,6 @@ const sendNotification = async (userIdOrData, type, data) => {
       logger.warn(`SMS notification requested but no phone number provided for user ${userId}`);
       return;
     }
-
     // Save the notification in the database
     try {
       await createNotification({
@@ -180,7 +179,6 @@ const sendNotification = async (userIdOrData, type, data) => {
 
         case 'both': {
           const promises = [];
-
           if (data.email) {
             promises.push(
               emailService.sendEmail({
