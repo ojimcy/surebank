@@ -31,23 +31,45 @@ const createInterestPackage = catchAsync(async (req, res) => {
   const userId = req.user._id;
   const createdBy = userId;
 
-  // For admin users, allow direct creation without payment
+  // Check user role for admin privileges
   const isAdminCreated = req.user.role === 'admin';
 
-  // Check if this is a verification callback
-  const { reference } = req.query;
+  // Check if payment reference is provided in query params or body
+  const reference = req.query.reference || req.body.paymentReference;
 
-  const createdPackage = await interestPackageService.createInterestPackage(
-    {
-      ...packageData,
-      userId,
-      createdBy,
-      isAdminCreated,
-    },
-    reference
-  );
+  // If user is not admin and no payment reference, reject creation
+  if (!isAdminCreated && !reference) {
+    return res.status(httpStatus.PAYMENT_REQUIRED).json({
+      success: false,
+      message: 'Payment is required before creating an interest package. Please use the init-payment endpoint first.',
+    });
+  }
 
-  res.status(httpStatus.CREATED).json(createdPackage);
+  try {
+    const createdPackage = await interestPackageService.createInterestPackage(
+      {
+        ...packageData,
+        userId,
+        createdBy,
+        isAdminCreated,
+      },
+      reference
+    );
+
+    res.status(httpStatus.CREATED).json({
+      success: true,
+      message: 'Interest package created successfully',
+      data: createdPackage,
+    });
+  } catch (error) {
+    if (error.statusCode === httpStatus.PAYMENT_REQUIRED) {
+      return res.status(httpStatus.PAYMENT_REQUIRED).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    throw error; // Let the global error handler handle other errors
+  }
 });
 
 /**
@@ -129,13 +151,52 @@ const handlePaymentCallback = catchAsync(async (req, res) => {
 
   if (!reference) {
     return res.status(httpStatus.BAD_REQUEST).json({
+      success: false,
       message: 'Payment reference is required',
     });
   }
 
-  const result = await interestPackageService.processVerifiedPayment({ reference });
+  try {
+    const result = await interestPackageService.processVerifiedPayment({ reference });
 
-  res.status(httpStatus.OK).json(result);
+    // If it's a web callback (not webhook), redirect to success page with package details
+    if (req.headers['user-agent'] && !req.headers['x-paystack-signature']) {
+      // Build the redirect URL with the package details
+      let finalRedirectURL = `/packages/new/ibs-success?packageId=${result._id}&status=success`;
+
+      // If the result has a redirect_url, use that instead
+      if (result.redirect_url) {
+        finalRedirectURL = result.redirect_url;
+
+        // Add query parameters if not already present
+        if (!finalRedirectURL.includes('?')) {
+          finalRedirectURL += `?packageId=${result._id}&status=success`;
+        } else {
+          finalRedirectURL += `&packageId=${result._id}&status=success`;
+        }
+      }
+
+      return res.redirect(finalRedirectURL);
+    }
+
+    // Otherwise return JSON for API/webhook consumers
+    return res.status(httpStatus.OK).json({
+      success: true,
+      message: 'Payment verified and package created successfully',
+      data: result,
+    });
+  } catch (error) {
+    // If it's a web callback, redirect to error page
+    if (req.headers['user-agent'] && !req.headers['x-paystack-signature']) {
+      return res.redirect(`/error?message=${encodeURIComponent(error.message)}&status=failed`);
+    }
+
+    // Otherwise return JSON error
+    return res.status(error.statusCode || httpStatus.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message || 'Failed to process payment',
+    });
+  }
 });
 
 /**

@@ -1,6 +1,17 @@
 const Joi = require('joi');
 const { objectId } = require('./custom.validation');
 
+const initiateInterestPackagePayment = {
+  body: Joi.object().keys({
+    name: Joi.string().required(),
+    principalAmount: Joi.number().positive().required(),
+    lockPeriod: Joi.number().integer().positive().required(),
+    earlyWithdrawalPenalty: Joi.number().min(0).max(100).default(50),
+    callbackUrl: Joi.string().uri().optional(),
+    redirect_url: Joi.string().uri().optional(),
+  }),
+};
+
 const createInterestPackage = {
   body: Joi.object().keys({
     name: Joi.string().required(),
@@ -51,6 +62,7 @@ const getProjectedInterest = {
 };
 
 module.exports = {
+  initiateInterestPackagePayment,
   createInterestPackage,
   getInterestPackageById,
   getUserInterestPackages,

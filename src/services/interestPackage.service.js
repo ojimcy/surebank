@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const mongoose = require('mongoose');
-const { InterestPackage, AccountTransaction } = require('../models');
+const { InterestPackage, AccountTransaction, PaymentTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
@@ -519,27 +519,87 @@ const processVerifiedPayment = async (paymentData) => {
     const verification = await paymentService.verifyTransaction(paymentData.reference);
 
     if (!verification || !verification.verified) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Payment verification failed');
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Payment verification failed. Please try again or contact support.');
     }
 
     const { metadata } = verification.transactionData;
 
     // Check if this is for interest package and package is pending creation
-    if (metadata && metadata.contributionType === 'interest_savings' && metadata.isPackagePending) {
-      // Create the package data with required fields
-      const packageData = {
-        userId: metadata.userId,
-        principalAmount: metadata.principalAmount,
-        lockPeriod: metadata.lockPeriod,
-        name: metadata.name || 'Interest Savings Package',
-        earlyWithdrawalPenalty: metadata.earlyWithdrawalPenalty,
-        createdBy: metadata.userId, // User creating their own package
-      };
-
-      return await createInterestPackage(packageData, paymentData.reference);
+    if (!metadata) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Payment metadata is missing. Cannot create package.');
     }
 
-    return { message: 'Payment verified but no pending interest package found' };
+    if (metadata.contributionType !== 'interest_savings') {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'This payment is not for an interest savings package.');
+    }
+
+    if (!metadata.isPackagePending) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'This payment is not for package creation or has already been processed.');
+    }
+
+    if (!metadata.userId) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'User ID missing from payment data');
+    }
+
+    // Check if a package already exists with this payment reference to prevent duplicates
+    const InterestPackageModel = await InterestPackage();
+    const existingPackage = await InterestPackageModel.findOne({ paymentReference: paymentData.reference });
+
+    if (existingPackage) {
+      logger.info(`Package already exists for payment reference ${paymentData.reference}`);
+
+      // If there's a redirect_url in the metadata, attach it to the existing package
+      if (metadata.redirect_url) {
+        existingPackage.redirect_url = metadata.redirect_url;
+      }
+
+      return existingPackage;
+    }
+
+    // Create the package data with required fields
+    const packageData = {
+      userId: metadata.userId,
+      principalAmount: metadata.principalAmount,
+      lockPeriod: metadata.lockPeriod,
+      name: metadata.name || 'Interest Savings Package',
+      earlyWithdrawalPenalty: metadata.earlyWithdrawalPenalty,
+      createdBy: metadata.userId, // User creating their own package
+    };
+
+    // Mark the transaction as processed in our system
+    try {
+      const PaymentTransactionModel = await PaymentTransaction();
+      await PaymentTransactionModel.updateOne(
+        { reference: paymentData.reference },
+        { $set: { status: 'processed', processedAt: new Date() } }
+      );
+    } catch (error) {
+      logger.error('Error updating payment transaction status:', error);
+      // Continue execution even if this fails
+    }
+
+    // Create the interest package
+    const createdPackage = await createInterestPackage(packageData, paymentData.reference);
+
+    // Attach the redirect_url from metadata if it exists (for frontend redirection)
+    if (metadata.redirect_url) {
+      createdPackage.redirect_url = metadata.redirect_url;
+    }
+
+    // Send notification asynchronously
+    try {
+      await sendNotification({
+        title: 'Package Created Successfully',
+        message: `Your deposit of ${packageData.principalAmount} was successful. Your interest-based savings package "${packageData.name}" is now active.`,
+        userId: packageData.userId,
+        type: 'package',
+      });
+    } catch (error) {
+      logger.error('Error sending package creation notification:', error);
+      // Continue execution even if notification fails
+    }
+
+    return createdPackage;
   } catch (error) {
     logger.error('Error processing verified payment for interest package:', error);
     throw error;

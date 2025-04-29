@@ -183,6 +183,8 @@ const initiateInterestPackagePayment = async (packageData) => {
       earlyWithdrawalPenalty: packageData.earlyWithdrawalPenalty,
       isPackagePending: true, // Flag to indicate the package should be created on verification
       userId: packageData.userId, // Include userId in metadata for verification
+      redirect_url:
+        packageData.redirect_url || `${process.env.FRONTEND_URL || 'http://localhost:8080'}/packages/new/ibs-success`, // Store redirect URL in metadata
     },
   };
 

@@ -11,39 +11,39 @@ const ALLOWED_INTEREST_RATES = [
     name: '1 Month',
     description: 'Standard interest rate for regular savings',
     minLockPeriod: 30, // minimum lock period in days
-    maxLockPeriod: 90, // maximum lock period in days
+    maxLockPeriod: 89, // maximum lock period in days
   },
   {
     id: 'quarterly',
     rate: 7.5,
     name: '3 Months',
     description: 'Higher interest rate for quarterly commitment',
-    minLockPeriod: 91,
-    maxLockPeriod: 180,
+    minLockPeriod: 90,
+    maxLockPeriod: 179,
   },
   {
     id: 'semiyearly',
     rate: 9.0,
     name: '6 Months',
     description: 'Enhanced interest rate for medium-term savings',
-    minLockPeriod: 181,
-    maxLockPeriod: 365,
+    minLockPeriod: 180,
+    maxLockPeriod: 364,
   },
   {
     id: 'yearly',
     rate: 12.0,
     name: '1 Year',
     description: 'Premium interest rate for yearly commitment',
-    minLockPeriod: 366,
-    maxLockPeriod: 730,
+    minLockPeriod: 365,
+    maxLockPeriod: 729,
   },
   {
     id: 'biennial',
     rate: 15.0,
     name: '2 Years',
     description: 'Maximum interest rate for long-term savers',
-    minLockPeriod: 731,
-    maxLockPeriod: 1095,
+    minLockPeriod: 730,
+    maxLockPeriod: 1094,
   },
 ];
 
