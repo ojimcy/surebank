@@ -16,9 +16,10 @@ const { getUserAccount } = require('./account.service');
  * @param {string} transactionData.callbackUrl - URL to redirect after payment (optional)
  * @param {string} transactionData.metadata - Additional transaction data (optional)
  * @param {string} transactionData.userId - User ID for the transaction
+ * @param {boolean} skipCustomerCreation - Whether to skip the customer creation process
  * @returns {Promise<Object>} Transaction initialization response
  */
-const initializeTransaction = async (transactionData) => {
+const initializeTransaction = async (transactionData, skipCustomerCreation = false) => {
   try {
     const { email, amount, callbackUrl, metadata = {}, userId } = transactionData;
 
@@ -31,7 +32,7 @@ const initializeTransaction = async (transactionData) => {
 
     // Ensure user has a Paystack customer record if userId is provided
     let customerCode = null;
-    if (userId) {
+    if (userId && !skipCustomerCreation) {
       try {
         const user = await userService.getUserById(userId);
         if (user) {
@@ -156,11 +157,22 @@ const initiateInterestPackagePayment = async (packageData) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Account not found. Please create one to continue.');
   }
 
+  // Get user details to retrieve email
+  const user = await userService.getUserById(packageData.userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  if (!user.email) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User email is required but not found');
+  }
+
   // Prepare payment data
   const paymentData = {
     userId: packageData.userId,
     packageId: null, // Will be populated after verification
     amount: packageData.principalAmount,
+    email: user.email, // Include the user's email
     callbackUrl: packageData.callbackUrl,
     metadata: {
       contributionType: 'interest_savings',
@@ -170,15 +182,14 @@ const initiateInterestPackagePayment = async (packageData) => {
       name: packageData.name,
       earlyWithdrawalPenalty: packageData.earlyWithdrawalPenalty,
       isPackagePending: true, // Flag to indicate the package should be created on verification
+      userId: packageData.userId, // Include userId in metadata for verification
     },
   };
 
   try {
-    // Initialize transaction
-    const response = await initializeTransaction(paymentData);
-
-    // Store pending package data in a temporary storage or session if needed
-    // This is optional if all data is in the payment metadata
+    // Initialize transaction but skip Paystack customer creation if it fails
+    const skipCustomerCreation = true;
+    const response = await initializeTransaction(paymentData, skipCustomerCreation);
 
     return response;
   } catch (error) {

@@ -196,7 +196,30 @@ const listCustomers = async (options = {}) => {
  * @returns {Promise<Object>} Customer data
  */
 const fetchCustomer = async (identifier) => {
-  return paystackClient.customer.fetch(identifier);
+  try {
+    // If this looks like an email, we need to list customers and filter
+    if (identifier.includes('@')) {
+      // Search for customer by email using list endpoint
+      const customers = await paystackClient.customer.list({
+        email: identifier,
+        perPage: 1,
+      });
+
+      if (customers && customers.status && customers.data.data.length > 0) {
+        return {
+          status: true,
+          data: customers.data.data[0],
+        };
+      }
+      throw new Error(`Customer with email ${identifier} not found`);
+    }
+
+    // Otherwise use the get endpoint with the customer code/ID
+    return paystackClient.customer.get({ id: identifier });
+  } catch (error) {
+    logger.error(`Error fetching Paystack customer ${identifier}:`, error);
+    throw error;
+  }
 };
 
 module.exports = {

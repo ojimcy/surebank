@@ -11,6 +11,7 @@ provider:
       allowedOrigins:
         - https://surebankstores.ng
         - http://localhost:3001
+        - http://localhost:8080
       allowedMethods:
         - GET
         - POST

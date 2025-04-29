@@ -8,7 +8,7 @@ const router = express.Router();
 
 // Initiate payment for a new interest package
 router
-  .route('/package/initiate-payment')
+  .route('/package/init-payment')
   .post(
     auth('selfAccount'),
     validate(interestPackageValidation.initiateInterestPackagePayment),
@@ -56,5 +56,10 @@ router
     validate(interestPackageValidation.getProjectedInterest),
     interestPackageController.getProjectedInterest
   );
+
+/**
+ * GET /v1/interest-packages/rate-options - Get available interest rate options
+ */
+router.route('/rate-options').get(auth(), interestPackageController.getInterestRateOptions);
 
 module.exports = router;

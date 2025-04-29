@@ -85,5 +85,6 @@ yarn-error.log
 coverage
 .serverless
 
-# cursor
-.cursor
+
+# docs
+docs/

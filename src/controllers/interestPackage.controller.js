@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const { interestPackageService, paymentService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
+const interestRateConfig = require('../config/interestRates');
 
 /**
  * Initiate payment for a new interest-based savings package
@@ -137,6 +138,17 @@ const handlePaymentCallback = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(result);
 });
 
+/**
+ * Get available interest rate options
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Promise<Object>} HTTP response
+ */
+const getInterestRateOptions = catchAsync(async (req, res) => {
+  const interestRateOptions = interestRateConfig.getAllowedInterestRates();
+  res.send(interestRateOptions);
+});
+
 module.exports = {
   initiateInterestPackagePayment,
   createInterestPackage,
@@ -146,4 +158,5 @@ module.exports = {
   requestWithdrawal,
   getProjectedInterest,
   handlePaymentCallback,
+  getInterestRateOptions,
 };

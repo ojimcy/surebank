@@ -6,6 +6,7 @@ const { getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
 const { sendNotification } = require('./notification.service');
 const paymentService = require('./payment.service');
+const interestRateConfig = require('../config/interestRates');
 
 /**
  * Update package status
@@ -38,7 +39,10 @@ const updatePackageStatus = async (packageId, newStatus) => {
 const calculateInterestForPackage = async (packageId) => {
   const InterestPackageModel = await InterestPackage();
 
+  // Get the interest package in a single operation
   const interestPackage = await InterestPackageModel.findById(packageId);
+
+  // Return early if package doesn't exist or isn't active
   if (!interestPackage || interestPackage.status !== 'active') {
     return interestPackage;
   }
@@ -46,11 +50,51 @@ const calculateInterestForPackage = async (packageId) => {
   const now = new Date();
   const lastCalculation = new Date(interestPackage.lastInterestCalculationDate);
 
-  // If maturity date has been reached, update status to matured
-  if (now >= interestPackage.maturityDate && interestPackage.status === 'active') {
-    await updatePackageStatus(packageId, 'matured');
+  // Calculate time difference in days since last calculation
+  const timeDiffMs = now - lastCalculation;
+  const daysSinceLastCalc = timeDiffMs / (24 * 60 * 60 * 1000);
+  const fullDays = Math.floor(daysSinceLastCalc);
 
-    // Send notification to user about maturity
+  // Return early if less than a day has passed since last calculation
+  if (fullDays < 1) {
+    return interestPackage;
+  }
+
+  // Check for maturity
+  const isMatured = now >= interestPackage.maturityDate;
+  let updateData = {};
+
+  // Only calculate interest if package has been active for at least a day
+  // Simple Interest = Principal × Rate × Time
+  const interestRate = interestPackage.interestRate / 100; // Convert percentage to decimal
+  const dailyRate = interestRate / 365; // Convert annual rate to daily rate
+  const interestAmount = interestPackage.currentBalance * dailyRate * fullDays;
+
+  // Round to 2 decimal places
+  const roundedInterestAmount = Math.round(interestAmount * 100) / 100;
+
+  // Prepare update data
+  updateData = {
+    $inc: {
+      interestAccrued: roundedInterestAmount,
+      currentBalance: roundedInterestAmount,
+    },
+    $set: {
+      lastInterestCalculationDate: now,
+    },
+  };
+
+  // If matured, update status in the same operation
+  if (isMatured && interestPackage.status === 'active') {
+    updateData.$set.status = 'matured';
+  }
+
+  // Update package with new interest accrued and last calculation date
+  // In a single database operation
+  const updatedPackage = await InterestPackageModel.findByIdAndUpdate(packageId, updateData, { new: true });
+
+  // Send notification about maturity if needed
+  if (isMatured && interestPackage.status === 'active') {
     try {
       await sendNotification({
         title: 'Interest Package Matured',
@@ -60,39 +104,9 @@ const calculateInterestForPackage = async (packageId) => {
       });
     } catch (error) {
       logger.error('Error sending maturity notification:', error);
+      // Continue execution even if notification fails
     }
   }
-
-  // Calculate time difference in days since last calculation
-  const timeDiffMs = now.getTime() - lastCalculation.getTime();
-  const daysSinceLastCalc = timeDiffMs / (24 * 60 * 60 * 1000);
-
-  // If less than a day has passed since last calculation, return the package as is
-  if (daysSinceLastCalc < 1) {
-    return interestPackage;
-  }
-
-  // Use simple interest calculation (no compounding)
-  // Simple Interest = Principal × Rate × Time
-  const interestRate = interestPackage.interestRate / 100; // Convert percentage to decimal
-  const dailyRate = interestRate / 365; // Convert annual rate to daily rate
-  const interestAmount = interestPackage.currentBalance * dailyRate * Math.floor(daysSinceLastCalc); // Only count full days
-
-  // Round to 2 decimal places
-  const roundedInterestAmount = Math.round(interestAmount * 100) / 100;
-
-  // Update package with new interest accrued and last calculation date
-  const updatedPackage = await InterestPackageModel.findByIdAndUpdate(
-    packageId,
-    {
-      $inc: {
-        interestAccrued: roundedInterestAmount,
-        currentBalance: roundedInterestAmount, // This adds the interest to the current balance as well
-      },
-      $set: { lastInterestCalculationDate: now },
-    },
-    { new: true }
-  );
 
   return updatedPackage;
 };
@@ -106,10 +120,10 @@ const calculateInterestForPackage = async (packageId) => {
 const createInterestPackage = async (packageDataInput, paymentReference = null) => {
   const InterestPackageModel = await InterestPackage();
 
-  // Create a working copy of the package data to avoid modifying the input parameter
+  // Create a working copy of the package data
   let packageData = { ...packageDataInput };
 
-  // If payment reference is provided, verify the payment first
+  // Validate payment or admin permission
   if (paymentReference) {
     try {
       const verification = await paymentService.verifyTransaction(paymentReference);
@@ -118,15 +132,14 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
         throw new ApiError(httpStatus.BAD_REQUEST, 'Payment verification failed. Package cannot be created.');
       }
 
-      // Extract package data from payment metadata if not directly provided
+      // Extract package data from payment metadata if available
       if (verification.transactionData.metadata && verification.transactionData.metadata.isPackagePending) {
         const { metadata } = verification.transactionData;
 
-        // Merge metadata values when not provided in original input
+        // Use metadata as fallback values
         packageData = {
           ...packageData,
           principalAmount: packageData.principalAmount || metadata.principalAmount,
-          interestRate: packageData.interestRate || metadata.interestRate,
           lockPeriod: packageData.lockPeriod || metadata.lockPeriod,
           name: packageData.name || metadata.name,
           earlyWithdrawalPenalty: packageData.earlyWithdrawalPenalty || metadata.earlyWithdrawalPenalty,
@@ -137,9 +150,29 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
       throw new ApiError(httpStatus.PAYMENT_REQUIRED, 'Payment could not be verified. Please try again or contact support.');
     }
   } else if (!packageData.isAdminCreated) {
-    // If no payment reference and not admin-created, we require payment first
+    // Only admin can create packages without payment
     throw new ApiError(httpStatus.PAYMENT_REQUIRED, 'Payment is required before creating an interest package.');
   }
+
+  // Determine the appropriate interest rate based on lock period
+  const interestRateInfo = interestRateConfig.getInterestRateByLockPeriod(packageData.lockPeriod);
+
+  if (!interestRateInfo) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Invalid lock period. Must be between ${interestRateConfig.ALLOWED_INTEREST_RATES[0].minLockPeriod} and ${
+        interestRateConfig.ALLOWED_INTEREST_RATES[interestRateConfig.ALLOWED_INTEREST_RATES.length - 1].maxLockPeriod
+      } days`
+    );
+  }
+
+  // Set the interest rate from configuration (overriding any user input)
+  packageData.interestRate = interestRateInfo.rate;
+  packageData.interestRateId = interestRateInfo.id;
+
+  // Set default withdrawal penalty if not provided
+  packageData.earlyWithdrawalPenalty =
+    packageData.earlyWithdrawalPenalty || interestRateConfig.DEFAULT_EARLY_WITHDRAWAL_PENALTY;
 
   // Get user's account from userId
   const userAccount = await getUserAccount(packageData.userId, 'ibs');
@@ -152,29 +185,34 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
   const maturityDate = new Date(startDate);
   maturityDate.setDate(maturityDate.getDate() + packageData.lockPeriod);
 
-  // Create the package
-  const interestPackage = await InterestPackageModel.create({
+  // Prepare final package data with defaults for any missing values
+  const finalPackageData = {
     ...packageData,
     accountNumber: userAccount.accountNumber,
     startDate,
     maturityDate,
-    currentBalance: packageData.principalAmount, // Initially set to principal amount
+    currentBalance: packageData.principalAmount,
+    interestAccrued: 0,
+    lastInterestCalculationDate: startDate,
     status: 'active',
-    paymentReference, // Store the payment reference
-  });
+    paymentReference,
+  };
 
-  try {
-    // Send notification
-    await sendNotification({
-      title: 'Interest Package Created',
-      message: `Your Interest-Based Savings package has been created successfully. It will mature on ${maturityDate.toLocaleDateString()}.`,
-      userId: packageData.userId,
-      type: 'package',
-    });
-  } catch (error) {
+  // Create the package with all necessary data
+  const interestPackage = await InterestPackageModel.create(finalPackageData);
+
+  // Send notification asynchronously
+  sendNotification({
+    title: `${interestRateInfo.name} Package Created`,
+    message: `Your Interest-Based Savings package (${
+      interestRateInfo.rate
+    }% interest) has been created successfully. It will mature on ${maturityDate.toLocaleDateString()}.`,
+    userId: packageData.userId,
+    type: 'package',
+  }).catch((error) => {
     logger.error('Error sending notification:', error);
-    // Continue execution even if notification fails
-  }
+    // Notification failure doesn't block package creation
+  });
 
   return interestPackage;
 };
@@ -488,13 +526,12 @@ const processVerifiedPayment = async (paymentData) => {
 
     // Check if this is for interest package and package is pending creation
     if (metadata && metadata.contributionType === 'interest_savings' && metadata.isPackagePending) {
-      // Create the package with data from payment metadata
+      // Create the package data with required fields
       const packageData = {
         userId: metadata.userId,
         principalAmount: metadata.principalAmount,
-        interestRate: metadata.interestRate,
         lockPeriod: metadata.lockPeriod,
-        name: metadata.name,
+        name: metadata.name || 'Interest Savings Package',
         earlyWithdrawalPenalty: metadata.earlyWithdrawalPenalty,
         createdBy: metadata.userId, // User creating their own package
       };
