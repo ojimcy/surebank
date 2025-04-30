@@ -31,6 +31,15 @@ router
     interestPackageController.getUserInterestPackages
   );
 
+// Get package by payment reference - must be defined before /:packageId route
+router
+  .route('/package/reference/:reference')
+  .get(
+    auth('selfAccount'),
+    validate(interestPackageValidation.getInterestPackageByReference),
+    interestPackageController.getInterestPackageByReference
+  );
+
 router
   .route('/package/:packageId')
   .get(

@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const { interestPackageService, paymentService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 const interestRateConfig = require('../config/interestRates');
-
+const config = require('../config/config');
 /**
  * Initiate payment for a new interest-based savings package
  * @param {Object} req - Express request object
@@ -85,6 +85,18 @@ const getInterestPackageById = catchAsync(async (req, res) => {
 });
 
 /**
+ * Get interest package by payment reference
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getInterestPackageByReference = catchAsync(async (req, res) => {
+  const { reference } = req.params;
+  const interestPackage = await interestPackageService.getInterestPackageByReference(reference);
+
+  res.status(httpStatus.OK).json(interestPackage);
+});
+
+/**
  * Get all interest packages for a user
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -162,7 +174,7 @@ const handlePaymentCallback = catchAsync(async (req, res) => {
     // If it's a web callback (not webhook), redirect to success page with package details
     if (req.headers['user-agent'] && !req.headers['x-paystack-signature']) {
       // Build the redirect URL with the package details
-      let finalRedirectURL = `/packages/new/ibs-success?packageId=${result._id}&status=success`;
+      let finalRedirectURL = `${config.paystack.frontendUrl}/packages/new/ibs-success?packageId=${result._id}&status=success`;
 
       // If the result has a redirect_url, use that instead
       if (result.redirect_url) {
@@ -214,6 +226,7 @@ module.exports = {
   initiateInterestPackagePayment,
   createInterestPackage,
   getInterestPackageById,
+  getInterestPackageByReference,
   getUserInterestPackages,
   calculateEarlyWithdrawal,
   requestWithdrawal,

@@ -42,7 +42,15 @@ const initializeTransaction = async (data) => {
  */
 const verifyTransaction = async (reference) => {
   try {
-    const response = await paystackClient.transaction.verify(reference);
+    // Validate the reference before proceeding
+    if (!reference || typeof reference !== 'string') {
+      logger.error(`Invalid transaction reference: ${reference}`);
+      throw new Error('Transaction reference must be a valid string');
+    }
+
+    // Create verification params object to avoid 'in' operator issues
+    const params = { reference };
+    const response = await paystackClient.transaction.verify(params);
 
     // Log verification attempt for debugging
     logger.info(`Transaction verification for reference ${reference}: ${response.status ? 'Success' : 'Failed'}`);
@@ -145,8 +153,15 @@ const deactivateDedicatedVirtualAccount = async (dedicatedAccountId) => {
  */
 const requeryTransaction = async (reference) => {
   try {
-    // Use verify endpoint to requery the transaction
-    const response = await paystackClient.transaction.verify(reference);
+    // Validate the reference before proceeding
+    if (!reference || typeof reference !== 'string') {
+      logger.error(`Invalid transaction reference for requery: ${reference}`);
+      throw new Error('Transaction reference must be a valid string');
+    }
+
+    // Create verification params object to avoid 'in' operator issues
+    const params = { reference };
+    const response = await paystackClient.transaction.verify(params);
 
     // Log verification attempt for monitoring
     logger.info(`Transaction requery for reference ${reference}: ${response.status ? 'Success' : 'Failed'}`);

@@ -55,6 +55,8 @@ const envVarsSchema = Joi.object()
     ONLINE_BRANCH_ID: Joi.string().description('Online branch id'),
     PAYSTACK_PUBLIC_KEY: Joi.string().required().description('Paystack public key'),
     PAYSTACK_SECRET_KEY: Joi.string().required().description('Paystack secret key'),
+    PAYSTACK_CALLBACK_URL: Joi.string().required().description('Paystack callback URL'),
+    FRONTEND_URL: Joi.string().required().description('Frontend URL'),
   })
   .unknown();
 
@@ -138,5 +140,7 @@ module.exports = {
   paystack: {
     publicKey: envVars.PAYSTACK_PUBLIC_KEY,
     secretKey: envVars.PAYSTACK_SECRET_KEY,
+    callbackUrl: envVars.PAYSTACK_CALLBACK_URL,
+    frontendUrl: envVars.FRONTEND_URL,
   },
 };

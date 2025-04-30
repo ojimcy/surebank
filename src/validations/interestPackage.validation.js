@@ -31,6 +31,12 @@ const getInterestPackageById = {
   }),
 };
 
+const getInterestPackageByReference = {
+  params: Joi.object().keys({
+    reference: Joi.string().required(),
+  }),
+};
+
 const getUserInterestPackages = {
   query: Joi.object().keys({
     status: Joi.string().valid('active', 'matured', 'closed', 'pending_withdrawal'),
@@ -65,6 +71,7 @@ module.exports = {
   initiateInterestPackagePayment,
   createInterestPackage,
   getInterestPackageById,
+  getInterestPackageByReference,
   getUserInterestPackages,
   calculateEarlyWithdrawal,
   requestWithdrawal,

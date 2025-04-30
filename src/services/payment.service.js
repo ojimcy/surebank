@@ -7,6 +7,7 @@ const logger = require('../config/logger');
 const { PaymentTransaction } = require('../models');
 const { getDailySavingsPackageById, processPaystackContribution } = require('./dailySavings.service');
 const { getUserAccount } = require('./account.service');
+const config = require('../config/config');
 
 /**
  * Initialize a payment transaction
@@ -167,13 +168,20 @@ const initiateInterestPackagePayment = async (packageData) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'User email is required but not found');
   }
 
+  // Use the configured callback URL from config if not provided in the request
+  const callbackUrl = packageData.callbackUrl || config.paystack.callbackUrl;
+
+  if (!callbackUrl) {
+    logger.warn('No callback URL provided for initiating interest package payment');
+  }
+
   // Prepare payment data
   const paymentData = {
     userId: packageData.userId,
     packageId: null, // Will be populated after verification
     amount: packageData.principalAmount,
     email: user.email, // Include the user's email
-    callbackUrl: packageData.callbackUrl,
+    callbackUrl,
     metadata: {
       contributionType: 'interest_savings',
       principalAmount: packageData.principalAmount,
@@ -184,7 +192,8 @@ const initiateInterestPackagePayment = async (packageData) => {
       isPackagePending: true, // Flag to indicate the package should be created on verification
       userId: packageData.userId, // Include userId in metadata for verification
       redirect_url:
-        packageData.redirect_url || `${process.env.FRONTEND_URL || 'http://localhost:8080'}/packages/new/ibs-success`, // Store redirect URL in metadata
+        packageData.redirect_url ||
+        `${config.paystack.frontendUrl}/packages/new/ibs-success?packageId=${packageData._id}&status=success`, // Store redirect URL in metadata
     },
   };
 

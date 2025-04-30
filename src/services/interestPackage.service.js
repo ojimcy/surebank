@@ -240,6 +240,33 @@ const getInterestPackageById = async (packageId) => {
 };
 
 /**
+ * Get interest package by payment reference
+ * @param {string} reference - Payment reference
+ * @returns {Promise<Object>} Interest package details
+ */
+const getInterestPackageByReference = async (reference) => {
+  const InterestPackageModel = await InterestPackage();
+
+  const interestPackage = await InterestPackageModel.findOne({ paymentReference: reference })
+    .populate('createdBy', 'firstName lastName')
+    .lean();
+
+  if (!interestPackage) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Interest package not found for this reference');
+  }
+
+  // Calculate latest interest before returning package details
+  await calculateInterestForPackage(interestPackage._id);
+
+  // Refresh package data after interest calculation
+  const updatedPackage = await InterestPackageModel.findById(interestPackage._id)
+    .populate('createdBy', 'firstName lastName')
+    .lean();
+
+  return updatedPackage;
+};
+
+/**
  * Get all interest packages for a user
  * @param {string} userId - User ID
  * @returns {Promise<Array>} List of interest packages
@@ -617,4 +644,5 @@ module.exports = {
   requestWithdrawal,
   getProjectedInterest,
   processVerifiedPayment,
+  getInterestPackageByReference,
 };
