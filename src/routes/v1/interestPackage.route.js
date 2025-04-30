@@ -33,7 +33,7 @@ router
 
 // Get package by payment reference - must be defined before /:packageId route
 router
-  .route('/package/reference/:reference')
+  .route('/package/reference')
   .get(
     auth('selfAccount'),
     validate(interestPackageValidation.getInterestPackageByReference),

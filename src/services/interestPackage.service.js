@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const mongoose = require('mongoose');
-const { InterestPackage, AccountTransaction, PaymentTransaction } = require('../models');
+const { InterestPackage, AccountTransaction, PaymentTransaction, User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
@@ -38,6 +38,7 @@ const updatePackageStatus = async (packageId, newStatus) => {
  */
 const calculateInterestForPackage = async (packageId) => {
   const InterestPackageModel = await InterestPackage();
+  const UserModel = await User();
 
   // Get the interest package in a single operation
   const interestPackage = await InterestPackageModel.findById(packageId);
@@ -47,8 +48,8 @@ const calculateInterestForPackage = async (packageId) => {
     return interestPackage;
   }
 
-  const now = new Date();
-  const lastCalculation = new Date(interestPackage.lastInterestCalculationDate);
+  const now = new Date().getTime();
+  const lastCalculation = interestPackage.lastInterestCalculationDate;
 
   // Calculate time difference in days since last calculation
   const timeDiffMs = now - lastCalculation;
@@ -96,11 +97,16 @@ const calculateInterestForPackage = async (packageId) => {
   // Send notification about maturity if needed
   if (isMatured && interestPackage.status === 'active') {
     try {
+      // Get user's email for notification
+      const user = await UserModel.findById(interestPackage.userId);
+      const userEmail = user ? user.email : null;
+
       await sendNotification({
         title: 'Interest Package Matured',
         message: `Your Interest-Based Savings package "${interestPackage.name}" has matured.`,
         userId: interestPackage.userId,
-        type: 'package',
+        type: 'package_matured',
+        email: userEmail,
       });
     } catch (error) {
       logger.error('Error sending maturity notification:', error);
@@ -119,6 +125,7 @@ const calculateInterestForPackage = async (packageId) => {
  */
 const createInterestPackage = async (packageDataInput, paymentReference = null) => {
   const InterestPackageModel = await InterestPackage();
+  const UserModel = await User();
 
   // Create a working copy of the package data
   let packageData = { ...packageDataInput };
@@ -181,9 +188,9 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
   }
 
   // Calculate maturity date based on lock period
-  const startDate = new Date();
-  const maturityDate = new Date(startDate);
-  maturityDate.setDate(maturityDate.getDate() + packageData.lockPeriod);
+  const startDate = new Date().getTime(); // Store as timestamp
+  const lockPeriodInMs = packageData.lockPeriod * 24 * 60 * 60 * 1000; // Convert days to milliseconds
+  const maturityDate = startDate + lockPeriodInMs; // Add lock period to timestamp
 
   // Prepare final package data with defaults for any missing values
   const finalPackageData = {
@@ -201,14 +208,20 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
   // Create the package with all necessary data
   const interestPackage = await InterestPackageModel.create(finalPackageData);
 
+  // Get user's email for notification
+  const user = await UserModel.findById(packageData.userId);
+  const userEmail = user ? user.email : null;
+
   // Send notification asynchronously
   sendNotification({
     title: `${interestRateInfo.name} Package Created`,
     message: `Your Interest-Based Savings package (${
       interestRateInfo.rate
-    }% interest) has been created successfully. It will mature on ${maturityDate.toLocaleDateString()}.`,
+    }% interest per annum) has been created successfully. It will mature on ${new Date(maturityDate).toLocaleDateString()}.`,
+    type: 'package_created',
     userId: packageData.userId,
-    type: 'package',
+    email: userEmail,
+    dashboardUrl: `${process.env.FRONTEND_URL}/packages/${interestPackage._id}`,
   }).catch((error) => {
     logger.error('Error sending notification:', error);
     // Notification failure doesn't block package creation
@@ -247,9 +260,19 @@ const getInterestPackageById = async (packageId) => {
 const getInterestPackageByReference = async (reference) => {
   const InterestPackageModel = await InterestPackage();
 
-  const interestPackage = await InterestPackageModel.findOne({ paymentReference: reference })
-    .populate('createdBy', 'firstName lastName')
-    .lean();
+  // Check if reference starts with ibs_ prefix, which indicates it's an internal reference
+  // and needs different handling than a payment reference
+  let query = { paymentReference: reference };
+
+  // If the reference has the ibs_ prefix, it might be a name rather than a payment reference
+  if (reference.startsWith('ibs_')) {
+    // Try to find by name as an alternative search
+    query = {
+      $or: [{ paymentReference: reference }, { name: reference }],
+    };
+  }
+
+  const interestPackage = await InterestPackageModel.findOne(query).populate('createdBy', 'firstName lastName').lean();
 
   if (!interestPackage) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Interest package not found for this reference');
@@ -370,6 +393,7 @@ const calculateEarlyWithdrawalAmount = async (packageId) => {
 const requestWithdrawal = async (packageId, withdrawalReason, userId) => {
   const InterestPackageModel = await InterestPackage();
   const AccountTransactionModel = await AccountTransaction();
+  const UserModel = await User();
 
   // Start a transaction session
   const session = await mongoose.startSession();
@@ -465,11 +489,16 @@ const requestWithdrawal = async (packageId, withdrawalReason, userId) => {
 
     // Send notification
     try {
+      // Get user's email for notification
+      const user = await UserModel.findById(interestPackage.userId);
+      const userEmail = user ? user.email : null;
+
       await sendNotification({
         title: 'Withdrawal Request Submitted',
         message: `Your withdrawal request for package "${interestPackage.name}" has been submitted and is pending approval.`,
         userId: interestPackage.userId,
-        type: 'package',
+        type: 'package_withdrawal_alert',
+        email: userEmail,
       });
     } catch (error) {
       logger.error('Error sending withdrawal notification:', error);
@@ -598,7 +627,7 @@ const processVerifiedPayment = async (paymentData) => {
       const PaymentTransactionModel = await PaymentTransaction();
       await PaymentTransactionModel.updateOne(
         { reference: paymentData.reference },
-        { $set: { status: 'processed', processedAt: new Date() } }
+        { $set: { status: 'processed', processedAt: new Date().getTime() } }
       );
     } catch (error) {
       logger.error('Error updating payment transaction status:', error);
@@ -615,11 +644,17 @@ const processVerifiedPayment = async (paymentData) => {
 
     // Send notification asynchronously
     try {
+      // Get user's email for notification
+      const UserModel = await User();
+      const user = await UserModel.findById(packageData.userId);
+      const userEmail = user ? user.email : null;
+
       await sendNotification({
         title: 'Package Created Successfully',
         message: `Your deposit of ${packageData.principalAmount} was successful. Your interest-based savings package "${packageData.name}" is now active.`,
         userId: packageData.userId,
-        type: 'package',
+        type: 'package_created',
+        email: userEmail,
       });
     } catch (error) {
       logger.error('Error sending package creation notification:', error);

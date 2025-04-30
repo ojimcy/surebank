@@ -13,6 +13,8 @@ const NOTIFICATION_TYPES = [
   'withdrawal_alerts',
   'login_alerts',
   'package_created',
+  'package_matured',
+  'package_withdrawal_alert',
 ];
 
 const notificationPreferenceSchema = mongoose.Schema(

@@ -7,6 +7,7 @@ const resetPasswordTemplate = require('../templates/emails/reset-password.templa
 const dailySavingsContributionTemplate = require('../templates/emails/daily-savings-contribution.template');
 const accountActivityTemplate = require('../templates/emails/account-activity.template');
 const packageCreatedTemplate = require('../templates/emails/package-created.template');
+const packageMaturedTemplate = require('../templates/emails/package-matured.template');
 const ApiError = require('../utils/ApiError');
 
 const client = new SESClient({ region: 'us-east-1' });
@@ -31,6 +32,10 @@ const emailTemplates = {
   PACKAGE_CREATED: {
     subject: 'Package Created Successfully',
     html: packageCreatedTemplate,
+  },
+  PACKAGE_MATURITY_ALERT: {
+    subject: 'Package Maturity Alert',
+    html: packageMaturedTemplate,
   },
 };
 

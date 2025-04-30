@@ -24,9 +24,19 @@ const initializeTransaction = async (transactionData, skipCustomerCreation = fal
   try {
     const { email, amount, callbackUrl, metadata = {}, userId } = transactionData;
 
-    // Generate a unique reference
-    const paymentType = ['ds', 'sb', 'is'];
-    const reference = `${paymentType[Math.floor(Math.random() * paymentType.length)]}_${uuidv4()}`;
+    // Determine prefix based on contributionType
+    const { contributionType } = metadata;
+    let prefix = 'gen'; // Default prefix if type is unknown
+    if (contributionType === 'ds') {
+      prefix = 'ds'; // Daily Savings
+    } else if (contributionType === 'interest_savings') {
+      prefix = 'ibs'; // Interest Savings
+    } else if (contributionType === 'sb') {
+      prefix = 'sb';
+    }
+
+    // Generate a unique reference using the determined prefix
+    const reference = `${prefix}_${uuidv4()}`;
 
     // Convert amount to kobo (Paystack uses kobo not Naira)
     const amountInKobo = Math.round(amount * 100);

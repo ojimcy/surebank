@@ -90,7 +90,7 @@ const getInterestPackageById = catchAsync(async (req, res) => {
  * @param {Object} res - Express response object
  */
 const getInterestPackageByReference = catchAsync(async (req, res) => {
-  const { reference } = req.params;
+  const { reference } = req.query;
   const interestPackage = await interestPackageService.getInterestPackageByReference(reference);
 
   res.status(httpStatus.OK).json(interestPackage);

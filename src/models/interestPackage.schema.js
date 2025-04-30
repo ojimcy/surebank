@@ -6,7 +6,7 @@ const interestPackageSchema = mongoose.Schema(
     accountNumber: {
       type: String,
       required: true,
-      unique: true,
+      trim: true,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -27,6 +27,7 @@ const interestPackageSchema = mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      unique: true,
     },
     principalAmount: {
       type: Number,
@@ -86,6 +87,7 @@ const interestPackageSchema = mongoose.Schema(
     paymentReference: {
       type: String,
       trim: true,
+      unique: true,
     },
     paymentTransactionId: {
       type: mongoose.Schema.Types.ObjectId,

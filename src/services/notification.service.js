@@ -46,12 +46,32 @@ const markNotificationAsRead = async (userId, notificationId) => {
 const getUserPreferences = async (userId) => {
   const NotificationPreferenceModel = await NotificationPreference();
 
-  const preferences = await NotificationPreferenceModel.findOne({ userId });
-  if (!preferences) {
-    // Create default preferences if none exist
-    return NotificationPreferenceModel.create({ userId });
+  try {
+    // Use findOneAndUpdate with upsert to handle concurrent attempts to create preferences
+    // This is an atomic operation that will create preferences if they don't exist,
+    // or return existing preferences if they do
+    const preferences = await NotificationPreferenceModel.findOneAndUpdate(
+      { userId },
+      { $setOnInsert: { userId } }, // Only set userId if creating a new document
+      {
+        upsert: true, // Create if doesn't exist
+        new: true, // Return the updated/created document
+        runValidators: true, // Ensure validation runs on new document
+      }
+    );
+
+    return preferences;
+  } catch (error) {
+    // If we still get a duplicate key error, it means another operation created the document
+    // between our find and update. In this case, just retrieve the document.
+    if (error.code === 11000) {
+      logger.info(`Concurrent notification preference creation detected for user ${userId}, fetching existing preferences`);
+      return NotificationPreferenceModel.findOne({ userId });
+    }
+
+    // For any other error, rethrow it
+    throw error;
   }
-  return preferences;
 };
 
 /**

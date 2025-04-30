@@ -32,7 +32,7 @@ const getInterestPackageById = {
 };
 
 const getInterestPackageByReference = {
-  params: Joi.object().keys({
+  query: Joi.object().keys({
     reference: Joi.string().required(),
   }),
 };
