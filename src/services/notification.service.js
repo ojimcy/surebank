@@ -101,28 +101,12 @@ const updateUserPreferences = async (userId, updateBody) => {
 
 /**
  * Send notification based on user preferences
- * @param {ObjectId|Object} userIdOrData - Either the userId or a full notification object (for backward compatibility)
- * @param {string} [type] - Notification type (only needed if first param is userId)
- * @param {Object} [data] - Notification data (only needed if first param is userId)
+ * @param {ObjectId} userId - User ID
+ * @param {string} type - Notification type
+ * @param {Object} data - Notification data (subject, message, email, etc)
  * @returns {Promise<void>}
  */
-const sendNotification = async (userIdOrData, type, data) => {
-  // Handle legacy calling convention (object as first parameter)
-  if (typeof userIdOrData === 'object' && userIdOrData !== null && !type && !data) {
-    const legacyData = userIdOrData;
-    logger.info(`Using legacy notification format for user ${legacyData.userId}`);
-
-    // Extract parameters from legacy format
-    return sendNotification(legacyData.userId, legacyData.type || 'account_activity', {
-      subject: legacyData.title,
-      message: legacyData.message,
-      // Other fields may not be present in legacy format
-    });
-  }
-
-  // New format handling
-  const userId = userIdOrData;
-
+const sendNotification = async (userId, type, data) => {
   try {
     const preferences = await getUserPreferences(userId);
 

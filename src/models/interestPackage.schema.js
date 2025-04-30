@@ -27,7 +27,6 @@ const interestPackageSchema = mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      unique: true,
     },
     principalAmount: {
       type: Number,

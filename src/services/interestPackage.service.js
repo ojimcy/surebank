@@ -101,11 +101,9 @@ const calculateInterestForPackage = async (packageId) => {
       const user = await UserModel.findById(interestPackage.userId);
       const userEmail = user ? user.email : null;
 
-      await sendNotification({
-        title: 'Interest Package Matured',
+      await sendNotification(interestPackage.userId, 'package_matured', {
+        subject: 'Interest Package Matured',
         message: `Your Interest-Based Savings package "${interestPackage.name}" has matured.`,
-        userId: interestPackage.userId,
-        type: 'package_matured',
         email: userEmail,
       });
     } catch (error) {
@@ -211,17 +209,17 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
   // Get user's email for notification
   const user = await UserModel.findById(packageData.userId);
   const userEmail = user ? user.email : null;
+  const phoneNumber = user ? user.phoneNumber : null;
 
   // Send notification asynchronously
-  sendNotification({
-    title: `${interestRateInfo.name} Package Created`,
+  sendNotification(packageData.userId, 'package_created', {
+    subject: `${interestRateInfo.name} Package Created`,
     message: `Your Interest-Based Savings package (${
       interestRateInfo.rate
     }% interest per annum) has been created successfully. It will mature on ${new Date(maturityDate).toLocaleDateString()}.`,
-    type: 'package_created',
-    userId: packageData.userId,
     email: userEmail,
     dashboardUrl: `${process.env.FRONTEND_URL}/packages/${interestPackage._id}`,
+    phoneNumber,
   }).catch((error) => {
     logger.error('Error sending notification:', error);
     // Notification failure doesn't block package creation
@@ -493,11 +491,9 @@ const requestWithdrawal = async (packageId, withdrawalReason, userId) => {
       const user = await UserModel.findById(interestPackage.userId);
       const userEmail = user ? user.email : null;
 
-      await sendNotification({
-        title: 'Withdrawal Request Submitted',
+      await sendNotification(interestPackage.userId, 'package_withdrawal_alert', {
+        subject: 'Withdrawal Request Submitted',
         message: `Your withdrawal request for package "${interestPackage.name}" has been submitted and is pending approval.`,
-        userId: interestPackage.userId,
-        type: 'package_withdrawal_alert',
         email: userEmail,
       });
     } catch (error) {
@@ -649,11 +645,9 @@ const processVerifiedPayment = async (paymentData) => {
       const user = await UserModel.findById(packageData.userId);
       const userEmail = user ? user.email : null;
 
-      await sendNotification({
-        title: 'Package Created Successfully',
+      await sendNotification(packageData.userId, 'package_created', {
+        subject: 'Package Created Successfully',
         message: `Your deposit of ${packageData.principalAmount} was successful. Your interest-based savings package "${packageData.name}" is now active.`,
-        userId: packageData.userId,
-        type: 'package_created',
         email: userEmail,
       });
     } catch (error) {
