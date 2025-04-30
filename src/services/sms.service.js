@@ -66,7 +66,6 @@ const sendNotificationSMS = async (to, template, data) => {
   if (!templates[template]) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid SMS template');
   }
-  console.log('sms data', data);
   const message = templates[template]({
     ...data,
     supportNumber: config.sms.supportNumber,

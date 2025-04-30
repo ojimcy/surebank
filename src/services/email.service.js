@@ -122,6 +122,67 @@ const sendResetPasswordEmail = async (to, otp) => {
 };
 
 /**
+ * Send package creation confirmation email
+ * @param {string} to - Recipient's email address
+ * @param {Object} packageDetails - Details of the created package
+ * @param {string} packageDetails.name - Name of the package
+ * @param {string} packageDetails.userName - User's name
+ * @param {number} packageDetails.interestRate - Interest rate of the package
+ * @param {number} packageDetails.amount - Principal amount of the package
+ * @param {Date|number} packageDetails.maturityDate - Maturity date of the package
+ * @param {string} [packageDetails.dashboardUrl] - URL to package dashboard
+ * @returns {Promise}
+ */
+const sendPackageCreationEmail = async (to, packageDetails) => {
+  const {
+    name: packageName,
+    userName = to.split('@')[0],
+    interestRate,
+    amount,
+    maturityDate,
+    dashboardUrl,
+  } = packageDetails;
+
+  const data = {
+    name: userName,
+    packageName,
+    interestRate,
+    maturityDate:
+      typeof maturityDate === 'number' ? new Date(maturityDate).toLocaleDateString() : maturityDate.toLocaleDateString(),
+    amount,
+    dashboardUrl,
+  };
+
+  const params = {
+    Source: formatEmailSource(config.email.from),
+    Destination: {
+      ToAddresses: [to],
+    },
+    Message: {
+      Subject: {
+        Data: emailTemplates.PACKAGE_CREATED.subject,
+      },
+      Body: {
+        Html: {
+          Data: emailTemplates.PACKAGE_CREATED.html(data),
+        },
+      },
+    },
+  };
+
+  try {
+    await client.send(new SendEmailCommand(params));
+    logger.info(`Package creation email sent to ${to}`);
+  } catch (error) {
+    logger.error('Error sending package creation email:', error);
+    if (error.message && error.message.includes('not verified')) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Email sending failed: Please verify your email address in AWS SES first');
+    }
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send package creation email');
+  }
+};
+
+/**
  * Send general-purpose email
  * @param {Object} options
  * @param {string} options.to - Recipient email
@@ -129,20 +190,20 @@ const sendResetPasswordEmail = async (to, otp) => {
  * @param {string} [options.text] - Plain text content
  * @param {string} [options.html] - HTML content
  * @param {string} [options.template] - Template name (from emailTemplates)
- * @param {Object} [options.data] - Template data
+ * @param {Object} [options.templateData] - Template data
  * @returns {Promise}
  */
 const sendEmail = async (options) => {
-  const { to, subject, text, html, template, data } = options;
+  const { to, subject, text, html, template, templateData } = options;
 
   let emailContent;
 
   if (template && emailTemplates[template.toUpperCase()]) {
-    const templateData = emailTemplates[template.toUpperCase()];
-    const renderedHtml = templateData.html(data || {});
+    const templateConfig = emailTemplates[template.toUpperCase()];
+    const renderedHtml = templateConfig.html(templateData || {});
     emailContent = {
       Subject: {
-        Data: templateData.subject,
+        Data: templateConfig.subject,
       },
       Body: {
         Html: {
@@ -201,4 +262,5 @@ module.exports = {
   sendVerificationEmail,
   sendResetPasswordEmail,
   sendEmail,
+  sendPackageCreationEmail,
 };

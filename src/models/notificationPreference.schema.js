@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
 
-const NOTIFICATION_CHANNELS = ['email', 'sms', 'both', 'none'];
+const NOTIFICATION_CHANNELS = ['in-app', 'email', 'sms', 'both', 'none'];
 const NOTIFICATION_TYPES = [
   'account_activity',
   'security_alerts',

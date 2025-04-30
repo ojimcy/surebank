@@ -1,8 +1,6 @@
 const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
 const { Notification, NotificationPreference } = require('../models');
-const emailService = require('./email.service');
-const smsService = require('./sms.service');
 const logger = require('../config/logger');
 const notificationPreferenceSchema = require('../models/notificationPreference.schema');
 
@@ -100,10 +98,15 @@ const updateUserPreferences = async (userId, updateBody) => {
 };
 
 /**
- * Send notification based on user preferences
+ * Send in-app notification (no email or SMS)
  * @param {ObjectId} userId - User ID
  * @param {string} type - Notification type
- * @param {Object} data - Notification data (subject, message, email, etc)
+ * @param {Object} data - Notification data
+ * @param {string} data.title - Notification title
+ * @param {string} data.body - Notification body
+ * @param {string} [data.reference] - Optional reference
+ * @param {ObjectId} [data.relatedEntityId] - Optional related entity ID
+ * @param {string} [data.relatedEntityType] - Optional related entity type
  * @returns {Promise<void>}
  */
 const sendNotification = async (userId, type, data) => {
@@ -123,109 +126,30 @@ const sendNotification = async (userId, type, data) => {
       return;
     }
 
-    const { subject, message, templateData, reference, relatedEntityId, relatedEntityType, template, smsTemplate } = data;
+    // Extract notification data
+    const { title, body, reference, relatedEntityId, relatedEntityType } = data;
 
-    // Validate required fields based on channel
-    if ((channel === 'email' || channel === 'both') && !data.email) {
-      logger.warn(`Email notification requested but no email address provided for user ${userId}`);
-      return;
-    }
-
-    if ((channel === 'sms' || channel === 'both') && !data.phoneNumber) {
-      logger.warn(`SMS notification requested but no phone number provided for user ${userId}`);
-      return;
-    }
     // Save the notification in the database
     try {
-      await createNotification({
+      const notification = await createNotification({
         userId,
-        title: subject,
-        body: message,
+        title: title || 'Notification',
+        body: body || '',
         type: notificationPreferenceSchema.statics.NOTIFICATION_TYPES.indexOf(type),
         reference,
         relatedEntityId,
         relatedEntityType,
       });
+
+      logger.info(`Successfully created in-app notification for user ${userId}`);
+      return notification;
     } catch (error) {
       logger.error('Error saving notification to database:', {
         message: error.message,
         userId,
         type,
       });
-      // Continue with sending, even if saving to DB fails
-    }
-
-    try {
-      switch (channel) {
-        case 'email':
-          if (data.email) {
-            await emailService.sendEmail({
-              to: data.email,
-              subject: subject || 'Notification',
-              template,
-              data: templateData || {},
-            });
-          }
-          break;
-
-        case 'sms':
-          if (data.phoneNumber) {
-            if (smsTemplate) {
-              await smsService.sendNotificationSMS(data.phoneNumber, smsTemplate, templateData || {});
-            } else if (message) {
-              await smsService.sendSMS({
-                to: data.phoneNumber,
-                message,
-              });
-            }
-          }
-          break;
-
-        case 'both': {
-          const promises = [];
-          if (data.email) {
-            promises.push(
-              emailService.sendEmail({
-                to: data.email,
-                subject: subject || 'Notification',
-                template,
-                data: templateData || {},
-              })
-            );
-          }
-
-          if (data.phoneNumber) {
-            if (smsTemplate) {
-              promises.push(smsService.sendNotificationSMS(data.phoneNumber, smsTemplate, templateData || {}));
-            } else if (message) {
-              promises.push(
-                smsService.sendSMS({
-                  to: data.phoneNumber,
-                  message,
-                })
-              );
-            }
-          }
-
-          if (promises.length > 0) {
-            await Promise.allSettled(promises);
-          }
-          break;
-        }
-
-        default:
-          logger.info(`No notifications sent for channel: ${channel}`);
-      }
-
-      logger.info(`Successfully sent ${type} notification to user ${userId} via ${channel}`);
-    } catch (error) {
-      // Log error but don't throw to prevent blocking the main process
-      logger.error('Error sending notification through channel:', {
-        channel,
-        error: error.message,
-        userId,
-        type,
-      });
+      throw error;
     }
   } catch (error) {
     logger.error('Error in notification process:', {
@@ -234,6 +158,30 @@ const sendNotification = async (userId, type, data) => {
       type,
     });
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send notification');
+  }
+};
+
+/**
+ * Check user notification preference for a specific type
+ * @param {ObjectId} userId - User ID
+ * @param {string} type - Notification type
+ * @returns {Promise<string|null>} The preferred channel or null if disabled
+ */
+const getUserNotificationPreference = async (userId, type) => {
+  try {
+    const preferences = await getUserPreferences(userId);
+
+    // If user has unsubscribed from all, return null
+    if (preferences.unsubscribedFromAll) {
+      return null;
+    }
+
+    // Get channel preference for this notification type
+    const channel = preferences.preferences[type];
+    return !channel || channel === 'none' ? null : channel;
+  } catch (error) {
+    logger.error('Error getting user notification preference:', error);
+    return null;
   }
 };
 
@@ -278,4 +226,5 @@ module.exports = {
   unsubscribeFromNotificationType,
   NOTIFICATION_TYPES: notificationPreferenceSchema.statics.NOTIFICATION_TYPES,
   NOTIFICATION_CHANNELS: notificationPreferenceSchema.statics.NOTIFICATION_CHANNELS,
+  getUserNotificationPreference,
 };

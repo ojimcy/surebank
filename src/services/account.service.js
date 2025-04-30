@@ -116,6 +116,10 @@ const getUserAccount = async (userId, accountType) => {
         path: 'branchId',
         select: 'name',
       },
+      {
+        path: 'userId',
+        select: 'email phoneNumber firstName',
+      },
     ])
     .lean();
   if (!account) {
