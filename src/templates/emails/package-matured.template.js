@@ -21,14 +21,14 @@ module.exports = (data) =>
   <h2 style="text-align: center;">Package Maturity Notification</h2>
   
   <div class="alert alert-success">
-    <p style="font-size: 16px;">Dear ${data.user.firstName},</p>
+    <p style="font-size: 16px;">Dear ${data.name},</p>
     <p>Congratulations! Your interest-based savings package has successfully matured.</p>
   </div>
 
   <div class="card">
     <div style="text-align: center;">
       <h3 style="color: #2E7D32;">Package Details</h3>
-      <div style="font-size: 18px; font-weight: bold; margin: 10px 0;">${data.name}</div>
+      <div style="font-size: 18px; font-weight: bold; margin: 10px 0;">${data.packageName}</div>
     </div>
 
     <div class="divider"></div>

@@ -7,12 +7,24 @@ const baseTemplate = require('./base.template');
  * @param {string} data.packageName Name of the interest package
  * @param {number} data.amount Principal amount invested
  * @param {number} data.interestRate Annual interest rate percentage
- * @param {string} data.maturityDate Date when the package will mature
+ * @param {string|number} data.maturityDate Date when the package will mature
  * @param {string} data.dashboardUrl URL to the dashboard
  * @returns {string} HTML email content
  */
-module.exports = (data) =>
-  baseTemplate(`
+module.exports = (data) => {
+  // Ensure maturity date is properly parsed
+  const maturityDate = new Date(parseInt(data.maturityDate, 10));
+  const formattedMaturityDate = maturityDate.toLocaleDateString();
+  const startDate = new Date(parseInt(data.startDate, 10));
+
+  // Calculate time difference in days for expected return
+  const timeDiffInMs = maturityDate - startDate;
+  const daysUntilMaturity = timeDiffInMs / (1000 * 60 * 60 * 24);
+
+  // Calculate expected return using simple interest formula
+  const expectedReturn = data.amount * (1 + (data.interestRate / 100) * (daysUntilMaturity / 365));
+
+  return baseTemplate(`
   <h2 style="text-align: center;">Interest-Based Savings Package Created</h2>
   
   <div class="alert alert-success">
@@ -36,13 +48,10 @@ module.exports = (data) =>
       <span>${data.interestRate}% per annum</span>
 
       <strong>Maturity Date:</strong>
-      <span>${data.maturityDate}</span>
+      <span>${formattedMaturityDate}</span>
 
       <strong>Expected Return:</strong>
-      <span>₦${Number(
-        data.amount *
-          (1 + ((data.interestRate / 100) * (new Date(data.maturityDate) - new Date())) / (1000 * 60 * 60 * 24 * 365))
-      ).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+      <span>₦${Number(expectedReturn).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
     </div>
   </div>
 
@@ -59,3 +68,4 @@ module.exports = (data) =>
     <p>Thank you for choosing SureBank for your investment journey!</p>
   </div>
 `);
+};

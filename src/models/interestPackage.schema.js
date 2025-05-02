@@ -56,16 +56,15 @@ const interestPackageSchema = mongoose.Schema(
       comment: 'How often interest is compounded',
     },
     lastInterestCalculationDate: {
-      type: Date,
-      default: Date.now,
+      type: String,
+      required: true,
     },
     startDate: {
-      type: Date,
+      type: String,
       required: true,
-      default: Date.now,
     },
     maturityDate: {
-      type: Date,
+      type: String,
       required: true,
     },
     lockPeriod: {

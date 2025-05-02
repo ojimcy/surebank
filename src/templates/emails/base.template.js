@@ -182,7 +182,7 @@ module.exports = (content, title) => `
 <body>
   <div class="container">
     <div class="header">
-      <img src="https://surebank.com/assets/logo-white.png" alt="SureBank" class="logo">
+      <img src="/logo.png" alt="SureBank" class="logo">
     </div>
     <div class="content">
       ${content}

@@ -147,8 +147,7 @@ const sendPackageCreationEmail = async (to, packageDetails) => {
     name: userName,
     packageName,
     interestRate,
-    maturityDate:
-      typeof maturityDate === 'number' ? new Date(maturityDate).toLocaleDateString() : maturityDate.toLocaleDateString(),
+    maturityDate: new Date(maturityDate).toLocaleDateString(),
     amount,
     dashboardUrl,
   };

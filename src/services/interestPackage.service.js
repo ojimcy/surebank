@@ -7,8 +7,9 @@ const logger = require('../config/logger');
 const { sendNotification, getUserNotificationPreference } = require('./notification.service');
 const paymentService = require('./payment.service');
 const emailService = require('./email.service');
-const smsService = require('./sms.service');
+
 const interestRateConfig = require('../config/interestRates');
+const { sendSMS } = require('./sms.service');
 
 /**
  * Update package status
@@ -140,7 +141,7 @@ const calculateInterestForPackage = async (packageId) => {
           const message = `Your Investment Package "${
             interestPackage.name
           }" has matured with a total amount of ${interestPackage.currentBalance.toFixed(2)}. Login to withdraw your funds.`;
-          await smsService.sendSMS({
+          await sendSMS({
             to: phoneNumber,
             message,
           });
@@ -223,7 +224,6 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
   if (!userAccount) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Account not found. Please create one to continue.');
   }
-  logger.info('User account:', userAccount);
 
   // Calculate maturity date based on lock period
   const startDate = new Date().getTime(); // Store as timestamp
@@ -294,7 +294,7 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
         const message = `Your IBS Package (${interestRateInfo.rate}%) of ${
           packageData.principalAmount
         } has been created successfully. It will mature on ${new Date(maturityDate).toLocaleDateString()}.`;
-        await smsService.sendSMS({
+        await sendSMS({
           to: phoneNumber,
           message,
         });
@@ -756,7 +756,7 @@ const processVerifiedPayment = async (paymentData) => {
         const smsPreference = await getUserNotificationPreference(packageData.userId, 'package_created');
         if (smsPreference === 'sms' || smsPreference === 'both') {
           const message = `Your deposit of ${packageData.principalAmount} was successful. Your investment package "${packageData.name}" is now active.`;
-          await smsService.sendSMS({
+          await sendSMS({
             to: phoneNumber,
             message,
           });
