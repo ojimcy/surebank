@@ -3,6 +3,7 @@ const { interestPackageService, paymentService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 const interestRateConfig = require('../config/interestRates');
 const config = require('../config/config');
+const logger = require('../config/logger');
 /**
  * Initiate payment for a new interest-based savings package
  * @param {Object} req - Express request object
@@ -170,11 +171,11 @@ const handlePaymentCallback = catchAsync(async (req, res) => {
 
   try {
     const result = await interestPackageService.processVerifiedPayment({ reference });
-
+    logger.info(`processing payment: ${result}`);
     // If it's a web callback (not webhook), redirect to success page with package details
     if (req.headers['user-agent'] && !req.headers['x-paystack-signature']) {
       // Build the redirect URL with the package details
-      let finalRedirectURL = `${config.paystack.frontendUrl}/packages/new/ibs-success?packageId=${result._id}&status=success`;
+      let finalRedirectURL = `${config.paystack.frontendUrl}/packages/new/ibs-success?reference=${result.reference}&status=success`;
 
       // If the result has a redirect_url, use that instead
       if (result.redirect_url) {
@@ -182,9 +183,9 @@ const handlePaymentCallback = catchAsync(async (req, res) => {
 
         // Add query parameters if not already present
         if (!finalRedirectURL.includes('?')) {
-          finalRedirectURL += `?packageId=${result._id}&status=success`;
+          finalRedirectURL += `?reference=${result.reference}&status=success`;
         } else {
-          finalRedirectURL += `&packageId=${result._id}&status=success`;
+          finalRedirectURL += `&reference=${result.reference}&status=success`;
         }
       }
 

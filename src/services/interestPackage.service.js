@@ -273,11 +273,14 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
       if (emailPreference === 'email' || emailPreference === 'both') {
         await emailService.sendPackageCreationEmail(userEmail, {
           name: interestPackage.name || interestRateInfo.name,
-          userName: userAccount.firstName,
+          packageName: interestPackage.name || interestRateInfo.name,
+          userName: userAccount.firstName || (userEmail ? userEmail.split('@')[0] : 'Valued Customer'),
           interestRate: interestRateInfo.rate,
+          startDate,
           maturityDate,
           amount: packageData.principalAmount,
           dashboardUrl: `${process.env.FRONTEND_URL}/packages/${interestPackage._id}`,
+          lockPeriod: packageData.lockPeriod,
         });
       }
     } catch (error) {
@@ -741,8 +744,10 @@ const processVerifiedPayment = async (paymentData) => {
         if (emailPreference === 'email' || emailPreference === 'both') {
           await emailService.sendPackageCreationEmail(userEmail, {
             name: packageData.name,
+            packageName: packageData.name,
             userName: user && user.firstName ? user.firstName : 'Valued Customer',
             interestRate: createdPackage.interestRate,
+            startDate: createdPackage.startDate,
             maturityDate: createdPackage.maturityDate,
             amount: packageData.principalAmount,
             dashboardUrl: metadata.redirect_url || `${process.env.FRONTEND_URL}/packages/${createdPackage._id}`,
