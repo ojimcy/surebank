@@ -203,7 +203,7 @@ const initiateInterestPackagePayment = async (packageData) => {
       userId: packageData.userId, // Include userId in metadata for verification
       redirect_url:
         packageData.redirect_url ||
-        `${config.paystack.frontendUrl}/packages/new/ibs-success?packageId=${packageData._id}&status=success`, // Store redirect URL in metadata
+        `${config.paystack.frontendUrl}/payments/success?packageId=${packageData._id}&status=success`, // Store redirect URL in metadata
     },
   };
 

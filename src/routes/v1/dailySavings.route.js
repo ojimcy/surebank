@@ -52,4 +52,15 @@ router
   )
   .patch(auth('updatePackage'), validate(dailySavingsValidation.updatedPackage), dailySavingsController.updatePackage);
 
+/**
+ * Route for initializing payment for daily savings contribution
+ */
+router
+  .route('/init-contribution')
+  .post(
+    auth('selfAccount'),
+    validate(dailySavingsValidation.initializeDailySavingsContribution),
+    dailySavingsController.initializeDailySavingsContribution
+  );
+
 module.exports = router;

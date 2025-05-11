@@ -47,27 +47,28 @@ Extend the current admin-focused app's backend/API to support user-facing functi
 
 ### 2.1 Daily Savings Package
 
-- [ ] Implement API endpoint for user-initiated package creation (Daily Savings type)
-- [ ] Implement backend contribution logic using Paystack integration (linking payments to packages)
+- [✅] Implement API endpoint for user-initiated package creation (Daily Savings type)
+- [✅] Implement daily savings contribution logic using Paystack integration (linking payments to packages)
 - [ ] Implement backend withdrawal request workflow specific to Daily Savings rules
 - [ ] Implement backend transaction history tracking and API endpoint for package history retrieval
 - [ ] Implement backend package status management logic (e.g., active, pending withdrawal, closed)
 
 ### 2.2 SB (Savings-Buying) Package
 
-- [ ] Implement API endpoint for user-initiated package creation (SB Package type)
+- [✅] Implement API endpoint for user-initiated package creation (SB Package type)
 - [ ] Implement backend contribution logic using Paystack integration for SB packages
 - [ ] Implement backend logic allowing product purchase debits from SB package balance
 - [ ] Implement backend withdrawal system logic specific to SB Package rules
 
 ### 2.3 Interest-Based Savings Package
 
-- [ ] Implement database model based on the Interest-Based Package Schema
-- [ ] Implement backend system for configuring APR (Annual Percentage Rate) - likely admin controlled API
-- [ ] Implement backend lock period management logic (setting and enforcing)
-- [ ] Implement core backend interest calculation logic (specify frequency, compounding method)
-- [ ] Implement backend maturity tracking system (identify matured packages, trigger actions/notifications)
-- [ ] Implement backend early withdrawal process, including calculating and applying penalties (as specified in the request), factored into the withdrawal request.
+- [✅] Implement database model based on the Interest-Based Package Schema
+- [✅] Implement core backend interest calculation logic (specify frequency, compounding method)
+- [✅] Implement backend maturity tracking system (identify matured packages, trigger actions/notifications )
+- [✅] **Implement API Endpoint for Creating IBS Package** (Handles amount, lock period - `[REQ-PKG-IS-01]`).
+- [✅] **Modify Package Details API (`[REQ-PKG-02]`)** to include IBS details (APR, lock period, maturity date, accrued interest - `[REQ-PKG-IS-02]`).
+- [✅] Implement backend early withdrawal process, including calculating and applying penalties.
+- [✅] **Implement API Endpoint for Requesting Early Withdrawal (IBS)** (Integrates with backend process, calculates/shows penalty/net amount before request submission - `[REQ-PKG-IS-03]`).
 
 ## Phase 3: Payment & Transaction System (API & Backend Logic)
 

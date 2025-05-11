@@ -9,10 +9,10 @@ const { CONTRIBUTION_CIRCLE, ACCOUNT_TYPE, DIRECTION_VALUE } = require('../const
 const { addLedgerEntry } = require('./accounting.service');
 const { dsContributionMessage, welcomeMessage } = require('../templates/sms/templates');
 const { sendSms } = require('./sms.service');
-const { getAccountByUserId, getUserAccount } = require('./account.service');
+const { getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
-const { sendEmail } = require('./email.service');
-const { sendNotification } = require('./notification.service');
+const { sendEmail, sendGenericPackageCreationEmail } = require('./email.service');
+const { sendNotification, getUserNotificationPreference } = require('./notification.service');
 const dailySavingsContributionTemplate = require('../templates/emails/daily-savings-contribution.template');
 const config = require('../config/config');
 
@@ -93,6 +93,252 @@ const createDailySavingsPackage = async (dailyInput) => {
 };
 
 /**
+ * Handle package creation notifications
+ * @param {Object} params - Notification parameters
+ * @returns {Promise<void>}
+ */
+const handlePackageCreatedNotification = async ({ user, data, notificationData }) => {
+  const { target, accountNumber, amountPerDay, targetAmount } = data;
+
+  try {
+    // Send in-app notification
+    await sendNotification(user._id, 'package_created', {
+      title: 'Package Created Successfully',
+      body: `Your Daily Savings package for ${target} has been created successfully.`,
+      ...notificationData,
+    });
+
+    // Send email notification if user has email
+    if (user.email) {
+      try {
+        const emailPreference = await getUserNotificationPreference(user._id, 'package_created');
+        if (emailPreference === 'email' || emailPreference === 'both') {
+          const packageDetails = {
+            userName: user.firstName || user.email.split('@')[0],
+            packageType: 'ds',
+            amountPerDay,
+            targetAmount,
+            target,
+            productName: `Daily Savings - ${target}`,
+            currentContribution: 0,
+            accountNumber,
+            date: Date.now(),
+            dashboardUrl: `${config.paystack.frontendUrl}/packages/${data.packageId}`,
+          };
+          await sendGenericPackageCreationEmail(user.email, packageDetails);
+        }
+      } catch (error) {
+        logger.error('Error sending package creation email:', error);
+      }
+    }
+
+    // Send SMS notification if user has phone number
+    if (user.phoneNumber) {
+      try {
+        const smsPreference = await getUserNotificationPreference(user._id, 'package_created');
+        if (smsPreference === 'sms' || smsPreference === 'both') {
+          const message = `Your Daily Savings package for ${target} has been created successfully.`;
+          await sendSms(user.phoneNumber, message);
+        }
+      } catch (error) {
+        logger.error('Error sending package creation SMS:', error);
+      }
+    }
+  } catch (error) {
+    logger.error('Error in package creation notification:', error);
+  }
+};
+
+/**
+ * Handle contribution notifications
+ * @param {Object} params - Notification parameters
+ * @returns {Promise<void>}
+ */
+const handleContributionNotification = async ({ user, data, notificationData, packageData, accountData }) => {
+  const { amount, reference, accountNumber, paymentMethod = 'Online Payment' } = data;
+  const totalContribution =
+    packageData && packageData.totalContribution ? packageData.totalContribution : data.totalContribution;
+
+  try {
+    // Send in-app notification
+    await sendNotification(user._id, 'daily_savings', {
+      title: 'Daily Savings Contribution',
+      body: `Your Daily Savings contribution of ${amount} has been successfully processed.`,
+      ...notificationData,
+    });
+
+    logger.info(`In-app notification created for contribution ${reference} for user ${user._id}`);
+
+    // Send email notification if user has email
+    if (user.email) {
+      try {
+        const emailPreference = await getUserNotificationPreference(user._id, 'account_activity');
+        if (emailPreference === 'email' || emailPreference === 'both') {
+          const emailData = {
+            fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Valued Customer',
+            amount,
+            accountNumber: accountNumber || (packageData ? packageData.accountNumber : ''),
+            totalContribution,
+            reference,
+            paymentMethod,
+            dashboardUrl: `${config.paystack.frontendUrl}/packages/${data.packageId}`,
+          };
+
+          await sendEmail({
+            to: user.email,
+            subject: 'Daily Savings Contribution Confirmation',
+            html: dailySavingsContributionTemplate(emailData),
+          });
+
+          logger.info(`Email notification sent for contribution ${reference} to ${user.email}`);
+        }
+      } catch (error) {
+        logger.error(`Error sending email notification for contribution ${reference}:`, error);
+      }
+    }
+
+    // Send SMS notification if user has phone number
+    const phoneNumber = user.phoneNumber || (accountData ? accountData.phoneNumber : null);
+    if (phoneNumber) {
+      try {
+        const smsPreference = await getUserNotificationPreference(user._id, 'account_activity');
+        if (smsPreference === 'sms' || smsPreference === 'both') {
+          const message = dsContributionMessage(
+            user.firstName || 'Valued Customer',
+            amount,
+            accountNumber || (packageData ? packageData.accountNumber : ''),
+            totalContribution,
+            paymentMethod
+          );
+
+          await sendSms(phoneNumber, message);
+          logger.info(`SMS notification sent for contribution ${reference} to ${phoneNumber}`);
+        }
+      } catch (error) {
+        logger.error(`Error sending SMS notification for contribution ${reference}:`, error);
+      }
+    }
+  } catch (error) {
+    logger.error(`Error in contribution notification:`, error);
+  }
+};
+
+/**
+ * Handle withdrawal notifications
+ * @param {Object} params - Notification parameters
+ * @returns {Promise<void>}
+ */
+const handleWithdrawalNotification = async ({ user, data, notificationData }) => {
+  const { amount, accountNumber } = data;
+
+  try {
+    // Send in-app notification
+    await sendNotification(user._id, 'account_activity', {
+      title: 'Daily Savings Withdrawal',
+      body: `Your withdrawal of ${amount} from your Daily Savings account has been processed.`,
+      ...notificationData,
+    });
+
+    // Send email notification if user has email
+    if (user.email) {
+      try {
+        const emailPreference = await getUserNotificationPreference(user._id, 'account_activity');
+        if (emailPreference === 'email' || emailPreference === 'both') {
+          const emailData = {
+            fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Valued Customer',
+            amount,
+            accountNumber,
+            date: new Date().toLocaleDateString(),
+            dashboardUrl: `${config.email.clientUrl}/dashboard/daily-savings`,
+          };
+
+          await sendEmail({
+            to: user.email,
+            subject: 'Daily Savings Withdrawal Confirmation',
+            template: 'WITHDRAWAL_CONFIRMATION',
+            templateData: emailData,
+          });
+        }
+      } catch (error) {
+        logger.error('Error sending withdrawal email notification:', error);
+      }
+    }
+
+    // Send SMS notification if user has phone number
+    if (user.phoneNumber) {
+      try {
+        const smsPreference = await getUserNotificationPreference(user._id, 'account_activity');
+        if (smsPreference === 'sms' || smsPreference === 'both') {
+          const message = `Your withdrawal of ${amount} from your Daily Savings account (${accountNumber}) has been processed.`;
+          await sendSms(user.phoneNumber, message);
+        }
+      } catch (error) {
+        logger.error('Error sending withdrawal SMS notification:', error);
+      }
+    }
+  } catch (error) {
+    logger.error('Error in withdrawal notification:', error);
+  }
+};
+
+/**
+ * Send notifications for daily savings operations based on notification type
+ * @param {Object} params - Notification parameters
+ * @param {string} params.userId - User ID
+ * @param {string} params.notificationType - Type of notification (package_created, account_activity, withdrawal)
+ * @param {Object} params.data - Data specific to the notification type
+ * @param {Object} [params.user] - User object (optional, will be fetched if not provided)
+ * @param {Object} [params.packageData] - Package data (optional)
+ * @param {Object} [params.accountData] - Account data (optional)
+ * @returns {Promise<void>}
+ */
+const sendDailySavingsNotifications = async ({ userId, notificationType, data, user, packageData, accountData }) => {
+  if (!userId) {
+    logger.error('sendDailySavingsNotifications called without userId');
+    return;
+  }
+
+  try {
+    // Fetch user if not provided
+    let userToUse = user;
+    if (!userToUse) {
+      const UserModel = await User();
+      const fetchedUser = await UserModel.findById(userId);
+      if (!fetchedUser) {
+        logger.warn(`Could not send notification: User ${userId} not found`);
+        return;
+      }
+      userToUse = fetchedUser;
+    }
+
+    // Prepare common data
+    const notificationData = {
+      reference: data.reference,
+      relatedEntityId: data.packageId || (packageData ? packageData._id : undefined),
+      relatedEntityType: 'daily_savings',
+    };
+
+    // Handle different notification types
+    switch (notificationType) {
+      case 'package_created':
+        await handlePackageCreatedNotification({ user: userToUse, data, notificationData });
+        break;
+      case 'account_activity':
+        await handleContributionNotification({ user: userToUse, data, notificationData, packageData, accountData });
+        break;
+      case 'withdrawal':
+        await handleWithdrawalNotification({ user: userToUse, data, notificationData });
+        break;
+      default:
+        logger.warn(`Unknown notification type: ${notificationType}`);
+    }
+  } catch (error) {
+    logger.error(`Error sending daily savings notification (${notificationType}):`, error);
+    // Continue execution even if notification fails
+  }
+};
+
+/**
  * Create a user-initiated daily savings package
  * @param {Object} dailyInput - Daily savings package input
  * @returns {Promise<Object>} Result of the operation
@@ -134,36 +380,19 @@ const createUserInitiatedDailySavingsPackage = async (dailyInput) => {
     branchId: branch.branchId,
   });
 
-  try {
-    // Get user details to include email and phone number
-    const UserModel = await User();
-    const user = await UserModel.findById(dailyInput.userId);
-
-    if (user) {
-      await sendNotification(dailyInput.userId, 'package_created', {
-        subject: 'Package Created Successfully',
-        message: `Your Daily Savings package for ${dailyInput.target} has been created successfully.`,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        template: 'PACKAGE_CREATED',
-        smsTemplate: 'package_created',
-        templateData: {
-          name: user.firstName || user.email.split('@')[0],
-          productName: `Daily Savings - ${dailyInput.target}`,
-          targetAmount: dailyInput.targetAmount || 0,
-          currentContribution: 0,
-          accountNumber,
-          date: Date.now(),
-          dashboardUrl: `${config.email.clientUrl}/dashboard/daily-savings`,
-        },
-      });
-    } else {
-      logger.warn(`Could not send notification: User ${dailyInput.userId} not found`);
-    }
-  } catch (error) {
-    logger.error('Error sending notification:', { message: error.message });
-    // Continue execution even if notification fails
-  }
+  // Send notification using the new helper function
+  await sendDailySavingsNotifications({
+    userId: dailyInput.userId,
+    notificationType: 'package_created',
+    data: {
+      target: dailyInput.target,
+      targetAmount: dailyInput.targetAmount || 0,
+      amountPerDay: dailyInput.amountPerDay,
+      accountNumber,
+      reference: createdPackage._id.toString(),
+      packageId: createdPackage._id,
+    },
+  });
 
   return createdPackage;
 };
@@ -377,6 +606,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
       amount: withdrawal.amount,
       createdBy: withdrawal.createdBy,
       narration: `Daily contribution withdrawal`,
+      userId: userPackage.userId,
     };
 
     await makeCustomerDeposit(withdrawalDetails, session);
@@ -391,6 +621,18 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    // Send notification for withdrawal
+    await sendDailySavingsNotifications({
+      userId: withdrawalDetails.userId,
+      notificationType: 'withdrawal',
+      data: {
+        amount: withdrawal.amount,
+        accountNumber: withdrawal.accountNumber,
+        reference: Date.now().toString(),
+        packageId: userPackage._id,
+      },
+    });
 
     return withdrawalDetails;
   } catch (error) {
@@ -499,117 +741,6 @@ const getUserPackage = async (query) => {
 };
 
 /**
- * Fallback method to send notifications directly if the notification service fails
- * @param {Object} notificationData - Data needed for notifications
- * @returns {Promise<void>}
- */
-const sendDirectNotifications = async (notificationData) => {
-  const { user, userAccount, packageData, amount, reference } = notificationData;
-
-  try {
-    // Check user notification preferences
-    const notificationPreferences = user.notificationPreferences || {
-      sms: true, // Default to true if not specified
-      email: true, // Default to true if not specified
-    };
-
-    // Send SMS notification if enabled
-    if (notificationPreferences.sms !== false && userAccount.phoneNumber) {
-      const message = dsContributionMessage(
-        user.firstName,
-        amount,
-        packageData.accountNumber,
-        packageData.totalContribution,
-        'Online Payment'
-      );
-
-      try {
-        await sendSms(userAccount.phoneNumber, message);
-        logger.info(`SMS notification sent for contribution ${reference} to ${userAccount.phoneNumber}`);
-      } catch (smsError) {
-        logger.error(`Failed to send SMS notification for contribution ${reference}:`, smsError);
-        // Continue execution even if SMS fails
-      }
-    }
-
-    // Send Email notification if enabled
-    if (notificationPreferences.email !== false && user.email) {
-      try {
-        const emailData = {
-          fullName: `${user.firstName} ${user.lastName}`,
-          amount,
-          accountNumber: packageData.accountNumber,
-          totalContribution: packageData.totalContribution,
-          reference,
-          paymentMethod: 'Online Payment',
-        };
-
-        await sendEmail({
-          to: user.email,
-          subject: 'Daily Savings Contribution Confirmation',
-          html: dailySavingsContributionTemplate(emailData),
-        });
-
-        logger.info(`Email notification sent for contribution ${reference} to ${user.email}`);
-      } catch (emailError) {
-        logger.error(`Failed to send email notification for contribution ${reference}:`, emailError);
-        // Continue execution even if email fails
-      }
-    }
-  } catch (error) {
-    logger.error(`Error in fallback notifications for contribution ${reference}:`, error);
-    // Don't throw the error as notifications are non-critical
-  }
-};
-
-/**
- * Send notifications for a successful contribution based on user preferences
- * @param {Object} notificationData - Data needed for notifications
- * @returns {Promise<void>}
- */
-const sendNotifications = async (notificationData) => {
-  const { user, userAccount, packageData, amount, reference } = notificationData;
-
-  try {
-    // Message for SMS
-    const smsMessage = dsContributionMessage(
-      user.firstName,
-      amount,
-      packageData.accountNumber,
-      packageData.totalContribution,
-      'Online Payment'
-    );
-
-    // Store notification in database for user's inbox
-    await sendNotification(user._id, 'account_activity', {
-      email: user.email,
-      phoneNumber: userAccount.phoneNumber,
-      subject: 'Daily Savings Contribution Confirmation',
-      message: smsMessage,
-      template: 'DAILY_SAVINGS_CONTRIBUTION',
-      // Don't use smsTemplate, use direct message
-      templateData: {
-        fullName: `${user.firstName} ${user.lastName}`,
-        amount,
-        accountNumber: packageData.accountNumber,
-        totalContribution: packageData.totalContribution,
-        reference,
-        paymentMethod: 'Online Payment',
-      },
-      reference,
-      relatedEntityId: packageData._id,
-      relatedEntityType: 'contribution',
-    });
-
-    logger.info(`Notification record created for contribution ${reference} for user ${user._id}`);
-  } catch (error) {
-    logger.error(`Error sending notifications for contribution ${reference}:`, error);
-    // Fallback to direct notification if the notification service fails
-    sendDirectNotifications(notificationData);
-  }
-};
-
-/**
  * Process a contribution received via Paystack
  * @param {string} packageId - The ID of the package to credit
  * @param {number} amount - The amount contributed (in Naira)
@@ -625,10 +756,6 @@ const processPaystackContribution = async (packageId, amount, userId, reference,
   const PackageModel = await DsPackage();
   const ContributionModel = await Contribution();
   const AccountTransactionModel = await AccountTransaction();
-  const UserModel = await User();
-
-  // Variables to store notification data that will be used outside transaction
-  let notificationData = null;
 
   try {
     // 1. Find the package
@@ -657,7 +784,8 @@ const processPaystackContribution = async (packageId, amount, userId, reference,
     }
 
     // 3. Find user account details
-    const userAccount = await getAccountByUserId(userId);
+    const userAccount = await getUserAccount(userId, 'ds');
+    logger.info(`User account details: ${userAccount}`);
     if (!userAccount) {
       throw new ApiError(httpStatus.NOT_FOUND, 'User account details not found.');
     }
@@ -690,6 +818,7 @@ const processPaystackContribution = async (packageId, amount, userId, reference,
           narration: `Daily contribution via Paystack`,
           paystackReference: reference,
           paymentMethod: 'paystack',
+          createdBy: userId,
         },
       ],
       { session }
@@ -755,33 +884,31 @@ const processPaystackContribution = async (packageId, amount, userId, reference,
     };
     await addLedgerEntry(addLedgerEntryInput, session);
 
-    // Store data for notifications after transaction completes
-    const updatedPackage = await PackageModel.findById(packageId).session(session);
-    const user = await UserModel.findById(userId).session(session);
-
-    if (user && userAccount) {
-      notificationData = {
-        user,
-        userAccount,
-        packageData: {
-          accountNumber: userPackage.accountNumber,
-          totalContribution: updatedPackage.totalContribution,
-        },
-        amount,
-        reference,
-      };
-    }
-
-    // 11. Commit Transaction
+    // Commit the transaction before sending notifications
     await session.commitTransaction();
     session.endSession();
 
     logger.info(`Successfully processed Paystack contribution: Ref ${reference}, Package ${packageId}, Amount ${amount}`);
 
-    // Send notifications outside of transaction
-    if (notificationData) {
-      await sendNotifications(notificationData);
-    }
+    // Fetch updated package data for notification
+    const updatedPackage = await PackageModel.findById(packageId);
+
+    // Send notification using the new helper function
+    await sendDailySavingsNotifications({
+      userId,
+      notificationType: 'account_activity',
+      data: {
+        amount,
+        target: updatedPackage.target,
+        amountPerDay: updatedPackage.amountPerDay,
+        totalContribution: updatedPackage.totalContribution,
+        packageId,
+        paymentMethod: 'Online Payment',
+        reference,
+      },
+      packageData: updatedPackage,
+      accountData: userAccount,
+    });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -803,5 +930,4 @@ module.exports = {
   updatePackageById,
   getUserPackage,
   processPaystackContribution,
-  sendNotifications,
 };

@@ -5,7 +5,7 @@ const { generateAccountNumber } = require('../utils/account/accountUtils');
 const { getUserByEmail, getUserById, getUserByPhoneNumber } = require('./user.service');
 const config = require('../config/config');
 const { kycService } = require('.');
-
+const logger = require('../config/logger');
 /**
  * Create an account
  * @param {Object} accountData - Account data
@@ -104,6 +104,7 @@ const getUserAccountNumber = async (userId) => {
  * @returns {Promise<Account>} User's account details
  */
 const getUserAccount = async (userId, accountType) => {
+  logger.info(`Getting user account for userId: ${userId} and accountType: ${accountType}`);
   const accountModel = await Account();
   const account = await accountModel
     .findOne({ userId, accountType })
@@ -284,9 +285,8 @@ const getAccountById = async (id) => {
 const createSelfAccount = async (userId, accountType) => {
   const accountModel = await Account();
   const user = await getUserById(userId);
-
   // kyc check
-  if (!user.kycVerified) {
+  if (user.kycStatus !== 'verified') {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Please complete your KYC to create an account');
   }
 

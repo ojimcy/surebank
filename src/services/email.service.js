@@ -8,6 +8,7 @@ const dailySavingsContributionTemplate = require('../templates/emails/daily-savi
 const accountActivityTemplate = require('../templates/emails/account-activity.template');
 const packageCreatedTemplate = require('../templates/emails/package-created.template');
 const packageMaturedTemplate = require('../templates/emails/package-matured.template');
+const genericPackageCreatedTemplate = require('../templates/emails/generic-package-created.template');
 const ApiError = require('../utils/ApiError');
 
 const client = new SESClient({ region: 'us-east-1' });
@@ -36,6 +37,10 @@ const emailTemplates = {
   PACKAGE_MATURITY_ALERT: {
     subject: 'Package Maturity Alert',
     html: packageMaturedTemplate,
+  },
+  GENERIC_PACKAGE_CREATED: {
+    subject: 'Package Created Successfully',
+    html: genericPackageCreatedTemplate,
   },
 };
 
@@ -182,6 +187,80 @@ const sendPackageCreationEmail = async (to, packageDetails) => {
 };
 
 /**
+ * Send generic package creation confirmation email for Daily Savings or Subscription-Based packages
+ * @param {string} to - Recipient's email address
+ * @param {Object} packageDetails - Details of the created package
+ * @param {string} packageDetails.userName - User's name
+ * @param {string} packageDetails.packageType - Type of package ('ds' for Daily Savings, 'sb' for Subscription-Based)
+ * @param {string} packageDetails.productName - Name of the package/product
+ * @param {number} packageDetails.targetAmount - Target amount for the package
+ * @param {number} [packageDetails.amountPerDay] - Amount saved per day (for DS packages)
+ * @param {string} [packageDetails.target] - Target label/purpose of savings
+ * @param {number} [packageDetails.currentContribution] - Current contribution amount (usually 0 for new packages)
+ * @param {string} [packageDetails.accountNumber] - The account number associated with the package
+ * @param {Date|number} packageDetails.date - Creation date of the package
+ * @param {string} [packageDetails.dashboardUrl] - URL to package dashboard
+ * @returns {Promise}
+ */
+const sendGenericPackageCreationEmail = async (to, packageDetails) => {
+  const {
+    userName = to.split('@')[0],
+    packageType,
+    productName,
+    targetAmount,
+    amountPerDay,
+    target,
+    currentContribution = 0,
+    accountNumber,
+    date = Date.now(),
+    packageId,
+    dashboardUrl,
+  } = packageDetails;
+
+  const data = {
+    name: userName,
+    packageType,
+    productName,
+    targetAmount,
+    amountPerDay,
+    target,
+    currentContribution,
+    accountNumber,
+    date,
+    dashboardUrl,
+    packageId,
+  };
+
+  const params = {
+    Source: formatEmailSource(config.email.from),
+    Destination: {
+      ToAddresses: [to],
+    },
+    Message: {
+      Subject: {
+        Data: emailTemplates.GENERIC_PACKAGE_CREATED.subject,
+      },
+      Body: {
+        Html: {
+          Data: emailTemplates.GENERIC_PACKAGE_CREATED.html(data),
+        },
+      },
+    },
+  };
+
+  try {
+    await client.send(new SendEmailCommand(params));
+    logger.info(`Generic package creation email (${packageType}) sent to ${to}`);
+  } catch (error) {
+    logger.error('Error sending generic package creation email:', error);
+    if (error.message && error.message.includes('not verified')) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Email sending failed: Please verify your email address in AWS SES first');
+    }
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send generic package creation email');
+  }
+};
+
+/**
  * Send general-purpose email
  * @param {Object} options
  * @param {string} options.to - Recipient email
@@ -262,4 +341,5 @@ module.exports = {
   sendResetPasswordEmail,
   sendEmail,
   sendPackageCreationEmail,
+  sendGenericPackageCreationEmail,
 };

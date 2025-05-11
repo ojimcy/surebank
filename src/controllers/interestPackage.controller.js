@@ -175,7 +175,7 @@ const handlePaymentCallback = catchAsync(async (req, res) => {
     // If it's a web callback (not webhook), redirect to success page with package details
     if (req.headers['user-agent'] && !req.headers['x-paystack-signature']) {
       // Build the redirect URL with the package details
-      let finalRedirectURL = `${config.paystack.frontendUrl}/packages/new/ibs-success?reference=${result.reference}&status=success`;
+      let finalRedirectURL = `${config.paystack.frontendUrl}/payments/success?reference=${result.reference}&status=success`;
 
       // If the result has a redirect_url, use that instead
       if (result.redirect_url) {

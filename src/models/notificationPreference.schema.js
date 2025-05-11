@@ -15,6 +15,7 @@ const NOTIFICATION_TYPES = [
   'package_created',
   'package_matured',
   'package_withdrawal_alert',
+  'daily_savings',
 ];
 
 const notificationPreferenceSchema = mongoose.Schema(

@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const config = require('../config/config');
 const catchAsync = require('../utils/catchAsync');
 const logger = require('../config/logger');
-const { paymentService, interestPackageService } = require('../services');
+const { paymentService, interestPackageService, dailySavingsService } = require('../services');
 
 /**
  * Verify Paystack webhook signature
@@ -99,7 +99,22 @@ const webhookHandler = catchAsync(async (req, res) => {
           // Check if this is a daily savings contribution
           if (metadata && metadata.contributionType === 'ds') {
             logger.info(`Processing daily savings contribution: ${reference}`);
-            // Daily Savings implementation already exists
+
+            // Extract data needed for processing daily savings contribution
+            const { packageId, userId } = metadata;
+            // Paystack amount is in kobo (smallest currency unit), convert to Naira
+            const amountInNaira = verificationResult.transactionData.amount / 100;
+            const paymentDate = new Date(verificationResult.transactionData.paid_at);
+
+            if (!packageId || !userId) {
+              logger.error(`Missing required fields in payment metadata: ${JSON.stringify(metadata)}`);
+              break;
+            }
+
+            // Process the daily savings contribution
+            await dailySavingsService.processPaystackContribution(packageId, amountInNaira, userId, reference, paymentDate);
+
+            logger.info(`Successfully processed daily savings contribution for package: ${packageId}`);
           }
           // Check if this is an interest-based savings package
           else if (metadata && metadata.contributionType === 'interest_savings' && metadata.isPackagePending) {

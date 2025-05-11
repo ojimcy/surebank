@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { dailySavingsService } = require('../services');
+const { dailySavingsService, paymentService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 
 const createDailySavingsPackage = catchAsync(async (req, res) => {
@@ -75,6 +75,25 @@ const updatePackage = catchAsync(async (req, res) => {
   res.send(dsPackage);
 });
 
+/**
+ * Initialize a Paystack payment for daily savings contribution
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const initializeDailySavingsContribution = catchAsync(async (req, res) => {
+  const { packageId, amount } = req.body;
+  const userId = req.user._id;
+
+  // Initialize payment through payment service
+  const paymentResponse = await paymentService.initializeDailySavingsContribution({
+    packageId,
+    amount,
+    userId,
+  });
+
+  res.status(httpStatus.OK).json(paymentResponse);
+});
+
 module.exports = {
   createDailySavingsPackage,
   createUserInitiatedDailySavingsPackage,
@@ -83,4 +102,5 @@ module.exports = {
   getUserDailySavingsPackages,
   getDailySavingsPackageById,
   updatePackage,
+  initializeDailySavingsContribution,
 };

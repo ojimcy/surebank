@@ -15,6 +15,7 @@ const createUserInitiatedDailySavingsPackage = {
   body: Joi.object().keys({
     amountPerDay: Joi.number().required(),
     target: Joi.string().required(),
+    targetAmount: Joi.number().optional(),
   }),
 };
 
@@ -68,6 +69,15 @@ const updatedPackage = {
   }),
 };
 
+const initializeDailySavingsContribution = {
+  body: Joi.object().keys({
+    packageId: Joi.string().required().custom(objectId),
+    amount: Joi.number().required().positive(),
+    callbackUrl: Joi.string().uri().optional(),
+    redirect_url: Joi.string().uri().optional(),
+  }),
+};
+
 module.exports = {
   createDailySavingsPackage,
   createUserInitiatedDailySavingsPackage,
@@ -77,4 +87,5 @@ module.exports = {
   getUserSavingsActivities,
   getUserDailySavingsPackages,
   updatedPackage,
+  initializeDailySavingsContribution,
 };
