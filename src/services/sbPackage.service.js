@@ -215,6 +215,7 @@ const makeDailyContribution = async (contributionInput) => {
     paymentMethod: contributionInput.paymentMethod,
     narration: `SB Daily contribution - ${contributionInput.paymentMethod}`,
     userId: userAccount.userId,
+    packageId: userPackageId,
   });
 
   userPackage.totalContribution += contributionInput.amount;
@@ -393,6 +394,7 @@ const mergeSavingsPackages = async (targetPackageId, sourcePackageIds) => {
       date: currentDate,
       direction: 'inflow',
       narration: 'Savings packages merged',
+      packageId: targetPackage._id,
       userId: userAccount.userId,
     });
 

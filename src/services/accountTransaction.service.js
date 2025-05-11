@@ -467,7 +467,7 @@ const rejectWithdrawalRequest = async (requestId, narration) => {
  */
 const getAccountTransactions = async (options = {}) => {
   const AccountTransactionModel = await AccountTransaction();
-  const { accountNumber, createdBy, startDate, endDate, page = 1, limit, narration } = options;
+  const { accountNumber, createdBy, startDate, endDate, page = 1, limit, narration, packageId } = options;
   const skip = (page - 1) * limit;
 
   // Construct the query object
@@ -496,6 +496,11 @@ const getAccountTransactions = async (options = {}) => {
   if (endDate) {
     query.date = { $lte: endDate };
   }
+
+  if (packageId) {
+    query.packageId = packageId;
+  }
+
   const transactions = await AccountTransactionModel.find(query)
     .populate([
       {

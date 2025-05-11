@@ -27,6 +27,11 @@ const accountTransactionSchema = mongoose.Schema(
       type: String,
       required: false,
     },
+    packageId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Package',
+      required: false,
+    },
     branchId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Branch',

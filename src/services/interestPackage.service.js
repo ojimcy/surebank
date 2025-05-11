@@ -554,6 +554,7 @@ const requestWithdrawal = async (packageId, withdrawalReason, userId) => {
       narration: `Withdrawal from interest package: ${
         withdrawalReason || (isEarlyWithdrawal ? 'Early withdrawal' : 'Mature withdrawal')
       }`,
+      packageId: interestPackage._id,
       userId: interestPackage.userId,
       branchId: interestPackage.branchId,
       isPenaltyApplied: withdrawalDetails.isPenaltyApplied,
