@@ -20,6 +20,23 @@ const initializeDailySavingsContribution = catchAsync(async (req, res) => {
 });
 
 /**
+ * Initialize a contribution to a Savings-Buying package via Paystack
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ */
+const initializeSbContribution = catchAsync(async (req, res) => {
+  // Ensure userId is the authenticated user
+  const contributionData = {
+    ...req.body,
+    userId: req.user._id, // Override userId with authenticated user ID for security
+  };
+
+  const result = await paymentService.initializeSbContribution(contributionData);
+  res.status(httpStatus.OK).json(result);
+});
+
+/**
  * Handle a callback from Paystack for Daily Savings contribution
  * This is typically called by a webhook or redirect from Paystack
  * @param {Object} req - Express request object
@@ -78,6 +95,7 @@ const getPackageContributions = catchAsync(async (req, res) => {
 
 module.exports = {
   initializeDailySavingsContribution,
+  initializeSbContribution,
   handleDailySavingsContribution,
   getUserDailySavingsPackages,
   getPackageContributions,

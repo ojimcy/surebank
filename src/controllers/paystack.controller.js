@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const config = require('../config/config');
 const catchAsync = require('../utils/catchAsync');
 const logger = require('../config/logger');
-const { paymentService, interestPackageService, dailySavingsService } = require('../services');
+const { paymentService, interestPackageService, dailySavingsService, sbPackageService } = require('../services');
 
 /**
  * Verify Paystack webhook signature
@@ -115,6 +115,26 @@ const webhookHandler = catchAsync(async (req, res) => {
             await dailySavingsService.processPaystackContribution(packageId, amountInNaira, userId, reference, paymentDate);
 
             logger.info(`Successfully processed daily savings contribution for package: ${packageId}`);
+          }
+          // Check if this is a savings-buying contribution
+          else if (metadata && metadata.contributionType === 'sb') {
+            logger.info(`Processing savings-buying contribution: ${reference}`);
+
+            // Extract data needed for processing SB contribution
+            const { packageId, userId } = metadata;
+            // Paystack amount is in kobo (smallest currency unit), convert to Naira
+            const amountInNaira = verificationResult.transactionData.amount / 100;
+            const paymentDate = new Date(verificationResult.transactionData.paid_at);
+
+            if (!packageId || !userId) {
+              logger.error(`Missing required fields in payment metadata: ${JSON.stringify(metadata)}`);
+              break;
+            }
+
+            // Process the SB contribution
+            await sbPackageService.processPaystackContribution(packageId, amountInNaira, userId, reference, paymentDate);
+
+            logger.info(`Successfully processed savings-buying contribution for package: ${packageId}`);
           }
           // Check if this is an interest-based savings package
           else if (metadata && metadata.contributionType === 'interest_savings' && metadata.isPackagePending) {

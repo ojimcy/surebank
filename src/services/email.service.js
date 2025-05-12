@@ -9,6 +9,7 @@ const accountActivityTemplate = require('../templates/emails/account-activity.te
 const packageCreatedTemplate = require('../templates/emails/package-created.template');
 const packageMaturedTemplate = require('../templates/emails/package-matured.template');
 const genericPackageCreatedTemplate = require('../templates/emails/generic-package-created.template');
+const genericContributionTemplate = require('../templates/emails/generic-contribution.template');
 const ApiError = require('../utils/ApiError');
 
 const client = new SESClient({ region: 'us-east-1' });
@@ -41,6 +42,10 @@ const emailTemplates = {
   GENERIC_PACKAGE_CREATED: {
     subject: 'Package Created Successfully',
     html: genericPackageCreatedTemplate,
+  },
+  GENERIC_CONTRIBUTION: {
+    subject: 'Contribution Confirmation',
+    html: genericContributionTemplate,
   },
 };
 
@@ -261,6 +266,80 @@ const sendGenericPackageCreationEmail = async (to, packageDetails) => {
 };
 
 /**
+ * Send generic contribution confirmation email for Daily Savings or Subscription-Based packages
+ * @param {string} to - Recipient's email address
+ * @param {Object} contributionDetails - Details of the contribution
+ * @param {string} contributionDetails.userName - User's name
+ * @param {string} contributionDetails.packageType - Type of package ('ds' for Daily Savings, 'sb' for Subscription-Based)
+ * @param {string} contributionDetails.productName - Name of the package/product
+ * @param {number} contributionDetails.contributionAmount - Amount contributed
+ * @param {number} contributionDetails.totalContribution - Total contribution amount to date
+ * @param {number} contributionDetails.targetAmount - Target amount for the package
+ * @param {string} [contributionDetails.accountNumber] - The account number associated with the package
+ * @param {Date|number} contributionDetails.date - Date of the contribution
+ * @param {string} [contributionDetails.packageId] - ID of the package
+ * @param {string} [contributionDetails.dashboardUrl] - URL to package dashboard
+ * @returns {Promise}
+ */
+const sendGenericContributionEmail = async (to, contributionDetails) => {
+  const {
+    userName = to.split('@')[0],
+    packageType,
+    productName,
+    contributionAmount,
+    totalContribution,
+    targetAmount,
+    accountNumber,
+    date = Date.now(),
+    packageId,
+    dashboardUrl,
+    totalCount,
+  } = contributionDetails;
+
+  const data = {
+    name: userName,
+    packageType,
+    productName,
+    contributionAmount,
+    totalContribution,
+    targetAmount,
+    accountNumber,
+    date,
+    packageId,
+    dashboardUrl,
+    progress: packageType === 'sb' ? (totalContribution / targetAmount) * 100 : (30 / totalCount) * 100,
+  };
+
+  const params = {
+    Source: formatEmailSource(config.email.from),
+    Destination: {
+      ToAddresses: [to],
+    },
+    Message: {
+      Subject: {
+        Data: emailTemplates.GENERIC_CONTRIBUTION.subject,
+      },
+      Body: {
+        Html: {
+          Data: emailTemplates.GENERIC_CONTRIBUTION.html(data),
+        },
+      },
+    },
+  };
+
+  try {
+    await client.send(new SendEmailCommand(params));
+    logger.info(`Generic contribution confirmation email (${packageType}) sent to ${to}`);
+  } catch (error) {
+    logger.error('Error sending generic contribution confirmation email:', error);
+    if (error.message && error.message.includes('not verified')) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Email sending failed: Please verify your email address in AWS SES first');
+    }
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send generic contribution confirmation email');
+  }
+};
+
+/**
  * Send general-purpose email
  * @param {Object} options
  * @param {string} options.to - Recipient email
@@ -342,4 +421,5 @@ module.exports = {
   sendEmail,
   sendPackageCreationEmail,
   sendGenericPackageCreationEmail,
+  sendGenericContributionEmail,
 };

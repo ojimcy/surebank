@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { sbPackageService } = require('../services');
+const { sbPackageService, paymentService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 const pick = require('../utils/pick');
 
@@ -87,6 +87,25 @@ const makeSbCustomerWithdrawal = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(withdrawalDetails);
 });
 
+/**
+ * Initialize a Paystack payment for savings-buying contribution
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const initializeSbContribution = catchAsync(async (req, res) => {
+  const { packageId, amount } = req.body;
+  const userId = req.user._id;
+
+  // Initialize payment through payment service
+  const paymentResponse = await paymentService.initializeSbContribution({
+    packageId,
+    amount,
+    userId,
+  });
+
+  res.status(httpStatus.OK).json(paymentResponse);
+});
+
 module.exports = {
   createSbPackage,
   createUserInitiatedSbPackage,
@@ -98,4 +117,5 @@ module.exports = {
   updatePackageProduct,
   getAllSbPackages,
   makeSbCustomerWithdrawal,
+  initializeSbContribution,
 };

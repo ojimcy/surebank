@@ -1,8 +1,10 @@
 const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
-const { Notification, NotificationPreference } = require('../models');
+const { Notification, NotificationPreference, User } = require('../models');
 const logger = require('../config/logger');
 const notificationPreferenceSchema = require('../models/notificationPreference.schema');
+const { sendEmail, sendGenericPackageCreationEmail, sendGenericContributionEmail } = require('./email.service');
+const { sendSms } = require('./sms.service');
 
 const createNotification = async (input) => {
   const NotificationModel = await Notification();
@@ -214,6 +216,137 @@ const unsubscribeFromNotificationType = async (userId, type) => {
   return preferences;
 };
 
+/**
+ * Send notification through multiple channels (in-app, email, SMS) based on user preferences
+ * @param {Object} params - Notification parameters
+ * @param {string} params.userId - User ID
+ * @param {string} params.type - Notification type (e.g., 'package_created', 'account_activity')
+ * @param {Object} params.user - User object with contact information (optional, will be fetched if not provided)
+ * @param {Object} params.data - Data specific to the notification
+ * @param {Object} params.notificationContent - Content for different channels
+ * @param {Object} params.notificationContent.inApp - In-app notification content
+ * @param {string} params.notificationContent.inApp.title - In-app notification title
+ * @param {string} params.notificationContent.inApp.body - In-app notification body
+ * @param {Object} [params.notificationContent.email] - Email notification content
+ * @param {string} [params.notificationContent.email.subject] - Email subject
+ * @param {string|Object} [params.notificationContent.email.template] - Email template name or object
+ * @param {Object} [params.notificationContent.email.templateData] - Data for email template
+ * @param {string} [params.notificationContent.sms] - SMS message content
+ * @param {Object} [params.notificationData] - Additional notification metadata
+ * @returns {Promise<Object>} Result with status of each channel
+ */
+const sendMultiChannelNotification = async ({ userId, type, user, data, notificationContent, notificationData = {} }) => {
+  if (!userId) {
+    logger.error('sendMultiChannelNotification called without userId');
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User ID is required');
+  }
+
+  if (!type) {
+    logger.error('sendMultiChannelNotification called without notification type');
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Notification type is required');
+  }
+
+  if (!notificationContent) {
+    logger.error('sendMultiChannelNotification called without notification content');
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Notification content is required');
+  }
+
+  const result = {
+    inApp: false,
+    email: false,
+    sms: false,
+  };
+
+  try {
+    // Fetch user if not provided
+    let userToUse = user;
+    if (!userToUse) {
+      // Use dynamic import to avoid circular dependencies
+      const UserModel = await User();
+      userToUse = await UserModel.findById(userId);
+      if (!userToUse) {
+        logger.warn(`Could not send notification: User ${userId} not found`);
+        return result;
+      }
+    }
+
+    // Send in-app notification
+    if (notificationContent.inApp) {
+      try {
+        const { title, body } = notificationContent.inApp;
+        const inAppData = {
+          title,
+          body,
+          ...notificationData,
+        };
+
+        await sendNotification(userId, type, inAppData);
+        result.inApp = true;
+        logger.info(`In-app notification sent to user ${userId} for type ${type}`);
+      } catch (error) {
+        logger.error(`Error sending in-app notification to user ${userId}:`, error);
+      }
+    }
+
+    // Send email notification if enabled for this type
+    if (notificationContent.email && userToUse.email) {
+      try {
+        const emailPreference = await getUserNotificationPreference(userId, type);
+        if (emailPreference === 'email' || emailPreference === 'both') {
+          const { subject, template, templateData, html } = notificationContent.email;
+
+          // Support both template-based and direct HTML emails
+          if (html) {
+            await sendEmail({
+              to: userToUse.email,
+              subject,
+              html,
+            });
+          } else if (template === 'PACKAGE_CREATION') {
+            // Special case for package creation emails
+            await sendGenericPackageCreationEmail(userToUse.email, templateData);
+          } else if (template === 'CONTRIBUTION') {
+            await sendGenericContributionEmail(userToUse.email, templateData);
+          } else {
+            await sendEmail({
+              to: userToUse.email,
+              subject,
+              template,
+              templateData,
+            });
+          }
+
+          result.email = true;
+          logger.info(`Email notification sent to ${userToUse.email} for type ${type}`);
+        }
+      } catch (error) {
+        logger.error(`Error sending email notification to ${userToUse.email}:`, error);
+      }
+    }
+
+    // Send SMS notification if enabled for this type
+    const phoneNumber = userToUse.phoneNumber || (data && data.phoneNumber);
+    if (notificationContent.sms && phoneNumber) {
+      try {
+        const smsPreference = await getUserNotificationPreference(userId, type);
+        if (smsPreference === 'sms' || smsPreference === 'both') {
+          await sendSms(phoneNumber, notificationContent.sms);
+          result.sms = true;
+          logger.info(`SMS notification sent to ${phoneNumber} for type ${type}`);
+        }
+      } catch (error) {
+        logger.error(`Error sending SMS notification to ${phoneNumber}:`, error);
+      }
+    }
+
+    return result;
+  } catch (error) {
+    logger.error(`Error in multi-channel notification for user ${userId} and type ${type}:`, error);
+    // Continue execution by returning the result so far
+    return result;
+  }
+};
+
 module.exports = {
   createNotification,
   getNotifications,
@@ -227,4 +360,5 @@ module.exports = {
   NOTIFICATION_TYPES: notificationPreferenceSchema.statics.NOTIFICATION_TYPES,
   NOTIFICATION_CHANNELS: notificationPreferenceSchema.statics.NOTIFICATION_CHANNELS,
   getUserNotificationPreference,
+  sendMultiChannelNotification,
 };

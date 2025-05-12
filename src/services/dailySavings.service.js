@@ -11,8 +11,7 @@ const { dsContributionMessage, welcomeMessage } = require('../templates/sms/temp
 const { sendSms } = require('./sms.service');
 const { getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
-const { sendEmail, sendGenericPackageCreationEmail } = require('./email.service');
-const { sendNotification, getUserNotificationPreference } = require('./notification.service');
+const { sendMultiChannelNotification } = require('./notification.service');
 const dailySavingsContributionTemplate = require('../templates/emails/daily-savings-contribution.template');
 const config = require('../config/config');
 
@@ -101,49 +100,40 @@ const handlePackageCreatedNotification = async ({ user, data, notificationData }
   const { target, accountNumber, amountPerDay, targetAmount } = data;
 
   try {
-    // Send in-app notification
-    await sendNotification(user._id, 'package_created', {
-      title: 'Package Created Successfully',
-      body: `Your Daily Savings package for ${target} has been created successfully.`,
-      ...notificationData,
+    // Prepare notification content for all channels
+    const notificationContent = {
+      inApp: {
+        title: 'Package Created Successfully',
+        body: `Your Daily Savings package for ${target} has been created successfully.`,
+      },
+      email: {
+        // For email, we're using the special case in sendMultiChannelNotification
+        template: 'PACKAGE_CREATION',
+        templateData: {
+          userName: user.firstName || user.email.split('@')[0],
+          packageType: 'ds',
+          amountPerDay,
+          targetAmount,
+          target,
+          productName: `Daily Savings - ${target}`,
+          currentContribution: 0,
+          accountNumber,
+          date: Date.now(),
+          dashboardUrl: `${config.paystack.frontendUrl}/packages/${data.packageId}`,
+        },
+      },
+      sms: `Your Daily Savings package for ${target} has been created successfully.`,
+    };
+
+    // Send notifications through all channels based on user preferences
+    await sendMultiChannelNotification({
+      userId: user._id,
+      type: 'package_created',
+      user,
+      data,
+      notificationContent,
+      notificationData,
     });
-
-    // Send email notification if user has email
-    if (user.email) {
-      try {
-        const emailPreference = await getUserNotificationPreference(user._id, 'package_created');
-        if (emailPreference === 'email' || emailPreference === 'both') {
-          const packageDetails = {
-            userName: user.firstName || user.email.split('@')[0],
-            packageType: 'ds',
-            amountPerDay,
-            targetAmount,
-            target,
-            productName: `Daily Savings - ${target}`,
-            currentContribution: 0,
-            accountNumber,
-            date: Date.now(),
-            dashboardUrl: `${config.paystack.frontendUrl}/packages/${data.packageId}`,
-          };
-          await sendGenericPackageCreationEmail(user.email, packageDetails);
-        }
-      } catch (error) {
-        logger.error('Error sending package creation email:', error);
-      }
-    }
-
-    // Send SMS notification if user has phone number
-    if (user.phoneNumber) {
-      try {
-        const smsPreference = await getUserNotificationPreference(user._id, 'package_created');
-        if (smsPreference === 'sms' || smsPreference === 'both') {
-          const message = `Your Daily Savings package for ${target} has been created successfully.`;
-          await sendSms(user.phoneNumber, message);
-        }
-      } catch (error) {
-        logger.error('Error sending package creation SMS:', error);
-      }
-    }
   } catch (error) {
     logger.error('Error in package creation notification:', error);
   }
@@ -160,64 +150,44 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
     packageData && packageData.totalContribution ? packageData.totalContribution : data.totalContribution;
 
   try {
-    // Send in-app notification
-    await sendNotification(user._id, 'daily_savings', {
-      title: 'Daily Savings Contribution',
-      body: `Your Daily Savings contribution of ${amount} has been successfully processed.`,
-      ...notificationData,
+    // Prepare notification content for all channels
+    const notificationContent = {
+      inApp: {
+        title: 'Daily Savings Contribution',
+        body: `Your Daily Savings contribution of ${amount} has been successfully processed.`,
+      },
+      email: {
+        subject: 'Daily Savings Contribution Confirmation',
+        html: dailySavingsContributionTemplate({
+          fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Valued Customer',
+          amount,
+          accountNumber: accountNumber || (packageData ? packageData.accountNumber : ''),
+          totalContribution,
+          reference,
+          paymentMethod,
+          dashboardUrl: `${config.paystack.frontendUrl}/packages/${data.packageId}`,
+        }),
+      },
+      sms: dsContributionMessage(
+        user.firstName || 'Valued Customer',
+        amount,
+        accountNumber || (packageData ? packageData.accountNumber : ''),
+        totalContribution,
+        paymentMethod
+      ),
+    };
+
+    // Send notifications through all channels based on user preferences
+    await sendMultiChannelNotification({
+      userId: user._id,
+      type: 'account_activity',
+      user,
+      data: { ...data, phoneNumber: accountData && accountData.phoneNumber }, // Pass accountData's phoneNumber for fallback
+      notificationContent,
+      notificationData,
     });
 
-    logger.info(`In-app notification created for contribution ${reference} for user ${user._id}`);
-
-    // Send email notification if user has email
-    if (user.email) {
-      try {
-        const emailPreference = await getUserNotificationPreference(user._id, 'account_activity');
-        if (emailPreference === 'email' || emailPreference === 'both') {
-          const emailData = {
-            fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Valued Customer',
-            amount,
-            accountNumber: accountNumber || (packageData ? packageData.accountNumber : ''),
-            totalContribution,
-            reference,
-            paymentMethod,
-            dashboardUrl: `${config.paystack.frontendUrl}/packages/${data.packageId}`,
-          };
-
-          await sendEmail({
-            to: user.email,
-            subject: 'Daily Savings Contribution Confirmation',
-            html: dailySavingsContributionTemplate(emailData),
-          });
-
-          logger.info(`Email notification sent for contribution ${reference} to ${user.email}`);
-        }
-      } catch (error) {
-        logger.error(`Error sending email notification for contribution ${reference}:`, error);
-      }
-    }
-
-    // Send SMS notification if user has phone number
-    const phoneNumber = user.phoneNumber || (accountData ? accountData.phoneNumber : null);
-    if (phoneNumber) {
-      try {
-        const smsPreference = await getUserNotificationPreference(user._id, 'account_activity');
-        if (smsPreference === 'sms' || smsPreference === 'both') {
-          const message = dsContributionMessage(
-            user.firstName || 'Valued Customer',
-            amount,
-            accountNumber || (packageData ? packageData.accountNumber : ''),
-            totalContribution,
-            paymentMethod
-          );
-
-          await sendSms(phoneNumber, message);
-          logger.info(`SMS notification sent for contribution ${reference} to ${phoneNumber}`);
-        }
-      } catch (error) {
-        logger.error(`Error sending SMS notification for contribution ${reference}:`, error);
-      }
-    }
+    logger.info(`All notifications sent for contribution ${reference} for user ${user._id}`);
   } catch (error) {
     logger.error(`Error in contribution notification:`, error);
   }
@@ -232,50 +202,35 @@ const handleWithdrawalNotification = async ({ user, data, notificationData }) =>
   const { amount, accountNumber } = data;
 
   try {
-    // Send in-app notification
-    await sendNotification(user._id, 'account_activity', {
-      title: 'Daily Savings Withdrawal',
-      body: `Your withdrawal of ${amount} from your Daily Savings account has been processed.`,
-      ...notificationData,
+    // Prepare notification content for all channels
+    const notificationContent = {
+      inApp: {
+        title: 'Daily Savings Withdrawal',
+        body: `Your withdrawal of ${amount} from your Daily Savings account has been processed.`,
+      },
+      email: {
+        subject: 'Daily Savings Withdrawal Confirmation',
+        template: 'WITHDRAWAL_CONFIRMATION',
+        templateData: {
+          fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Valued Customer',
+          amount,
+          accountNumber,
+          date: new Date().toLocaleDateString(),
+          dashboardUrl: `${config.paystack.frontendUrl}/dashboard/daily-savings`,
+        },
+      },
+      sms: `Your withdrawal of ${amount} from your Daily Savings account (${accountNumber}) has been processed.`,
+    };
+
+    // Send notifications through all channels based on user preferences
+    await sendMultiChannelNotification({
+      userId: user._id,
+      type: 'account_activity',
+      user,
+      data,
+      notificationContent,
+      notificationData,
     });
-
-    // Send email notification if user has email
-    if (user.email) {
-      try {
-        const emailPreference = await getUserNotificationPreference(user._id, 'account_activity');
-        if (emailPreference === 'email' || emailPreference === 'both') {
-          const emailData = {
-            fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Valued Customer',
-            amount,
-            accountNumber,
-            date: new Date().toLocaleDateString(),
-            dashboardUrl: `${config.email.clientUrl}/dashboard/daily-savings`,
-          };
-
-          await sendEmail({
-            to: user.email,
-            subject: 'Daily Savings Withdrawal Confirmation',
-            template: 'WITHDRAWAL_CONFIRMATION',
-            templateData: emailData,
-          });
-        }
-      } catch (error) {
-        logger.error('Error sending withdrawal email notification:', error);
-      }
-    }
-
-    // Send SMS notification if user has phone number
-    if (user.phoneNumber) {
-      try {
-        const smsPreference = await getUserNotificationPreference(user._id, 'account_activity');
-        if (smsPreference === 'sms' || smsPreference === 'both') {
-          const message = `Your withdrawal of ${amount} from your Daily Savings account (${accountNumber}) has been processed.`;
-          await sendSms(user.phoneNumber, message);
-        }
-      } catch (error) {
-        logger.error('Error sending withdrawal SMS notification:', error);
-      }
-    }
   } catch (error) {
     logger.error('Error in withdrawal notification:', error);
   }

@@ -91,6 +91,15 @@ const makeSbCustomerWithdrawal = {
   }),
 };
 
+const initializeSbContribution = {
+  body: Joi.object().keys({
+    packageId: Joi.string().required().custom(objectId),
+    amount: Joi.number().required().positive(),
+    callbackUrl: Joi.string().uri().optional(),
+    redirect_url: Joi.string().uri().optional(),
+  }),
+};
+
 module.exports = {
   createSbPackage,
   createUserInitiatedSbPackage,
@@ -102,4 +111,5 @@ module.exports = {
   updatePackageProduct,
   getAllSbPackages,
   makeSbCustomerWithdrawal,
+  initializeSbContribution,
 };

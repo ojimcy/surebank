@@ -14,6 +14,14 @@ router.post(
   userPortalController.initializeDailySavingsContribution
 );
 
+// SB Contribution route
+router.post(
+  '/sb/contribute/init',
+  auth('initiateSbContribution'),
+  validate(paymentValidation.initializeDsContribution), // Reuse the same validation schema for now
+  userPortalController.initializeSbContribution
+);
+
 router.get('/ds/packages', auth('userPackage'), userPortalController.getUserDailySavingsPackages);
 
 router.get('/ds/packages/:packageId/contributions', auth('userPackage'), userPortalController.getPackageContributions);
@@ -22,7 +30,6 @@ router.get('/ds/packages/:packageId/contributions', auth('userPackage'), userPor
 router.post('/verify', validate(paymentValidation.verifyPayment), userPortalController.handleDailySavingsContribution);
 
 // Future payment-related routes can be added here
-// router.post('/sb/contribute/init', ...);
 // router.get('/transactions', ...);
 
 module.exports = router;

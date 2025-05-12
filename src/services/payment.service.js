@@ -7,6 +7,7 @@ const logger = require('../config/logger');
 const { PaymentTransaction } = require('../models');
 const { getDailySavingsPackageById, processPaystackContribution } = require('./dailySavings.service');
 const { getUserAccount } = require('./account.service');
+const sbPackageService = require('./sbPackage.service');
 const config = require('../config/config');
 
 /**
@@ -150,6 +151,64 @@ const initializeDailySavingsContribution = async (contributionData) => {
     callbackUrl,
     metadata,
     userId, // Pass userId for customer linking in initializeTransaction
+  };
+
+  // Call the generic initialization function
+  return initializeTransaction(transactionData);
+};
+
+/**
+ * Initialize a Savings-Buying Contribution via Paystack
+ * @param {Object} contributionData
+ * @param {string} contributionData.userId - User initiating the contribution
+ * @param {string} contributionData.packageId - Target SB package ID
+ * @param {number} contributionData.amount - Amount to contribute
+ * @param {string} [contributionData.callbackUrl] - Optional callback URL
+ * @returns {Promise<Object>} Paystack initialization response
+ */
+const initializeSbContribution = async (contributionData) => {
+  const { userId, packageId, amount, callbackUrl } = contributionData;
+
+  if (!userId || !packageId || !amount) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User ID, Package ID, and Amount are required.');
+  }
+
+  // Fetch user details (for email) and package details
+  const user = await userService.getUserById(userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // Ensure package exists (assuming there's a getPackageById function in sbPackageService)
+  const userPackage = await sbPackageService.getPackageById(packageId);
+  if (!userPackage) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Savings-Buying package not found');
+  }
+
+  const metadata = {
+    userId,
+    packageId,
+    contributionType: 'sb', // Identify the type of contribution
+    custom_fields: [
+      {
+        display_name: 'Package ID',
+        variable_name: 'package_id',
+        value: packageId,
+      },
+      {
+        display_name: 'Contribution Type',
+        variable_name: 'contribution_type',
+        value: 'Savings-Buying',
+      },
+    ],
+  };
+
+  const transactionData = {
+    email: user.email,
+    amount,
+    callbackUrl,
+    metadata,
+    userId,
   };
 
   // Call the generic initialization function
@@ -539,6 +598,7 @@ const getBanks = async (country = 'nigeria') => {
 module.exports = {
   initializeTransaction,
   initializeDailySavingsContribution,
+  initializeSbContribution,
   initiateInterestPackagePayment,
   verifyTransaction,
   getTransactionHistory,

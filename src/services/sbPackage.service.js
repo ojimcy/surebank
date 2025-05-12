@@ -9,8 +9,210 @@ const { sendSms } = require('./sms.service');
 const { sbContributionMessage } = require('../templates/sms/templates');
 const { getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
-const { sendNotification } = require('./notification.service');
+const { sendMultiChannelNotification } = require('./notification.service');
 const config = require('../config/config');
+
+/**
+ * Handle package creation notifications
+ * @param {Object} params - Notification parameters
+ * @returns {Promise<void>}
+ */
+const handlePackageCreatedNotification = async ({ user, data, notificationData }) => {
+  const { productName, targetAmount, accountNumber } = data;
+
+  try {
+    // Prepare notification content for all channels
+    const notificationContent = {
+      inApp: {
+        title: 'Package Created Successfully',
+        body: `Your Savings-Buying package for ${productName} has been created successfully.`,
+      },
+      email: {
+        template: 'PACKAGE_CREATION',
+        templateData: {
+          userName: user.firstName || user.email.split('@')[0],
+          packageType: 'sb',
+          targetAmount,
+          productName,
+          currentContribution: 0,
+          accountNumber,
+          date: Date.now(),
+          dashboardUrl: `${config.paystack.frontendUrl}/dashboard/packages`,
+        },
+      },
+      sms: `Your Savings-Buying package for ${productName} has been created successfully.`,
+    };
+
+    // Send notifications through all channels based on user preferences
+    await sendMultiChannelNotification({
+      userId: user._id,
+      type: 'package_created',
+      user,
+      data,
+      notificationContent,
+      notificationData,
+    });
+  } catch (error) {
+    logger.error('Error in package creation notification:', error);
+  }
+};
+
+/**
+ * Handle contribution notifications
+ * @param {Object} params - Notification parameters
+ * @returns {Promise<void>}
+ */
+const handleContributionNotification = async ({ user, data, notificationData, packageData, accountData }) => {
+  const { amount, reference, accountNumber, paymentMethod = 'Online Payment' } = data;
+  const totalContribution =
+    packageData && packageData.totalContribution ? packageData.totalContribution : data.totalContribution;
+  const productName = data.productName || (packageData && packageData.product ? packageData.product.name : 'your product');
+
+  try {
+    // Prepare notification content for all channels
+    const notificationContent = {
+      inApp: {
+        title: 'Savings-Buying Contribution',
+        body: `Your Savings-Buying contribution of ${amount} for ${productName} has been successfully processed.`,
+      },
+      email: {
+        subject: 'Savings-Buying Contribution Confirmation',
+        template: 'CONTRIBUTION',
+        templateData: {
+          fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Valued Customer',
+          amount,
+          accountNumber: accountNumber || (packageData ? packageData.accountNumber : ''),
+          totalContribution,
+          reference,
+          paymentMethod,
+          productName,
+          dashboardUrl: `${config.paystack.frontendUrl}/packages/${data.packageId}`,
+        },
+      },
+      sms: sbContributionMessage(
+        user.firstName || 'Valued Customer',
+        amount,
+        accountNumber || (packageData ? packageData.accountNumber : ''),
+        totalContribution,
+        paymentMethod
+      ),
+    };
+
+    // Send notifications through all channels based on user preferences
+    await sendMultiChannelNotification({
+      userId: user._id,
+      type: 'contribution',
+      user,
+      data: { ...data, phoneNumber: accountData && accountData.phoneNumber }, // Pass accountData's phoneNumber for fallback
+      notificationContent,
+      notificationData,
+    });
+
+    logger.info(`All notifications sent for contribution ${reference} for user ${user._id}`);
+  } catch (error) {
+    logger.error(`Error in contribution notification:`, error);
+  }
+};
+
+/**
+ * Handle withdrawal notifications
+ * @param {Object} params - Notification parameters
+ * @returns {Promise<void>}
+ */
+const handleWithdrawalNotification = async ({ user, data, notificationData }) => {
+  const { amount, accountNumber } = data;
+
+  try {
+    // Prepare notification content for all channels
+    const notificationContent = {
+      inApp: {
+        title: 'Savings-Buying Withdrawal',
+        body: `Your withdrawal of ${amount} from your Savings-Buying account has been processed.`,
+      },
+      email: {
+        subject: 'Savings-Buying Withdrawal Confirmation',
+        template: 'WITHDRAWAL_CONFIRMATION',
+        templateData: {
+          fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Valued Customer',
+          amount,
+          accountNumber,
+          date: new Date().toLocaleDateString(),
+          dashboardUrl: `${config.email.clientUrl}/dashboard/savings-buying`,
+        },
+      },
+      sms: `Your withdrawal of ${amount} from your Savings-Buying account (${accountNumber}) has been processed.`,
+    };
+
+    // Send notifications through all channels based on user preferences
+    await sendMultiChannelNotification({
+      userId: user._id,
+      type: 'account_activity',
+      user,
+      data,
+      notificationContent,
+      notificationData,
+    });
+  } catch (error) {
+    logger.error('Error in withdrawal notification:', error);
+  }
+};
+
+/**
+ * Send notifications for Savings-Buying operations based on notification type
+ * @param {Object} params - Notification parameters
+ * @param {string} params.userId - User ID
+ * @param {string} params.notificationType - Type of notification (package_created, account_activity, withdrawal)
+ * @param {Object} params.data - Data specific to the notification type
+ * @param {Object} [params.user] - User object (optional, will be fetched if not provided)
+ * @param {Object} [params.packageData] - Package data (optional)
+ * @param {Object} [params.accountData] - Account data (optional)
+ * @returns {Promise<void>}
+ */
+const sendSbNotifications = async ({ userId, notificationType, data, user, packageData, accountData }) => {
+  if (!userId) {
+    logger.error('sendSbNotifications called without userId');
+    return;
+  }
+
+  try {
+    // Fetch user if not provided
+    let userToUse = user;
+    if (!userToUse) {
+      const UserModel = await User();
+      const fetchedUser = await UserModel.findById(userId);
+      if (!fetchedUser) {
+        logger.warn(`Could not send notification: User ${userId} not found`);
+        return;
+      }
+      userToUse = fetchedUser;
+    }
+
+    // Prepare common data
+    const notificationData = {
+      reference: data.reference,
+      relatedEntityId: data.packageId || (packageData ? packageData._id : undefined),
+      relatedEntityType: 'sb_package',
+    };
+
+    // Handle different notification types
+    switch (notificationType) {
+      case 'package_created':
+        await handlePackageCreatedNotification({ user: userToUse, data, notificationData });
+        break;
+      case 'account_activity':
+        await handleContributionNotification({ user: userToUse, data, notificationData, packageData, accountData });
+        break;
+      case 'withdrawal':
+        await handleWithdrawalNotification({ user: userToUse, data, notificationData });
+        break;
+      default:
+        logger.warn(`Unknown notification type: ${notificationType}`);
+    }
+  } catch (error) {
+    logger.error(`Error sending Savings-Buying notification (${notificationType}):`, error);
+    // Continue execution even if notification fails
+  }
+};
 
 const createSbPackage = async (sbPackageData) => {
   const SbPackageModel = await SbPackage();
@@ -107,37 +309,18 @@ const createUserInitiatedSbPackage = async (sbPackageData) => {
     totalContribution: 0,
   });
 
-  // Send notification
-  try {
-    // Get user details to include email and phone number
-    const UserModel = await User();
-    const user = await UserModel.findById(sbPackageData.userId);
-
-    if (user) {
-      await sendNotification(sbPackageData.userId, 'package_created', {
-        subject: 'Package Created Successfully',
-        message: `Your SB package for "${product.name}" has been created successfully.`,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        template: 'PACKAGE_CREATED',
-        templateData: {
-          name: user.firstName || user.email.split('@')[0],
-          productName: product.name,
-          targetAmount: product.sellingPrice,
-          currentContribution: 0,
-          accountNumber,
-          productImage: product.images && product.images.length > 0 ? product.images[0] : null,
-          date: Date.now(),
-          dashboardUrl: `${config.email.clientUrl}/dashboard/packages`,
-        },
-      });
-    } else {
-      logger.warn(`Could not send notification: User ${sbPackageData.userId} not found`);
-    }
-  } catch (error) {
-    logger.error('Error sending notification:', { message: error.message });
-    // Continue execution even if notification fails
-  }
+  // Send notification using the standardized notification function
+  await sendSbNotifications({
+    userId: sbPackageData.userId,
+    notificationType: 'package_created',
+    data: {
+      productName: product.name,
+      targetAmount: product.sellingPrice,
+      accountNumber,
+      packageId: sbPackage._id,
+      reference: sbPackage._id.toString(),
+    },
+  });
 
   return sbPackage;
 };
@@ -293,6 +476,20 @@ const makeSbTransfer = async (withdrawal) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    // Send withdrawal notification using our standardized notification function
+    if (userPackage.userId) {
+      await sendSbNotifications({
+        userId: userPackage.userId,
+        notificationType: 'withdrawal',
+        data: {
+          amount: withdrawal.amount,
+          accountNumber: withdrawal.accountNumber,
+          reference: Date.now().toString(),
+          packageId: userPackage._id,
+        },
+      });
+    }
 
     return withdrawalDetails;
   } catch (error) {
@@ -492,6 +689,160 @@ const getAllSbPackages = async (filterOptions) => {
   return packages;
 };
 
+/**
+ * Process a contribution received via Paystack
+ * @param {string} packageId - The ID of the package to credit
+ * @param {number} amount - The amount contributed (in Naira)
+ * @param {string} userId - The ID of the user who made the contribution
+ * @param {string} reference - The Paystack transaction reference
+ * @param {Date} paymentDate - The date the payment was made
+ * @returns {Promise<void>}
+ */
+const processPaystackContribution = async (packageId, amount, userId, reference, paymentDate) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  const SbPackageModel = await SbPackage();
+  const ContributionModel = await Contribution();
+  const AccountTransactionModel = await AccountTransaction();
+
+  try {
+    // 1. Find the package
+    const userPackage = await SbPackageModel.findById(packageId).session(session);
+    if (!userPackage) {
+      throw new ApiError(404, 'Savings-Buying package not found');
+    }
+    if (userPackage.userId.toString() !== userId) {
+      // Security check: ensure the user ID from metadata matches the package owner
+      throw new ApiError(403, 'User mismatch for package contribution');
+    }
+    if (userPackage.status === 'closed') {
+      throw new ApiError(400, 'Cannot contribute to a closed package');
+    }
+
+    // 2. Check if this contribution reference has already been processed for this package
+    const existingContribution = await ContributionModel.findOne({
+      paystackReference: reference,
+      packageId,
+    }).session(session);
+    if (existingContribution) {
+      logger.warn(`Contribution with reference ${reference} already processed for package ${packageId}. Skipping.`);
+      await session.abortTransaction();
+      session.endSession();
+      return; // Avoid duplicate processing
+    }
+
+    // 3. Find user account details
+    const userAccount = await getUserAccount(userId, 'sb');
+    if (!userAccount) {
+      throw new ApiError(404, 'User account details not found.');
+    }
+
+    // 4. Create Contribution Record
+    const contributionDate = paymentDate || new Date(); // Use payment date from Paystack if available
+
+    // Create contribution record
+    await ContributionModel.create(
+      [
+        {
+          userId,
+          amount,
+          branchId: userPackage.branchId,
+          accountNumber: userPackage.accountNumber,
+          packageId,
+          date: contributionDate,
+          paymentMethod: 'paystack',
+          narration: `SB contribution via Paystack`,
+          paystackReference: reference,
+          createdBy: userId,
+        },
+      ],
+      { session }
+    );
+
+    // 5. Create Account Transaction Record
+    const transactionDate = contributionDate;
+    const contributionTransaction = await AccountTransactionModel.create(
+      [
+        {
+          accountNumber: userPackage.accountNumber,
+          amount,
+          createdBy: userId,
+          branchId: userPackage.branchId,
+          date: transactionDate,
+          direction: 'inflow',
+          narration: `SB contribution via Paystack (Ref: ${reference})`,
+          packageId,
+          paymentReference: reference,
+          transactionType: 'contribution_sb_paystack',
+          userId,
+        },
+      ],
+      { session }
+    );
+
+    // 6. Update Package Totals
+    await SbPackageModel.findByIdAndUpdate(
+      packageId,
+      {
+        $inc: { totalContribution: amount },
+      },
+      { session }
+    );
+
+    // 7. Add Ledger Entry
+    const addLedgerEntryInput = {
+      type: ACCOUNT_TYPE[2], // SB Account
+      direction: DIRECTION_VALUE[0], // Credit
+      date: transactionDate,
+      narration: `SB contribution via Paystack (Ref: ${reference})`,
+      amount,
+      userId,
+      branchId: userPackage.branchId,
+      transactionId: contributionTransaction[0]._id,
+      reference,
+    };
+    await addLedgerEntry(addLedgerEntryInput, session);
+
+    // Commit the transaction before sending notifications
+    await session.commitTransaction();
+    session.endSession();
+
+    logger.info(`Successfully processed Paystack contribution: Ref ${reference}, Package ${packageId}, Amount ${amount}`);
+
+    // Fetch complete product information for notifications
+    const ProductCatalogueModel = await ProductCatalogue();
+    const product = await ProductCatalogueModel.findById(userPackage.product);
+    const productName = product ? product.name : 'your product';
+
+    // 8. Send notification using our standardized notification function
+    await sendSbNotifications({
+      userId,
+      notificationType: 'account_activity',
+      data: {
+        amount,
+        reference,
+        packageId,
+        accountNumber: userPackage.accountNumber,
+        totalContribution: userPackage.totalContribution + amount,
+        paymentMethod: 'Online Payment',
+        productName,
+      },
+      packageData: {
+        ...userPackage.toObject(),
+        product,
+      },
+      accountData: userAccount,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    logger.error(`Error processing Paystack contribution Ref ${reference} for package ${packageId}:`, error);
+    // Re-throw the error so the caller knows processing failed
+    throw error;
+  }
+};
+
 module.exports = {
   createSbPackage,
   createUserInitiatedSbPackage,
@@ -502,4 +853,6 @@ module.exports = {
   mergeSavingsPackages,
   updatePackageProduct,
   getAllSbPackages,
+  processPaystackContribution,
+  sendSbNotifications,
 };

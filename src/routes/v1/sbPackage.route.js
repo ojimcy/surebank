@@ -52,4 +52,12 @@ router
     sbPackageController.updatePackageProduct
   );
 
+router
+  .route('/init-contribution')
+  .post(
+    auth('selfAccount'),
+    validate(sbPackageValidation.initializeSbContribution),
+    sbPackageController.initializeSbContribution
+  );
+
 module.exports = router;
