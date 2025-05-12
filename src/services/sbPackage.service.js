@@ -72,20 +72,23 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
     // Prepare notification content for all channels
     const notificationContent = {
       inApp: {
-        title: 'Savings-Buying Contribution',
-        body: `Your Savings-Buying contribution of ${amount} for ${productName} has been successfully processed.`,
+        title: 'SB Contribution',
+        body: `Your SB contribution of ${amount} for ${productName} has been successfully processed.`,
       },
       email: {
-        subject: 'Savings-Buying Contribution Confirmation',
+        subject: 'SB Contribution Confirmation',
         template: 'CONTRIBUTION',
         templateData: {
           fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Valued Customer',
           amount,
+          packageType: 'sb',
           accountNumber: accountNumber || (packageData ? packageData.accountNumber : ''),
+          contributionAmount: amount,
           totalContribution,
           reference,
           paymentMethod,
           productName,
+          targetAmount: packageData && packageData.targetAmount ? packageData.targetAmount : 0,
           dashboardUrl: `${config.paystack.frontendUrl}/packages/${data.packageId}`,
         },
       },
@@ -101,7 +104,7 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
     // Send notifications through all channels based on user preferences
     await sendMultiChannelNotification({
       userId: user._id,
-      type: 'contribution',
+      type: 'account_activities',
       user,
       data: { ...data, phoneNumber: accountData && accountData.phoneNumber }, // Pass accountData's phoneNumber for fallback
       notificationContent,
@@ -146,7 +149,7 @@ const handleWithdrawalNotification = async ({ user, data, notificationData }) =>
     // Send notifications through all channels based on user preferences
     await sendMultiChannelNotification({
       userId: user._id,
-      type: 'account_activity',
+      type: 'account_activities',
       user,
       data,
       notificationContent,
@@ -199,7 +202,7 @@ const sendSbNotifications = async ({ userId, notificationType, data, user, packa
       case 'package_created':
         await handlePackageCreatedNotification({ user: userToUse, data, notificationData });
         break;
-      case 'account_activity':
+      case 'account_activities':
         await handleContributionNotification({ user: userToUse, data, notificationData, packageData, accountData });
         break;
       case 'withdrawal':
@@ -818,7 +821,7 @@ const processPaystackContribution = async (packageId, amount, userId, reference,
     // 8. Send notification using our standardized notification function
     await sendSbNotifications({
       userId,
-      notificationType: 'account_activity',
+      notificationType: 'account_activities',
       data: {
         amount,
         reference,

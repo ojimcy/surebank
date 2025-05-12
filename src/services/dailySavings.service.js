@@ -12,7 +12,6 @@ const { sendSms } = require('./sms.service');
 const { getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
 const { sendMultiChannelNotification } = require('./notification.service');
-const dailySavingsContributionTemplate = require('../templates/emails/daily-savings-contribution.template');
 const config = require('../config/config');
 
 /**
@@ -148,6 +147,8 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
   const { amount, reference, accountNumber, paymentMethod = 'Online Payment' } = data;
   const totalContribution =
     packageData && packageData.totalContribution ? packageData.totalContribution : data.totalContribution;
+  const targetAmount = packageData && packageData.targetAmount ? packageData.targetAmount : 0;
+  const totalCount = packageData && packageData.totalCount ? packageData.totalCount : 30;
 
   try {
     // Prepare notification content for all channels
@@ -157,16 +158,22 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
         body: `Your Daily Savings contribution of ${amount} has been successfully processed.`,
       },
       email: {
-        subject: 'Daily Savings Contribution Confirmation',
-        html: dailySavingsContributionTemplate({
-          fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Valued Customer',
-          amount,
-          accountNumber: accountNumber || (packageData ? packageData.accountNumber : ''),
+        // Use the email service instead of direct template
+        subject: 'Contribution Confirmation',
+        template: 'CONTRIBUTION',
+        templateData: {
+          userName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Valued Customer',
+          packageType: 'ds',
+          productName: packageData ? packageData.target : 'Daily Savings',
+          contributionAmount: amount,
           totalContribution,
-          reference,
-          paymentMethod,
+          targetAmount,
+          accountNumber: accountNumber || (packageData ? packageData.accountNumber : ''),
+          date: Date.now(),
+          packageId: data.packageId,
           dashboardUrl: `${config.paystack.frontendUrl}/packages/${data.packageId}`,
-        }),
+          totalCount,
+        },
       },
       sms: dsContributionMessage(
         user.firstName || 'Valued Customer',
@@ -180,7 +187,7 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
     // Send notifications through all channels based on user preferences
     await sendMultiChannelNotification({
       userId: user._id,
-      type: 'account_activity',
+      type: 'account_activities',
       user,
       data: { ...data, phoneNumber: accountData && accountData.phoneNumber }, // Pass accountData's phoneNumber for fallback
       notificationContent,
@@ -225,7 +232,7 @@ const handleWithdrawalNotification = async ({ user, data, notificationData }) =>
     // Send notifications through all channels based on user preferences
     await sendMultiChannelNotification({
       userId: user._id,
-      type: 'account_activity',
+      type: 'account_activities',
       user,
       data,
       notificationContent,

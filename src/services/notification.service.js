@@ -87,14 +87,24 @@ const updateUserPreferences = async (userId, updateBody) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Notification preferences not found');
   }
 
-  // Validate notification types
-  Object.keys(updateBody.preferences || {}).forEach((type) => {
-    if (!notificationPreferenceSchema.statics.NOTIFICATION_TYPES.includes(type)) {
-      throw new ApiError(httpStatus.BAD_REQUEST, `Invalid notification type: ${type}`);
-    }
-  });
+  // Create a shallow copy of updateBody to avoid modifying the function parameter
+  const updateData = { ...updateBody };
 
-  Object.assign(preferences, updateBody);
+  // Validate notification types and update preferences Map
+  if (updateData.preferences) {
+    Object.entries(updateData.preferences).forEach(([type, channel]) => {
+      if (!notificationPreferenceSchema.statics.NOTIFICATION_TYPES.includes(type)) {
+        throw new ApiError(httpStatus.BAD_REQUEST, `Invalid notification type: ${type}`);
+      }
+      preferences.preferences.set(type, channel);
+    });
+
+    // Remove preferences property to prevent overwriting the entire Map
+    delete updateData.preferences;
+  }
+
+  // Update other properties
+  Object.assign(preferences, updateData);
   await preferences.save();
   return preferences;
 };
@@ -122,7 +132,7 @@ const sendNotification = async (userId, type, data) => {
     }
 
     // Get channel preference for this notification type
-    const channel = preferences.preferences[type];
+    const channel = preferences.preferences.get(type);
     if (!channel || channel === 'none') {
       logger.info(`Notifications of type ${type} are disabled for user ${userId}`);
       return;
@@ -178,8 +188,8 @@ const getUserNotificationPreference = async (userId, type) => {
       return null;
     }
 
-    // Get channel preference for this notification type
-    const channel = preferences.preferences[type];
+    // Get channel preference for this notification type from the Map
+    const channel = preferences.preferences.get(type);
     return !channel || channel === 'none' ? null : channel;
   } catch (error) {
     logger.error('Error getting user notification preference:', error);
@@ -211,7 +221,7 @@ const unsubscribeFromNotificationType = async (userId, type) => {
   if (!preferences) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Notification preferences not found');
   }
-  preferences.preferences[type] = 'none';
+  preferences.preferences.set(type, 'none');
   await preferences.save();
   return preferences;
 };
