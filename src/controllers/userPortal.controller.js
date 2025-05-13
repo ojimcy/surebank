@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
-const { paymentService, dailySavingsService } = require('../services');
+const { paymentService, dailySavingsService, sbPackageService } = require('../services');
 
 /**
  * Initialize a contribution to a Daily Savings package via Paystack
@@ -78,10 +78,43 @@ const getUserDailySavingsPackages = catchAsync(async (req, res) => {
  */
 const getPackageContributions = catchAsync(async (req, res) => {
   const { packageId } = req.params;
+  const { startDate, endDate } = req.query;
 
-  // First, verify the package belongs to this user
-  const packageData = await dailySavingsService.getDailySavingsPackageById(packageId);
+  // Create filters object for date filtering
+  const filters = {};
+  if (startDate) filters.startDate = startDate;
+  if (endDate) filters.endDate = endDate;
 
+  // Try to find the package in DS packages first
+  let packageData;
+
+  try {
+    packageData = await dailySavingsService.getDailySavingsPackageById(packageId);
+  } catch (error) {
+    // Package doesn't exist in DS, try SB
+    if (error.statusCode === 404) {
+      try {
+        packageData = await sbPackageService.getPackageById(packageId);
+      } catch (sbError) {
+        return res.status(httpStatus.NOT_FOUND).json({
+          success: false,
+          message: 'Package not found',
+        });
+      }
+    } else {
+      throw error; // Rethrow if it's not a 404 error
+    }
+  }
+
+  // If no package found in either service
+  if (!packageData) {
+    return res.status(httpStatus.NOT_FOUND).json({
+      success: false,
+      message: 'Package not found',
+    });
+  }
+
+  // Verify ownership
   if (packageData.userId.toString() !== req.user._id.toString()) {
     return res.status(httpStatus.FORBIDDEN).json({
       success: false,
@@ -89,7 +122,10 @@ const getPackageContributions = catchAsync(async (req, res) => {
     });
   }
 
-  const contributions = await dailySavingsService.getDailySavingsContributions(packageId);
+  // Get contributions - works for both DS and SB since they share the same Contribution model
+  const contributions = await dailySavingsService.getDailySavingsContributions(packageId, filters);
+
+  // Return just the contributions to maintain backward compatibility
   res.status(httpStatus.OK).json(contributions);
 });
 
