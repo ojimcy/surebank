@@ -170,6 +170,25 @@ const getHeldAmount = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(heldAmount);
 });
 
+const getSelfTransactions = catchAsync(async (req, res) => {
+  const { startDate, endDate, narration, page = 1, limit = 20 } = req.query;
+  const userId = req.user._id;
+
+  const parsedPage = parseInt(page, 10);
+  const parsedLimit = parseInt(limit, 10);
+
+  const transactions = await accountTransactionService.getSelfTransactions({
+    userId,
+    startDate,
+    endDate,
+    narration,
+    page: parsedPage,
+    limit: parsedLimit,
+  });
+
+  res.status(httpStatus.OK).json(transactions);
+});
+
 module.exports = {
   makeCustomerDeposit,
   updateAccountStatus,
@@ -187,4 +206,5 @@ module.exports = {
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
   getHeldAmount,
+  getSelfTransactions,
 };

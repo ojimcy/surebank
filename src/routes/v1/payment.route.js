@@ -60,6 +60,5 @@ router.post('/transfer/webhook', validate(paymentValidation.paystackWebhook), us
 
 // Future payment-related routes can be added here
 // router.get('/transactions', ...);
-// router.post('/init-withdrawal', ...);
 
 module.exports = router;

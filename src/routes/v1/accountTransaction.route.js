@@ -26,6 +26,14 @@ router
   );
 
 router
+  .route('/self')
+  .get(
+    auth('viewOwnTransactions'),
+    validate(accountTransactionValidation.getSelfTransactions),
+    accountTransactionController.getSelfTransactions
+  );
+
+router
   .route('/balance')
   .post(
     auth('viewBalance'),

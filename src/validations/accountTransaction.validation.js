@@ -98,6 +98,16 @@ const getWithdrawalRequestById = {
   }),
 };
 
+const getSelfTransactions = {
+  query: Joi.object().keys({
+    startDate: Joi.number().optional(),
+    endDate: Joi.number().optional(),
+    narration: Joi.string().optional(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
 module.exports = {
   makeCustomerDeposit,
   getAvailableBalance,
@@ -110,4 +120,5 @@ module.exports = {
   rejectWithdrawalRequest,
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
+  getSelfTransactions,
 };

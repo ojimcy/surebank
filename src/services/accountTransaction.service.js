@@ -599,6 +599,52 @@ const getCustomerwithdrawals = async (
   }
 };
 
+/**
+ * Get account transactions for the logged-in user
+ * @param {Object} options - Query options
+ * @param {string} options.userId - User ID (authenticated user)
+ * @param {number} options.startDate - Start date for filtering transactions
+ * @param {number} options.endDate - End date for filtering transactions
+ * @param {string} options.narration - Narration search string
+ * @param {number} options.page - Page number for pagination
+ * @param {number} options.limit - Number of items per page
+ * @returns {Promise<Object>} Result with transactions and pagination info
+ */
+const getSelfTransactions = async (options = {}) => {
+  const filter = { userId: options.userId };
+
+  if (options.startDate) {
+    filter.date = { $gte: options.startDate };
+  }
+
+  if (options.endDate) {
+    filter.date = { ...filter.date, $lte: options.endDate };
+  }
+
+  if (options.narration) {
+    filter.narration = { $regex: options.narration, $options: 'i' };
+  }
+
+  const AccountTransactionModel = await AccountTransaction();
+  const page = options.page || 1;
+  const limit = options.limit || 20;
+  const skip = (page - 1) * limit;
+
+  const transactions = await AccountTransactionModel.find(filter).sort({ date: -1 }).skip(skip).limit(limit);
+
+  const totalTransactions = await AccountTransactionModel.countDocuments(filter);
+
+  const result = {
+    transactions,
+    page,
+    limit,
+    totalPages: Math.ceil(totalTransactions / limit),
+    totalResults: totalTransactions,
+  };
+
+  return result;
+};
+
 module.exports = {
   getAccountByNumber,
   makeCustomerDeposit,
@@ -616,4 +662,5 @@ module.exports = {
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
   getHeldAmount,
+  getSelfTransactions,
 };

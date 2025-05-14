@@ -42,6 +42,7 @@ const userPermissions = [
   'selfWithdrawal',
   'getSelfWithdrawal',
   'notifications',
+  'viewOwnTransactions',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];
