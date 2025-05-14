@@ -574,7 +574,7 @@ const requestWithdrawal = async (packageId, withdrawalReason, userId) => {
       const user = await UserModel.findById(interestPackage.userId);
       const userEmail = user ? user.email : null;
 
-      await sendNotification(interestPackage.userId, 'package_withdrawal_alert', {
+      await sendNotification(interestPackage.userId, 'withdrawal_request', {
         subject: 'Withdrawal Request Submitted',
         message: `Your withdrawal request for package "${interestPackage.name}" has been submitted and is pending approval.`,
         email: userEmail,

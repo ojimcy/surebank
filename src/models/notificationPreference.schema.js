@@ -13,7 +13,7 @@ const NOTIFICATION_TYPES = [
   'login_alerts',
   'package_created',
   'package_matured',
-  'package_withdrawal_alert',
+  'withdrawal_request',
   'daily_savings',
 ];
 
@@ -29,7 +29,7 @@ const DEFAULT_PREFERENCES = {
   login_alerts: 'both',
   package_created: 'both',
   package_matured: 'both',
-  package_withdrawal_alert: 'both',
+  withdrawal_request: 'both',
   daily_savings: 'both',
 };
 

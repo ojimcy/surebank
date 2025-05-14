@@ -8,6 +8,10 @@ const kycSchema = mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    name: {
+      type: String,
+      required: true,
+    },
     type: {
       type: String,
       enum: ['bvn', 'id'],

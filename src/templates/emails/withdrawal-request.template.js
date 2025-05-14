@@ -3,7 +3,7 @@ const baseTemplate = require('./base.template');
 module.exports = (data) =>
   baseTemplate(
     `
-  <h2>Withdrawal Alert</h2>
+  <h2>Withdrawal Request</h2>
   <p>Dear ${data.name},</p>
   
   <div class="alert alert-warning">
@@ -13,12 +13,12 @@ module.exports = (data) =>
       <p><strong>Date:</strong> ${new Date(data.date).toLocaleString()}</p>
       <p><strong>Status:</strong> ${data.status}</p>
       <p><strong>Bank:</strong> ${data.bankName}</p>
-      <p><strong>Account Number:</strong> ${data.accountNumber}</p>
+      <p><strong>Account Number:</strong> ${data.bankAccountNumber}</p>
       <p><strong>Reference:</strong> ${data.reference}</p>
     </div>
   </div>
 
-  <p>Expected processing time: ${data.processingTime}</p>
+  <p>Withdrawal request may take up to ${data.processingTime} working days to be processed.</p>
   
   ${
     data.status === 'pending'
@@ -28,5 +28,5 @@ module.exports = (data) =>
       : ''
   }
 `,
-    'Withdrawal Alert'
+    'Withdrawal Request'
   );

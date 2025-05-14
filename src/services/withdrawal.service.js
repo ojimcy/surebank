@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const mongoose = require('mongoose');
-const { WithdrawalRequest } = require('../models');
+const { WithdrawalRequest, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
 const userService = require('./user.service');
 const paystackService = require('./paystack.service');
@@ -23,6 +23,8 @@ const logger = require('../config/logger');
  */
 const createSelfWithdrawalRequest = async (withdrawalData) => {
   const { userId, accountNumber, amount, bankAccountName, bankAccountNumber, bankName, bankCode, reason } = withdrawalData;
+
+  const AccountTransactionModel = await AccountTransaction();
 
   // Validate account ownership and balance
   const account = await accountTransactionService.getAccountByNumber(accountNumber);
@@ -56,7 +58,8 @@ const createSelfWithdrawalRequest = async (withdrawalData) => {
 
   try {
     // Create withdrawal request
-    const withdrawalRequest = await WithdrawalRequest.create(
+    const transactionDate = new Date().getTime();
+    const withdrawalRequest = await AccountTransactionModel.create(
       [
         {
           userId,
@@ -74,6 +77,9 @@ const createSelfWithdrawalRequest = async (withdrawalData) => {
           status: 'pending',
           isEarlyWithdrawal: false,
           narration: 'Self withdrawal request',
+          branchId: account.branchId,
+          direction: 'outflow',
+          date: transactionDate,
         },
       ],
       { session }
@@ -88,70 +94,35 @@ const createSelfWithdrawalRequest = async (withdrawalData) => {
       const accountManager = await userService.getUserById(account.accountManagerId);
 
       if (accountManager) {
-        await notificationService.sendMultiChannelNotification({
+        await notificationService.sendTemplatedNotification({
           userId: account.accountManagerId,
-          type: 'withdrawal_request',
+          templateType: 'WITHDRAWAL_REQUEST',
           user: accountManager,
           data: {
             amount,
             accountNumber,
             customerName: user ? `${user.firstName} ${user.lastName}` : 'Customer',
-          },
-          notificationContent: {
-            inApp: {
-              title: 'New Withdrawal Request',
-              body: `Customer ${
-                user ? `${user.firstName} ${user.lastName}` : accountNumber
-              } has requested a withdrawal of ₦${amount} from account ${accountNumber}`,
-            },
-            email: {
-              subject: 'New Withdrawal Request',
-              template: 'WITHDRAWAL_REQUEST',
-              templateData: {
-                customerName: user ? `${user.firstName} ${user.lastName}` : 'Customer',
-                amount,
-                accountNumber,
-                date: new Date(),
-              },
-            },
+            date: new Date(),
           },
         });
       }
 
       // Notify the user about their withdrawal request
       if (user) {
-        await notificationService.sendMultiChannelNotification({
+        await notificationService.sendTemplatedNotification({
           userId,
-          type: 'withdrawal_alert',
+          templateType: 'WITHDRAWAL_REQUEST',
           user,
           data: {
+            name: `${user.firstName} ${user.lastName}`,
             amount,
             accountNumber,
             bankName,
             bankAccountNumber,
             reference: withdrawalRequest[0]._id.toString(),
-          },
-          notificationContent: {
-            inApp: {
-              title: 'Withdrawal Request Received',
-              body: `Your withdrawal request of ₦${amount} from account ${accountNumber} has been received. It will be processed within 2 working days.`,
-            },
-            email: {
-              subject: 'Withdrawal Request Received',
-              template: 'withdrawal-alert',
-              templateData: {
-                name: `${user.firstName} ${user.lastName}`,
-                amount,
-                accountNumber,
-                bankName,
-                bankAccountNumber,
-                reference: withdrawalRequest[0]._id.toString(),
-                date: new Date(),
-                status: 'pending',
-                processingTime: 'maximum 2 working days',
-              },
-            },
-            sms: `Your withdrawal request of ₦${amount} from account ${accountNumber} has been received. It will be processed within 2 working days.`,
+            date: new Date(),
+            status: 'pending',
+            processingTime: '2',
           },
         });
       }

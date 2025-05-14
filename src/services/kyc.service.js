@@ -32,6 +32,7 @@ const submitKycRequest = async (userId, kycData) => {
   // Prepare KYC data based on type
   const kycBody = {
     userId,
+    name: `${user.firstName} ${user.lastName}` || kycData.name,
     type: kycData.kycType,
     dateOfBirth: kycData.dateOfBirth,
     phoneNumber: kycData.phoneNumber,

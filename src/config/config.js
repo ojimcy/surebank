@@ -142,5 +142,6 @@ module.exports = {
     secretKey: envVars.PAYSTACK_SECRET_KEY,
     callbackUrl: envVars.PAYSTACK_CALLBACK_URL,
     frontendUrl: envVars.FRONTEND_URL,
+    baseUrl: envVars.PAYSTACK_BASE_URL,
   },
 };

@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/ds/packages', auth('userPackage'), userPortalController.getUserDailySavingsPackages);
 
 /**
- * GET /v1/payment/packages/:packageId/contributions
+ * GET /v1/payments/packages/:packageId/contributions
  * Get contributions for a specific package (works for both DS and SB packages)
  * @param {string} packageId - Package ID (in route params)
  * @query {string} [startDate] - Optional start date for filtering (YYYY-MM-DD)
@@ -22,7 +22,7 @@ router.get('/packages/:packageId/contributions', auth('userPackage'), userPortal
 router.post('/verify', validate(paymentValidation.verifyPayment), userPortalController.handleDailySavingsContribution);
 
 /**
- * POST /v1/payment/withdrawal/request
+ * POST /v1/payments/withdrawal/request
  * Create a self-withdrawal request
  * @auth Required
  * @body {string} accountNumber - Account number
@@ -42,7 +42,7 @@ router.post(
 );
 
 /**
- * GET /v1/payment/withdrawal/status/:id
+ * GET /v1/payments/withdrawal/status/:id
  * Get status of a self-withdrawal request
  * @auth Required
  * @param {string} id - Withdrawal request ID

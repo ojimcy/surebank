@@ -375,6 +375,171 @@ const readAllNotifications = async (userId) => {
   await NotificationModel.updateMany({ userId }, { isRead: true });
 };
 
+/**
+ * Notification templates registry - centralized definitions for all notification types
+ */
+const NOTIFICATION_TEMPLATES = {
+  WITHDRAWAL_ALERT: {
+    inApp: {
+      title: 'Withdrawal Request Received',
+      bodyTemplate:
+        'Your withdrawal request of ₦{{amount}} from account {{accountNumber}} has been received. It will be processed within 2 working days.',
+    },
+    email: {
+      subject: 'Withdrawal Request Received',
+      template: 'WITHDRAWAL_ALERT',
+    },
+    sms: 'Your withdrawal request of ₦{{amount}} has been received. It will be processed within 2 working days.',
+  },
+
+  WITHDRAWAL_APPROVED: {
+    inApp: {
+      title: 'Withdrawal Request Approved',
+      bodyTemplate: 'Your withdrawal request of ₦{{amount}} has been processed.',
+    },
+    email: {
+      subject: 'Withdrawal Request Approved',
+      template: 'WITHDRAWAL_APPROVED',
+    },
+    sms: 'Your withdrawal request of ₦{{amount}} from account {{accountNumber}} has been approved and is being processed.',
+  },
+
+  WITHDRAWAL_SUCCESS: {
+    inApp: {
+      title: 'Withdrawal Successful',
+      bodyTemplate: 'Your withdrawal of ₦{{amount}} from account {{accountNumber}} has been processed successfully.',
+    },
+    email: {
+      subject: 'Withdrawal Processed Successfully',
+      template: 'WITHDRAWAL_SUCCESS',
+    },
+    sms: 'Your withdrawal of ₦{{amount}} from account {{accountNumber}} has been processed successfully.',
+  },
+
+  WITHDRAWAL_FAILED: {
+    inApp: {
+      title: 'Withdrawal Failed',
+      bodyTemplate: 'Your withdrawal of ₦{{amount}} from account {{accountNumber}} failed to process.',
+    },
+    email: {
+      subject: 'Withdrawal Failed',
+      template: 'WITHDRAWAL_FAILED',
+    },
+    sms: 'Your withdrawal of ₦{{amount}} from account {{accountNumber}} failed to process.',
+  },
+
+  // Package related notifications
+  PACKAGE_CREATED: {
+    inApp: {
+      title: 'Package Created Successfully',
+      bodyTemplate: 'Your {{packageType}} package for {{target}} has been created successfully.',
+    },
+    email: {
+      subject: 'Package Created Successfully',
+      template: 'PACKAGE_CREATION',
+    },
+    sms: 'Your {{packageType}} package for {{target}} has been created successfully.',
+  },
+
+  CONTRIBUTION: {
+    inApp: {
+      title: 'Contribution Confirmation',
+      bodyTemplate: 'Your contribution of ₦{{amount}} has been successfully processed.',
+    },
+    email: {
+      subject: 'Contribution Confirmation',
+      template: 'CONTRIBUTION',
+    },
+    sms: 'Your contribution of ₦{{amount}} to account {{accountNumber}} was successful. New balance: ₦{{totalContribution}}.',
+  },
+};
+
+/**
+ * Fill template string with data values
+ * @param {string} template - Template string with {{placeholders}}
+ * @param {Object} data - Data object with values
+ * @returns {string} Filled template
+ */
+const fillTemplate = (template, data) => {
+  if (!template || typeof template !== 'string') return '';
+  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    return data[key] !== undefined ? data[key] : match;
+  });
+};
+
+/**
+ * Get notification content from templates based on type and data
+ * @param {string} templateType - Template type from NOTIFICATION_TEMPLATES
+ * @param {Object} data - Data to fill in templates
+ * @returns {Object} Notification content for different channels
+ */
+const getNotificationContent = (templateType, data) => {
+  const template = NOTIFICATION_TEMPLATES[templateType];
+  if (!template) {
+    logger.warn(`Notification template not found: ${templateType}`);
+    return {};
+  }
+
+  const content = {};
+
+  // Process in-app notification
+  if (template.inApp) {
+    content.inApp = {
+      title: template.inApp.title,
+      body: fillTemplate(template.inApp.bodyTemplate, data),
+    };
+  }
+
+  // Process email notification
+  if (template.email) {
+    content.email = {
+      subject: template.email.subject,
+      template: template.email.template,
+      templateData: {
+        ...data,
+        date: data.date || new Date(),
+      },
+    };
+  }
+
+  return content;
+};
+
+/**
+ * Send templated notification - simplified API for sending notifications
+ * @param {Object} params - Notification parameters
+ * @param {string} params.userId - User ID
+ * @param {string} params.templateType - Template type from NOTIFICATION_TEMPLATES
+ * @param {Object} params.data - Data to fill templates with
+ * @param {Object} [params.user] - User object (optional, will be fetched if not provided)
+ * @param {Object} [params.metadata] - Additional metadata for the notification
+ * @returns {Promise<Object>} Result with status of each channel
+ */
+const sendTemplatedNotification = async ({ userId, templateType, data, user, metadata = {} }) => {
+  if (!NOTIFICATION_TEMPLATES[templateType]) {
+    logger.warn(`Invalid notification template type: ${templateType}`);
+    return { inApp: false, email: false, sms: false };
+  }
+
+  // Get appropriate notification type for preference checking
+  const notificationType = templateType.toLowerCase();
+
+  const notificationContent = getNotificationContent(templateType, data);
+
+  return sendMultiChannelNotification({
+    userId,
+    type: notificationType,
+    user,
+    data,
+    notificationContent,
+    notificationData: {
+      reference: data.reference || metadata.reference,
+      relatedEntityId: data.relatedEntityId || metadata.relatedEntityId || data.packageId,
+      relatedEntityType: data.relatedEntityType || metadata.relatedEntityType,
+    },
+  });
+};
+
 module.exports = {
   createNotification,
   getNotifications,
@@ -391,4 +556,7 @@ module.exports = {
   sendMultiChannelNotification,
   deleteNotification,
   readAllNotifications,
+  NOTIFICATION_TEMPLATES,
+  sendTemplatedNotification,
+  getNotificationContent,
 };

@@ -50,7 +50,16 @@ const accountTransactionSchema = mongoose.Schema(
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: false,
+    },
+    approvedAt: {
+      type: Date,
+    },
+    rejectedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    rejectedAt: {
+      type: Date,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -72,6 +81,19 @@ const accountTransactionSchema = mongoose.Schema(
     bankName: {
       type: String,
       required: false,
+    },
+    bankCode: {
+      type: String,
+      required: false,
+    },
+    isEarlyWithdrawal: {
+      type: Boolean,
+      required: false,
+    },
+    penaltyAmount: {
+      type: Number,
+      default: 0,
+      comment: 'Amount deducted as penalty for early withdrawal or other reasons',
     },
   },
   {

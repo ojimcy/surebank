@@ -42,6 +42,11 @@ const submitKyc = {
       then: Joi.required(),
       otherwise: Joi.forbidden(),
     }),
+    name: Joi.string().when('kycType', {
+      is: 'id',
+      then: Joi.required(),
+      otherwise: Joi.optional(),
+    }),
     // Common fields
     dateOfBirth: Joi.date().required(),
     phoneNumber: Joi.string().required(),
