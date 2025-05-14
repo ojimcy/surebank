@@ -8,23 +8,27 @@ const router = express.Router();
 
 router
   .route('/all')
-  .get(auth('getNitifications'), validate(notificationValidation.getNotifications), notificationController.getNotifications);
+  .get(auth('notifications'), validate(notificationValidation.getNotifications), notificationController.getNotifications);
 
 router
   .route('/count')
   .get(
-    auth('getPendingNotificationCount'),
+    auth('notifications'),
     validate(notificationValidation.pendingNotificationCount),
     notificationController.pendingNotificationCount
   );
 
+router.route('/:notificationId').delete(auth('notifications'), notificationController.deleteNotification);
+
 router
   .route('/:notificationId/mark-as-read')
   .post(
-    auth('markNotificationAsRead'),
+    auth('notifications'),
     validate(notificationValidation.markNotificationAsRead),
     notificationController.markNotificationAsRead
   );
+
+router.route('/read-all').post(auth('notifications'), notificationController.readAllNotifications);
 
 router
   .route('/preferences')

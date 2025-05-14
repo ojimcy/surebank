@@ -16,23 +16,39 @@ const pendingNotificationCount = catchAsync(async (req, res) => {
   res.send({ count });
 });
 
+const deleteNotification = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const notification = await notificationService.deleteNotification(userId, req.params.notificationId);
+  res.send(notification);
+});
+
 const markNotificationAsRead = catchAsync(async (req, res) => {
-  const notification = await notificationService.markNotificationAsRead(req.user._id, req.params.notificationId);
+  const userId = req.user._id;
+  const notification = await notificationService.markNotificationAsRead(userId, req.params.notificationId);
+  res.send(notification);
+});
+
+const readAllNotifications = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const notification = await notificationService.readAllNotifications(userId);
   res.send(notification);
 });
 
 const getPreferences = catchAsync(async (req, res) => {
-  const preferences = await notificationService.getUserPreferences(req.user.id);
+  const userId = req.user._id;
+  const preferences = await notificationService.getUserPreferences(userId);
   res.send(preferences);
 });
 
 const updatePreferences = catchAsync(async (req, res) => {
-  const preferences = await notificationService.updateUserPreferences(req.user.id, req.body);
+  const userId = req.user._id;
+  const preferences = await notificationService.updateUserPreferences(userId, req.body);
   res.send(preferences);
 });
 
 const unsubscribeFromAll = catchAsync(async (req, res) => {
-  const preferences = await notificationService.unsubscribeFromAll(req.user.id);
+  const userId = req.user._id;
+  const preferences = await notificationService.unsubscribeFromAll(userId);
   res.send(preferences);
 });
 
@@ -44,7 +60,8 @@ const getNotificationTypes = catchAsync(async (req, res) => {
 });
 
 const unsubscribeFromNotificationType = catchAsync(async (req, res) => {
-  const preferences = await notificationService.unsubscribeFromNotificationType(req.user.id, req.params.type);
+  const userId = req.user._id;
+  const preferences = await notificationService.unsubscribeFromNotificationType(userId, req.params.type);
   res.send(preferences);
 });
 
@@ -57,4 +74,6 @@ module.exports = {
   unsubscribeFromAll,
   getNotificationTypes,
   unsubscribeFromNotificationType,
+  deleteNotification,
+  readAllNotifications,
 };

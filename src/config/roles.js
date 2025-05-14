@@ -39,6 +39,9 @@ const userPermissions = [
   'updatePreferences',
   'unsubscribeFromAll',
   'unsubscribeFromNotificationType',
+  'selfWithdrawal',
+  'getSelfWithdrawal',
+  'notifications',
 ];
 
 const vendorPermissions = [...userPermissions, 'manageProduct'];
@@ -99,6 +102,7 @@ const managerPermissions = [
   'sbPackages',
   'manageNote',
   'manageKyc',
+  'approveWithdrawalRequests',
 ];
 
 const adminPermissions = [

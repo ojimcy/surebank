@@ -536,7 +536,7 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
   const PackageModel = await DsPackage();
   const session = await mongoose.startSession();
   session.startTransaction();
-
+  logger.info(`Withdrawal details: ${withdrawal}`);
   try {
     const userPackage = await PackageModel.findOne(
       {
@@ -636,16 +636,33 @@ const getUserDailySavingsPackages = async (userId) => {
 /**
  * Get all contributions for a package
  * @param {string} packageId - Package ID
+ * @param {Object} [filters] - Optional filters
+ * @param {Date} [filters.startDate] - Start date filter for contributions
+ * @param {Date} [filters.endDate] - End date filter for contributions
  * @returns {Promise<Array>} Array of contributions
  */
-const getDailySavingsContributions = async (packageId) => {
+const getDailySavingsContributions = async (packageId, filters = {}) => {
   const ContributionModel = await Contribution();
-  const contribution = ContributionModel.find({ packageId });
 
-  const user = await getUserById(contribution.product);
-  const createdBy = user ? `${user.firstName} ${user.lastName}` : null;
+  // Start with the base query to find by packageId
+  const query = { packageId };
 
-  return { contribution, createdBy };
+  // Add date filters if provided
+  if (filters.startDate || filters.endDate) {
+    query.date = {};
+
+    if (filters.startDate) {
+      query.date.$gte = new Date(filters.startDate);
+    }
+
+    if (filters.endDate) {
+      query.date.$lte = new Date(filters.endDate);
+    }
+  }
+
+  const contribution = await ContributionModel.find(query).sort({ date: -1 });
+
+  return contribution;
 };
 
 /**

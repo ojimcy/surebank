@@ -13,6 +13,7 @@ provider:
         - http://localhost:3001
         - http://localhost:8081
         - https://surebank.sonicflare.net
+        - http://127.0.0.1:55528
       allowedMethods:
         - GET
         - POST

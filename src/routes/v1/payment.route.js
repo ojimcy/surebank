@@ -6,30 +6,60 @@ const { userPortalController } = require('../../controllers');
 
 const router = express.Router();
 
-// User routes - authenticated
-router.post(
-  '/ds/contribute/init',
-  auth('initiateDsContribution'),
-  validate(paymentValidation.initializeDsContribution),
-  userPortalController.initializeDailySavingsContribution
-);
-
-// SB Contribution route
-router.post(
-  '/sb/contribute/init',
-  auth('initiateSbContribution'),
-  validate(paymentValidation.initializeDsContribution), // Reuse the same validation schema for now
-  userPortalController.initializeSbContribution
-);
-
 router.get('/ds/packages', auth('userPackage'), userPortalController.getUserDailySavingsPackages);
 
-router.get('/ds/packages/:packageId/contributions', auth('userPackage'), userPortalController.getPackageContributions);
+/**
+ * GET /v1/payment/packages/:packageId/contributions
+ * Get contributions for a specific package (works for both DS and SB packages)
+ * @param {string} packageId - Package ID (in route params)
+ * @query {string} [startDate] - Optional start date for filtering (YYYY-MM-DD)
+ * @query {string} [endDate] - Optional end date for filtering (YYYY-MM-DD)
+ * @returns {Object} Object containing packageType (ds/sb) and contributions array
+ */
+router.get('/packages/:packageId/contributions', auth('userPackage'), userPortalController.getPackageContributions);
 
 // Webhook/callback handlers - typically not authenticated but might require verification
 router.post('/verify', validate(paymentValidation.verifyPayment), userPortalController.handleDailySavingsContribution);
 
+/**
+ * POST /v1/payment/withdrawal/request
+ * Create a self-withdrawal request
+ * @auth Required
+ * @body {string} accountNumber - Account number
+ * @body {number} amount - Amount to withdraw
+ * @body {string} bankName - Bank name
+ * @body {string} bankCode - Bank code
+ * @body {string} bankAccountNumber - Bank account number
+ * @body {string} bankAccountName - Bank account name
+ * @body {string} [reason] - Reason for withdrawal (optional)
+ * @returns {Object} Withdrawal request details
+ */
+router.post(
+  '/withdrawal/request',
+  auth('selfWithdrawal'),
+  validate(paymentValidation.selfWithdrawalRequest),
+  userPortalController.requestSelfWithdrawal
+);
+
+/**
+ * GET /v1/payment/withdrawal/status/:id
+ * Get status of a self-withdrawal request
+ * @auth Required
+ * @param {string} id - Withdrawal request ID
+ * @returns {Object} Withdrawal request status and details
+ */
+router.get(
+  '/withdrawal/status/:id',
+  auth('getSelfWithdrawal'),
+  validate(paymentValidation.getSelfWithdrawalStatus),
+  userPortalController.getSelfWithdrawalStatus
+);
+
+// Paystack webhook for transfer events
+router.post('/transfer/webhook', validate(paymentValidation.paystackWebhook), userPortalController.handleTransferWebhook);
+
 // Future payment-related routes can be added here
 // router.get('/transactions', ...);
+// router.post('/init-withdrawal', ...);
 
 module.exports = router;

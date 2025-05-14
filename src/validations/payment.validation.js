@@ -16,7 +16,37 @@ const verifyPayment = {
   }),
 };
 
+const selfWithdrawalRequest = {
+  body: Joi.object().keys({
+    accountNumber: Joi.string().required(),
+    amount: Joi.number().positive().required(),
+    bankName: Joi.string().required(),
+    bankCode: Joi.string().required(),
+    bankAccountNumber: Joi.string().required(),
+    bankAccountName: Joi.string().required(),
+    reason: Joi.string().optional(),
+  }),
+};
+
+const getSelfWithdrawalStatus = {
+  params: Joi.object().keys({
+    id: Joi.string().custom(objectId).required(),
+  }),
+};
+
+const paystackWebhook = {
+  body: Joi.object()
+    .keys({
+      event: Joi.string().required(),
+      data: Joi.object().required(),
+    })
+    .unknown(true),
+};
+
 module.exports = {
   initializeDsContribution,
   verifyPayment,
+  selfWithdrawalRequest,
+  getSelfWithdrawalStatus,
+  paystackWebhook,
 };

@@ -357,6 +357,24 @@ const sendMultiChannelNotification = async ({ userId, type, user, data, notifica
   }
 };
 
+const deleteNotification = async (userId, notificationId) => {
+  const NotificationModel = await Notification();
+  const notification = await NotificationModel.findById(notificationId);
+  if (!notification) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Notification not found');
+  }
+  if (notification.userId !== userId) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+  }
+  await notification.delete();
+  return notification;
+};
+
+const readAllNotifications = async (userId) => {
+  const NotificationModel = await Notification();
+  await NotificationModel.updateMany({ userId }, { isRead: true });
+};
+
 module.exports = {
   createNotification,
   getNotifications,
@@ -371,4 +389,6 @@ module.exports = {
   NOTIFICATION_CHANNELS: notificationPreferenceSchema.statics.NOTIFICATION_CHANNELS,
   getUserNotificationPreference,
   sendMultiChannelNotification,
+  deleteNotification,
+  readAllNotifications,
 };

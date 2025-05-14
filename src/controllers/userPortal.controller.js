@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
-const { paymentService, dailySavingsService, sbPackageService } = require('../services');
+const { paymentService, dailySavingsService, sbPackageService, withdrawalService } = require('../services');
 
 /**
  * Initialize a contribution to a Daily Savings package via Paystack
@@ -129,10 +129,67 @@ const getPackageContributions = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(contributions);
 });
 
+/**
+ * Create a self-withdrawal request
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ */
+const requestSelfWithdrawal = catchAsync(async (req, res) => {
+  const withdrawalData = {
+    ...req.body,
+    userId: req.user._id,
+  };
+
+  const result = await withdrawalService.createSelfWithdrawalRequest(withdrawalData);
+  res.status(httpStatus.CREATED).json(result);
+});
+
+/**
+ * Get the status of a self-withdrawal request
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ */
+const getSelfWithdrawalStatus = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user._id;
+
+  const result = await withdrawalService.getSelfWithdrawalStatus(id, userId);
+  res.status(httpStatus.OK).json(result);
+});
+
+/**
+ * Handle Paystack transfer webhook
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ */
+const handleTransferWebhook = catchAsync(async (req, res) => {
+  const event = req.body;
+
+  // Verify webhook signature should be done here
+  // This requires the Paystack webhook secret from your environment variables
+  // const signature = req.headers['x-paystack-signature'];
+  // const isVerified = paystackService.verifyWebhookSignature(signature, event);
+  // if (!isVerified) {
+  //   return res.status(httpStatus.UNAUTHORIZED).json({
+  //     success: false,
+  //     message: 'Invalid webhook signature',
+  //   });
+  // }
+
+  const result = await withdrawalService.processTransferWebhook(event);
+  res.status(httpStatus.OK).json({ received: true, ...result });
+});
+
 module.exports = {
   initializeDailySavingsContribution,
   initializeSbContribution,
   handleDailySavingsContribution,
   getUserDailySavingsPackages,
   getPackageContributions,
+  requestSelfWithdrawal,
+  getSelfWithdrawalStatus,
+  handleTransferWebhook,
 };
