@@ -625,6 +625,10 @@ const getSelfTransactions = async (options = {}) => {
     filter.narration = { $regex: options.narration, $options: 'i' };
   }
 
+  if (options.direction) {
+    filter.direction = options.direction;
+  }
+
   const AccountTransactionModel = await AccountTransaction();
   const page = options.page || 1;
   const limit = options.limit || 20;

@@ -702,14 +702,46 @@ const processVerifiedPayment = async (paymentData) => {
     };
 
     // Mark the transaction as processed in our system
+    let paymentTransactionId;
     try {
       const PaymentTransactionModel = await PaymentTransaction();
-      await PaymentTransactionModel.updateOne(
+      const updatedTransaction = await PaymentTransactionModel.findOneAndUpdate(
         { reference: paymentData.reference },
-        { $set: { status: 'processed', processedAt: new Date().getTime() } }
+        { $set: { status: 'processed', processedAt: new Date().getTime() } },
+        { new: true }
       );
+      paymentTransactionId = updatedTransaction ? updatedTransaction._id : undefined;
     } catch (error) {
       logger.error('Error updating payment transaction status:', error);
+      // Continue execution even if this fails
+    }
+
+    // Save transaction to accountTransactions as well
+    try {
+      // Get user's account information
+      const userAccount = await getUserAccount(metadata.userId, 'ibs');
+      if (userAccount) {
+        const AccountTransactionModel = await AccountTransaction();
+        const currentDate = new Date().getTime();
+
+        await AccountTransactionModel.create({
+          accountNumber: userAccount.accountNumber,
+          amount: metadata.principalAmount,
+          date: currentDate,
+          direction: 'inflow',
+          narration: `IBS payment via Paystack (Ref: ${paymentData.reference})`,
+          branchId: userAccount.branchId,
+          userId: metadata.userId,
+          createdBy: metadata.userId,
+          packageId: paymentTransactionId, // Link to the payment transaction
+        });
+
+        logger.info(`Successfully created account transaction for interest package payment: ${paymentData.reference}`);
+      } else {
+        logger.error(`User account not found for userId: ${metadata.userId}. Cannot create account transaction.`);
+      }
+    } catch (error) {
+      logger.error('Error creating account transaction:', error);
       // Continue execution even if this fails
     }
 

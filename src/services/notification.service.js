@@ -25,14 +25,17 @@ const getUnreadNotificationsCount = async (userId) => {
 };
 
 const markNotificationAsRead = async (userId, notificationId) => {
+  logger.info(`Marking notification as read: ${notificationId} for user: ${userId}`);
   const NotificationModel = await Notification();
   const notification = await NotificationModel.findById(notificationId);
   if (!notification) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Notification not found');
   }
-  if (!notification.userId !== userId) {
+  logger.info(`Notification: ${notification}`);
+  if (String(notification.userId) !== String(userId)) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
+
   notification.isRead = true;
   await notification.save();
   return notification;
@@ -379,7 +382,7 @@ const readAllNotifications = async (userId) => {
  * Notification templates registry - centralized definitions for all notification types
  */
 const NOTIFICATION_TEMPLATES = {
-  WITHDRAWAL_ALERT: {
+  WITHDRAWAL_REQUEST: {
     inApp: {
       title: 'Withdrawal Request Received',
       bodyTemplate:
@@ -387,7 +390,7 @@ const NOTIFICATION_TEMPLATES = {
     },
     email: {
       subject: 'Withdrawal Request Received',
-      template: 'WITHDRAWAL_ALERT',
+      template: 'WITHDRAWAL_REQUEST',
     },
     sms: 'Your withdrawal request of ₦{{amount}} has been received. It will be processed within 2 working days.',
   },

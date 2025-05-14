@@ -171,7 +171,7 @@ const getHeldAmount = catchAsync(async (req, res) => {
 });
 
 const getSelfTransactions = catchAsync(async (req, res) => {
-  const { startDate, endDate, narration, page = 1, limit = 20 } = req.query;
+  const { startDate, endDate, narration, direction, page = 1, limit = 20 } = req.query;
   const userId = req.user._id;
 
   const parsedPage = parseInt(page, 10);
@@ -182,6 +182,7 @@ const getSelfTransactions = catchAsync(async (req, res) => {
     startDate,
     endDate,
     narration,
+    direction,
     page: parsedPage,
     limit: parsedLimit,
   });

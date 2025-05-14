@@ -103,6 +103,7 @@ const getSelfTransactions = {
     startDate: Joi.number().optional(),
     endDate: Joi.number().optional(),
     narration: Joi.string().optional(),
+    direction: Joi.string().optional(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
   }),
