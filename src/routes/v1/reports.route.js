@@ -51,4 +51,7 @@ router.route('/contribution-incomes/others/supperadmin').get(auth('reports'), re
 
 router.route('/packages/contributions').get(auth('contributionsReports'), reportsController.getDailyContributions);
 
+// Dashboard summary route for fetching aggregated data based on user role
+router.route('/dashboard-summary').get(auth('dashboardReports'), reportsController.getDashboardSummary);
+
 module.exports = router;

@@ -1,7 +1,7 @@
 const httpStatus = require('http-status');
 const pick = require('../utils/pick');
 const catchAsync = require('../utils/catchAsync');
-const { reportService } = require('../services');
+const { reportService, dashboardSummaryService } = require('../services');
 
 const getTotalContributions = catchAsync(async (req, res) => {
   const { startDate, endDate, branchId, createdBy, narration } = req.query;
@@ -129,6 +129,18 @@ const getDailyContributions = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(dailyContributions);
 });
 
+/**
+ * Get dashboard summary data based on user role
+ */
+const getDashboardSummary = catchAsync(async (req, res) => {
+  const { branchId } = req.query;
+  const { role } = req.user;
+
+  const dashboardData = await dashboardSummaryService.getDashboardSummary(role, branchId);
+
+  res.status(httpStatus.OK).json(dashboardData);
+});
+
 module.exports = {
   getTotalContributions,
   getDailySavingsWithdrawals,
@@ -144,4 +156,5 @@ module.exports = {
   getSumOfDailyContributions,
   getOtherCharges,
   getDailyContributions,
+  getDashboardSummary,
 };

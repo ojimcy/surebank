@@ -76,7 +76,7 @@ const createSelfWithdrawalRequest = async (withdrawalData) => {
           requestedBy: userId,
           status: 'pending',
           isEarlyWithdrawal: false,
-          narration: 'Self withdrawal request',
+          narration: `Self withdrawal request - ${account.accountType}`,
           branchId: account.branchId,
           direction: 'outflow',
           date: transactionDate,

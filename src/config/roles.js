@@ -103,7 +103,6 @@ const managerPermissions = [
   'sbPackages',
   'manageNote',
   'manageKyc',
-  'approveWithdrawalRequests',
 ];
 
 const adminPermissions = [
@@ -130,6 +129,7 @@ const superAdminPermissions = [
   'accounting',
   'updatePackage',
   'sbCustomerWithdrawal',
+  'approveWithdrawalRequests',
 ];
 
 const allRoles = {

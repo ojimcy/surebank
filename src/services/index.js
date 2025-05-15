@@ -32,3 +32,4 @@ module.exports.paymentService = require('./payment.service');
 module.exports.virtualAccountService = require('./virtualAccount.service');
 module.exports.interestPackageService = require('./interestPackage.service');
 module.exports.withdrawalService = require('./withdrawal.service');
+module.exports.dashboardSummaryService = require('./dashboardSummary.service');
