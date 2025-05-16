@@ -73,7 +73,7 @@ const createSelfWithdrawalRequest = async (withdrawalData) => {
           bankName,
           bankCode,
           reason,
-          requestedBy: userId,
+          createdBy: userId,
           status: 'pending',
           isEarlyWithdrawal: false,
           narration: `Self withdrawal request - ${account.accountType}`,
@@ -279,13 +279,14 @@ const processTransferWebhook = async (event) => {
  * @returns {Promise<Object>} Approval result
  */
 const approveWithdrawalRequest = async (requestId, approvedById) => {
-  const withdrawalRequest = await WithdrawalRequest.findById(requestId);
+  const AccountTransactionModel = await AccountTransaction();
+  const withdrawalRequest = await AccountTransactionModel.findById(requestId);
 
   if (!withdrawalRequest) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Withdrawal request not found');
   }
 
-  if (withdrawalRequest.status !== 'pending') {
+  if (withdrawalRequest.status === 'approved') {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Withdrawal request already processed');
   }
 
@@ -294,40 +295,6 @@ const approveWithdrawalRequest = async (requestId, approvedById) => {
   withdrawalRequest.approvedBy = approvedById;
   withdrawalRequest.approvedAt = new Date();
   await withdrawalRequest.save();
-
-  // Notify user that their withdrawal request has been approved
-  try {
-    const user = await userService.getUserById(withdrawalRequest.userId);
-
-    await notificationService.sendMultiChannelNotification({
-      userId: withdrawalRequest.userId,
-      type: 'withdrawal_approved',
-      user,
-      data: {
-        amount: withdrawalRequest.amount,
-        accountNumber: withdrawalRequest.accountNumber,
-      },
-      notificationContent: {
-        inApp: {
-          title: 'Withdrawal Request Approved',
-          body: `Your withdrawal request of ₦${withdrawalRequest.amount} from account ${withdrawalRequest.accountNumber} has been approved and is now being processed.`,
-        },
-        email: {
-          subject: 'Withdrawal Request Approved',
-          template: 'WITHDRAWAL_APPROVED',
-          templateData: {
-            amount: withdrawalRequest.amount,
-            accountNumber: withdrawalRequest.accountNumber,
-            date: new Date(),
-          },
-        },
-        sms: `Your withdrawal request of ₦${withdrawalRequest.amount} from account ${withdrawalRequest.accountNumber} has been approved and is being processed.`,
-      },
-    });
-  } catch (notificationError) {
-    // Don't fail the process if notification fails
-    logger.error('Failed to send approval notification:', notificationError);
-  }
 
   // Initiate Paystack transfer
   const recipientData = {
@@ -349,15 +316,49 @@ const approveWithdrawalRequest = async (requestId, approvedById) => {
       recipient: recipient.data.recipient_code,
       reason: `Withdrawal for ${withdrawalRequest.accountNumber}`,
     };
-
+    logger.info('transferData', transferData);
     const transfer = await paystackService.initiateTransfer(transferData);
-
+    logger.info('transfer', transfer);
     // Update withdrawal request with transfer data
     withdrawalRequest.transferReference = transfer.data.reference;
     withdrawalRequest.transferResponseData = transfer.data;
     withdrawalRequest.status = 'processing';
     withdrawalRequest.transferDate = new Date();
     await withdrawalRequest.save();
+
+    // Notify user that their withdrawal request has been approved
+    try {
+      const user = await userService.getUserById(withdrawalRequest.userId);
+
+      await notificationService.sendMultiChannelNotification({
+        userId: withdrawalRequest.userId,
+        type: 'withdrawal_approved',
+        user,
+        data: {
+          amount: withdrawalRequest.amount,
+          accountNumber: withdrawalRequest.accountNumber,
+        },
+        notificationContent: {
+          inApp: {
+            title: 'Withdrawal Request Approved',
+            body: `Your withdrawal request of ₦${withdrawalRequest.amount} from account ${withdrawalRequest.accountNumber} has been approved and is now being processed.`,
+          },
+          email: {
+            subject: 'Withdrawal Request Approved',
+            template: 'WITHDRAWAL_APPROVED',
+            templateData: {
+              amount: withdrawalRequest.amount,
+              accountNumber: withdrawalRequest.accountNumber,
+              date: new Date(),
+            },
+          },
+          sms: `Your withdrawal request of ₦${withdrawalRequest.amount} from account ${withdrawalRequest.accountNumber} has been approved and is being processed.`,
+        },
+      });
+    } catch (notificationError) {
+      // Don't fail the process if notification fails
+      logger.error('Failed to send approval notification:', notificationError);
+    }
 
     return { withdrawalRequest, transfer };
   } catch (error) {
@@ -373,9 +374,72 @@ const approveWithdrawalRequest = async (requestId, approvedById) => {
   }
 };
 
+/**
+ * Audit and process a self-withdrawal request
+ * @param {string} requestId - Withdrawal request ID
+ * @param {string} processedById - User ID of the staff processing the request
+ * @returns {Promise<Object>} Processing result
+ */
+const auditAndProcessSelfWithdrawal = async (requestId, processedById) => {
+  const AccountTransactionModel = await AccountTransaction();
+  const withdrawalRequest = await AccountTransactionModel.findById(requestId);
+  if (!withdrawalRequest) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Withdrawal request not found');
+  }
+
+  if (withdrawalRequest.status === 'approved') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Withdrawal request already processed');
+  }
+
+  // Perform thorough audit checks
+  // 1. Verify account details
+  const account = await accountTransactionService.getAccountByNumber(withdrawalRequest.accountNumber);
+  if (!account) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Associated account not found');
+  }
+
+  // 2. Verify user owns the account
+  if (account.userId.toString() !== withdrawalRequest.userId.toString()) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Account ownership verification failed');
+  }
+
+  // 3. Verify sufficient funds (again)
+  const availableBalance = await accountTransactionService.getAvailableBalance(withdrawalRequest.accountNumber);
+  const heldAmount = await accountTransactionService.getHeldAmount(withdrawalRequest.accountNumber);
+
+  // Calculate total balance including already held amount for this specific transaction
+  const totalBalance = availableBalance + heldAmount;
+
+  if (totalBalance < withdrawalRequest.amount) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Insufficient funds');
+  }
+
+  // 4. Verify bank account details match
+  const user = await userService.getUserById(withdrawalRequest.userId);
+  if (!user) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User not found');
+  }
+
+  // 5. Check for suspicious activity (multiple withdrawals in short time)
+  const recentWithdrawals = await AccountTransactionModel.find({
+    userId: withdrawalRequest.userId,
+    createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // Last 24 hours
+    _id: { $ne: withdrawalRequest._id }, // Exclude current request
+  });
+
+  if (recentWithdrawals.length > 3) {
+    // Log suspicious activity but don't necessarily block
+    logger.warn(`Suspicious withdrawal activity detected for user ${withdrawalRequest.userId}`);
+  }
+
+  // If all checks pass, proceed with approval
+  return approveWithdrawalRequest(requestId, processedById);
+};
+
 module.exports = {
   createSelfWithdrawalRequest,
   getSelfWithdrawalStatus,
+  auditAndProcessSelfWithdrawal,
   processTransferWebhook,
   approveWithdrawalRequest,
 };

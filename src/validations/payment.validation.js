@@ -43,10 +43,17 @@ const paystackWebhook = {
     .unknown(true),
 };
 
+const processSelfWithdrawal = {
+  params: Joi.object().keys({
+    requestId: Joi.string().custom(objectId).required(),
+  }),
+};
+
 module.exports = {
   initializeDsContribution,
   verifyPayment,
   selfWithdrawalRequest,
   getSelfWithdrawalStatus,
   paystackWebhook,
+  processSelfWithdrawal,
 };

@@ -9,11 +9,11 @@ provider:
   httpApi:
     cors:
       allowedOrigins:
-        - https://surebankstores.ng
-        - http://localhost:3001
+        - - http://localhost:3001
         - http://localhost:8081
         - https://surebank.sonicflare.net
-        - http://127.0.0.1:54908
+        - http://localhost:*
+        - http://127.0.0.1:*
       allowedMethods:
         - GET
         - POST

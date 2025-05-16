@@ -183,6 +183,20 @@ const handleTransferWebhook = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json({ received: true, ...result });
 });
 
+/**
+ * Process a self-withdrawal request after thorough audit
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ */
+const processSelfWithdrawal = catchAsync(async (req, res) => {
+  const { requestId } = req.params;
+  const processedById = req.user._id;
+
+  const result = await withdrawalService.auditAndProcessSelfWithdrawal(requestId, processedById);
+  res.status(httpStatus.OK).json(result);
+});
+
 module.exports = {
   initializeDailySavingsContribution,
   initializeSbContribution,
@@ -192,4 +206,5 @@ module.exports = {
   requestSelfWithdrawal,
   getSelfWithdrawalStatus,
   handleTransferWebhook,
+  processSelfWithdrawal,
 };

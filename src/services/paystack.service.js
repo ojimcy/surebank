@@ -1,4 +1,5 @@
 const Paystack = require('paystack-api');
+const axios = require('axios');
 const config = require('../config/config');
 const logger = require('../config/logger');
 
@@ -85,8 +86,26 @@ const listTransactions = async (options = {}) => {
  * @param {string} data.currency - Currency code (default: NGN)
  * @returns {Promise<Object>} Recipient creation response
  */
+const makePaystackRequest = async (endpoint, data) => {
+  const baseUrl = config.paystack.baseUrl || 'https://api.paystack.co';
+  return axios.post(`${baseUrl}${endpoint}`, data, {
+    headers: {
+      Authorization: `Bearer ${config.paystack.secretKey}`,
+      'Content-Type': 'application/json',
+    },
+  });
+};
+
 const createTransferRecipient = async (data) => {
-  return paystackClient.transferrecipient.create(data);
+  try {
+    const response = await makePaystackRequest('/transferrecipient', data);
+    logger.info('Transfer recipient created successfully');
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response && error.response.data ? error.response.data : error.message;
+    logger.error('Error creating transfer recipient:', errorMessage);
+    throw error;
+  }
 };
 
 /**
@@ -99,7 +118,16 @@ const createTransferRecipient = async (data) => {
  * @returns {Promise<Object>} Transfer response
  */
 const initiateTransfer = async (data) => {
-  return paystackClient.transfer.create(data);
+  try {
+    const response = await makePaystackRequest('/transfer', data);
+    const reference = response.data.data && response.data.data.reference ? response.data.data.reference : 'unknown';
+    logger.info(`Transfer initiated with reference: ${reference}`);
+    return response.data;
+  } catch (error) {
+    const errorData = error.response && error.response.data ? error.response.data : error.message;
+    logger.error('Error initiating transfer:', errorData);
+    throw error;
+  }
 };
 
 /**

@@ -275,6 +275,15 @@ const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy,
   const AccountTransactionModel = await AccountTransaction();
   try {
     const query = {};
+
+    // Always filter for withdrawal requests based on narration
+    const withdrawalNarrations = [
+      'Self withdrawal request - ds',
+      'Self withdrawal request - sb',
+      'Self withdrawal request - ibs',
+      'request cash',
+    ];
+
     // Optional date range filtering
     if (startDate && endDate) {
       query.date = { $gte: startDate, $lte: endDate };
@@ -297,16 +306,16 @@ const getAllWithdrawalRequests = async (startDate, endDate, branchId, createdBy,
     if (status) {
       query.status = status;
     }
-    // Optional narration filtering
+
+    // If specific narration is provided, use it, otherwise use the withdrawal narrations
     if (narration) {
       query.narration = narration;
+    } else {
+      query.narration = { $in: withdrawalNarrations };
     }
+
     const withdrawalRequests = await AccountTransactionModel.find(query)
       .populate([
-        {
-          path: 'createdBy',
-          select: 'firstName lastName',
-        },
         {
           path: 'createdBy',
           select: 'firstName lastName',
@@ -572,7 +581,7 @@ const getCustomerwithdrawals = async (
       query.accountNumber = accountNumber;
     }
 
-    query.narration = 'Request Cash' || 'Request Cash SB' || narration;
+    query.narration = { $in: ['Request Cash', 'Request Cash SB', ...(narration ? [narration] : [])] };
     const withdrawals = await AccountTransaction.find(query)
       .populate([
         {

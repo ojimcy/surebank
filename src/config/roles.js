@@ -130,6 +130,7 @@ const superAdminPermissions = [
   'updatePackage',
   'sbCustomerWithdrawal',
   'approveWithdrawalRequests',
+  'processWithdrawal',
 ];
 
 const allRoles = {

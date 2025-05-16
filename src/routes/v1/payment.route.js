@@ -58,6 +58,20 @@ router.get(
 // Paystack webhook for transfer events
 router.post('/transfer/webhook', validate(paymentValidation.paystackWebhook), userPortalController.handleTransferWebhook);
 
+/**
+ * POST /v1/payments/withdrawal/process/:requestId
+ * Process a self-withdrawal request after thorough account audit
+ * @auth Required (Staff with processWithdrawal permission)
+ * @param {string} requestId - Withdrawal request ID
+ * @returns {Object} Processing result with transfer details
+ */
+router.post(
+  '/withdrawal/process/:requestId',
+  auth('processWithdrawal'),
+  validate(paymentValidation.processSelfWithdrawal),
+  userPortalController.processSelfWithdrawal
+);
+
 // Future payment-related routes can be added here
 // router.get('/transactions', ...);
 

@@ -69,7 +69,7 @@ const withdrawalRequestSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    requestedBy: {
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
