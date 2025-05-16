@@ -8,7 +8,7 @@ const router = express.Router();
 router
   .route('/')
   .post(auth('orderOperations'), validate(orderValidation.createOrder), orderController.createOrder)
-  .get(auth('orderOperations'), validate(orderValidation.getAllOrders), orderController.getAllOrders);
+  .get(auth('manageOrder'), validate(orderValidation.getAllOrders), orderController.getAllOrders);
 
 router
   .route('/:orderId/sb-pay')
@@ -19,6 +19,8 @@ router.route('/:orderId').get(auth('orderOperations'), validate(orderValidation.
 router
   .route('/:orderId/deliver')
   .post(auth('manageOrder'), validate(orderValidation.getOrder), orderController.deliverOrder);
-router.route('/:orderId/cancel').post(auth('manageOrder'), validate(orderValidation.getOrder), orderController.cancelOrder);
+router
+  .route('/:orderId/cancel')
+  .post(auth('orderOperations'), validate(orderValidation.getOrder), orderController.cancelOrder);
 
 module.exports = router;

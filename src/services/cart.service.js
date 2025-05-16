@@ -36,11 +36,13 @@ const addToCart = async (userId, productCatalogueId, packageId, quantity) => {
   const { costPrice, sellingPrice, discount, name, images } = product;
 
   let cart = await CartModel.findOne({ userId });
+  let isNewCart = false;
   if (!cart) {
     // Initialize Cart
     const subTotal = (discount > 0 ? discount : sellingPrice) * quantity;
     const costTotal = costPrice * quantity;
     cart = await initCart(userId, subTotal, costTotal);
+    isNewCart = true;
   }
 
   // Check if the product already exists in the cart
@@ -68,10 +70,12 @@ const addToCart = async (userId, productCatalogueId, packageId, quantity) => {
     costTotal,
   });
 
-  cart.total += subTotal;
-  cart.costTotal += costTotal;
-
-  await cart.save();
+  // Only update cart totals if the cart was not newly created
+  if (!isNewCart) {
+    cart.total += subTotal;
+    cart.costTotal += costTotal;
+    await cart.save();
+  }
 
   return { cart };
 };

@@ -144,11 +144,13 @@ const createOrder = async (userId, orderDetails) => {
 /**
  * Get order by ID
  * @param {string} orderId - The ID of the order
+ * @param {Object} options - Optional parameters
  * @returns {Promise<Object>} The order data
  */
-const getOrder = async (orderId) => {
+const getOrder = async (orderId, options = {}) => {
   const OrderModel = await Order();
   const order = await OrderModel.findById(orderId)
+    .session(options.session || null)
     .populate({
       path: 'createdBy',
       select: 'firstName lastName',
@@ -194,17 +196,19 @@ const getAllOrders = async (status, branchId, createdBy) => {
  * Update order by id
  * @param {ObjectId} orderId
  * @param {Object} updateBody
+ * @param {Object} options - Optional parameters
  * @returns {Promise<Order>}
  */
-const updateOrder = async (orderId, updateBody) => {
-  const order = await getOrder(orderId);
+const updateOrder = async (orderId, updateBody, options = {}) => {
+  const OrderModel = await Order();
+  const order = await OrderModel.findById(orderId).session(options.session || null);
 
   if (!order) {
     throw new ApiError(httpStatus.NOT_FOUND, 'order not found');
   }
 
   Object.assign(order, updateBody);
-  await order.save();
+  await order.save({ session: options.session });
   return order;
 };
 
@@ -220,8 +224,8 @@ const payOrderWithSbBalance = async (packageId, orderId, userId) => {
   session.startTransaction();
   try {
     // Retrieve order details
-    const order = await getOrder(orderId);
-    const userPackage = await SbPackageModel.findById(packageId);
+    const order = await getOrder(orderId, { session });
+    const userPackage = await SbPackageModel.findById(packageId).session(session);
     const AccountTransactionModel = await AccountTransaction();
     const currentDate = new Date().getTime();
 

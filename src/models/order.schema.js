@@ -67,7 +67,7 @@ const orderSchema = mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ['sb_balance', 'paypal', 'bank_transfer', 'cash_on_delivery'],
+      enum: ['sb_balance', 'paystack', 'bank_transfer', 'cash_on_delivery'],
       required: true,
     },
     createdBy: { type: String, required: true, ref: 'User' },
