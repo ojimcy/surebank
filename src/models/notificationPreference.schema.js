@@ -15,6 +15,13 @@ const NOTIFICATION_TYPES = [
   'package_matured',
   'withdrawal_request',
   'daily_savings',
+  'order_updates',
+  'order_created',
+  'order_payment',
+  'order_shipped',
+  'order_delivered',
+  'order_canceled',
+  'order_refund',
 ];
 
 // Default preferences configuration for each notification type
@@ -31,6 +38,12 @@ const DEFAULT_PREFERENCES = {
   package_matured: 'both',
   withdrawal_request: 'both',
   daily_savings: 'both',
+  order_updates: 'email',
+  order_created: 'email',
+  order_payment: 'email',
+  order_shipped: 'email',
+  order_delivered: 'email',
+  order_canceled: 'email',
 };
 
 const notificationPreferenceSchema = mongoose.Schema(

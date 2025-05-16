@@ -455,6 +455,31 @@ const NOTIFICATION_TEMPLATES = {
     },
     sms: 'Your contribution of ₦{{amount}} to account {{accountNumber}} was successful. New balance: ₦{{totalContribution}}.',
   },
+
+  // order updates
+  ORDER_CREATED: {
+    inApp: {
+      title: 'Order Confirmation',
+      bodyTemplate: 'Your order #{{orderNumber}} for ₦{{totalAmount}} has been placed successfully.',
+    },
+    email: {
+      subject: 'Order Confirmation',
+      template: 'ORDER-CREATED',
+    },
+    sms: 'Your order #{{orderNumber}} for ₦{{totalAmount}} has been placed successfully.',
+  },
+
+  ORDER_PAYMENT: {
+    inApp: {
+      title: 'Payment Confirmation',
+      bodyTemplate: 'Your payment of ₦{{totalAmount}} for order #{{orderNumber}} was successful.',
+    },
+    email: {
+      subject: 'Payment Confirmation',
+      template: 'ORDER-PAYMENT',
+    },
+    sms: 'Your payment of ₦{{totalAmount}} for order #{{orderNumber}} was successful.',
+  },
 };
 
 /**

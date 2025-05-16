@@ -11,6 +11,8 @@ const packageMaturedTemplate = require('../templates/emails/package-matured.temp
 const genericPackageCreatedTemplate = require('../templates/emails/generic-package-created.template');
 const genericContributionTemplate = require('../templates/emails/generic-contribution.template');
 const withdrawalRequestTemplate = require('../templates/emails/withdrawal-request.template');
+const orderCreatedTemplate = require('../templates/emails/order-created.template');
+const orderPaymentTemplate = require('../templates/emails/order-payment.template');
 const ApiError = require('../utils/ApiError');
 
 const client = new SESClient({ region: 'us-east-1' });
@@ -51,6 +53,14 @@ const emailTemplates = {
   WITHDRAWAL_REQUEST: {
     subject: 'Withdrawal Request',
     html: withdrawalRequestTemplate,
+  },
+  'ORDER-CREATED': {
+    subject: 'Order Confirmation',
+    html: orderCreatedTemplate,
+  },
+  'ORDER-PAYMENT': {
+    subject: 'Payment Confirmation',
+    html: orderPaymentTemplate,
   },
 };
 

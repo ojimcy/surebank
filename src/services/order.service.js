@@ -6,6 +6,9 @@ const { clearCart, getCartItems } = require('./cart.service');
 const { ACCOUNT_TYPE, DIRECTION_VALUE } = require('../constants/account');
 const { addLedgerEntry } = require('./accounting.service');
 const { saveSbProfit } = require('./charge.service');
+const notificationService = require('./notification.service');
+const userService = require('./user.service');
+const logger = require('../config/logger');
 
 /**
  * Check product availability based on its ID and requested quantity
@@ -132,6 +135,28 @@ const createOrder = async (userId, orderDetails) => {
 
     await session.commitTransaction();
 
+    // Send order confirmation notification
+    try {
+      const user = await userService.getUserById(userId);
+      if (user) {
+        await notificationService.sendTemplatedNotification({
+          userId,
+          templateType: 'ORDER_CREATED',
+          user,
+          data: {
+            customerName: `${user.firstName} ${user.lastName}`,
+            orderNumber: order[0]._id.toString().slice(-8),
+            totalAmount,
+            products: order[0].products,
+            deliveryAddress: order[0].deliveryAddress,
+          },
+        });
+      }
+    } catch (notificationError) {
+      // Just log the error, don't affect the order flow
+      logger.error('Failed to send order notification:', notificationError);
+    }
+
     return order;
   } catch (error) {
     await session.abortTransaction();
@@ -216,6 +241,7 @@ const updateOrder = async (orderId, updateBody, options = {}) => {
  * Pay an order using sb_balance payment method
  * @param {string} packageId - The ID of the user making the payment
  * @param {string} orderId - The ID of the order to be paid
+ * @param {string} userId - The ID of the user performing the payment
  * @returns {Promise<Object>} Result of the payment operation
  */
 const payOrderWithSbBalance = async (packageId, orderId, userId) => {
@@ -241,6 +267,9 @@ const payOrderWithSbBalance = async (packageId, orderId, userId) => {
         $inc: {
           totalContribution: -order.totalAmount,
         },
+        $set: {
+          status: 'closed',
+        },
       },
       { session }
     );
@@ -259,7 +288,7 @@ const payOrderWithSbBalance = async (packageId, orderId, userId) => {
     // Add ledger entry (you may need to adapt this based on your implementation)
     const addLedgerEntryInput = {
       type: ACCOUNT_TYPE[0],
-      direction: DIRECTION_VALUE[0],
+      direction: DIRECTION_VALUE[1],
       date: currentDate,
       narration: 'Payment for Order',
       amount: order.totalAmount,
@@ -288,6 +317,30 @@ const payOrderWithSbBalance = async (packageId, orderId, userId) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    // Send payment confirmation notification
+    try {
+      const user = await userService.getUserById(userId);
+      if (user) {
+        await notificationService.sendTemplatedNotification({
+          userId,
+          templateType: 'ORDER_PAYMENT',
+          user,
+          data: {
+            customerName: `${user.firstName} ${user.lastName}`,
+            orderNumber: order._id.toString().slice(-8),
+            totalAmount: order.totalAmount,
+            products: order.products,
+            paymentMethod: 'sb_balance',
+            paymentDate: currentDate,
+            accountNumber: userPackage.accountNumber,
+          },
+        });
+      }
+    } catch (notificationError) {
+      // Just log the error, don't affect the payment flow
+      logger.error('Failed to send payment notification:', notificationError);
+    }
 
     return updatedOrder;
   } catch (error) {
