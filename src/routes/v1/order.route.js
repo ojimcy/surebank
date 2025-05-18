@@ -10,6 +10,8 @@ router
   .post(auth('orderOperations'), validate(orderValidation.createOrder), orderController.createOrder)
   .get(auth('manageOrder'), validate(orderValidation.getAllOrders), orderController.getAllOrders);
 
+router.route('/self').get(auth('orderOperations'), validate(orderValidation.getUserOrders), orderController.getUserOrders);
+
 router
   .route('/:orderId/sb-pay')
   .post(auth('orderOperations'), validate(orderValidation.payOrderWithSbBalance), orderController.payOrderWithSbBalance);

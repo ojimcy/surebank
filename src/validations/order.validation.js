@@ -58,9 +58,18 @@ const getAllOrders = {
   }),
 };
 
+const getUserOrders = {
+  query: Joi.object().keys({
+    status: Joi.string().optional(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+  }),
+};
+
 module.exports = {
   createOrder,
   getOrder,
   payOrderWithSbBalance,
   getAllOrders,
+  getUserOrders,
 };

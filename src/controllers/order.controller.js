@@ -43,6 +43,14 @@ const getAllOrders = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(ordersWithTotalAmount);
 });
 
+const getUserOrders = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const { status } = req.query;
+  const orders = await orderService.getAllOrders(status, null, userId);
+
+  res.status(httpStatus.OK).send(orders);
+});
+
 const payOrderWithSbBalance = catchAsync(async (req, res) => {
   const { orderId } = req.params;
   const { packageId, page = 1, limit = 20 } = req.query;
@@ -75,6 +83,7 @@ module.exports = {
   createOrder,
   getOrder,
   getAllOrders,
+  getUserOrders,
   payOrderWithSbBalance,
   deliverOrder,
   cancelOrder,
