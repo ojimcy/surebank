@@ -2,6 +2,7 @@ const httpStatus = require('http-status');
 const { accountTransactionService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
+const logger = require('../config/logger');
 
 const getAccountByNumber = catchAsync(async (req, res) => {
   const { accountNumber } = req.query;
@@ -50,7 +51,7 @@ const getAvailableBalance = catchAsync(async (req, res) => {
   if (!availableBalance) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
   }
-  res.send({ availableBalance });
+  res.status(httpStatus.OK).send({ availableBalance });
 });
 
 const getAccountBalance = catchAsync(async (req, res) => {
@@ -59,7 +60,7 @@ const getAccountBalance = catchAsync(async (req, res) => {
   if (!accountBalance) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
   }
-  res.send({ accountBalance });
+  res.status(httpStatus.OK).send({ accountBalance });
 });
 
 const makeCustomerWithdrawal = catchAsync(async (req, res) => {
@@ -94,7 +95,7 @@ const getCustomerwithdrawals = catchAsync(async (req, res) => {
     branchId,
     createdBy,
     approvedBy,
-    narration
+    narration,
   );
   res.status(httpStatus.OK).json(result);
 });
@@ -134,7 +135,7 @@ const getAllWithdrawalRequests = catchAsync(async (req, res) => {
     status,
     narration,
     parsedPage,
-    parsedLimit
+    parsedLimit,
   );
 
   // Calculate the sum of withdrawal amounts
@@ -171,23 +172,31 @@ const getHeldAmount = catchAsync(async (req, res) => {
 });
 
 const getSelfTransactions = catchAsync(async (req, res) => {
-  const { startDate, endDate, narration, direction, page = 1, limit = 20 } = req.query;
-  const userId = req.user._id;
+  try {
+    const { startDate, endDate, narration, direction, page = 1, limit = 20 } = req.query;
+    const userId = req.user._id;
 
-  const parsedPage = parseInt(page, 10);
-  const parsedLimit = parseInt(limit, 10);
+    const parsedPage = parseInt(page, 10);
+    const parsedLimit = parseInt(limit, 10);
 
-  const transactions = await accountTransactionService.getSelfTransactions({
-    userId,
-    startDate,
-    endDate,
-    narration,
-    direction,
-    page: parsedPage,
-    limit: parsedLimit,
-  });
+    const transactions = await accountTransactionService.getSelfTransactions({
+      userId,
+      startDate,
+      endDate,
+      narration,
+      direction,
+      page: parsedPage,
+      limit: parsedLimit,
+    });
 
-  res.status(httpStatus.OK).json(transactions);
+    res.status(httpStatus.OK).json(transactions);
+  } catch (error) {
+    logger.error('Error fetching self transactions:', error);
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to fetch transactions');
+  }
 });
 
 module.exports = {

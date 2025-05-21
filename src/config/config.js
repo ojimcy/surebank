@@ -75,7 +75,7 @@ module.exports = {
   systemAccountId: envVars.SYSTEM_ACCOUNT_ID,
   onlineBranchId: envVars.ONLINE_BRANCH_ID,
   mongoose: {
-    url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : ''),
+    url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : envVars.NODE_ENV === 'development' ? '-dev' : ''),
     options: {
       useCreateIndex: true,
       useNewUrlParser: true,
