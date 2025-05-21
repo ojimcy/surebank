@@ -6,10 +6,6 @@ const ApiError = require('../utils/ApiError');
 
 const s3Client = new S3Client({
   region: config.aws.region,
-  credentials: {
-    accessKeyId: config.aws.accessKeyId,
-    secretAccessKey: config.aws.secretAccessKey,
-  },
 });
 
 /**

@@ -9,11 +9,7 @@ provider:
   httpApi:
     cors:
       allowedOrigins:
-        - http://localhost:3001
-        - http://localhost:8081
-        - https://surebank.sonicflare.net
-        - http://localhost:*
-        - http://127.0.0.1:*
+        - '*'
       allowedMethods:
         - GET
         - POST
@@ -34,6 +30,12 @@ provider:
             - secretsmanager:GetSecretValue
           Resource:
             - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:sb/prod/mongo-*
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:DeleteObject
+          Resource:
+            - arn:aws:s3:::surebank-kyc-documents/*
 
 functions:
   api:
