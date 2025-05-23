@@ -4,15 +4,12 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs18.x
-  # timeout: 90
+  timeout: 90
   environment: ${file(env.json)}
   httpApi:
     cors:
       allowedOrigins:
-        - https://surebankstores.ng
-        - http://localhost:3001
-        - http://localhost:8081
-        - https://surebank.sonicflare.net
+        - '*'
       allowedMethods:
         - GET
         - POST
@@ -24,7 +21,11 @@ provider:
         - Content-Type
         - Authorization
         - X-Requested-With
-      allowCredentials: true
+        - Access-Control-Allow-Origin
+        - Access-Control-Allow-Methods
+        - Access-Control-Allow-Headers
+        - Access-Control-Allow-Credentials
+        - Access-Control-Max-Age
   iam:
     role:
       statements:
