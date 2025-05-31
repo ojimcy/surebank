@@ -49,6 +49,51 @@ const processSelfWithdrawal = {
   }),
 };
 
+const initializeContribution = {
+  body: Joi.object()
+    .keys({
+      contributionType: Joi.string().valid('daily_savings', 'savings_buying', 'interest_package').required(),
+      packageId: Joi.string()
+        .custom(objectId)
+        .when('contributionType', {
+          is: Joi.string().valid('daily_savings', 'savings_buying'),
+          then: Joi.required(),
+          otherwise: Joi.optional(),
+        }),
+      amount: Joi.number().positive().required(),
+      callbackUrl: Joi.string().uri().optional(),
+      redirect_url: Joi.string().uri().optional(),
+      // Interest package specific fields
+      name: Joi.string().when('contributionType', {
+        is: 'interest_package',
+        then: Joi.required(),
+        otherwise: Joi.forbidden(),
+      }),
+      principalAmount: Joi.number().positive().when('contributionType', {
+        is: 'interest_package',
+        then: Joi.required(),
+        otherwise: Joi.forbidden(),
+      }),
+      lockPeriod: Joi.number().integer().positive().when('contributionType', {
+        is: 'interest_package',
+        then: Joi.required(),
+        otherwise: Joi.forbidden(),
+      }),
+      earlyWithdrawalPenalty: Joi.number().min(0).max(100).default(50).when('contributionType', {
+        is: 'interest_package',
+        then: Joi.optional(),
+        otherwise: Joi.forbidden(),
+      }),
+      interestRate: Joi.number().positive().when('contributionType', {
+        is: 'interest_package',
+        then: Joi.optional(),
+        otherwise: Joi.forbidden(),
+      }),
+    })
+    .forbid('metadata') // Explicitly forbid metadata field
+    .unknown(false), // Don't allow unknown fields
+};
+
 module.exports = {
   initializeDsContribution,
   verifyPayment,
@@ -56,4 +101,5 @@ module.exports = {
   getSelfWithdrawalStatus,
   paystackWebhook,
   processSelfWithdrawal,
+  initializeContribution,
 };

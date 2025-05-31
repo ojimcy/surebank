@@ -2,18 +2,24 @@ const baseTemplate = require('./base.template');
 
 module.exports = (data) => {
   const { customerName, orderNumber, totalAmount, products, paymentMethod, paymentDate, accountNumber } = data;
-  
-  const productList = products.map(product => `
+
+  const productList = products
+    .map(
+      (product) => `
     <tr>
       <td style="padding: 10px; border-bottom: 1px solid #E9ECEF;">
-        <img src="${product.image}" alt="${product.name}" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px;" />
+        <img src="${product.image}" alt="${
+        product.name
+      }" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px;" />
       </td>
       <td style="padding: 10px; border-bottom: 1px solid #E9ECEF;">${product.name}</td>
       <td style="padding: 10px; border-bottom: 1px solid #E9ECEF;">${product.quantity}</td>
       <td style="padding: 10px; border-bottom: 1px solid #E9ECEF;">₦${product.sellingPrice.toLocaleString()}</td>
       <td style="padding: 10px; border-bottom: 1px solid #E9ECEF;">₦${product.subTotal.toLocaleString()}</td>
     </tr>
-  `).join('');
+  `
+    )
+    .join('');
 
   const content = `
     <h2>Payment Confirmation</h2>
@@ -54,6 +60,6 @@ module.exports = (data) => {
     <p>We're processing your order now and will notify you once it's dispatched for delivery.</p>
     <p>Thank you for shopping with SureBank!</p>
   `;
-  
+
   return baseTemplate(content, 'Payment Confirmation');
-}; 
+};

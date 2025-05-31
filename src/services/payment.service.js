@@ -5,10 +5,9 @@ const paystackService = require('./paystack.service');
 const userService = require('./user.service');
 const logger = require('../config/logger');
 const { PaymentTransaction } = require('../models');
-const { getDailySavingsPackageById, processPaystackContribution } = require('./dailySavings.service');
-const { getUserAccount } = require('./account.service');
-const sbPackageService = require('./sbPackage.service');
-const config = require('../config/config');
+const { processPaystackContribution } = require('./dailySavings.service');
+const { createPaymentMetadata } = require('./payment/helpers');
+const { isMobileApp } = require('../config/mobile');
 
 /**
  * Initialize a payment transaction
@@ -24,6 +23,17 @@ const config = require('../config/config');
 const initializeTransaction = async (transactionData, skipCustomerCreation = false) => {
   try {
     const { email, amount, callbackUrl, metadata = {}, userId } = transactionData;
+
+    // Debug logging for transaction data
+    logger.info('=== PAYSTACK INITIALIZATION DEBUG ===');
+    logger.info('Transaction data received:', {
+      email,
+      amount,
+      callbackUrl,
+      metadata,
+      userId,
+      skipCustomerCreation,
+    });
 
     // Determine prefix based on contributionType
     const { contributionType } = metadata;
@@ -77,18 +87,39 @@ const initializeTransaction = async (transactionData, skipCustomerCreation = fal
       paymentData.customer = customerCode;
     }
 
+    // Debug log what we're sending to Paystack
+    logger.info('Paystack initialization params:', {
+      email: paymentData.email,
+      amount: paymentData.amount,
+      reference: paymentData.reference,
+      callback_url: paymentData.callback_url,
+      metadata: paymentData.metadata,
+      customer: paymentData.customer || 'none',
+    });
+
     const response = await paystackService.initializeTransaction(paymentData);
 
     if (!response || !response.status) {
+      logger.error('Paystack initialization failed:', response);
       throw new ApiError(httpStatus.BAD_REQUEST, 'Payment initialization failed');
     }
 
+    // Debug log Paystack response
+    logger.info('Paystack response received:', {
+      status: response.status,
+      reference: response.data && response.data.reference,
+      authorization_url: response.data && response.data.authorization_url,
+      access_code: response.data && response.data.access_code,
+    });
+    logger.info('=== PAYSTACK INITIALIZATION DEBUG END ===');
+
     return {
       success: true,
-      reference,
-      authorizationUrl: response.data.authorization_url,
-      accessCode: response.data.access_code,
-      paymentData: response.data,
+      data: {
+        authorization_url: response.data.authorization_url,
+        reference,
+        access_code: response.data.access_code,
+      },
     };
   } catch (error) {
     logger.error('Payment initialization error:', error);
@@ -100,7 +131,62 @@ const initializeTransaction = async (transactionData, skipCustomerCreation = fal
 };
 
 /**
+ * Generic payment initialization for all package types
+ * @param {Object} data - Payment data
+ * @param {string} data.userId - User ID
+ * @param {string} data.packageId - Package ID (optional for interest packages)
+ * @param {number} data.amount - Amount to pay
+ * @param {string} data.contributionType - Type: 'daily_savings', 'savings_buying', 'interest_package'
+ * @param {Object} data.packageData - Additional package-specific data (for interest packages)
+ * @param {string} data.callbackUrl - Optional callback URL
+ * @returns {Promise<Object>} Payment initialization response
+ */
+const initializePaymentContribution = async (data, req = null) => {
+  const { userId, packageId, amount, contributionType, packageData = {}, callbackUrl } = data;
+
+  // Add mobile context to package data if request object is available
+  if (req) {
+    packageData.isMobileApp = isMobileApp(req);
+  }
+
+  // Common validation
+  if (!userId || !amount || !contributionType) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User ID, Amount, and Contribution Type are required.');
+  }
+
+  // Get user details
+  const user = await userService.getUserById(userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // Create payment metadata directly
+  const metadata = createPaymentMetadata(userId, packageId, packageData, contributionType);
+
+  // For interest packages, don't use hardcoded callback URL - let Paystack handle default behavior
+  const finalCallbackUrl = callbackUrl;
+  // Note: We removed the hardcoded fallback to let Paystack use its own default behavior
+  // if (contributionType === 'interest_package' && !finalCallbackUrl) {
+  //   finalCallbackUrl = config.paystack.callbackUrl;
+  // }
+
+  const transactionData = {
+    email: user.email,
+    amount,
+    callbackUrl: finalCallbackUrl,
+    metadata,
+    userId,
+  };
+
+  // Use skipCustomerCreation for interest packages
+  const skipCustomerCreation = contributionType === 'interest_package';
+
+  return initializeTransaction(transactionData, skipCustomerCreation);
+};
+
+/**
  * Initialize a Daily Savings Contribution via Paystack
+ * @deprecated Use initializePaymentContribution with contributionType: 'daily_savings' instead
  * @param {Object} contributionData
  * @param {string} contributionData.userId - User initiating the contribution
  * @param {string} contributionData.packageId - Target Daily Savings package ID
@@ -109,56 +195,16 @@ const initializeTransaction = async (transactionData, skipCustomerCreation = fal
  * @returns {Promise<Object>} Paystack initialization response
  */
 const initializeDailySavingsContribution = async (contributionData) => {
-  const { userId, packageId, amount, callbackUrl } = contributionData;
-
-  if (!userId || !packageId || !amount) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'User ID, Package ID, and Amount are required.');
-  }
-
-  // Fetch user details (for email) and package details (optional validation)
-  const user = await userService.getUserById(userId);
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-  }
-  // Optional: Fetch package to ensure it exists before initializing
-  const userPackage = await getDailySavingsPackageById(packageId);
-  if (!userPackage) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Daily Savings package not found');
-  }
-
-  const metadata = {
-    userId,
-    packageId,
-    contributionType: 'ds', // Identify the type of contribution
-    custom_fields: [
-      // Example Paystack standard metadata
-      {
-        display_name: 'Package ID',
-        variable_name: 'package_id',
-        value: packageId,
-      },
-      {
-        display_name: 'Contribution Type',
-        variable_name: 'contribution_type',
-        value: 'Daily Savings',
-      },
-    ],
-  };
-
-  const transactionData = {
-    email: user.email,
-    amount,
-    callbackUrl,
-    metadata,
-    userId, // Pass userId for customer linking in initializeTransaction
-  };
-
-  // Call the generic initialization function
-  return initializeTransaction(transactionData);
+  // Use the new unified function for backward compatibility
+  return initializePaymentContribution({
+    ...contributionData,
+    contributionType: 'daily_savings',
+  });
 };
 
 /**
  * Initialize a Savings-Buying Contribution via Paystack
+ * @deprecated Use initializePaymentContribution with contributionType: 'savings_buying' instead
  * @param {Object} contributionData
  * @param {string} contributionData.userId - User initiating the contribution
  * @param {string} contributionData.packageId - Target SB package ID
@@ -167,118 +213,28 @@ const initializeDailySavingsContribution = async (contributionData) => {
  * @returns {Promise<Object>} Paystack initialization response
  */
 const initializeSbContribution = async (contributionData) => {
-  const { userId, packageId, amount, callbackUrl } = contributionData;
-
-  if (!userId || !packageId || !amount) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'User ID, Package ID, and Amount are required.');
-  }
-
-  // Fetch user details (for email) and package details
-  const user = await userService.getUserById(userId);
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-  }
-
-  // Ensure package exists (assuming there's a getPackageById function in sbPackageService)
-  const userPackage = await sbPackageService.getPackageById(packageId);
-  if (!userPackage) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Savings-Buying package not found');
-  }
-
-  const metadata = {
-    userId,
-    packageId,
-    contributionType: 'sb', // Identify the type of contribution
-    custom_fields: [
-      {
-        display_name: 'Package ID',
-        variable_name: 'package_id',
-        value: packageId,
-      },
-      {
-        display_name: 'Contribution Type',
-        variable_name: 'contribution_type',
-        value: 'Savings-Buying',
-      },
-    ],
-  };
-
-  const transactionData = {
-    email: user.email,
-    amount,
-    callbackUrl,
-    metadata,
-    userId,
-  };
-
-  // Call the generic initialization function
-  return initializeTransaction(transactionData);
+  // Use the new unified function for backward compatibility
+  return initializePaymentContribution({
+    ...contributionData,
+    contributionType: 'savings_buying',
+  });
 };
 
 /**
  * Initiate payment for interest-based savings package
+ * @deprecated Use initializePaymentContribution with contributionType: 'interest_package' instead
  * @param {Object} packageData - Interest package input data
  * @returns {Promise<Object>} Payment initialization response
  */
 const initiateInterestPackagePayment = async (packageData) => {
-  // Get user's account from userId to verify it exists
-  const userAccount = await getUserAccount(packageData.userId, 'ibs');
-  if (!userAccount) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Account not found. Please create one to continue.');
-  }
-
-  // Get user details to retrieve email
-  const user = await userService.getUserById(packageData.userId);
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-  }
-
-  if (!user.email) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'User email is required but not found');
-  }
-
-  // Use the configured callback URL from config if not provided in the request
-  const callbackUrl = packageData.callbackUrl || config.paystack.callbackUrl;
-
-  if (!callbackUrl) {
-    logger.warn('No callback URL provided for initiating interest package payment');
-  }
-
-  // Prepare payment data
-  const paymentData = {
+  // Use the new unified function for backward compatibility
+  return initializePaymentContribution({
     userId: packageData.userId,
-    packageId: null, // Will be populated after verification
     amount: packageData.principalAmount,
-    email: user.email, // Include the user's email
-    callbackUrl,
-    metadata: {
-      contributionType: 'interest_savings',
-      principalAmount: packageData.principalAmount,
-      interestRate: packageData.interestRate,
-      lockPeriod: packageData.lockPeriod,
-      name: packageData.name,
-      earlyWithdrawalPenalty: packageData.earlyWithdrawalPenalty,
-      isPackagePending: true, // Flag to indicate the package should be created on verification
-      userId: packageData.userId, // Include userId in metadata for verification
-      redirect_url:
-        packageData.redirect_url ||
-        `${config.paystack.frontendUrl}/payments/success?packageId=${packageData._id}&status=success`, // Store redirect URL in metadata
-    },
-  };
-
-  try {
-    // Initialize transaction but skip Paystack customer creation if it fails
-    const skipCustomerCreation = true;
-    const response = await initializeTransaction(paymentData, skipCustomerCreation);
-
-    return response;
-  } catch (error) {
-    logger.error('Error initializing interest package payment:', error);
-    throw new ApiError(
-      error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
-      error.message || 'Failed to initialize interest package payment'
-    );
-  }
+    contributionType: 'interest_package',
+    packageData,
+    callbackUrl: packageData.callbackUrl,
+  });
 };
 
 /**
@@ -595,8 +551,57 @@ const getBanks = async (country = 'nigeria') => {
   }
 };
 
+/**
+ * Get payment status by reference
+ * @param {string} reference - Transaction reference
+ * @param {string} userId - User ID (for security validation)
+ * @returns {Promise<Object>} Payment status response
+ */
+const getPaymentStatus = async (reference, userId = null) => {
+  try {
+    if (!reference) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Transaction reference is required');
+    }
+
+    // Get the PaymentTransaction model
+    const PaymentTransactionModel = await PaymentTransaction();
+
+    // Find payment by reference
+    const payment = await PaymentTransactionModel.findOne({ reference }).lean();
+
+    if (!payment) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Payment not found');
+    }
+
+    // If userId is provided, verify ownership
+    if (userId && payment.userId && payment.userId.toString() !== userId.toString()) {
+      throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to view this payment');
+    }
+
+    // Transform the response to match the expected format
+    return {
+      success: true,
+      reference: payment.reference,
+      status: payment.status,
+      amount: payment.amount,
+      packageId: payment.packageId,
+      packageType: payment.metadata && payment.metadata.contributionType ? payment.metadata.contributionType : null,
+      createdAt: payment.createdAt,
+      updatedAt: payment.updatedAt,
+      metadata: payment.metadata,
+    };
+  } catch (error) {
+    logger.error('Get payment status error:', error);
+    throw new ApiError(
+      error.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to get payment status'
+    );
+  }
+};
+
 module.exports = {
   initializeTransaction,
+  initializePaymentContribution,
   initializeDailySavingsContribution,
   initializeSbContribution,
   initiateInterestPackagePayment,
@@ -606,4 +611,5 @@ module.exports = {
   initiateTransfer,
   resolveBankAccount,
   getBanks,
+  getPaymentStatus,
 };

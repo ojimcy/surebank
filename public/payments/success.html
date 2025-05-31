@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Successful - SureBank</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .container {
+        text-align: center;
+        max-width: 400px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 40px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      .success-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+      }
+      h1 {
+        margin: 0 0 10px 0;
+        font-size: 28px;
+        font-weight: 600;
+      }
+      p {
+        margin: 0 0 20px 0;
+        opacity: 0.9;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      .redirect-info {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        font-size: 14px;
+      }
+      .button {
+        display: inline-block;
+        background: #4caf50;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 25px;
+        font-weight: 500;
+        margin: 10px;
+        transition: all 0.3s ease;
+      }
+      .button:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+      }
+      .loading {
+        display: none;
+        margin: 20px 0;
+      }
+      .spinner {
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top: 3px solid white;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="success-icon">🎉</div>
+      <h1>Payment Successful!</h1>
+      <p id="main-message">Your payment has been processed successfully.</p>
+
+      <div id="mobile-redirect" class="redirect-info" style="display: none">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Redirecting to SureBank app...</p>
+        </div>
+        <p>If the app doesn't open automatically:</p>
+        <a href="#" id="open-app-link" class="button">Open SureBank App</a>
+      </div>
+
+      <div id="web-success" style="display: none">
+        <p>Thank you for using SureBank! You can now close this page.</p>
+        <a href="https://surebank.sonicflare.net" class="button">Back to SureBank</a>
+      </div>
+    </div>
+
+    <script>
+      // Parse URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const platform = urlParams.get('platform');
+      const type = urlParams.get('type');
+      const packageId = urlParams.get('packageId');
+      const reference = urlParams.get('reference');
+
+      // Log for debugging
+      console.log('Payment success bridge:', {
+        platform,
+        type,
+        packageId,
+        reference,
+        userAgent: navigator.userAgent,
+      });
+
+      // Detect if this is a mobile request
+      const isMobileRequest =
+        platform === 'mobile' ||
+        navigator.userAgent.includes('Capacitor') ||
+        /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+      if (isMobileRequest) {
+        // Show mobile redirect UI
+        document.getElementById('mobile-redirect').style.display = 'block';
+        document.querySelector('.loading').style.display = 'block';
+
+        // Generate deep link URL
+        const baseScheme = 'surebank'; // This should match your mobile app scheme
+        const deepLinkParams = new URLSearchParams({
+          type: type || 'payment',
+          status: 'success',
+          ...(packageId && { packageId }),
+          ...(reference && { reference }),
+        });
+        const deepLinkUrl = `${baseScheme}://payment/callback?${deepLinkParams.toString()}`;
+
+        // Set the deep link for manual opening
+        document.getElementById('open-app-link').href = deepLinkUrl;
+
+        console.log('Generated deep link:', deepLinkUrl);
+
+        // Attempt automatic redirect to mobile app
+        setTimeout(() => {
+          console.log('Attempting to open mobile app...');
+          window.location.href = deepLinkUrl;
+
+          // Hide loading after a short delay
+          setTimeout(() => {
+            document.querySelector('.loading').style.display = 'none';
+          }, 3000);
+        }, 1500); // Wait 1.5 seconds to show success message first
+      } else {
+        // Show web success UI
+        document.getElementById('web-success').style.display = 'block';
+        document.getElementById('main-message').textContent =
+          'Your payment has been processed successfully. Thank you for using SureBank!';
+      }
+
+      // Track page visit for analytics
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'payment_success', {
+          platform: isMobileRequest ? 'mobile' : 'web',
+          payment_type: type || 'unknown',
+        });
+      }
+    </script>
+  </body>
+</html>

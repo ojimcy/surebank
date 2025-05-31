@@ -42,11 +42,11 @@ describe('Paystack Service', () => {
         reference: 'test-reference',
       };
       const mockResponse = { status: true, data: { authorization_url: 'https://checkout.paystack.com/test' } };
-      
+
       paystackService.paystackClient.transaction.initialize = jest.fn().mockResolvedValue(mockResponse);
-      
+
       const result = await paystackService.initializeTransaction(mockData);
-      
+
       expect(paystackService.paystackClient.transaction.initialize).toHaveBeenCalledWith(mockData);
       expect(result).toEqual(mockResponse);
     });

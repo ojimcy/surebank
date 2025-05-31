@@ -6,7 +6,7 @@ const { getSecret } = require('../utils/secretsManager');
 const accountSchema = require('./account.schema');
 const accountTransactionSchema = require('./accountTransaction.schema');
 const bannerSchema = require('./banner.schema');
-const branchSchema = require('./branch.schma');
+const branchSchema = require('./branch.schema');
 const branchStaffSchema = require('./branchStaff.schema');
 const cartSchema = require('./cart.schema');
 const collectionSchema = require('./collections.schema');
@@ -49,7 +49,7 @@ const withdrawalRequestSchema = require('./withdrawalRequest.schema');
 const kycSchema = require('./kyc.schema');
 // Track connection and models
 let conn = null;
-let models = {};
+const models = {};
 let isConnecting = false;
 let connectionPromise = null;
 const MAX_RETRIES = 5;
@@ -65,7 +65,7 @@ const registerModels = () => {
   }
 
   try {
-    // Only register models once
+    // Only register models once per connection
     if (Object.keys(models).length === 0) {
       // Schema registration
       models.Account = conn.model('Account', accountSchema);
@@ -116,6 +116,14 @@ const registerModels = () => {
       // Ensure DsPackage is properly registered
       models.DsPackage = conn.model('DsPackage', packageSchema);
 
+      // Verify critical models for populate operations
+      const criticalModels = ['Branch', 'User', 'Account'];
+      const missingModel = criticalModels.find((modelName) => !models[modelName]);
+      if (missingModel) {
+        logger.error(`Critical model ${missingModel} not registered`);
+        return false;
+      }
+
       logger.info('All models registered successfully');
       return true;
     }
@@ -140,7 +148,7 @@ const createConnection = async (options) => {
 
   try {
     // Create new connection promise
-    connectionPromise = new Promise(async (resolve, reject) => {
+    connectionPromise = new Promise((resolve, reject) => {
       try {
         conn = mongoose.createConnection(config.mongoose.url, options);
 
@@ -155,7 +163,7 @@ const createConnection = async (options) => {
         conn.on('error', (err) => {
           logger.error('MongoDB connection error:', err);
           if (retryCount < MAX_RETRIES) {
-            retryCount++;
+            retryCount += 1;
             logger.info(`Retrying connection... Attempt ${retryCount} of ${MAX_RETRIES}`);
             setTimeout(async () => {
               try {
@@ -176,17 +184,21 @@ const createConnection = async (options) => {
         });
 
         // Wait for connection to be ready before resolving
-        await new Promise((resolveConnection) => {
+        const waitForConnection = () => {
           if (conn.readyState === 1) {
-            resolveConnection();
+            // Ensure models are registered
+            registerModels();
+            resolve(conn);
           } else {
-            conn.once('connected', resolveConnection);
+            conn.once('connected', () => {
+              // Ensure models are registered
+              registerModels();
+              resolve(conn);
+            });
           }
-        });
+        };
 
-        // Ensure models are registered
-        registerModels();
-        resolve(conn);
+        waitForConnection();
       } catch (error) {
         isConnecting = false;
         reject(error);
@@ -237,8 +249,10 @@ const getConnection = async () => {
     await createConnection(options);
   }
 
-  // Ensure models are registered
-  registerModels();
+  // Ensure models are registered every time (safety check for serverless environments)
+  if (Object.keys(models).length === 0) {
+    registerModels();
+  }
   return conn;
 };
 

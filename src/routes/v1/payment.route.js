@@ -2,11 +2,34 @@ const express = require('express');
 const auth = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 const paymentValidation = require('../../validations/payment.validation');
-const { userPortalController } = require('../../controllers');
+const { userPortalController, paymentController } = require('../../controllers');
 
 const router = express.Router();
 
 router.get('/ds/packages', auth('userPackage'), userPortalController.getUserDailySavingsPackages);
+
+/**
+ * POST /v1/payments/init-contribution
+ * Universal payment initialization for all contribution types
+ * @auth Required (selfAccount permission)
+ * @body {string} contributionType - Type: 'daily_savings', 'savings_buying', 'interest_package'
+ * @body {string} [packageId] - Package ID (required for daily_savings and savings_buying)
+ * @body {number} amount - Amount to contribute
+ * @body {string} [callbackUrl] - Optional callback URL
+ * @body {string} [redirect_url] - Optional redirect URL
+ * @body {string} [name] - Package name (required for interest_package)
+ * @body {number} [principalAmount] - Principal amount (required for interest_package)
+ * @body {number} [lockPeriod] - Lock period in days (required for interest_package)
+ * @body {number} [earlyWithdrawalPenalty] - Early withdrawal penalty (optional for interest_package)
+ * @body {number} [interestRate] - Interest rate (optional for interest_package)
+ * @returns {Object} Payment initialization response with authorization URL
+ */
+router.post(
+  '/init-contribution',
+  auth('selfAccount'),
+  validate(paymentValidation.initializeContribution),
+  paymentController.initializeContribution
+);
 
 /**
  * GET /v1/payments/packages/:packageId/contributions

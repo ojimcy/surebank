@@ -95,7 +95,7 @@ const getCustomerwithdrawals = catchAsync(async (req, res) => {
     branchId,
     createdBy,
     approvedBy,
-    narration,
+    narration
   );
   res.status(httpStatus.OK).json(result);
 });
@@ -135,7 +135,7 @@ const getAllWithdrawalRequests = catchAsync(async (req, res) => {
     status,
     narration,
     parsedPage,
-    parsedLimit,
+    parsedLimit
   );
 
   // Calculate the sum of withdrawal amounts
