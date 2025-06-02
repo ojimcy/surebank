@@ -165,10 +165,6 @@ const initializePaymentContribution = async (data, req = null) => {
 
   // For interest packages, don't use hardcoded callback URL - let Paystack handle default behavior
   const finalCallbackUrl = callbackUrl;
-  // Note: We removed the hardcoded fallback to let Paystack use its own default behavior
-  // if (contributionType === 'interest_package' && !finalCallbackUrl) {
-  //   finalCallbackUrl = config.paystack.callbackUrl;
-  // }
 
   const transactionData = {
     email: user.email,

@@ -35,6 +35,7 @@ const paymentRoute = require('./payment.route');
 const selfAccountRoute = require('./selfAccount.route');
 const interestPackageRoute = require('./interestPackage.route');
 const s3Route = require('./s3.route');
+const healthRoute = require('./health.route');
 
 const router = express.Router();
 
@@ -174,6 +175,10 @@ const defaultRoutes = [
   {
     path: '/s3',
     route: s3Route,
+  },
+  {
+    path: '/health',
+    route: healthRoute,
   },
 ];
 

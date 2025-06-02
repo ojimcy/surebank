@@ -1,0 +1,15 @@
+{
+  "name": "surebank-api-dependencies-layer",
+  "version": "1.0.0",
+  "description": "Common dependencies for Surebank API",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "http-status": "^1.4.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.7.7",
+    "winston": "^3.2.1"
+  }
+}

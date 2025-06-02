@@ -16,6 +16,12 @@ const verifyPayment = {
   }),
 };
 
+const getPaymentStatus = {
+  params: Joi.object().keys({
+    reference: Joi.string().required(),
+  }),
+};
+
 const selfWithdrawalRequest = {
   body: Joi.object().keys({
     accountNumber: Joi.string().required(),
@@ -67,36 +73,37 @@ const initializeContribution = {
       name: Joi.string().when('contributionType', {
         is: 'interest_package',
         then: Joi.required(),
-        otherwise: Joi.forbidden(),
+        otherwise: Joi.strip(),
       }),
       principalAmount: Joi.number().positive().when('contributionType', {
         is: 'interest_package',
         then: Joi.required(),
-        otherwise: Joi.forbidden(),
+        otherwise: Joi.strip(),
       }),
       lockPeriod: Joi.number().integer().positive().when('contributionType', {
         is: 'interest_package',
         then: Joi.required(),
-        otherwise: Joi.forbidden(),
+        otherwise: Joi.strip(),
       }),
       earlyWithdrawalPenalty: Joi.number().min(0).max(100).default(50).when('contributionType', {
         is: 'interest_package',
         then: Joi.optional(),
-        otherwise: Joi.forbidden(),
+        otherwise: Joi.strip(),
       }),
       interestRate: Joi.number().positive().when('contributionType', {
         is: 'interest_package',
         then: Joi.optional(),
-        otherwise: Joi.forbidden(),
+        otherwise: Joi.strip(),
       }),
     })
-    .forbid('metadata') // Explicitly forbid metadata field
-    .unknown(false), // Don't allow unknown fields
+    .unknown(false) // Don't allow unknown fields
+    .strip('metadata'), // Explicitly strip metadata field
 };
 
 module.exports = {
   initializeDsContribution,
   verifyPayment,
+  getPaymentStatus,
   selfWithdrawalRequest,
   getSelfWithdrawalStatus,
   paystackWebhook,

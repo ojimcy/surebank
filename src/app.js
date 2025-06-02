@@ -13,6 +13,7 @@ const { authLimiter } = require('./middlewares/rateLimiter');
 const routes = require('./routes/v1');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
+const logger = require('./config/logger');
 
 const app = express();
 
@@ -69,6 +70,22 @@ if (config.env === 'production') {
 app.use('/v1', routes);
 
 app.use('/public', express.static(`${__dirname}/public`));
+
+// Simple root health check endpoint
+app.get('/health', (req, res) => {
+  const timestamp = new Date().toISOString();
+  const clientIp = req.ip || req.connection.remoteAddress;
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+
+  logger.info(`HEALTH_CHECK | ${timestamp} | IP: ${clientIp} | UA: ${userAgent}`);
+
+  res.status(httpStatus.OK).json({
+    status: 'ok',
+    service: 'surebank-api',
+    version: process.env.npm_package_version || '1.7.0',
+    uptime: Math.floor(process.uptime()),
+  });
+});
 
 // send back a 404 error for any unknown api request
 app.use((req, res, next) => {

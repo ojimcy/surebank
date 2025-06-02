@@ -1,10 +1,11 @@
 service: surebank-api
-frameworkVersion: '3'
+frameworkVersion: '4'
 
 provider:
   name: aws
-  runtime: nodejs18.x
-  # timeout: 90
+  runtime: nodejs22.x
+  memorySize: 512
+  timeout: 30
   environment: ${file(env.json)}
   httpApi:
     cors:
@@ -43,11 +44,44 @@ provider:
           Resource:
             - arn:aws:s3:::surebank-kyc-documents/*
 
+# Disable esbuild for now
+build:
+  esbuild: false
+
+# Efficient packaging
+package:
+  individually: true
+  patterns:
+    - '!node_modules/aws-sdk/**'
+    - '!node_modules/.bin/**'
+    - '!node_modules/**/test/**'
+    - '!node_modules/**/docs/**'
+    - '!node_modules/**/examples/**'
+    - '!node_modules/**/*.md'
+    - '!node_modules/**/*.ts'
+    - '!tests/**'
+    - '!coverage/**'
+    - '!.husky/**'
+    - '!.git/**'
+    - '!.github/**'
+    - '!docs/**'
+    - '!**/*.test.js'
+    - '!webpack.config.js'
+
+layers:
+  dependencies:
+    path: layers/dependencies
+    description: Common dependencies for Surebank API
+    compatibleRuntimes:
+      - nodejs22.x
+
 functions:
   api:
     handler: sls.handler
     events:
       - httpApi: '*'
+    layers:
+      - !Ref DependenciesLambdaLayer
 
 plugins:
   - serverless-offline

@@ -1,5 +1,6 @@
 const branchSchema = require('./branch.schema');
-const { getConnection } = require('./connection');
+const { getConnection, getModel } = require('./connection');
+const logger = require('../config/logger');
 
 let model = null;
 
@@ -7,23 +8,26 @@ let model = null;
  * @returns Branch
  */
 const Branch = async () => {
-  if (!model) {
-    const conn = await getConnection();
+  try {
+    // First try to get the model using getModel helper which ensures connection exists
+    return await getModel('Branch');
+  } catch (error) {
+    // If model not found, create connection and register it manually
+    if (!model) {
+      const conn = await getConnection();
 
-    // Check if Branch model already exists on the connection to prevent OverwriteModelError
-    try {
-      model = conn.models.Branch || conn.model('Branch', branchSchema);
-    } catch (error) {
-      // If model already exists, get it from the connection
-      if (error.message.includes('Cannot overwrite')) {
+      // Check if Branch model already exists on the connection
+      if (conn.models.Branch) {
         model = conn.models.Branch;
       } else {
-        throw error;
+        // If not, register it
+        model = conn.model('Branch', branchSchema);
+        logger.info('Branch model registered successfully');
       }
     }
-  }
 
-  return model;
+    return model;
+  }
 };
 
 module.exports = Branch;

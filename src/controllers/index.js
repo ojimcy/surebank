@@ -21,3 +21,4 @@ module.exports.smsController = require('./sms.controller');
 module.exports.noteKeepingController = require('./noteKeeping.controller');
 module.exports.paystackController = require('./paystack.controller');
 module.exports.userPortalController = require('./userPortal.controller');
+module.exports.paymentController = require('./payment.controller');

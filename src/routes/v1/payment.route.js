@@ -32,6 +32,20 @@ router.post(
 );
 
 /**
+ * GET /v1/payments/status/:reference
+ * Get payment status by reference
+ * @auth Required (selfAccount permission)
+ * @param {string} reference - Payment reference to check
+ * @returns {Object} Payment status details
+ */
+router.get(
+  '/status/:reference',
+  auth('selfAccount'),
+  validate(paymentValidation.getPaymentStatus),
+  paymentController.getPaymentStatus
+);
+
+/**
  * GET /v1/payments/packages/:packageId/contributions
  * Get contributions for a specific package (works for both DS and SB packages)
  * @param {string} packageId - Package ID (in route params)
