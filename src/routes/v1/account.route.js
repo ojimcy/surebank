@@ -51,4 +51,18 @@ router
   .route('/:accountId/bvn')
   .post(auth('manageAccount'), validate(accountValidation.updateAccountBvn), accountController.updateAccountBvn);
 
+/**
+ * GET /v1/accounts/self/all
+ * Retrieve all accounts for the authenticated user
+ */
+router
+  .route('/self/all')
+  .get(auth('getUserAccount'), validate(accountValidation.getSelfAllAccounts), accountController.getSelfAllAccounts);
+
+/**
+ * GET /v1/accounts/self/balances
+ * Retrieve all accounts with balances for withdrawal selection
+ */
+router.route('/self/balances').get(auth('getUserAccount'), accountController.getSelfAccountsWithBalances);
+
 module.exports = router;

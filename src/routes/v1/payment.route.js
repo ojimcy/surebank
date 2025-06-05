@@ -79,6 +79,25 @@ router.post(
 );
 
 /**
+ * POST /v1/payments/withdrawal/multi-request
+ * Create a multi-account withdrawal request
+ * @auth Required
+ * @body {Array} withdrawalAccounts - Array of {accountNumber, amount}
+ * @body {string} bankName - Bank name
+ * @body {string} bankCode - Bank code
+ * @body {string} bankAccountNumber - Bank account number
+ * @body {string} bankAccountName - Bank account name
+ * @body {string} [reason] - Reason for withdrawal (optional)
+ * @returns {Object} Multi-account withdrawal request details
+ */
+router.post(
+  '/withdrawal/multi-request',
+  auth('selfWithdrawal'),
+  validate(paymentValidation.multiAccountWithdrawalRequest),
+  userPortalController.requestMultiAccountWithdrawal
+);
+
+/**
  * GET /v1/payments/withdrawal/status/:id
  * Get status of a self-withdrawal request
  * @auth Required

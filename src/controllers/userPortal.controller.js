@@ -197,6 +197,21 @@ const processSelfWithdrawal = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(result);
 });
 
+/**
+ * Create a multi-account withdrawal request
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>}
+ */
+const requestMultiAccountWithdrawal = catchAsync(async (req, res) => {
+  const withdrawalData = {
+    ...req.body,
+  };
+
+  const result = await withdrawalService.createMultiAccountWithdrawalRequest(withdrawalData, req.user._id);
+  res.status(httpStatus.CREATED).json(result);
+});
+
 module.exports = {
   initializeDailySavingsContribution,
   initializeSbContribution,
@@ -207,4 +222,5 @@ module.exports = {
   getSelfWithdrawalStatus,
   handleTransferWebhook,
   processSelfWithdrawal,
+  requestMultiAccountWithdrawal,
 };

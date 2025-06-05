@@ -122,17 +122,25 @@ const calculateEarlyWithdrawal = catchAsync(async (req, res) => {
 });
 
 /**
- * Request a withdrawal from an interest package
- * Intelligently handles both early and mature withdrawals
+ * Process a withdrawal from an interest package
+ * Directly processes both early and mature withdrawals and updates user balance
+ * Supports both full and partial withdrawals
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
-const requestWithdrawal = catchAsync(async (req, res) => {
+const requestInterestPackageWithdrawal = catchAsync(async (req, res) => {
   const { packageId } = req.params;
-  const { withdrawalReason } = req.body;
+  const { amount } = req.body;
   const userId = req.user._id;
 
-  const withdrawalResult = await interestPackageService.requestWithdrawal(packageId, withdrawalReason, userId);
+  // Convert amount to number if provided
+  const withdrawalAmount = amount ? Number(amount) : null;
+
+  const withdrawalResult = await interestPackageService.requestInterestPackageWithdrawal(
+    packageId,
+    userId,
+    withdrawalAmount
+  );
 
   res.status(httpStatus.OK).json(withdrawalResult);
 });
@@ -230,7 +238,7 @@ module.exports = {
   getInterestPackageByReference,
   getUserInterestPackages,
   calculateEarlyWithdrawal,
-  requestWithdrawal,
+  requestInterestPackageWithdrawal,
   getProjectedInterest,
   handlePaymentCallback,
   getInterestRateOptions,

@@ -11,6 +11,7 @@ provider:
     cors:
       allowedOrigins:
         - 'https://surebank.ng'
+        - 'https://surebank.sonicflare.net'
         - 'https://localhost'
         - 'https://localhost:8081'
       allowedMethods:

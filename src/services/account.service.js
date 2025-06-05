@@ -348,6 +348,44 @@ const updateAccountBvn = async (accountId, bvn) => {
   return accountModel.findById(accountId);
 };
 
+/**
+ * Get user accounts with available balances for withdrawal
+ * @param {string} userId - User ID
+ * @returns {Promise<Array>} User accounts with balances
+ */
+const getUserAccountsWithBalances = async (userId) => {
+  const accountModel = await Account();
+  const accounts = await accountModel
+    .find({
+      userId,
+      status: 'active', // Only active accounts
+    })
+    .populate([
+      {
+        path: 'accountManagerId',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'branchId',
+        select: 'name',
+      },
+    ])
+    .lean();
+
+  // Return accounts with balance information
+  return accounts.map((account) => ({
+    _id: account._id,
+    accountNumber: account.accountNumber,
+    accountType: account.accountType,
+    availableBalance: account.availableBalance,
+    ledgerBalance: account.ledgerBalance,
+    heldAmount: account.ledgerBalance - account.availableBalance,
+    accountManager: account.accountManagerId,
+    branch: account.branchId,
+    status: account.status,
+  }));
+};
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -363,4 +401,5 @@ module.exports = {
   getUserAccounts,
   createSelfAccount,
   updateAccountBvn,
+  getUserAccountsWithBalances,
 };

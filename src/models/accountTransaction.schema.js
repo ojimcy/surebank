@@ -95,6 +95,11 @@ const accountTransactionSchema = mongoose.Schema(
       default: 0,
       comment: 'Amount deducted as penalty for early withdrawal or other reasons',
     },
+    relatedWithdrawalGroup: {
+      type: String,
+      required: false,
+      comment: 'Group identifier for multi-account withdrawal requests',
+    },
   },
   {
     timestamps: true,

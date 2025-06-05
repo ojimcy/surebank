@@ -1,146 +1,12 @@
 const httpStatus = require('http-status');
 const mongoose = require('mongoose');
-const { WithdrawalRequest, AccountTransaction } = require('../models');
+const { WithdrawalRequest, AccountTransaction, Account } = require('../models');
 const ApiError = require('../utils/ApiError');
 const userService = require('./user.service');
 const paystackService = require('./paystack.service');
 const notificationService = require('./notification.service');
 const accountTransactionService = require('./accountTransaction.service');
 const logger = require('../config/logger');
-
-/**
- * Create a self-withdrawal request
- * @param {Object} withdrawalData - Withdrawal request data
- * @param {string} withdrawalData.userId - User ID
- * @param {string} withdrawalData.accountNumber - Account number
- * @param {number} withdrawalData.amount - Amount to withdraw
- * @param {string} withdrawalData.bankAccountName - Bank account name
- * @param {string} withdrawalData.bankAccountNumber - Bank account number
- * @param {string} withdrawalData.bankName - Bank name
- * @param {string} withdrawalData.bankCode - Bank code
- * @param {string} [withdrawalData.reason] - Reason for withdrawal (optional)
- * @returns {Promise<Object>} Withdrawal request details
- */
-const createSelfWithdrawalRequest = async (withdrawalData) => {
-  const { userId, accountNumber, amount, bankAccountName, bankAccountNumber, bankName, bankCode, reason } = withdrawalData;
-
-  const AccountTransactionModel = await AccountTransaction();
-
-  // Validate account ownership and balance
-  const account = await accountTransactionService.getAccountByNumber(accountNumber);
-  if (!account) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Account not found');
-  }
-
-  if (account.userId.toString() !== userId.toString()) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'You do not have access to this account');
-  }
-
-  // Check available balance
-  const availableBalance = await accountTransactionService.getAvailableBalance(accountNumber);
-  if (availableBalance < amount) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Insufficient funds');
-  }
-
-  // Determine package type based on account type
-  let packageType;
-  if (account.accountType === 'ds') {
-    packageType = 'DsPackage';
-  } else if (account.accountType === 'sb') {
-    packageType = 'SbPackage';
-  } else {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Account type not supported for withdrawals');
-  }
-
-  // Start transaction
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    // Create withdrawal request
-    const transactionDate = new Date().getTime();
-    const withdrawalRequest = await AccountTransactionModel.create(
-      [
-        {
-          userId,
-          packageId: account.packageId,
-          packageType,
-          accountNumber,
-          amount,
-          requestedAmount: amount,
-          bankAccountName,
-          bankAccountNumber,
-          bankName,
-          bankCode,
-          reason,
-          createdBy: userId,
-          status: 'pending',
-          isEarlyWithdrawal: false,
-          narration: `Self withdrawal request - ${account.accountType}`,
-          branchId: account.branchId,
-          direction: 'outflow',
-          date: transactionDate,
-        },
-      ],
-      { session }
-    );
-
-    // Put amount on hold
-    await accountTransactionService.putAmountOnHold(accountNumber, amount);
-
-    // Notify account manager
-    try {
-      const user = await userService.getUserById(userId);
-      const accountManager = await userService.getUserById(account.accountManagerId);
-
-      if (accountManager) {
-        await notificationService.sendTemplatedNotification({
-          userId: account.accountManagerId,
-          templateType: 'WITHDRAWAL_REQUEST',
-          user: accountManager,
-          data: {
-            amount,
-            accountNumber,
-            customerName: user ? `${user.firstName} ${user.lastName}` : 'Customer',
-            date: new Date(),
-          },
-        });
-      }
-
-      // Notify the user about their withdrawal request
-      if (user) {
-        await notificationService.sendTemplatedNotification({
-          userId,
-          templateType: 'WITHDRAWAL_REQUEST',
-          user,
-          data: {
-            name: `${user.firstName} ${user.lastName}`,
-            amount,
-            accountNumber,
-            bankName,
-            bankAccountNumber,
-            reference: withdrawalRequest[0]._id.toString(),
-            date: new Date(),
-            status: 'pending',
-            processingTime: '2',
-          },
-        });
-      }
-    } catch (notificationError) {
-      // Don't fail the transaction if notification fails
-      logger.error('Failed to send notifications:', notificationError);
-    }
-
-    await session.commitTransaction();
-
-    return withdrawalRequest[0];
-  } catch (error) {
-    await session.abortTransaction();
-    throw error;
-  } finally {
-    session.endSession();
-  }
-};
 
 /**
  * Get status of a self-withdrawal request
@@ -436,10 +302,277 @@ const auditAndProcessSelfWithdrawal = async (requestId, processedById) => {
   return approveWithdrawalRequest(requestId, processedById);
 };
 
+/**
+ * Send multi-account withdrawal request notifications using existing WITHDRAWAL_REQUEST template
+ * @param {Object} notificationData - Notification data
+ */
+const sendMultiAccountWithdrawalNotifications = async (notificationData) => {
+  const { userId, withdrawalRequests, bankName, bankAccountNumber, totalAmount } = notificationData;
+
+  try {
+    const user = await userService.getUserById(userId);
+    if (!user) return;
+
+    // For single account withdrawal, use standard template data
+    if (withdrawalRequests.length === 1) {
+      const singleRequest = withdrawalRequests[0];
+
+      // Notify user using existing WITHDRAWAL_REQUEST template
+      await notificationService.sendTemplatedNotification({
+        userId,
+        templateType: 'WITHDRAWAL_REQUEST',
+        user,
+        data: {
+          name: `${user.firstName} ${user.lastName}`,
+          amount: singleRequest.amount,
+          accountNumber: singleRequest.accountNumber,
+          bankName,
+          bankAccountNumber,
+          reference: singleRequest._id.toString(),
+          date: new Date(),
+          status: 'pending',
+          processingTime: '2',
+        },
+      });
+    } else {
+      // For multi-account, modify template data to show combined information
+      const accountSummary = withdrawalRequests
+        .map((wr) => `₦${wr.amount.toLocaleString()} from ${wr.accountNumber}`)
+        .join(', ');
+
+      // Use existing template but with combined data
+      await notificationService.sendTemplatedNotification({
+        userId,
+        templateType: 'WITHDRAWAL_REQUEST',
+        user,
+        data: {
+          name: `${user.firstName} ${user.lastName}`,
+          amount: totalAmount,
+          accountNumber: `${withdrawalRequests.length} accounts (${accountSummary})`,
+          bankName,
+          bankAccountNumber,
+          reference: withdrawalRequests[0].relatedWithdrawalGroup, // Use group ID as reference
+          date: new Date(),
+          status: 'pending',
+          processingTime: '2',
+        },
+      });
+    }
+
+    // Notify account manager(s) - use the first account's manager for simplicity
+    const firstAccount = await accountTransactionService.getAccountByNumber(withdrawalRequests[0].accountNumber);
+    if (firstAccount && firstAccount.accountManagerId) {
+      const accountManager = await userService.getUserById(firstAccount.accountManagerId);
+
+      if (accountManager) {
+        await notificationService.sendTemplatedNotification({
+          userId: firstAccount.accountManagerId,
+          templateType: 'WITHDRAWAL_REQUEST',
+          user: accountManager,
+          data: {
+            amount: totalAmount,
+            accountNumber:
+              withdrawalRequests.length === 1
+                ? withdrawalRequests[0].accountNumber
+                : `${withdrawalRequests.length} accounts`,
+            customerName: `${user.firstName} ${user.lastName}`,
+            date: new Date(),
+            reference: withdrawalRequests[0].relatedWithdrawalGroup || withdrawalRequests[0]._id.toString(),
+            status: 'pending',
+            processingTime: '2',
+          },
+        });
+      }
+    }
+  } catch (notificationError) {
+    logger.error('Failed to send withdrawal notifications:', notificationError);
+  }
+};
+
+/**
+ * Create a multi-account withdrawal request
+ * @param {Object} withdrawalData - Multi-account withdrawal data
+ * @param {Array} withdrawalData.withdrawalAccounts - Array of {accountNumber, amount}
+ * @param {string} withdrawalData.bankAccountName - Bank account name
+ * @param {string} withdrawalData.bankAccountNumber - Bank account number
+ * @param {string} withdrawalData.bankName - Bank name
+ * @param {string} withdrawalData.bankCode - Bank code
+ * @param {string} [withdrawalData.reason] - Reason for withdrawal (optional)
+ * @param {string} userId - User ID from authentication
+ * @returns {Promise<Object>} Multi-account withdrawal request details
+ */
+const createMultiAccountWithdrawalRequest = async (withdrawalData, userId) => {
+  const { withdrawalAccounts, bankAccountName, bankAccountNumber, bankName, bankCode, reason } = withdrawalData;
+
+  // Validate all accounts first using Promise.all
+  const validationResults = await Promise.all(
+    withdrawalAccounts.map(async (withdrawalAccount) => {
+      const { accountNumber, amount } = withdrawalAccount;
+
+      // Validate each account
+      const account = await accountTransactionService.getAccountByNumber(accountNumber);
+      if (!account) {
+        throw new ApiError(httpStatus.NOT_FOUND, `Account ${accountNumber} not found`);
+      }
+
+      if (account.userId.toString() !== userId.toString()) {
+        throw new ApiError(httpStatus.FORBIDDEN, `You do not have access to account ${accountNumber}`);
+      }
+
+      // Check available balance for each account
+      const availableBalance = await accountTransactionService.getAvailableBalance(accountNumber);
+      if (availableBalance < amount) {
+        throw new ApiError(httpStatus.BAD_REQUEST, `Insufficient funds in account ${accountNumber}`);
+      }
+
+      // Determine package type
+      let packageType;
+      if (account.accountType === 'ds') {
+        packageType = 'DsPackage';
+      } else if (account.accountType === 'sb') {
+        packageType = 'SbPackage';
+      } else if (account.accountType === 'ibs') {
+        packageType = 'InterestPackage';
+      } else {
+        throw new ApiError(httpStatus.BAD_REQUEST, `Account type ${account.accountType} not supported for withdrawals`);
+      }
+
+      return {
+        account,
+        amount,
+        packageType,
+      };
+    })
+  );
+
+  const totalAmount = validationResults.reduce((sum, item) => sum + item.amount, 0);
+
+  // Check for duplicate account numbers
+  const accountNumbers = withdrawalAccounts.map((wa) => wa.accountNumber);
+  const uniqueAccountNumbers = [...new Set(accountNumbers)];
+  if (accountNumbers.length !== uniqueAccountNumbers.length) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Duplicate account numbers are not allowed');
+  }
+
+  const AccountTransactionModel = await AccountTransaction();
+  const AccountModel = await Account();
+
+  // Start transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const transactionDate = new Date().getTime();
+
+    // Create withdrawal requests and hold amounts using Promise.all
+    const withdrawalResults = await Promise.all(
+      validationResults.map(async (validatedAccount) => {
+        const { account, amount, packageType } = validatedAccount;
+
+        const withdrawalRequest = await AccountTransactionModel.create(
+          [
+            {
+              userId,
+              packageId: account.packageId,
+              packageType,
+              accountNumber: account.accountNumber,
+              amount,
+              requestedAmount: amount,
+              bankAccountName,
+              bankAccountNumber,
+              bankName,
+              bankCode,
+              reason: reason || `Multi-account withdrawal - ${account.accountType}`,
+              createdBy: userId,
+              status: 'pending',
+              isEarlyWithdrawal: false,
+              narration: `Self withdrawal request - ${account.accountType}`,
+              branchId: account.branchId,
+              direction: 'outflow',
+              date: transactionDate,
+              // Link related withdrawal requests
+              relatedWithdrawalGroup: transactionDate.toString(), // Use timestamp as group identifier
+            },
+          ],
+          { session }
+        );
+
+        // Put amount on hold for each account within the transaction
+        await AccountModel.findOneAndUpdate(
+          { accountNumber: account.accountNumber },
+          { $inc: { availableBalance: -amount } },
+          { new: true, runValidators: true, session }
+        );
+
+        return withdrawalRequest[0];
+      })
+    );
+
+    await session.commitTransaction();
+
+    // Send notifications after successful transaction
+    await sendMultiAccountWithdrawalNotifications({
+      userId,
+      withdrawalRequests: withdrawalResults,
+      bankName,
+      bankAccountNumber,
+      totalAmount,
+    });
+
+    return {
+      withdrawalRequests: withdrawalResults,
+      totalAmount,
+      groupId: transactionDate.toString(),
+      summary: {
+        accountsCount: withdrawalResults.length,
+        totalAmount,
+        bankDetails: {
+          bankName,
+          bankAccountNumber,
+          bankAccountName,
+        },
+      },
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+/**
+ * Create a self-withdrawal request (DEPRECATED - Use createMultiAccountWithdrawalRequest)
+ * @param {Object} withdrawalData - Withdrawal request data
+ * @returns {Promise<Object>} Withdrawal request details
+ */
+const createSelfWithdrawalRequest = async (withdrawalData) => {
+  // Convert single withdrawal to multi-account format and use the new function
+  const multiAccountData = {
+    withdrawalAccounts: [
+      {
+        accountNumber: withdrawalData.accountNumber,
+        amount: withdrawalData.amount,
+      },
+    ],
+    bankAccountName: withdrawalData.bankAccountName,
+    bankAccountNumber: withdrawalData.bankAccountNumber,
+    bankName: withdrawalData.bankName,
+    bankCode: withdrawalData.bankCode,
+    reason: withdrawalData.reason,
+  };
+
+  const result = await createMultiAccountWithdrawalRequest(multiAccountData, withdrawalData.userId);
+
+  // Return the first (and only) withdrawal request for backwards compatibility
+  return result.withdrawalRequests[0];
+};
+
 module.exports = {
   createSelfWithdrawalRequest,
   getSelfWithdrawalStatus,
   auditAndProcessSelfWithdrawal,
   processTransferWebhook,
   approveWithdrawalRequest,
+  createMultiAccountWithdrawalRequest,
 };

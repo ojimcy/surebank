@@ -100,6 +100,26 @@ const initializeContribution = {
     .strip('metadata'), // Explicitly strip metadata field
 };
 
+const multiAccountWithdrawalRequest = {
+  body: Joi.object().keys({
+    withdrawalAccounts: Joi.array()
+      .items(
+        Joi.object().keys({
+          accountNumber: Joi.string().required(),
+          amount: Joi.number().positive().required(),
+        })
+      )
+      .min(1)
+      .max(3) // ds, sb, ibs - maximum 3 account types
+      .required(),
+    bankName: Joi.string().required(),
+    bankCode: Joi.string().required(),
+    bankAccountNumber: Joi.string().required(),
+    bankAccountName: Joi.string().required(),
+    reason: Joi.string().optional(),
+  }),
+};
+
 module.exports = {
   initializeDsContribution,
   verifyPayment,
@@ -109,4 +129,5 @@ module.exports = {
   paystackWebhook,
   processSelfWithdrawal,
   initializeContribution,
+  multiAccountWithdrawalRequest,
 };

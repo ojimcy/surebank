@@ -4,9 +4,10 @@ const { InterestPackage, AccountTransaction, PaymentTransaction, User } = requir
 const ApiError = require('../utils/ApiError');
 const { getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
-const { sendNotification, getUserNotificationPreference } = require('./notification.service');
+const { sendNotification, getUserNotificationPreference, sendMultiChannelNotification } = require('./notification.service');
 const paymentService = require('./payment.service');
 const emailService = require('./email.service');
+const { makeCustomerDeposit } = require('./accountTransaction.service');
 
 const interestRateConfig = require('../config/interestRates');
 const { sendSMS } = require('./sms.service');
@@ -464,15 +465,14 @@ const calculateEarlyWithdrawalAmount = async (packageId) => {
 
 /**
  * Process a withdrawal request for an interest package
- * Handles both early withdrawals and mature withdrawals intelligently
+ * Directly processes the withdrawal and updates the user's balance
  * @param {string} packageId - Package ID
- * @param {string} withdrawalReason - Reason for withdrawal
  * @param {string} userId - User ID making the request
+ * @param {number} [amount] - Optional amount to withdraw (for partial withdrawals)
  * @returns {Promise<Object>} Withdrawal result
  */
-const requestWithdrawal = async (packageId, withdrawalReason, userId) => {
+const requestInterestPackageWithdrawal = async (packageId, userId, amount = null) => {
   const InterestPackageModel = await InterestPackage();
-  const AccountTransactionModel = await AccountTransaction();
   const UserModel = await User();
 
   // Start a transaction session
@@ -494,10 +494,6 @@ const requestWithdrawal = async (packageId, withdrawalReason, userId) => {
       throw new ApiError(httpStatus.FORBIDDEN, 'Not authorized to withdraw from this package');
     }
 
-    if (interestPackage.status === 'pending_withdrawal') {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Package already has a pending withdrawal request');
-    }
-
     if (interestPackage.status === 'closed') {
       throw new ApiError(httpStatus.BAD_REQUEST, 'Package is already closed');
     }
@@ -505,79 +501,173 @@ const requestWithdrawal = async (packageId, withdrawalReason, userId) => {
     // Determine if early withdrawal or regular (mature) withdrawal
     const isEarlyWithdrawal = interestPackage.status !== 'matured';
 
-    // Calculate withdrawal details based on withdrawal type
-    let withdrawalDetails;
+    // Calculate penalty details for early withdrawal
+    let penaltyAmount = 0;
+    let penaltyRate = 0;
+    let interestAccrued = 0;
 
     if (isEarlyWithdrawal) {
-      // For early withdrawal - calculate accrued interest and apply penalty
-      const interestAccrued = interestPackage.currentBalance - interestPackage.principalAmount;
-      const penaltyRate = interestPackage.earlyWithdrawalPenalty / 100;
-      const penaltyAmount = interestAccrued * penaltyRate;
-      const totalWithdrawalAmount = interestPackage.principalAmount + (interestAccrued - penaltyAmount);
-
-      withdrawalDetails = {
-        packageId,
-        originalBalance: interestPackage.principalAmount,
-        interestAccrued,
-        penaltyRate: interestPackage.earlyWithdrawalPenalty,
-        penaltyAmount,
-        totalWithdrawalAmount,
-        isPenaltyApplied: true,
-        isEarlyWithdrawal: true,
-      };
-    } else {
-      // For mature withdrawal - no penalty applies
-      withdrawalDetails = {
-        packageId,
-        originalBalance: interestPackage.principalAmount,
-        interestAccrued: interestPackage.currentBalance - interestPackage.principalAmount,
-        penaltyRate: 0,
-        penaltyAmount: 0,
-        totalWithdrawalAmount: interestPackage.currentBalance,
-        isPenaltyApplied: false,
-        isEarlyWithdrawal: false,
-      };
+      // For early withdrawal - calculate accrued interest and penalty
+      interestAccrued = interestPackage.currentBalance - interestPackage.principalAmount;
+      penaltyRate = interestPackage.earlyWithdrawalPenalty / 100;
+      penaltyAmount = interestAccrued * penaltyRate;
     }
 
-    // Update package status
-    interestPackage.status = 'pending_withdrawal';
-    await interestPackage.save({ session });
+    // Handle withdrawal amount validation and penalty application
+    let totalWithdrawalAmount;
+    let isPartialWithdrawal = false;
+    let remainingBalance = 0;
 
-    // Create a withdrawal transaction record
-    const transactionDate = new Date().getTime();
-    const transactionData = {
-      accountNumber: interestPackage.accountNumber,
-      amount: withdrawalDetails.totalWithdrawalAmount,
-      createdBy: userId,
-      date: transactionDate,
-      direction: 'outflow',
-      narration: `Withdrawal from interest package: ${
-        withdrawalReason || (isEarlyWithdrawal ? 'Early withdrawal' : 'Mature withdrawal')
-      }`,
-      packageId: interestPackage._id,
-      userId: interestPackage.userId,
-      branchId: interestPackage.branchId,
-      isPenaltyApplied: withdrawalDetails.isPenaltyApplied,
-      penaltyAmount: withdrawalDetails.penaltyAmount,
-      withdrawalType: isEarlyWithdrawal ? 'early' : 'mature',
+    if (amount !== null) {
+      // Validate the withdrawal amount against the current balance (before penalty)
+      if (amount <= 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Withdrawal amount must be greater than zero');
+      }
+
+      if (amount > interestPackage.currentBalance) {
+        throw new ApiError(
+          httpStatus.BAD_REQUEST,
+          `Withdrawal amount exceeds current balance. Current balance: ${interestPackage.currentBalance}`
+        );
+      }
+
+      // Check if this is a full withdrawal (amount equals current balance)
+      const isFullWithdrawal = amount === interestPackage.currentBalance;
+
+      if (isFullWithdrawal) {
+        // For full withdrawal, apply penalty to get net withdrawal amount
+        totalWithdrawalAmount = isEarlyWithdrawal
+          ? interestPackage.currentBalance - penaltyAmount
+          : interestPackage.currentBalance;
+        isPartialWithdrawal = false;
+        remainingBalance = 0;
+      } else {
+        // For partial withdrawal, calculate proportional penalty
+        const withdrawalRatio = amount / interestPackage.currentBalance;
+        const proportionalPenalty = isEarlyWithdrawal ? penaltyAmount * withdrawalRatio : 0;
+
+        totalWithdrawalAmount = amount - proportionalPenalty;
+        isPartialWithdrawal = true;
+        remainingBalance = interestPackage.currentBalance - amount;
+      }
+    } else {
+      // Full withdrawal - apply penalty if early withdrawal
+      totalWithdrawalAmount = isEarlyWithdrawal
+        ? interestPackage.currentBalance - penaltyAmount
+        : interestPackage.currentBalance;
+      isPartialWithdrawal = false;
+      remainingBalance = 0;
+    }
+
+    // Calculate actual interest accrued being withdrawn
+    const withdrawnAmount = amount || interestPackage.currentBalance;
+    const interestShare = isPartialWithdrawal
+      ? (withdrawnAmount / interestPackage.currentBalance) * interestAccrued
+      : interestAccrued;
+
+    // Calculate actual penalty amount applied
+    let appliedPenaltyAmount = 0;
+    if (isEarlyWithdrawal) {
+      if (isPartialWithdrawal) {
+        appliedPenaltyAmount = penaltyAmount * (withdrawnAmount / interestPackage.currentBalance);
+      } else {
+        appliedPenaltyAmount = penaltyAmount;
+      }
+    }
+
+    // Prepare withdrawal details
+    const withdrawalDetails = {
+      packageId,
+      originalBalance: interestPackage.currentBalance,
+      interestAccrued: interestShare,
+      penaltyRate: isEarlyWithdrawal ? interestPackage.earlyWithdrawalPenalty : 0,
+      penaltyAmount: appliedPenaltyAmount,
+      totalWithdrawalAmount,
+      isPenaltyApplied: isEarlyWithdrawal,
+      isEarlyWithdrawal,
+      isPartialWithdrawal,
+      remainingBalance,
     };
 
-    await AccountTransactionModel.create([transactionData], { session });
+    // Update package status or balance
+    if (isPartialWithdrawal) {
+      // Update balance for partial withdrawal
+      interestPackage.currentBalance = remainingBalance;
+      await interestPackage.save({ session });
+    } else {
+      // Close package for full withdrawal
+      interestPackage.status = 'closed';
+      await interestPackage.save({ session });
+    }
+
+    // Process the deposit to user's account
+    const depositDetails = {
+      accountNumber: interestPackage.accountNumber,
+      amount: totalWithdrawalAmount,
+      createdBy: userId,
+      narration: `Interest package ${isPartialWithdrawal ? 'partial ' : ''}withdrawal: ${
+        isEarlyWithdrawal ? 'Early withdrawal' : 'Mature withdrawal'
+      }`,
+      userId: interestPackage.userId,
+    };
+
+    await makeCustomerDeposit(depositDetails, session);
 
     // Commit the transaction
     await session.commitTransaction();
     session.endSession();
 
-    // Send notification
+    // Send notification for withdrawal
     try {
-      // Get user's email for notification
+      // Get user for notification
       const user = await UserModel.findById(interestPackage.userId);
-      const userEmail = user ? user.email : null;
 
-      await sendNotification(interestPackage.userId, 'withdrawal_request', {
-        subject: 'Withdrawal Request Submitted',
-        message: `Your withdrawal request for package "${interestPackage.name}" has been submitted and is pending approval.`,
-        email: userEmail,
+      await sendMultiChannelNotification({
+        userId: interestPackage.userId,
+        type: 'account_activities',
+        user,
+        data: {
+          amount: totalWithdrawalAmount,
+          accountNumber: interestPackage.accountNumber,
+          reference: Date.now().toString(),
+          packageId: interestPackage._id,
+        },
+        notificationContent: {
+          inApp: {
+            title: `Interest Package ${isPartialWithdrawal ? 'Partial ' : ''}Withdrawal`,
+            body: `Your withdrawal of ${totalWithdrawalAmount} from your Interest-Based Savings package "${
+              interestPackage.name
+            }" has been processed.${isPartialWithdrawal ? ` Remaining balance: ${remainingBalance}` : ''}`,
+          },
+          email: {
+            subject: `Interest Package ${isPartialWithdrawal ? 'Partial ' : ''}Withdrawal Confirmation`,
+            template: 'WITHDRAWAL_CONFIRMATION',
+            templateData: {
+              fullName:
+                `${user && user.firstName ? user.firstName : ''} ${user && user.lastName ? user.lastName : ''}`.trim() ||
+                'Valued Customer',
+              amount: totalWithdrawalAmount,
+              packageName: interestPackage.name,
+              accountNumber: interestPackage.accountNumber,
+              date: new Date().toLocaleDateString(),
+              penaltyAmount: withdrawalDetails.penaltyAmount,
+              isEarlyWithdrawal,
+              isPartialWithdrawal,
+              remainingBalance: isPartialWithdrawal ? remainingBalance : 0,
+              dashboardUrl: `${process.env.FRONTEND_URL}/packages`,
+            },
+          },
+          sms: `Your ${
+            isPartialWithdrawal ? 'partial ' : ''
+          }withdrawal of ${totalWithdrawalAmount} from your Interest Package "${interestPackage.name}" has been processed.${
+            isPartialWithdrawal ? ` Remaining balance: ${remainingBalance}` : ''
+          }`,
+        },
+        notificationData: {
+          reference: Date.now().toString(),
+          relatedEntityId: interestPackage._id,
+          relatedEntityType: 'interest_package',
+        },
       });
     } catch (error) {
       logger.error('Error sending withdrawal notification:', error);
@@ -585,8 +675,8 @@ const requestWithdrawal = async (packageId, withdrawalReason, userId) => {
 
     return {
       ...withdrawalDetails,
-      status: 'pending_withdrawal',
-      message: 'Withdrawal request submitted successfully and pending approval',
+      status: 'completed',
+      message: `${isPartialWithdrawal ? 'Partial withdrawal' : 'Withdrawal'} processed successfully`,
     };
   } catch (error) {
     // Abort transaction on error
@@ -820,7 +910,7 @@ module.exports = {
   updateAllActivePackagesInterest,
   updatePackageStatus,
   calculateEarlyWithdrawalAmount,
-  requestWithdrawal,
+  requestInterestPackageWithdrawal,
   getProjectedInterest,
   processVerifiedPayment,
   getInterestPackageByReference,

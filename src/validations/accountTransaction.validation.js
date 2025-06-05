@@ -109,6 +109,12 @@ const getSelfTransactions = {
   }),
 };
 
+const getTransactionById = {
+  params: Joi.object().keys({
+    transactionId: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   makeCustomerDeposit,
   getAvailableBalance,
@@ -122,4 +128,5 @@ module.exports = {
   getAllWithdrawalRequests,
   getWithdrawalRequestById,
   getSelfTransactions,
+  getTransactionById,
 };

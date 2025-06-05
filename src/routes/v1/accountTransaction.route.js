@@ -79,6 +79,14 @@ router
   );
 
 router
+  .route('/:transactionId')
+  .get(
+    auth('accountTransactions'),
+    validate(accountTransactionValidation.getTransactionById),
+    accountTransactionController.getTransactionById
+  );
+
+router
   .route('/withdraw/cash/:requestId')
   .get(
     auth('requestCash'),

@@ -49,12 +49,12 @@ const calculateEarlyWithdrawal = {
   }),
 };
 
-const requestWithdrawal = {
+const requestInterestPackageWithdrawal = {
   params: Joi.object().keys({
     packageId: Joi.string().custom(objectId).required(),
   }),
   body: Joi.object().keys({
-    withdrawalReason: Joi.string().min(3).max(200),
+    amount: Joi.number().positive().optional().description('Amount to withdraw (for partial withdrawals)'),
   }),
 };
 
@@ -74,6 +74,6 @@ module.exports = {
   getInterestPackageByReference,
   getUserInterestPackages,
   calculateEarlyWithdrawal,
-  requestWithdrawal,
+  requestInterestPackageWithdrawal,
   getProjectedInterest,
 };

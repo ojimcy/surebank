@@ -119,6 +119,12 @@ const getSelfAllAccounts = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(accounts);
 });
 
+const getSelfAccountsWithBalances = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const accounts = await accountService.getUserAccountsWithBalances(userId);
+  res.status(httpStatus.OK).send(accounts);
+});
+
 module.exports = {
   createAccount,
   assignBranch,
@@ -135,4 +141,5 @@ module.exports = {
   getSelfAccount,
   updateAccountBvn,
   getSelfAllAccounts,
+  getSelfAccountsWithBalances,
 };

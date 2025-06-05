@@ -53,8 +53,8 @@ router
   .route('/package/:packageId/request-withdrawal')
   .post(
     auth('selfAccount'),
-    validate(interestPackageValidation.requestWithdrawal),
-    interestPackageController.requestWithdrawal
+    validate(interestPackageValidation.requestInterestPackageWithdrawal),
+    interestPackageController.requestInterestPackageWithdrawal
   );
 
 // endpoint for projected interest calculation

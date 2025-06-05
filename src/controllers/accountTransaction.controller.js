@@ -199,6 +199,12 @@ const getSelfTransactions = catchAsync(async (req, res) => {
   }
 });
 
+const getTransactionById = catchAsync(async (req, res) => {
+  const { transactionId } = req.params;
+  const transaction = await accountTransactionService.getTransactionById(transactionId);
+  res.status(httpStatus.OK).json(transaction);
+});
+
 module.exports = {
   makeCustomerDeposit,
   updateAccountStatus,
@@ -217,4 +223,5 @@ module.exports = {
   getWithdrawalRequestById,
   getHeldAmount,
   getSelfTransactions,
+  getTransactionById,
 };

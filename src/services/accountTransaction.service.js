@@ -658,6 +658,41 @@ const getSelfTransactions = async (options = {}) => {
   return result;
 };
 
+/**
+ * Get transaction details by transaction ID
+ * @param {string} transactionId - Transaction ID
+ * @returns {Promise<Object>} Transaction details
+ */
+const getTransactionById = async (transactionId) => {
+  const AccountTransactionModel = await AccountTransaction();
+  const transaction = await AccountTransactionModel.findById(transactionId)
+    .populate([
+      {
+        path: 'createdBy',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'userId',
+        select: 'firstName lastName',
+      },
+      {
+        path: 'branchId',
+        select: 'name',
+      },
+      {
+        path: 'approvedBy',
+        select: 'firstName lastName',
+      },
+    ])
+    .lean();
+
+  if (!transaction) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Transaction not found');
+  }
+
+  return transaction;
+};
+
 module.exports = {
   getAccountByNumber,
   makeCustomerDeposit,
@@ -676,4 +711,5 @@ module.exports = {
   getWithdrawalRequestById,
   getHeldAmount,
   getSelfTransactions,
+  getTransactionById,
 };
