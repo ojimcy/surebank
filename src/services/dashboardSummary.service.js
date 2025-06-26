@@ -161,32 +161,355 @@ const getManagerDashboardSummary = async (
 
   // Combine all metrics into summary object
   return {
-    // Branch metrics
-    branchTotalContributions:
+    // Branch metrics (using names expected by ManagerDashboard)
+    contributionsDailyTotal:
       branchTotalContributions[0] && branchTotalContributions[0].total ? branchTotalContributions[0].total : 0,
-    branchDsContributions: branchDsContributions[0] && branchDsContributions[0].total ? branchDsContributions[0].total : 0,
-    branchSbContributions: branchSbContributions[0] && branchSbContributions[0].total ? branchSbContributions[0].total : 0,
-    branchPendingWithdrawals: {
-      total: branchPendingWithdrawals[0] && branchPendingWithdrawals[0].total ? branchPendingWithdrawals[0].total : 0,
-      count: branchPendingWithdrawals[0] && branchPendingWithdrawals[0].count ? branchPendingWithdrawals[0].count : 0,
-    },
+    dsDailyTotal: branchDsContributions[0] && branchDsContributions[0].total ? branchDsContributions[0].total : 0,
+    sbDailyTotal: branchSbContributions[0] && branchSbContributions[0].total ? branchSbContributions[0].total : 0,
+    dailySavingsWithdrawals:
+      branchPendingWithdrawals[0] && branchPendingWithdrawals[0].total ? branchPendingWithdrawals[0].total : 0,
 
-    // Manager-specific metrics
-    managerTotalContributions:
+    // Manager-specific metrics (using names expected by ManagerDashboard)
+    managerTotal:
       managerTotalContributions[0] && managerTotalContributions[0].total ? managerTotalContributions[0].total : 0,
-    managerDsContributions:
-      managerDsContributions[0] && managerDsContributions[0].total ? managerDsContributions[0].total : 0,
-    managerSbContributions:
-      managerSbContributions[0] && managerSbContributions[0].total ? managerSbContributions[0].total : 0,
-    managerPendingWithdrawals: {
-      total: managerPendingWithdrawals[0] && managerPendingWithdrawals[0].total ? managerPendingWithdrawals[0].total : 0,
-      count: managerPendingWithdrawals[0] && managerPendingWithdrawals[0].count ? managerPendingWithdrawals[0].count : 0,
-    },
+    managerDsTotal: managerDsContributions[0] && managerDsContributions[0].total ? managerDsContributions[0].total : 0,
+    managerSbTotal: managerSbContributions[0] && managerSbContributions[0].total ? managerSbContributions[0].total : 0,
+    managerWithdrawals:
+      managerPendingWithdrawals[0] && managerPendingWithdrawals[0].total ? managerPendingWithdrawals[0].total : 0,
 
     // Package counts
     openPackageCount,
     openSbPackageCount,
     openIbsPackageCount,
+
+    // Additional data for compatibility
+    branchPendingWithdrawalsCount:
+      branchPendingWithdrawals[0] && branchPendingWithdrawals[0].count ? branchPendingWithdrawals[0].count : 0,
+    managerPendingWithdrawalsCount:
+      managerPendingWithdrawals[0] && managerPendingWithdrawals[0].count ? managerPendingWithdrawals[0].count : 0,
+  };
+};
+
+/**
+ * Get dashboard summary for admin role
+ * @param {Object} ContributionModel - Contribution model
+ * @param {Object} AccountTransactionModel - AccountTransaction model
+ * @param {string} branchId - Branch ID (optional)
+ * @param {Object} dateFilter - Date filter object
+ * @returns {Promise<Object>} Admin dashboard summary data
+ */
+const getAdminDashboardSummary = async (ContributionModel, AccountTransactionModel, branchId, dateFilter) => {
+  // Admin filter (branch-specific if branchId provided)
+  const adminFilter = branchId ? { branchId } : {};
+
+  // Calculate yesterday's date filter for comparison
+  const currentDate = new Date();
+  const yesterdayStart = new Date(currentDate);
+  yesterdayStart.setDate(currentDate.getDate() - 1);
+  yesterdayStart.setHours(0, 0, 0, 0);
+
+  const yesterdayEnd = new Date(currentDate);
+  yesterdayEnd.setDate(currentDate.getDate() - 1);
+  yesterdayEnd.setHours(23, 59, 59, 999);
+
+  const yesterdayFilter = {
+    date: { $gte: yesterdayStart.getTime(), $lte: yesterdayEnd.getTime() },
+  };
+
+  // Helper function to calculate percentage change
+  const calculatePercentageChange = (current, previous) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100 * 10) / 10; // Round to 1 decimal place
+  };
+
+  // Today's data - Total daily contributions
+  const contributionsDailyTotal = await ContributionModel.aggregate([
+    {
+      $match: {
+        ...adminFilter,
+        ...dateFilter,
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // Yesterday's data - Total daily contributions
+  const contributionsDailyTotalYesterday = await ContributionModel.aggregate([
+    {
+      $match: {
+        ...adminFilter,
+        ...yesterdayFilter,
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // Today's DS daily contributions
+  const dsDailyTotal = await ContributionModel.aggregate([
+    {
+      $match: {
+        ...adminFilter,
+        ...dateFilter,
+        narration: 'Daily contribution via Paystack',
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // Yesterday's DS daily contributions
+  const dsDailyTotalYesterday = await ContributionModel.aggregate([
+    {
+      $match: {
+        ...adminFilter,
+        ...yesterdayFilter,
+        narration: 'Daily contribution via Paystack',
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // Today's SB daily contributions
+  const sbDailyTotal = await ContributionModel.aggregate([
+    {
+      $match: {
+        ...adminFilter,
+        ...dateFilter,
+        narration: 'SB contribution via Paystack',
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // Yesterday's SB daily contributions
+  const sbDailyTotalYesterday = await ContributionModel.aggregate([
+    {
+      $match: {
+        ...adminFilter,
+        ...yesterdayFilter,
+        narration: 'SB contribution via Paystack',
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // Today's daily pending withdrawal requests
+  const dailySavingsWithdrawals = await AccountTransactionModel.aggregate([
+    {
+      $match: {
+        ...adminFilter,
+        ...dateFilter,
+        direction: 'outflow',
+        status: 'pending',
+        narration: {
+          $in: [
+            'Request cash',
+            'Self withdrawal request - ds',
+            'Self withdrawal request - sb',
+            'Self withdrawal request - ibs',
+          ],
+        },
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // Yesterday's daily pending withdrawal requests
+  const dailySavingsWithdrawalsYesterday = await AccountTransactionModel.aggregate([
+    {
+      $match: {
+        ...adminFilter,
+        ...yesterdayFilter,
+        direction: 'outflow',
+        status: 'pending',
+        narration: {
+          $in: [
+            'Request cash',
+            'Self withdrawal request - ds',
+            'Self withdrawal request - sb',
+            'Self withdrawal request - ibs',
+          ],
+        },
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // Extract values with fallback to 0
+  const todayContributions =
+    contributionsDailyTotal[0] && contributionsDailyTotal[0].total ? contributionsDailyTotal[0].total : 0;
+  const yesterdayContributions =
+    contributionsDailyTotalYesterday[0] && contributionsDailyTotalYesterday[0].total
+      ? contributionsDailyTotalYesterday[0].total
+      : 0;
+
+  const todayDs = dsDailyTotal[0] && dsDailyTotal[0].total ? dsDailyTotal[0].total : 0;
+  const yesterdayDs = dsDailyTotalYesterday[0] && dsDailyTotalYesterday[0].total ? dsDailyTotalYesterday[0].total : 0;
+
+  const todaySb = sbDailyTotal[0] && sbDailyTotal[0].total ? sbDailyTotal[0].total : 0;
+  const yesterdaySb = sbDailyTotalYesterday[0] && sbDailyTotalYesterday[0].total ? sbDailyTotalYesterday[0].total : 0;
+
+  const todayWithdrawals =
+    dailySavingsWithdrawals[0] && dailySavingsWithdrawals[0].total ? dailySavingsWithdrawals[0].total : 0;
+  const yesterdayWithdrawals =
+    dailySavingsWithdrawalsYesterday[0] && dailySavingsWithdrawalsYesterday[0].total
+      ? dailySavingsWithdrawalsYesterday[0].total
+      : 0;
+
+  return {
+    contributionsDailyTotal: todayContributions,
+    contributionsDailyTotalChange: calculatePercentageChange(todayContributions, yesterdayContributions),
+
+    dsDailyTotal: todayDs,
+    dsDailyTotalChange: calculatePercentageChange(todayDs, yesterdayDs),
+
+    sbDailyTotal: todaySb,
+    sbDailyTotalChange: calculatePercentageChange(todaySb, yesterdaySb),
+
+    dailySavingsWithdrawals: todayWithdrawals,
+    dailySavingsWithdrawalsChange: calculatePercentageChange(todayWithdrawals, yesterdayWithdrawals),
+  };
+};
+
+/**
+ * Get dashboard summary for user rep role
+ * @param {Object} ContributionModel - Contribution model
+ * @param {Object} AccountTransactionModel - AccountTransaction model
+ * @param {Object} DsPackageModel - DsPackage model
+ * @param {Object} SbPackageModel - SbPackage model
+ * @param {string} userRepId - User Rep ID
+ * @param {Object} dateFilter - Date filter object
+ * @returns {Promise<Object>} User rep dashboard summary data
+ */
+const getUserRepDashboardSummary = async (
+  ContributionModel,
+  AccountTransactionModel,
+  DsPackageModel,
+  SbPackageModel,
+  userRepId,
+  dateFilter
+) => {
+  // User rep filter
+  const userRepFilter = { createdBy: userRepId };
+
+  // Total daily contributions by user rep
+  const contributionsDailyTotal = await ContributionModel.aggregate([
+    {
+      $match: {
+        ...userRepFilter,
+        ...dateFilter,
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // DS daily contributions by user rep
+  const dsDailyTotal = await ContributionModel.aggregate([
+    {
+      $match: {
+        ...userRepFilter,
+        ...dateFilter,
+        narration: 'Daily contribution via Paystack',
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // SB daily contributions by user rep
+  const sbDailyTotal = await ContributionModel.aggregate([
+    {
+      $match: {
+        ...userRepFilter,
+        ...dateFilter,
+        narration: 'SB contribution via Paystack',
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // Daily withdrawal requests by user rep
+  const dailySavingsWithdrawals = await AccountTransactionModel.aggregate([
+    {
+      $match: {
+        ...userRepFilter,
+        ...dateFilter,
+        direction: 'outflow',
+        narration: {
+          $in: [
+            'Request cash',
+            'Self withdrawal request - ds',
+            'Self withdrawal request - sb',
+            'Self withdrawal request - ibs',
+          ],
+        },
+      },
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } },
+  ]);
+
+  // Daily DS customers (unique packages with contributions today)
+  const dailyDsCustomers = await ContributionModel.aggregate([
+    {
+      $match: {
+        ...userRepFilter,
+        ...dateFilter,
+        narration: 'Daily contribution via Paystack',
+      },
+    },
+    {
+      $group: {
+        _id: '$packageId',
+      },
+    },
+    {
+      $count: 'count',
+    },
+  ]);
+
+  // Daily SB customers (unique packages with contributions today)
+  const dailySbCustomers = await ContributionModel.aggregate([
+    {
+      $match: {
+        ...userRepFilter,
+        ...dateFilter,
+        narration: 'SB contribution via Paystack',
+      },
+    },
+    {
+      $group: {
+        _id: '$packageId',
+      },
+    },
+    {
+      $count: 'count',
+    },
+  ]);
+
+  // Open package counts by user rep
+  const openPackageCount = await DsPackageModel.countDocuments({
+    ...userRepFilter,
+    status: 'open',
+  });
+
+  const openSbPackageCount = await SbPackageModel.countDocuments({
+    ...userRepFilter,
+    status: 'open',
+  });
+
+  return {
+    contributionsDailyTotal:
+      contributionsDailyTotal[0] && contributionsDailyTotal[0].total ? contributionsDailyTotal[0].total : 0,
+    dsDailyTotal: dsDailyTotal[0] && dsDailyTotal[0].total ? dsDailyTotal[0].total : 0,
+    sbDailyTotal: sbDailyTotal[0] && sbDailyTotal[0].total ? sbDailyTotal[0].total : 0,
+    dailySavingsWithdrawals:
+      dailySavingsWithdrawals[0] && dailySavingsWithdrawals[0].total ? dailySavingsWithdrawals[0].total : 0,
+    dailyDsCustomers: dailyDsCustomers[0] && dailyDsCustomers[0].count ? dailyDsCustomers[0].count : 0,
+    dailySbCustomers: dailySbCustomers[0] && dailySbCustomers[0].count ? dailySbCustomers[0].count : 0,
+    openPackageCount,
+    openSbPackageCount,
+    totalOpenPackages:
+      (dailyDsCustomers[0] && dailyDsCustomers[0].count ? dailyDsCustomers[0].count : 0) +
+      (dailySbCustomers[0] && dailySbCustomers[0].count ? dailySbCustomers[0].count : 0),
+    totalPackages: openPackageCount + openSbPackageCount,
   };
 };
 
@@ -195,7 +518,7 @@ const getManagerDashboardSummary = async (
  * @param {string} role - User role
  * @param {string} branchId - Branch ID (optional)
  * @param {Object} options - Additional options
- * @param {string} options.userId - User ID for manager role
+ * @param {string} options.userId - User ID for manager/user_rep role
  * @param {number} options.startDate - Start date timestamp
  * @param {number} options.endDate - End date timestamp
  * @returns {Promise<Object>} Dashboard summary data
@@ -239,6 +562,24 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
       );
     }
 
+    if (role === 'userReps' && options.userId) {
+      // User rep dashboard summary - user rep specific data
+      return getUserRepDashboardSummary(
+        ContributionModel,
+        AccountTransactionModel,
+        DsPackageModel,
+        SbPackageModel,
+        options.userId,
+        dateFilter
+      );
+    }
+
+    if (role === 'admin') {
+      // Admin dashboard summary - branch or system-wide data
+      return getAdminDashboardSummary(ContributionModel, AccountTransactionModel, branchId, dateFilter);
+    }
+
+    // For superAdmin and other roles, continue with comprehensive dashboard summary
     // SB Net Balance (sum of all daily contributions minus withdrawals)
     const sbContributions = await ContributionModel.aggregate([
       {

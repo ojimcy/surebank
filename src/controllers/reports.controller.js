@@ -133,10 +133,16 @@ const getDailyContributions = catchAsync(async (req, res) => {
  * Get dashboard summary data based on user role
  */
 const getDashboardSummary = catchAsync(async (req, res) => {
-  const { branchId } = req.query;
-  const { role } = req.user;
+  const { branchId, startDate, endDate } = req.query;
+  const { role, _id: userId } = req.user;
 
-  const dashboardData = await dashboardSummaryService.getDashboardSummary(role, branchId);
+  const options = {
+    userId,
+    startDate,
+    endDate,
+  };
+
+  const dashboardData = await dashboardSummaryService.getDashboardSummary(role, branchId, options);
 
   res.status(httpStatus.OK).json(dashboardData);
 });

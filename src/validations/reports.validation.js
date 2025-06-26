@@ -70,6 +70,9 @@ const getIncomeSummary = {
 const getDashboardSummary = {
   query: Joi.object().keys({
     branchId: Joi.string().optional().custom(objectId),
+    createdBy: Joi.string().optional().custom(objectId),
+    startDate: Joi.number().optional(),
+    endDate: Joi.number().optional(),
   }),
 };
 

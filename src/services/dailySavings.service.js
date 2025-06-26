@@ -83,9 +83,9 @@ const createDailySavingsPackage = async (dailyInput) => {
     branchId: branch.branchId,
   });
 
-  const phone = userAccount.phoneNumber;
-  const message = welcomeMessage(userAccount.firstName, userAccount.accountNumber);
-  await sendSms(phone, message);
+  // const phone = userAccount.phoneNumber;
+  // const message = welcomeMessage(userAccount.firstName, userAccount.accountNumber);
+  // await sendSms(phone, message);
 
   return createdPackage;
 };
@@ -505,15 +505,15 @@ const saveDailyContribution = async (contributionInput) => {
     const cashier = await UserModel.findById(contributionInput.createdBy);
 
     // Send credit SMS
-    const phone = userAccount.phoneNumber;
-    const message = dsContributionMessage(
-      userAccount.firstName,
-      contributionInput.amount,
-      contributionInput.accountNumber,
-      userPackage.totalContribution,
-      cashier.firstName
-    );
-    await sendSms(phone, message);
+    // const phone = userAccount.phoneNumber;
+    // const message = dsContributionMessage(
+    //   userAccount.firstName,
+    //   contributionInput.amount,
+    //   contributionInput.accountNumber,
+    //   userPackage.totalContribution,
+    //   cashier.firstName
+    // );
+    // await sendSms(phone, message);
     // await chargeSmsFees(userAccount.phoneNumber, 1, contributionInput.createdBy, branch.branchId);
 
     await session.commitTransaction();
