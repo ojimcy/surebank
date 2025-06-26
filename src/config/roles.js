@@ -129,7 +129,7 @@ const superAdminPermissions = [
   'assignManager',
   'accounting',
   'updatePackage',
-  'sbCustomerWithdrawal',
+  'sbCustomerTransfer',
   'approveWithdrawalRequests',
   'processWithdrawal',
 ];

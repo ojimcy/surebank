@@ -36,11 +36,11 @@ router
   );
 
 router
-  .route('/withdraw')
+  .route('/transfer')
   .post(
     auth('manageContributions'),
-    validate(dailySavingsValidation.makeDailySavingsWithdrawal),
-    dailySavingsController.makeDailySavingsWithdrawal
+    validate(dailySavingsValidation.makeDailySavingsTransfer),
+    dailySavingsController.makeDailySavingsTransfer
   );
 
 router

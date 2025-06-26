@@ -7,7 +7,14 @@ const getTotalContributions = {
     endDate: Joi.number().optional(),
     branchId: Joi.string().optional().custom(objectId),
     createdBy: Joi.string().optional().custom(objectId),
-    narration: Joi.string(),
+    narration: Joi.string().optional(),
+  }),
+};
+
+const getMyTotalContributions = {
+  query: Joi.object().keys({
+    startDate: Joi.number().optional(),
+    endDateParam: Joi.number().optional(),
   }),
 };
 
@@ -22,42 +29,57 @@ const getDailySavingsWithdrawals = {
 
 const getCharges = {
   query: Joi.object().keys({
-    startDate: Joi.number(),
-    endDate: Joi.number(),
+    startDate: Joi.number().optional(),
+    endDate: Joi.number().optional(),
     branchId: Joi.string().optional().custom(objectId),
-    reasons: Joi.string(),
-    sortBy: Joi.string(),
-    limit: Joi.number().integer(),
-    page: Joi.number().integer(),
+    reasons: Joi.string().optional(),
+    sortBy: Joi.string().optional(),
+    limit: Joi.number().integer().optional(),
+    page: Joi.number().integer().optional(),
   }),
 };
 
 const getPackages = {
   query: Joi.object().keys({
-    status: Joi.string(),
+    status: Joi.string().optional(),
     branchId: Joi.string().optional().custom(objectId),
     userReps: Joi.string().optional().custom(objectId),
     createdBy: Joi.string().optional().custom(objectId),
-    sortBy: Joi.string(),
-    limit: Joi.number().integer(),
-    page: Joi.number().integer(),
+    sortBy: Joi.string().optional(),
+    limit: Joi.number().integer().optional(),
+    page: Joi.number().integer().optional(),
   }),
 };
 
 const getDailyContributions = {
   query: Joi.object().keys({
-    startDate: Joi.number(),
-    endDate: Joi.number(),
+    startDate: Joi.number().optional(),
+    endDate: Joi.number().optional(),
     branchId: Joi.string().optional().custom(objectId),
-    narration: Joi.string(),
-    createdBy: Joi.string(),
+    narration: Joi.string().optional(),
+    createdBy: Joi.string().optional().custom(objectId),
+  }),
+};
+
+const getIncomeSummary = {
+  query: Joi.object().keys({
+    branchId: Joi.string().optional().custom(objectId),
+  }),
+};
+
+const getDashboardSummary = {
+  query: Joi.object().keys({
+    branchId: Joi.string().optional().custom(objectId),
   }),
 };
 
 module.exports = {
   getTotalContributions,
+  getMyTotalContributions,
   getDailySavingsWithdrawals,
   getCharges,
   getPackages,
   getDailyContributions,
+  getIncomeSummary,
+  getDashboardSummary,
 };

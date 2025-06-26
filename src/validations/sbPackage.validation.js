@@ -80,7 +80,7 @@ const getAllSbPackages = {
   }),
 };
 
-const makeSbCustomerWithdrawal = {
+const makeSbCustomerTransfer = {
   query: Joi.object().keys({
     packageId: Joi.string().required().custom(objectId),
   }),
@@ -110,6 +110,6 @@ module.exports = {
   mergeSavingsPackages,
   updatePackageProduct,
   getAllSbPackages,
-  makeSbCustomerWithdrawal,
+  makeSbCustomerTransfer,
   initializeSbContribution,
 };

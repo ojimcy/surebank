@@ -435,19 +435,19 @@ const makeDailyContribution = async (contributionInput) => {
 };
 
 /**
- * Make a sb transfer
- * @param {Object} withdrawal - Withdrawal details
- * @returns {Promise<Object>} Withdrawal details
+ * Make a sb transfer from package to available balance
+ * @param {Object} transfer - Transfer details
+ * @returns {Promise<Object>} Transfer details
  */
-const makeSbTransfer = async (withdrawal) => {
+const makeSbTransfer = async (transfer) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const SbPackageModel = await SbPackage();
     const userPackage = await SbPackageModel.findOne(
       {
-        accountNumber: withdrawal.accountNumber,
-        product: withdrawal.product,
+        accountNumber: transfer.accountNumber,
+        product: transfer.product,
       },
       null,
       { session }
@@ -456,45 +456,45 @@ const makeSbTransfer = async (withdrawal) => {
       throw new ApiError(404, 'User does not have an active Package');
     }
 
-    if (userPackage.totalContribution < withdrawal.amount) {
+    if (userPackage.totalContribution < transfer.amount) {
       throw new ApiError(400, 'Insufficient balance');
     }
 
-    const balanceAfterWithdrawal = userPackage.totalContribution - withdrawal.amount;
+    const balanceAfterTransfer = userPackage.totalContribution - transfer.amount;
 
     await SbPackageModel.findOneAndUpdate(
-      { accountNumber: withdrawal.accountNumber, status: 'open', product: withdrawal.product },
-      { totalContribution: balanceAfterWithdrawal },
+      { accountNumber: transfer.accountNumber, status: 'open', product: transfer.product },
+      { totalContribution: balanceAfterTransfer },
       { session }
     );
 
-    const withdrawalDetails = {
-      accountNumber: withdrawal.accountNumber,
-      amount: withdrawal.amount,
-      createdBy: withdrawal.createdBy,
+    const transferDetails = {
+      accountNumber: transfer.accountNumber,
+      amount: transfer.amount,
+      createdBy: transfer.createdBy,
       narration: `SB transfer`,
     };
 
-    await makeCustomerDeposit(withdrawalDetails, session);
+    await makeCustomerDeposit(transferDetails, session);
 
     await session.commitTransaction();
     session.endSession();
 
-    // Send withdrawal notification using our standardized notification function
+    // Send transfer notification using our standardized notification function
     if (userPackage.userId) {
       await sendSbNotifications({
         userId: userPackage.userId,
         notificationType: 'withdrawal',
         data: {
-          amount: withdrawal.amount,
-          accountNumber: withdrawal.accountNumber,
+          amount: transfer.amount,
+          accountNumber: transfer.accountNumber,
           reference: Date.now().toString(),
           packageId: userPackage._id,
         },
       });
     }
 
-    return withdrawalDetails;
+    return transferDetails;
   } catch (error) {
     await session.abortTransaction();
     session.endSession();

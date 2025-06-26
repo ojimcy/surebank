@@ -32,11 +32,11 @@ router
   );
 
 router
-  .route('/withdraw')
+  .route('/transfer')
   .post(
-    auth('sbCustomerWithdrawal'),
-    validate(sbPackageValidation.makeSbCustomerWithdrawal),
-    sbPackageController.makeSbCustomerWithdrawal
+    auth('sbCustomerTransfer'),
+    validate(sbPackageValidation.makeSbCustomerTransfer),
+    sbPackageController.makeSbCustomerTransfer
   );
 
 router

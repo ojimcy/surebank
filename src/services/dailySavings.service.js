@@ -528,21 +528,21 @@ const saveDailyContribution = async (contributionInput) => {
 };
 
 /**
- * Make a daily savings withdrawal
- * @param {Object} withdrawal - Withdrawal details
- * @returns {Promise<Object>} Withdrawal details
+ * Make a daily savings transfer from package to available balance
+ * @param {Object} transfer - Transfer details
+ * @returns {Promise<Object>} Transfer details
  */
-const makeDailySavingsWithdrawal = async (withdrawal) => {
+const makeDailySavingsTransfer = async (transfer) => {
   const PackageModel = await DsPackage();
   const session = await mongoose.startSession();
   session.startTransaction();
-  logger.info(`Withdrawal details: ${withdrawal}`);
+  logger.info(`Transfer details: ${transfer}`);
   try {
     const userPackage = await PackageModel.findOne(
       {
-        accountNumber: withdrawal.accountNumber,
+        accountNumber: transfer.accountNumber,
         status: 'open',
-        target: withdrawal.target,
+        target: transfer.target,
       },
       null,
       { session }
@@ -552,31 +552,31 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
       throw new ApiError(404, 'User does not have an active daily savings package');
     }
 
-    if (userPackage.totalContribution < withdrawal.amount) {
+    if (userPackage.totalContribution < transfer.amount) {
       throw new ApiError(400, 'Insufficient balance');
     }
 
-    const balanceAfterWithdrawal = userPackage.totalContribution - withdrawal.amount;
+    const balanceAfterTransfer = userPackage.totalContribution - transfer.amount;
 
     await PackageModel.findOneAndUpdate(
-      { accountNumber: withdrawal.accountNumber, status: 'open', target: withdrawal.target },
-      { totalContribution: balanceAfterWithdrawal },
+      { accountNumber: transfer.accountNumber, status: 'open', target: transfer.target },
+      { totalContribution: balanceAfterTransfer },
       { session }
     );
 
-    const withdrawalDetails = {
-      accountNumber: withdrawal.accountNumber,
-      amount: withdrawal.amount,
-      createdBy: withdrawal.createdBy,
-      narration: `Daily contribution withdrawal`,
+    const transferDetails = {
+      accountNumber: transfer.accountNumber,
+      amount: transfer.amount,
+      createdBy: transfer.createdBy,
+      narration: `Daily contribution transfer`,
       userId: userPackage.userId,
     };
 
-    await makeCustomerDeposit(withdrawalDetails, session);
+    await makeCustomerDeposit(transferDetails, session);
 
-    if (balanceAfterWithdrawal === 0) {
+    if (balanceAfterTransfer === 0) {
       await PackageModel.findOneAndUpdate(
-        { accountNumber: withdrawal.accountNumber, status: 'open' },
+        { accountNumber: transfer.accountNumber, status: 'open' },
         { status: 'closed' },
         { session }
       );
@@ -585,19 +585,19 @@ const makeDailySavingsWithdrawal = async (withdrawal) => {
     await session.commitTransaction();
     session.endSession();
 
-    // Send notification for withdrawal
+    // Send notification for transfer
     await sendDailySavingsNotifications({
-      userId: withdrawalDetails.userId,
+      userId: transferDetails.userId,
       notificationType: 'withdrawal',
       data: {
-        amount: withdrawal.amount,
-        accountNumber: withdrawal.accountNumber,
+        amount: transfer.amount,
+        accountNumber: transfer.accountNumber,
         reference: Date.now().toString(),
         packageId: userPackage._id,
       },
     });
 
-    return withdrawalDetails;
+    return transferDetails;
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -903,7 +903,7 @@ module.exports = {
   createDailySavingsPackage,
   createUserInitiatedDailySavingsPackage,
   saveDailyContribution,
-  makeDailySavingsWithdrawal,
+  makeDailySavingsTransfer,
   getUserDailySavingsPackages,
   getDailySavingsContributions,
   getDailySavingsWithdrawals,

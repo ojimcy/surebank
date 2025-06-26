@@ -288,7 +288,7 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
       {
         $match: {
           ...branchFilter,
-          narration: 'IBS Contribution',
+          narration: { $regex: /IBS (Contribution|payment|via Paystack)/i },
         },
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -299,11 +299,48 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
         $match: {
           ...branchFilter,
           direction: 'outflow',
-          narration: { $in: ['IBS withdrawal', 'Self withdrawal request - ibs'] },
+          narration: {
+            $in: [
+              'IBS withdrawal',
+              'Self withdrawal request - ibs',
+              'Interest package withdrawal: Mature withdrawal',
+              'Interest package withdrawal: early withdrawal',
+            ],
+          },
         },
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
+
+    // Get the sum of principal amounts from active IBS packages
+    const ibsPrincipal = await InterestPackageModel.aggregate([
+      {
+        $match: {
+          ...branchFilter,
+          status: { $in: ['active', 'matured'] },
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$principalAmount' } } },
+    ]);
+
+    // Get the sum of accrued interest from active IBS packages
+    const ibsInterest = await InterestPackageModel.aggregate([
+      {
+        $match: {
+          ...branchFilter,
+          status: { $in: ['active', 'matured'] },
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$interestAccrued' } } },
+    ]);
+
+    // Calculate IBS balance based on actual package data
+    const ibsPrincipalTotal = ibsPrincipal[0] && ibsPrincipal[0].total ? ibsPrincipal[0].total : 0;
+    const ibsInterestTotal = ibsInterest[0] && ibsInterest[0].total ? ibsInterest[0].total : 0;
+    const ibsWithdrawalsTotal = ibsWithdrawals[0] && ibsWithdrawals[0].total ? ibsWithdrawals[0].total : 0;
+
+    // The actual amount still in the system is principal + interest - withdrawals
+    const ibsNetBalance = ibsPrincipalTotal + ibsInterestTotal - ibsWithdrawalsTotal;
 
     // Daily totals
     const contributionsDailyTotal = await ContributionModel.aggregate([
@@ -382,9 +419,6 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
     const dsNetBalance =
       (dsContributions[0] && dsContributions[0].total ? dsContributions[0].total : 0) -
       (dsWithdrawals[0] && dsWithdrawals[0].total ? dsWithdrawals[0].total : 0);
-    const ibsNetBalance =
-      (ibsContributions[0] && ibsContributions[0].total ? ibsContributions[0].total : 0) -
-      (ibsWithdrawals[0] && ibsWithdrawals[0].total ? ibsWithdrawals[0].total : 0);
     const totalContributions = sbNetBalance + dsNetBalance + ibsNetBalance;
 
     // Set the values in the summary object
@@ -401,6 +435,9 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
     summary.openPackageCount = openPackageCount;
     summary.openSbPackageCount = openSbPackageCount;
     summary.openIbsPackageCount = openIbsPackageCount;
+    summary.ibsPrincipalTotal = ibsPrincipalTotal;
+    summary.ibsInterestTotal = ibsInterestTotal;
+    summary.ibsWithdrawalsTotal = ibsWithdrawalsTotal;
 
     return summary;
   } catch (error) {

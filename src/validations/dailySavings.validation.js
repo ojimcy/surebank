@@ -30,7 +30,7 @@ const saveDailyContribution = {
   }),
 };
 
-const makeDailySavingsWithdrawal = {
+const makeDailySavingsTransfer = {
   query: Joi.object().keys({
     packageId: Joi.string().required().custom(objectId),
   }),
@@ -82,7 +82,7 @@ module.exports = {
   createDailySavingsPackage,
   createUserInitiatedDailySavingsPackage,
   saveDailyContribution,
-  makeDailySavingsWithdrawal,
+  makeDailySavingsTransfer,
   getDailySavingsPackageById,
   getUserSavingsActivities,
   getUserDailySavingsPackages,

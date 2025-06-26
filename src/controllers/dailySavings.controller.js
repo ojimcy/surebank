@@ -46,12 +46,12 @@ const saveDailyContribution = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(result);
 });
 
-const makeDailySavingsWithdrawal = catchAsync(async (req, res) => {
-  const withdrawal = req.body;
+const makeDailySavingsTransfer = catchAsync(async (req, res) => {
+  const transfer = req.body;
   const createdBy = req.user._id;
   const packageId = req.query;
-  const withdrawalDetails = await dailySavingsService.makeDailySavingsWithdrawal({ ...withdrawal, createdBy, packageId });
-  res.status(httpStatus.OK).json(withdrawalDetails);
+  const transferDetails = await dailySavingsService.makeDailySavingsTransfer({ ...transfer, createdBy, packageId });
+  res.status(httpStatus.OK).json(transferDetails);
 });
 
 const getDailySavingsPackageById = catchAsync(async (req, res) => {
@@ -98,7 +98,7 @@ module.exports = {
   createDailySavingsPackage,
   createUserInitiatedDailySavingsPackage,
   saveDailyContribution,
-  makeDailySavingsWithdrawal,
+  makeDailySavingsTransfer,
   getUserDailySavingsPackages,
   getDailySavingsPackageById,
   updatePackage,

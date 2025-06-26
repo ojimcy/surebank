@@ -75,16 +75,16 @@ const getAllSbPackages = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json(packages);
 });
 
-const makeSbCustomerWithdrawal = catchAsync(async (req, res) => {
-  const withdrawal = req.body;
+const makeSbCustomerTransfer = catchAsync(async (req, res) => {
+  const transfer = req.body;
   const createdBy = req.user._id;
   const { packageId } = req.query;
-  const withdrawalDetails = await sbPackageService.makeSbTransfer({
-    ...withdrawal,
+  const transferDetails = await sbPackageService.makeSbTransfer({
+    ...transfer,
     createdBy,
     packageId,
   });
-  res.status(httpStatus.OK).json(withdrawalDetails);
+  res.status(httpStatus.OK).json(transferDetails);
 });
 
 /**
@@ -116,6 +116,6 @@ module.exports = {
   mergeSavingsPackages,
   updatePackageProduct,
   getAllSbPackages,
-  makeSbCustomerWithdrawal,
+  makeSbCustomerTransfer,
   initializeSbContribution,
 };
