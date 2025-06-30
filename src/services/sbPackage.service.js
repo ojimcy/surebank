@@ -63,7 +63,7 @@ const handlePackageCreatedNotification = async ({ user, data, notificationData }
  * @returns {Promise<void>}
  */
 const handleContributionNotification = async ({ user, data, notificationData, packageData, accountData }) => {
-  const { amount, reference, accountNumber, paymentMethod = 'Online Payment' } = data;
+  const { amount, reference, accountNumber, paymentMethod = 'Online Payment', cashierName } = data;
   const totalContribution =
     packageData && packageData.totalContribution ? packageData.totalContribution : data.totalContribution;
   const productName = data.productName || (packageData && packageData.product ? packageData.product.name : 'your product');
@@ -85,11 +85,12 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
           accountNumber: accountNumber || (packageData ? packageData.accountNumber : ''),
           contributionAmount: amount,
           totalContribution,
-          reference,
+          reference: reference || '',
           paymentMethod,
           productName,
           targetAmount: packageData && packageData.targetAmount ? packageData.targetAmount : 0,
           dashboardUrl: `${config.paystack.frontendUrl}/packages/${data.packageId}`,
+          cashierName: cashierName || '',
         },
       },
       sms: sbContributionMessage(
@@ -97,7 +98,7 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
         amount,
         accountNumber || (packageData ? packageData.accountNumber : ''),
         totalContribution,
-        paymentMethod
+        cashierName || paymentMethod
       ),
     };
 
@@ -111,7 +112,7 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
       notificationData,
     });
 
-    logger.info(`All notifications sent for contribution ${reference} for user ${user._id}`);
+    logger.info(`All notifications sent for contribution${reference ? ` ${reference}` : ''} for user ${user._id}`);
   } catch (error) {
     logger.error(`Error in contribution notification:`, error);
   }
@@ -192,7 +193,7 @@ const sendSbNotifications = async ({ userId, notificationType, data, user, packa
 
     // Prepare common data
     const notificationData = {
-      reference: data.reference,
+      reference: data.reference || undefined,
       relatedEntityId: data.packageId || (packageData ? packageData._id : undefined),
       relatedEntityType: 'sb_package',
     };
@@ -414,16 +415,21 @@ const makeDailyContribution = async (contributionInput) => {
 
   const cashier = await UserModel.findById(contributionInput.createdBy);
 
-  // Send credit SMS
-  const phone = userAccount.phoneNumber;
-  const message = sbContributionMessage(
-    userAccount.firstName,
-    contributionInput.amount,
-    contributionInput.accountNumber,
-    userPackage.totalContribution,
-    cashier.firstName
-  );
-  await sendSms(phone, message);
+  // Send notification using the standardized notification function
+  await sendSbNotifications({
+    userId: userAccount.userId,
+    notificationType: 'account_activities',
+    data: {
+      amount: contributionInput.amount,
+      accountNumber: contributionInput.accountNumber,
+      totalContribution: userPackage.totalContribution,
+      paymentMethod: contributionInput.paymentMethod,
+      packageId: userPackageId,
+      cashierName: cashier ? cashier.firstName : undefined,
+    },
+    packageData: userPackage,
+    accountData: userAccount,
+  });
 
   // // Charge for SMS fees
   //  await chargeSmsFees(phone, 1, contributionInput.createdBy, branch.branchId);

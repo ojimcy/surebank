@@ -133,11 +133,11 @@ const getDailyContributions = catchAsync(async (req, res) => {
  * Get dashboard summary data based on user role
  */
 const getDashboardSummary = catchAsync(async (req, res) => {
-  const { branchId, startDate, endDate } = req.query;
+  const { branchId, startDate, endDate, staffId } = req.query;
   const { role, _id: userId } = req.user;
 
   const options = {
-    userId,
+    userId: staffId || userId, // Use staffId if provided, otherwise use logged-in user's ID
     startDate,
     endDate,
   };

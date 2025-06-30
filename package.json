@@ -15,7 +15,7 @@
     "dev": "cross-env NODE_ENV=development nodemon src/index.js",
     "local": "node local-server.js",
     "health-server": "node health-server.js",
-    "sls": "serverless offline",
+    "sls": "serverless offline start --stage dev --region us-east-2",
     "sls:debug": "SLS_DEBUG=* serverless offline",
     "setup-v4": "./setup-serverless-v4.sh",
     "deploy": "serverless deploy",

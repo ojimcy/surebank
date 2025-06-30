@@ -144,7 +144,7 @@ const handlePackageCreatedNotification = async ({ user, data, notificationData }
  * @returns {Promise<void>}
  */
 const handleContributionNotification = async ({ user, data, notificationData, packageData, accountData }) => {
-  const { amount, reference, accountNumber, paymentMethod = 'Online Payment' } = data;
+  const { amount, reference, accountNumber, paymentMethod = 'Online Payment', cashierName } = data;
   const totalContribution =
     packageData && packageData.totalContribution ? packageData.totalContribution : data.totalContribution;
   const targetAmount = packageData && packageData.targetAmount ? packageData.targetAmount : 0;
@@ -173,6 +173,8 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
           packageId: data.packageId,
           dashboardUrl: `${config.paystack.frontendUrl}/packages/${data.packageId}`,
           totalCount,
+          reference: reference || '',
+          cashierName: cashierName || '',
         },
       },
       sms: dsContributionMessage(
@@ -180,7 +182,7 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
         amount,
         accountNumber || (packageData ? packageData.accountNumber : ''),
         totalContribution,
-        paymentMethod
+        cashierName || paymentMethod
       ),
     };
 
@@ -194,7 +196,7 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
       notificationData,
     });
 
-    logger.info(`All notifications sent for contribution ${reference} for user ${user._id}`);
+    logger.info(`All notifications sent for contribution${reference ? ` ${reference}` : ''} for user ${user._id}`);
   } catch (error) {
     logger.error(`Error in contribution notification:`, error);
   }
@@ -275,7 +277,7 @@ const sendDailySavingsNotifications = async ({ userId, notificationType, data, u
 
     // Prepare common data
     const notificationData = {
-      reference: data.reference,
+      reference: data.reference || '',
       relatedEntityId: data.packageId || (packageData ? packageData._id : undefined),
       relatedEntityType: 'daily_savings',
     };
@@ -504,20 +506,25 @@ const saveDailyContribution = async (contributionInput) => {
 
     const cashier = await UserModel.findById(contributionInput.createdBy);
 
-    // Send credit SMS
-    // const phone = userAccount.phoneNumber;
-    // const message = dsContributionMessage(
-    //   userAccount.firstName,
-    //   contributionInput.amount,
-    //   contributionInput.accountNumber,
-    //   userPackage.totalContribution,
-    //   cashier.firstName
-    // );
-    // await sendSms(phone, message);
-    // await chargeSmsFees(userAccount.phoneNumber, 1, contributionInput.createdBy, branch.branchId);
-
     await session.commitTransaction();
     session.endSession();
+
+    // Send notification using the standardized notification function
+    await sendDailySavingsNotifications({
+      userId: userAccount.userId,
+      notificationType: 'account_activity',
+      data: {
+        amount: contributionInput.amount,
+        accountNumber: contributionInput.accountNumber,
+        totalContribution: userPackage.totalContribution,
+        paymentMethod: contributionInput.paymentMethod,
+        packageId: userPackageId,
+        target: userPackage.target,
+        cashierName: cashier ? cashier.firstName : undefined,
+      },
+      packageData: userPackage,
+      accountData: userAccount,
+    });
 
     return { newContribution, contributionTransaction };
   } catch (error) {

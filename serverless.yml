@@ -5,7 +5,7 @@ provider:
   name: aws
   runtime: nodejs22.x
   memorySize: 512
-  timeout: 30
+  timeout: 90
   environment: ${file(env.json)}
   httpApi:
     cors:
@@ -14,7 +14,9 @@ provider:
         - 'https://surebank.sonicflare.net'
         - 'https://localhost'
         - 'https://localhost:8081'
+        - 'http://localhost:8081'
         - 'http://localhost:3001'
+        - 'http://localhost:3000'
       allowedMethods:
         - GET
         - POST
