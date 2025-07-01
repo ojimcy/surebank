@@ -9,7 +9,7 @@ const router = express.Router();
 router
   .route('/')
   .post(auth('manageBranch'), validate(branchValidation.createBranch), branchController.createBranch)
-  .get(auth('getBranches'), validate(branchValidation.getBranches), branchController.getBranches);
+  .get(branchController.getBranches);
 
 router
   .route('/:branchId')

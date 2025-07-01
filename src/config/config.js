@@ -9,6 +9,7 @@ const envVarsSchema = Joi.object()
     NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
     PORT: Joi.number().default(3000),
     MONGODB_URL: Joi.string().required().description('Mongo DB url'),
+    MONGODB_URL_DEV: Joi.string().required().description('Mongo DB url for development'),
     SYSTEM_ACCOUNT_ID: Joi.string().required().description('System account id'),
     SMART_CHAIN_NODE: Joi.string().required().description('BSC Node address'),
     MATIC_NODE: Joi.string().required().description('Matic Node address'),
@@ -75,7 +76,7 @@ module.exports = {
   systemAccountId: envVars.SYSTEM_ACCOUNT_ID,
   onlineBranchId: envVars.ONLINE_BRANCH_ID,
   mongoose: {
-    url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : envVars.NODE_ENV === 'development' ? '-dev' : ''),
+    url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : envVars.NODE_ENV === 'development' ? envVars.MONGODB_URL_DEV : ''),
     options: {
       useCreateIndex: true,
       useNewUrlParser: true,
@@ -108,13 +109,13 @@ module.exports = {
       },
     },
     from: envVars.EMAIL_FROM,
-    templateDirectory: envVars.EMAIL_TEMPLATE_DIRECTORY.toString().trimEnd('/'),
+    templateDirectory: envVars.EMAIL_TEMPLATE_DIRECTORY ? envVars.EMAIL_TEMPLATE_DIRECTORY.toString().trimEnd('/') : './src/templates/emails',
     clientUrl: envVars.CLIENT_URL,
   },
   sms: {
     apiToken: envVars.SMS_API_TOKEN,
     smsSender: envVars.SMS_SENDER,
-    templateDirectory: envVars.SMS_TEMPLATE_DIRECTORY.toString().trimEnd('/'),
+    templateDirectory: envVars.SMS_TEMPLATE_DIRECTORY ? envVars.SMS_TEMPLATE_DIRECTORY.toString().trimEnd('/') : './src/templates/sms',
     providerUrl: envVars.SMS_PROVIDER_URL,
   },
   reloadly: {
