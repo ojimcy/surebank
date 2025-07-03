@@ -26,7 +26,7 @@ router
     interestPackageController.createInterestPackage
   )
   .get(
-    auth('selfAccount'),
+    auth('userPackage'),
     validate(interestPackageValidation.getUserInterestPackages),
     interestPackageController.getUserInterestPackages
   );

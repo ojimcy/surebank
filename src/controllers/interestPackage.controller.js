@@ -103,7 +103,14 @@ const getInterestPackageByReference = catchAsync(async (req, res) => {
  * @param {Object} res - Express response object
  */
 const getUserInterestPackages = catchAsync(async (req, res) => {
-  const userId = req.user._id;
+  let userId;
+  // If a userId is provided in the query and the user is an admin, use that userId
+  if (req.query.userId && ['admin', 'superAdmin', 'manager', 'userReps'].includes(req.user.role)) {
+    userId = req.query.userId;
+  } else {
+    // Otherwise, use the authenticated user's id
+    userId = req.user._id;
+  }
   const packages = await interestPackageService.getUserInterestPackages(userId);
 
   res.status(httpStatus.OK).json(packages);

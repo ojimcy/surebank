@@ -35,10 +35,10 @@ module.exports = (data) =>
 
     <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-top: 15px;">
       <strong>Start Date:</strong>
-      <span>${new Date(data.startDate).toLocaleString()}</span>
+      <span>${new Date(parseInt(data.startDate, 10)).toLocaleString()}</span>
       
       <strong>Matured On:</strong>
-      <span>${new Date(data.maturityDate).toLocaleString()}</span>
+      <span>${new Date(parseInt(data.maturityDate, 10)).toLocaleString()}</span>
 
       <strong>Principal Amount:</strong>
       <span>₦${Number(data.principalAmount).toLocaleString()}</span>

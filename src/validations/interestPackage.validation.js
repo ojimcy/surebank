@@ -40,6 +40,7 @@ const getInterestPackageByReference = {
 const getUserInterestPackages = {
   query: Joi.object().keys({
     status: Joi.string().valid('active', 'matured', 'closed', 'pending_withdrawal'),
+    userId: Joi.string().custom(objectId).optional(),
   }),
 };
 

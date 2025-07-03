@@ -126,9 +126,13 @@ const calculateInterestForPackage = async (packageId) => {
             templateData: {
               name: user && user.firstName ? user.firstName : 'Valued Customer',
               packageName: interestPackage.name,
+              principalAmount: interestPackage.principalAmount,
+              currentBalance: interestPackage.currentBalance,
               interestRate: interestPackage.interestRate,
-              maturityDate: new Date(interestPackage.maturityDate).toLocaleDateString(),
-              amount: interestPackage.currentBalance,
+              interestAccrued: interestPackage.interestAccrued,
+              accountNumber: interestPackage.accountNumber,
+              maturityDate: interestPackage.maturityDate,
+              startDate: interestPackage.startDate,
               dashboardUrl: `${process.env.FRONTEND_URL}/packages/${interestPackage._id}`,
             },
           });
@@ -139,9 +143,8 @@ const calculateInterestForPackage = async (packageId) => {
       if (phoneNumber) {
         const smsPreference = await getUserNotificationPreference(interestPackage.userId, 'package_matured');
         if (smsPreference === 'sms' || smsPreference === 'both') {
-          const message = `Your Investment Package "${
-            interestPackage.name
-          }" has matured with a total amount of ${interestPackage.currentBalance.toFixed(2)}. Login to withdraw your funds.`;
+          const message = `Your Investment Package "${interestPackage.name
+            }" has matured with a total amount of ${interestPackage.currentBalance.toFixed(2)}. Login to withdraw your funds.`;
           await sendSMS({
             to: phoneNumber,
             message,
@@ -206,8 +209,7 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
   if (!interestRateInfo) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `Invalid lock period. Must be between ${interestRateConfig.ALLOWED_INTEREST_RATES[0].minLockPeriod} and ${
-        interestRateConfig.ALLOWED_INTEREST_RATES[interestRateConfig.ALLOWED_INTEREST_RATES.length - 1].maxLockPeriod
+      `Invalid lock period. Must be between ${interestRateConfig.ALLOWED_INTEREST_RATES[0].minLockPeriod} and ${interestRateConfig.ALLOWED_INTEREST_RATES[interestRateConfig.ALLOWED_INTEREST_RATES.length - 1].maxLockPeriod
       } days`
     );
   }
@@ -254,11 +256,10 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
   try {
     await sendNotification(packageData.userId, 'package_created', {
       title: `${interestRateInfo.name} Package Created`,
-      body: `Your Interest-Based Savings package (${
-        interestRateInfo.rate
-      }% interest per annum) has been created successfully. It will mature on ${new Date(
-        maturityDate
-      ).toLocaleDateString()}.`,
+      body: `Your Interest-Based Savings package (${interestRateInfo.rate
+        }% interest per annum) has been created successfully. It will mature on ${new Date(
+          maturityDate
+        ).toLocaleDateString()}.`,
       reference: interestPackage._id.toString(),
     });
   } catch (error) {
@@ -295,9 +296,8 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
     try {
       const smsPreference = await getUserNotificationPreference(packageData.userId, 'package_created');
       if (smsPreference === 'sms' || smsPreference === 'both') {
-        const message = `Your IBS Package (${interestRateInfo.rate}%) of ${
-          packageData.principalAmount
-        } has been created successfully. It will mature on ${new Date(maturityDate).toLocaleDateString()}.`;
+        const message = `Your IBS Package (${interestRateInfo.rate}%) of ${packageData.principalAmount
+          } has been created successfully. It will mature on ${new Date(maturityDate).toLocaleDateString()}.`;
         await sendSMS({
           to: phoneNumber,
           message,
@@ -605,9 +605,8 @@ const requestInterestPackageWithdrawal = async (packageId, userId, amount = null
       accountNumber: interestPackage.accountNumber,
       amount: totalWithdrawalAmount,
       createdBy: userId,
-      narration: `Interest package ${isPartialWithdrawal ? 'partial ' : ''}withdrawal: ${
-        isEarlyWithdrawal ? 'Early withdrawal' : 'Mature withdrawal'
-      }`,
+      narration: `Interest package ${isPartialWithdrawal ? 'partial ' : ''}withdrawal: ${isEarlyWithdrawal ? 'Early withdrawal' : 'Mature withdrawal'
+        }`,
       userId: interestPackage.userId,
     };
 
@@ -635,9 +634,8 @@ const requestInterestPackageWithdrawal = async (packageId, userId, amount = null
         notificationContent: {
           inApp: {
             title: `Interest Package ${isPartialWithdrawal ? 'Partial ' : ''}Withdrawal`,
-            body: `Your withdrawal of ${totalWithdrawalAmount} from your Interest-Based Savings package "${
-              interestPackage.name
-            }" has been processed.${isPartialWithdrawal ? ` Remaining balance: ${remainingBalance}` : ''}`,
+            body: `Your withdrawal of ${totalWithdrawalAmount} from your Interest-Based Savings package "${interestPackage.name
+              }" has been processed.${isPartialWithdrawal ? ` Remaining balance: ${remainingBalance}` : ''}`,
           },
           email: {
             subject: `Interest Package ${isPartialWithdrawal ? 'Partial ' : ''}Withdrawal Confirmation`,
@@ -657,11 +655,9 @@ const requestInterestPackageWithdrawal = async (packageId, userId, amount = null
               dashboardUrl: `${process.env.FRONTEND_URL}/packages`,
             },
           },
-          sms: `Your ${
-            isPartialWithdrawal ? 'partial ' : ''
-          }withdrawal of ${totalWithdrawalAmount} from your Interest Package "${interestPackage.name}" has been processed.${
-            isPartialWithdrawal ? ` Remaining balance: ${remainingBalance}` : ''
-          }`,
+          sms: `Your ${isPartialWithdrawal ? 'partial ' : ''
+            }withdrawal of ${totalWithdrawalAmount} from your Interest Package "${interestPackage.name}" has been processed.${isPartialWithdrawal ? ` Remaining balance: ${remainingBalance}` : ''
+            }`,
         },
         notificationData: {
           reference: Date.now().toString(),
