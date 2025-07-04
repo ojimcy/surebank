@@ -12,7 +12,7 @@ router
 
 router
   .route('/package')
-  .post(auth('createPackage'), validate(sbPackageValidation.createSbPackage), sbPackageController.createSbPackage)
+  .post(auth('createSbPackage'), validate(sbPackageValidation.createSbPackage), sbPackageController.createSbPackage)
   .get(auth('userPackage'), validate(sbPackageValidation.getUserSbPackages), sbPackageController.getUserSbPackages);
 
 router

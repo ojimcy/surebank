@@ -73,6 +73,9 @@ const userRepsPermissions = [
   'sbPackages',
   'contributionsReports',
   'packageReports',
+  'createDsPackage',
+  'createIbsPackage',
+  'createSbPackage',
 ];
 
 const managerPermissions = [
