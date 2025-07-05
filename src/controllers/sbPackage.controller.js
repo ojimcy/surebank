@@ -47,7 +47,14 @@ const getPackageById = catchAsync(async (req, res) => {
 });
 
 const getUserSbPackages = catchAsync(async (req, res) => {
-  const { userId } = req.query;
+  let userId;
+  // If a userId is provided in the query and the user is an admin, use that userId
+  if (req.query.userId && ['admin', 'superAdmin', 'manager', 'userReps'].includes(req.user.role)) {
+    userId = req.query.userId;
+  } else {
+    // Otherwise, use the authenticated user's id
+    userId = req.user._id;
+  }
   const userPackage = await sbPackageService.getUserSbPackages(userId);
   res.status(httpStatus.OK).json(userPackage);
 });

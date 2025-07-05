@@ -21,3 +21,5 @@ module.exports.chargerValidation = require('./charge.validation');
 module.exports.orderValidation = require('./order.validation');
 module.exports.paystackValidation = require('./paystack.validation');
 module.exports.s3Validation = require('./s3.validation');
+module.exports.storedCardValidation = require('./storedCard.validation');
+module.exports.scheduledContributionValidation = require('./scheduledContribution.validation');

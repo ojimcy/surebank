@@ -34,3 +34,5 @@ module.exports.interestPackageService = require('./interestPackage.service');
 module.exports.withdrawalService = require('./withdrawal.service');
 module.exports.dashboardSummaryService = require('./dashboardSummary.service');
 module.exports.s3Service = require('./s3.service');
+module.exports.storedCardService = require('./storedCard.service');
+module.exports.scheduledContributionService = require('./scheduledContribution.service');

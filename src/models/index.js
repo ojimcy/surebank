@@ -40,3 +40,6 @@ module.exports.PaymentTransaction = require('./paymentTransaction.model');
 module.exports.InterestPackage = require('./interestPackage.model');
 module.exports.WithdrawalRequest = require('./withdrawalRequest.model');
 module.exports.KYC = require('./kyc.model');
+module.exports.StoredCard = require('./storedCard.model');
+module.exports.ScheduledContribution = require('./scheduledContribution.model');
+module.exports.ScheduledPaymentLog = require('./scheduledPaymentLog.model');

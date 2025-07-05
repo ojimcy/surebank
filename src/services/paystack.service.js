@@ -265,6 +265,148 @@ const fetchCustomer = async (identifier) => {
   }
 };
 
+/**
+ * Charge an authorization code for recurring payments
+ * @param {Object} data - Charge data
+ * @param {string} data.authorization_code - Authorization code from previous transaction
+ * @param {string} data.email - Customer email
+ * @param {number} data.amount - Amount in kobo
+ * @param {string} data.reference - Unique transaction reference
+ * @param {Object} data.metadata - Additional transaction metadata
+ * @returns {Promise<Object>} Charge response
+ */
+const chargeAuthorization = async (data) => {
+  try {
+    logger.info(`Charging authorization code: ${data.authorization_code} for amount: ${data.amount}`);
+
+    const response = await paystackClient.transaction.chargeAuthorization(data);
+
+    logger.info(`Authorization charge response: ${response.status ? 'Success' : 'Failed'}`);
+    return response;
+  } catch (error) {
+    logger.error('Error charging authorization:', error);
+    throw error;
+  }
+};
+
+/**
+ * Validate an authorization code to ensure it's still valid
+ * @param {string} authorizationCode - Authorization code to validate
+ * @param {string} email - Customer email
+ * @param {number} amount - Amount in kobo (small amount for validation)
+ * @returns {Promise<Object>} Validation response
+ */
+const validateAuthorization = async (authorizationCode, email, amount = 100) => {
+  try {
+    const data = {
+      authorization_code: authorizationCode,
+      email,
+      amount,
+    };
+
+    const response = await paystackClient.transaction.checkAuthorization(data);
+
+    logger.info(`Authorization validation for ${authorizationCode}: ${response.status ? 'Valid' : 'Invalid'}`);
+    return response;
+  } catch (error) {
+    logger.error('Error validating authorization:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get authorization details from a transaction
+ * @param {string} transactionId - Transaction ID
+ * @returns {Promise<Object>} Authorization details
+ */
+const getTransactionAuthorization = async (transactionId) => {
+  try {
+    const response = await paystackClient.transaction.get({ id: transactionId });
+
+    if (response.status && response.data.authorization) {
+      return {
+        status: true,
+        data: response.data.authorization,
+      };
+    }
+
+    throw new Error('No authorization found for transaction');
+  } catch (error) {
+    logger.error(`Error getting authorization for transaction ${transactionId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * List customer authorizations
+ * @param {string} customerCode - Customer code
+ * @param {Object} options - Query options
+ * @returns {Promise<Object>} List of authorizations
+ */
+const listCustomerAuthorizations = async (customerCode, options = {}) => {
+  try {
+    const response = await paystackClient.customer.getAuthorizations({
+      customer: customerCode,
+      ...options,
+    });
+
+    return response;
+  } catch (error) {
+    logger.error(`Error listing authorizations for customer ${customerCode}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Deactivate an authorization code
+ * @param {string} authorizationCode - Authorization code to deactivate
+ * @returns {Promise<Object>} Deactivation response
+ */
+const deactivateAuthorization = async (authorizationCode) => {
+  try {
+    const response = await makePaystackRequest('/customer/deactivate_authorization', {
+      authorization_code: authorizationCode,
+    });
+
+    logger.info(`Authorization ${authorizationCode} deactivated successfully`);
+    return response.data;
+  } catch (error) {
+    logger.error(`Error deactivating authorization ${authorizationCode}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Check if an authorization is reusable
+ * @param {Object} authorization - Authorization object
+ * @returns {boolean} Whether the authorization is reusable
+ */
+const isAuthorizationReusable = (authorization) => {
+  return authorization && authorization.reusable === true;
+};
+
+/**
+ * Get card details from authorization
+ * @param {Object} authorization - Authorization object
+ * @returns {Object} Card details
+ */
+const getCardDetailsFromAuthorization = (authorization) => {
+  if (!authorization) {
+    throw new Error('Authorization object is required');
+  }
+
+  return {
+    authorizationCode: authorization.authorization_code,
+    cardType: authorization.card_type,
+    last4: authorization.last4,
+    expiryMonth: authorization.exp_month,
+    expiryYear: authorization.exp_year,
+    bank: authorization.bank,
+    signature: authorization.signature,
+    reusable: authorization.reusable,
+  };
+};
+
 module.exports = {
   paystackClient,
   verifyPaystackInitialization,
@@ -280,4 +422,11 @@ module.exports = {
   createCustomer,
   listCustomers,
   fetchCustomer,
+  chargeAuthorization,
+  validateAuthorization,
+  getTransactionAuthorization,
+  listCustomerAuthorizations,
+  deactivateAuthorization,
+  isAuthorizationReusable,
+  getCardDetailsFromAuthorization,
 };
