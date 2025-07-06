@@ -409,10 +409,346 @@ const processFailedPayment = async (schedule, paymentLog, chargeResponse) => {
     }
 };
 
+/**
+ * Get a specific scheduled contribution
+ * @param {string} scheduleId - Schedule ID
+ * @param {string} userId - User ID
+ * @returns {Promise<Object>} Scheduled contribution
+ */
+const getScheduledContribution = async (scheduleId, userId) => {
+    const ScheduledContributionModel = await ScheduledContribution();
+
+    try {
+        const schedule = await ScheduledContributionModel.findOne({
+            _id: scheduleId,
+            userId,
+        }).populate('storedCardId', 'cardType last4 bank');
+
+        if (!schedule) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'Scheduled contribution not found');
+        }
+
+        return schedule;
+    } catch (error) {
+        logger.error(`Error getting scheduled contribution ${scheduleId}:`, error);
+        throw error;
+    }
+};
+
+/**
+ * Update a scheduled contribution
+ * @param {string} scheduleId - Schedule ID
+ * @param {string} userId - User ID
+ * @param {Object} updateData - Update data
+ * @returns {Promise<Object>} Updated schedule
+ */
+const updateScheduledContribution = async (scheduleId, userId, updateData) => {
+    const ScheduledContributionModel = await ScheduledContribution();
+
+    try {
+        const schedule = await ScheduledContributionModel.findOne({
+            _id: scheduleId,
+            userId,
+        });
+
+        if (!schedule) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'Scheduled contribution not found');
+        }
+
+        if (schedule.status === 'cancelled' || schedule.status === 'completed') {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot update cancelled or completed schedule');
+        }
+
+        const updatedSchedule = await ScheduledContributionModel.findByIdAndUpdate(
+            scheduleId,
+            updateData,
+            { new: true }
+        ).populate('storedCardId', 'cardType last4 bank');
+
+        logger.info(`Scheduled contribution updated: ${scheduleId}`);
+        return updatedSchedule;
+    } catch (error) {
+        logger.error(`Error updating scheduled contribution ${scheduleId}:`, error);
+        throw error;
+    }
+};
+
+/**
+ * Pause a scheduled contribution
+ * @param {string} scheduleId - Schedule ID
+ * @param {string} userId - User ID
+ * @param {Date} pausedUntil - Pause until date (optional)
+ * @returns {Promise<Object>} Paused schedule
+ */
+const pauseScheduledContribution = async (scheduleId, userId, pausedUntil = null) => {
+    const ScheduledContributionModel = await ScheduledContribution();
+
+    try {
+        const schedule = await ScheduledContributionModel.findOne({
+            _id: scheduleId,
+            userId,
+        });
+
+        if (!schedule) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'Scheduled contribution not found');
+        }
+
+        if (schedule.status !== 'active') {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Only active schedules can be paused');
+        }
+
+        const updateData = {
+            status: 'paused',
+            pausedAt: new Date(),
+        };
+
+        if (pausedUntil) {
+            updateData.pausedUntil = new Date(pausedUntil);
+        }
+
+        const pausedSchedule = await ScheduledContributionModel.findByIdAndUpdate(
+            scheduleId,
+            updateData,
+            { new: true }
+        ).populate('storedCardId', 'cardType last4 bank');
+
+        logger.info(`Scheduled contribution paused: ${scheduleId}`);
+        return pausedSchedule;
+    } catch (error) {
+        logger.error(`Error pausing scheduled contribution ${scheduleId}:`, error);
+        throw error;
+    }
+};
+
+/**
+ * Resume a scheduled contribution
+ * @param {string} scheduleId - Schedule ID
+ * @param {string} userId - User ID
+ * @returns {Promise<Object>} Resumed schedule
+ */
+const resumeScheduledContribution = async (scheduleId, userId) => {
+    const ScheduledContributionModel = await ScheduledContribution();
+
+    try {
+        const schedule = await ScheduledContributionModel.findOne({
+            _id: scheduleId,
+            userId,
+        });
+
+        if (!schedule) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'Scheduled contribution not found');
+        }
+
+        if (schedule.status !== 'paused') {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Only paused schedules can be resumed');
+        }
+
+        const updateData = {
+            status: 'active',
+            pausedAt: null,
+            pausedUntil: null,
+        };
+
+        const resumedSchedule = await ScheduledContributionModel.findByIdAndUpdate(
+            scheduleId,
+            updateData,
+            { new: true }
+        ).populate('storedCardId', 'cardType last4 bank');
+
+        logger.info(`Scheduled contribution resumed: ${scheduleId}`);
+        return resumedSchedule;
+    } catch (error) {
+        logger.error(`Error resuming scheduled contribution ${scheduleId}:`, error);
+        throw error;
+    }
+};
+
+/**
+ * Cancel a scheduled contribution
+ * @param {string} scheduleId - Schedule ID
+ * @param {string} userId - User ID
+ * @returns {Promise<Object>} Cancelled schedule
+ */
+const cancelScheduledContribution = async (scheduleId, userId) => {
+    const ScheduledContributionModel = await ScheduledContribution();
+
+    try {
+        const schedule = await ScheduledContributionModel.findOne({
+            _id: scheduleId,
+            userId,
+        });
+
+        if (!schedule) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'Scheduled contribution not found');
+        }
+
+        if (schedule.status === 'cancelled' || schedule.status === 'completed') {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Schedule is already cancelled or completed');
+        }
+
+        const updateData = {
+            status: 'cancelled',
+            isActive: false,
+            cancelledAt: new Date(),
+        };
+
+        const cancelledSchedule = await ScheduledContributionModel.findByIdAndUpdate(
+            scheduleId,
+            updateData,
+            { new: true }
+        ).populate('storedCardId', 'cardType last4 bank');
+
+        logger.info(`Scheduled contribution cancelled: ${scheduleId}`);
+        return cancelledSchedule;
+    } catch (error) {
+        logger.error(`Error cancelling scheduled contribution ${scheduleId}:`, error);
+        throw error;
+    }
+};
+
+/**
+ * Get payment logs for a scheduled contribution
+ * @param {string} scheduleId - Schedule ID
+ * @param {string} userId - User ID
+ * @param {Object} options - Query options
+ * @returns {Promise<Object>} Payment logs
+ */
+const getScheduledPaymentLogs = async (scheduleId, userId, options = {}) => {
+    const ScheduledContributionModel = await ScheduledContribution();
+    const ScheduledPaymentLogModel = await ScheduledPaymentLog();
+
+    try {
+        // Verify schedule belongs to user
+        const schedule = await ScheduledContributionModel.findOne({
+            _id: scheduleId,
+            userId,
+        });
+
+        if (!schedule) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'Scheduled contribution not found');
+        }
+
+        const { limit = 20, offset = 0 } = options;
+
+        const logs = await ScheduledPaymentLogModel.find({
+            scheduledContributionId: scheduleId,
+        })
+            .sort({ createdAt: -1 })
+            .limit(parseInt(limit))
+            .skip(parseInt(offset));
+
+        const totalLogs = await ScheduledPaymentLogModel.countDocuments({
+            scheduledContributionId: scheduleId,
+        });
+
+        return {
+            logs,
+            total: totalLogs,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+        };
+    } catch (error) {
+        logger.error(`Error getting payment logs for schedule ${scheduleId}:`, error);
+        throw error;
+    }
+};
+
+/**
+ * Get user's schedule statistics
+ * @param {string} userId - User ID
+ * @returns {Promise<Object>} Schedule statistics
+ */
+const getUserScheduleStats = async (userId) => {
+    const ScheduledContributionModel = await ScheduledContribution();
+    const ScheduledPaymentLogModel = await ScheduledPaymentLog();
+
+    try {
+        // Get schedule counts by status
+        const scheduleStats = await ScheduledContributionModel.aggregate([
+            { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+            {
+                $group: {
+                    _id: '$status',
+                    count: { $sum: 1 },
+                    totalAmount: { $sum: '$totalAmount' },
+                    totalPayments: { $sum: '$totalPayments' },
+                }
+            }
+        ]);
+
+        // Get payment stats
+        const paymentStats = await ScheduledPaymentLogModel.aggregate([
+            { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+            {
+                $group: {
+                    _id: '$status',
+                    count: { $sum: 1 },
+                    totalAmount: { $sum: '$amount' },
+                }
+            }
+        ]);
+
+        // Get recent activity
+        const recentActivity = await ScheduledPaymentLogModel.find({
+            userId: new mongoose.Types.ObjectId(userId),
+        })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select('amount status createdAt contributionType');
+
+        // Format the response
+        const stats = {
+            schedules: {
+                total: 0,
+                active: 0,
+                paused: 0,
+                cancelled: 0,
+                completed: 0,
+            },
+            payments: {
+                total: 0,
+                successful: 0,
+                failed: 0,
+                totalAmount: 0,
+            },
+            recentActivity,
+        };
+
+        // Process schedule stats
+        scheduleStats.forEach(stat => {
+            stats.schedules.total += stat.count;
+            stats.schedules[stat._id] = stat.count;
+        });
+
+        // Process payment stats
+        paymentStats.forEach(stat => {
+            stats.payments.total += stat.count;
+            if (stat._id === 'success') {
+                stats.payments.successful = stat.count;
+                stats.payments.totalAmount = stat.totalAmount;
+            } else if (stat._id === 'failed') {
+                stats.payments.failed = stat.count;
+            }
+        });
+
+        return stats;
+    } catch (error) {
+        logger.error(`Error getting schedule stats for user ${userId}:`, error);
+        throw error;
+    }
+};
+
 module.exports = {
     createScheduledContribution,
     getUserScheduledContributions,
     getDueScheduledContributions,
     processScheduledPayment,
     calculateNextPaymentDate,
+    getScheduledContribution,
+    updateScheduledContribution,
+    pauseScheduledContribution,
+    resumeScheduledContribution,
+    cancelScheduledContribution,
+    getScheduledPaymentLogs,
+    getUserScheduleStats,
 }; 
