@@ -11,12 +11,11 @@ module.exports = (data) =>
     <div style="margin: 20px 0;">
       <p><strong>Amount:</strong> <span class="amount">₦${data.amount.toLocaleString()}</span></p>
       <p><strong>Date:</strong> ${new Date(data.date).toLocaleString()}</p>
-      <p><strong>Account Number:</strong> ${data.accountNumber}</p>
       <p><strong>Reference:</strong> ${data.reference}</p>
     </div>
   </div>
 
-  <p>Your withdrawal request has been approved and is being processed. You will receive another notification once the funds are available in your account.</p>
+  <p>Your withdrawal request has been approved and is being processed. Your provided account number will be credited with the amount shortly.</p>
 `,
         'Withdrawal Approved'
     ); 

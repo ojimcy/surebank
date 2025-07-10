@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const httpStatus = require('http-status');
 const { Account, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { handleWithdrawalApprovalNotification } = require('./transactionNotification.service');
+const { sendWithdrawalApprovalNotification } = require('./transactionNotification.service');
 
 /**
  * Get user and account details by account number
@@ -425,7 +425,7 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
     // );
     // await sendSms(phone, message);
 
-    await handleWithdrawalApprovalNotification({
+    await sendWithdrawalApprovalNotification({
       userId: withdrawalRequest.userId,
       amount: withdrawalRequest.amount,
       accountNumber: withdrawalRequest.accountNumber,
