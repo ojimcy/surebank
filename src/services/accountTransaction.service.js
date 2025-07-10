@@ -4,6 +4,7 @@ const { Account, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { withdrawalMessage } = require('../templates/sms/templates');
 const { sendSms } = require('./sms.service');
+const { handleWithdrawalApprovalNotification } = require('./transactionNotification.service');
 
 /**
  * Get user and account details by account number
@@ -376,7 +377,6 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
   const AccountModel = await Account();
   try {
     const withdrawalRequest = await getWithdrawalRequestById(requestId);
-
     if (!withdrawalRequest) {
       throw new ApiError(404, 'Withdrawal request does not exist.');
     }
@@ -385,9 +385,9 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
       throw new ApiError(400, 'Withdrawal request has been processed!!!.');
     }
 
-    if (withdrawalRequest.narration !== 'Request Cash' && withdrawalRequest.narration !== 'Request Cash SB') {
-      throw new ApiError(400, 'Invalid withdrawal request.');
-    }
+    // if (withdrawalRequest.narration !== 'Request Cash' && withdrawalRequest.narration !== 'Request Cash SB') {
+    //   throw new ApiError(400, 'Invalid withdrawal request.');
+    // }
 
     const { accountNumber, amount } = withdrawalRequest;
     const account = await AccountModel.findOne({ accountNumber });
@@ -416,16 +416,27 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
 
     await spendHeldAmount(accountNumber, amount);
 
-    // Send credit SMS
-    const phone = account.phoneNumber;
-    const message = withdrawalMessage(
-      account.firstName,
-      withdrawalRequest.amount,
-      withdrawalRequest.accountNumber,
-      account.availableBalance,
-      withdrawalRequest.userReps.firstName
-    );
-    await sendSms(phone, message);
+    // No longer need to send SMS directly, handled by notification service
+    // const phone = account.phoneNumber;
+    // const message = withdrawalMessage(
+    //   account.firstName,
+    //   withdrawalRequest.amount,
+    //   withdrawalRequest.accountNumber,
+    //   account.availableBalance,
+    //   withdrawalRequest.createdBy.firstName
+    // );
+    // await sendSms(phone, message);
+
+    await handleWithdrawalApprovalNotification({
+      user: account,
+      data: {
+        amount: withdrawalRequest.amount,
+        accountNumber: withdrawalRequest.accountNumber,
+        availableBalance: account.availableBalance,
+        createdBy: withdrawalRequest.createdBy.firstName,
+        reference: withdrawalRequest._id,
+      },
+    });
 
     return withdrawalRequest;
   } catch (error) {
