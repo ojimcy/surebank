@@ -13,6 +13,7 @@ const genericContributionTemplate = require('../templates/emails/generic-contrib
 const withdrawalRequestTemplate = require('../templates/emails/withdrawal-request.template');
 const orderCreatedTemplate = require('../templates/emails/order-created.template');
 const orderPaymentTemplate = require('../templates/emails/order-payment.template');
+const withdrawalApprovedTemplate = require('../templates/emails/withdrawal-approved.template');
 const ApiError = require('../utils/ApiError');
 
 const client = new SESClient({ region: 'us-east-1' });
@@ -53,6 +54,10 @@ const emailTemplates = {
   WITHDRAWAL_REQUEST: {
     subject: 'Withdrawal Request',
     html: withdrawalRequestTemplate,
+  },
+  WITHDRAWAL_APPROVED: {
+    subject: 'Withdrawal Request Approved',
+    html: withdrawalApprovedTemplate,
   },
   'ORDER-CREATED': {
     subject: 'Order Confirmation',
@@ -393,17 +398,17 @@ const sendEmail = async (options) => {
       Body: {
         ...(text || !html
           ? {
-              Text: {
-                Data: text || defaultText,
-              },
-            }
+            Text: {
+              Data: text || defaultText,
+            },
+          }
           : {}),
         ...(html
           ? {
-              Html: {
-                Data: html,
-              },
-            }
+            Html: {
+              Data: html,
+            },
+          }
           : {}),
       },
     };

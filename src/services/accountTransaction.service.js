@@ -2,8 +2,6 @@ const mongoose = require('mongoose');
 const httpStatus = require('http-status');
 const { Account, AccountTransaction } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { withdrawalMessage } = require('../templates/sms/templates');
-const { sendSms } = require('./sms.service');
 const { handleWithdrawalApprovalNotification } = require('./transactionNotification.service');
 
 /**
@@ -428,14 +426,12 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
     // await sendSms(phone, message);
 
     await handleWithdrawalApprovalNotification({
-      user: account,
-      data: {
-        amount: withdrawalRequest.amount,
-        accountNumber: withdrawalRequest.accountNumber,
-        availableBalance: account.availableBalance,
-        createdBy: withdrawalRequest.createdBy.firstName,
-        reference: withdrawalRequest._id,
-      },
+      userId: withdrawalRequest.userId,
+      amount: withdrawalRequest.amount,
+      accountNumber: withdrawalRequest.accountNumber,
+      reference: withdrawalRequest._id.toString(),
+      phoneNumber: account.phoneNumber,
+      availableBalance: account.availableBalance,
     });
 
     return withdrawalRequest;

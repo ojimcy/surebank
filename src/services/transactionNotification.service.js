@@ -1,39 +1,52 @@
 const logger = require('../config/logger');
-const { sendMultiChannelNotification } = require('./notification.service');
-const { withdrawalApprovalMessage } = require('../templates/sms/templates');
-const { withdrawalApprovalTemplate } = require('../templates/emails/withdrawal-approval.template');
+const notificationService = require('./notification.service');
+const userService = require('./user.service');
 
-const handleWithdrawalApprovalNotification = async ({ user, data }) => {
-    const { amount, accountNumber, availableBalance, createdBy, reference } = data;
-
+// Send withdrawal-approval notifications via all channels (in-app, email, SMS)
+// Follows the same pattern used in withdrawal.service.js → approveWithdrawalRequest
+const handleWithdrawalApprovalNotification = async ({
+    userId,
+    amount,
+    accountNumber,
+    reference,
+    phoneNumber,
+    availableBalance,
+}) => {
     try {
-        const notificationContent = {
-            inApp: {
-                title: 'Withdrawal Approved',
-                body: `Your withdrawal of ${amount} has been approved.`,
-            },
-            email: {
-                subject: 'Withdrawal Approval Confirmation',
-                template: withdrawalApprovalTemplate,
-                templateData: {
-                    name: user.firstName,
-                    amount,
-                    transactionDate: new Date().toLocaleDateString(),
-                    transactionType: 'Withdrawal',
-                    reference,
-                    balance: availableBalance,
-                    description: `Withdrawal of ${amount} approved by ${createdBy}.`,
-                },
-            },
-            sms: withdrawalApprovalMessage(user.firstName, amount, accountNumber, availableBalance, createdBy),
-        };
+        const user = await userService.getUserById(userId);
+        if (!user) {
+            logger.warn(`User ${userId} not found. Skipping withdrawal approval notification.`);
+            return;
+        }
 
-        await sendMultiChannelNotification({
-            userId: user._id,
-            type: 'account_activity',
+        await notificationService.sendMultiChannelNotification({
+            userId,
+            type: 'withdrawal_approval', // aligns with default preferences key
             user,
-            data,
-            notificationContent,
+            data: {
+                amount,
+                accountNumber,
+                phoneNumber,
+            },
+            notificationContent: {
+                inApp: {
+                    title: 'Withdrawal Request Approved',
+                    body: `Your withdrawal request of ₦${amount} from account ${accountNumber} has been approved and is being processed.`,
+                },
+                email: {
+                    subject: 'Withdrawal Request Approved',
+                    template: 'WITHDRAWAL_APPROVED',
+                    templateData: {
+                        name: `${user.firstName} ${user.lastName}`,
+                        amount,
+                        accountNumber,
+                        reference,
+                        balance: availableBalance,
+                        date: new Date(),
+                    },
+                },
+                sms: `Your withdrawal request of ₦${amount} from account ${accountNumber} has been approved and is being processed.`,
+            },
         });
     } catch (error) {
         logger.error('Error in withdrawal approval notification:', error);
