@@ -5,7 +5,8 @@ const paystackService = require('./paystack.service');
 const userService = require('./user.service');
 const logger = require('../config/logger');
 const { PaymentTransaction } = require('../models');
-const { processPaystackContribution } = require('./dailySavings.service');
+const { processPaystackContribution, getDailySavingsPackageById } = require('./dailySavings.service');
+const { CONTRIBUTION_CIRCLE } = require('../constants/account');
 const { createPaymentMetadata } = require('./payment/helpers');
 const { isMobileApp } = require('../config/mobile');
 
@@ -158,6 +159,49 @@ const initializePaymentContribution = async (data, req = null) => {
   const user = await userService.getUserById(userId);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // Pre-payment validation for daily savings contributions
+  if (contributionType === 'daily_savings' && packageId) {
+    try {
+      const userPackage = await getDailySavingsPackageById(packageId);
+      
+      // Verify package ownership
+      if (userPackage.userId.toString() !== userId.toString()) {
+        throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to contribute to this package');
+      }
+      
+      // Check if package is active
+      if (userPackage.status === 'closed') {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot contribute to a closed package');
+      }
+      
+      // Validate amount is multiple of daily amount
+      if (amount % userPackage.amountPerDay !== 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, `Contribution amount must be a multiple of ₦${userPackage.amountPerDay.toLocaleString()} (daily amount for this package)`);
+      }
+      
+      // Validate amount is not too small
+      const contributionDaysCount = Math.round(amount / userPackage.amountPerDay);
+      if (contributionDaysCount <= 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Contribution amount is too small for this package');
+      }
+      
+      // Check if contribution would exceed contribution circle limit
+      const newTotalCount = userPackage.totalCount + contributionDaysCount;
+      if (newTotalCount > CONTRIBUTION_CIRCLE) {
+        const remainingDays = CONTRIBUTION_CIRCLE - userPackage.totalCount;
+        const maxAllowedAmount = remainingDays * userPackage.amountPerDay;
+        throw new ApiError(
+          httpStatus.BAD_REQUEST, 
+          `Contribution exceeds ${CONTRIBUTION_CIRCLE}-day cycle limit. Maximum allowed: ₦${maxAllowedAmount.toLocaleString()} (${remainingDays} days)`
+        );
+      }
+      
+    } catch (error) {
+      // Re-throw validation errors and 404s from getDailySavingsPackageById
+      throw error;
+    }
   }
 
   // Create payment metadata directly
