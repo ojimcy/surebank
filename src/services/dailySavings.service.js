@@ -714,6 +714,8 @@ const updatePackageById = async (packageId, updateBody) => {
  */
 const getUserPackage = async (query) => {
   const PackageModel = await DsPackage();
+  // Ensure User model is registered for populate operations
+  await User();
 
   const userPackage = await PackageModel.findOne({
     accountNumber: query.accountNumber,
@@ -742,6 +744,8 @@ const processPaystackContribution = async (packageId, amount, userId, reference,
   const PackageModel = await DsPackage();
   const ContributionModel = await Contribution();
   const AccountTransactionModel = await AccountTransaction();
+  // Ensure User model is registered for populate operations
+  await User();
 
   try {
     // 1. Find the package
