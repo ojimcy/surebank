@@ -2,23 +2,25 @@ const express = require('express');
 const validate = require('../../middlewares/validate');
 const authValidation = require('../../validations/auth.validation');
 const authController = require('../../controllers/auth.controller');
+const auth = require('../../middlewares/auth');
 const {
   authLimiter,
   registrationLimiter,
   passwordResetLimiter,
   verificationEmailLimiter,
 } = require('../../middlewares/rateLimiter');
+const { authSecurity } = require('../../utils/securityOrchestrator');
 
 const router = express.Router();
 
-// Apply general rate limiting to all auth endpoints
-router.use(authLimiter);
+// Apply enhanced auth security to all endpoints
+router.use(authSecurity);
 
 // Registration route with stricter rate limiting
 router.post('/register', registrationLimiter, validate(authValidation.register), authController.register);
 
 router.post('/login', validate(authValidation.loginUser), authController.loginUser);
-router.post('/logout', validate(authValidation.logout), authController.logout);
+router.post('/logout', auth(), validate(authValidation.logout), authController.logout);
 router.post('/refresh-tokens', validate(authValidation.refreshTokens), authController.refreshTokens);
 
 // Apply password reset rate limiter

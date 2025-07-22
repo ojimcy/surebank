@@ -3,18 +3,22 @@ const validator = require('validator');
 const { authenticator } = require('otplib');
 const tokenService = require('./token.service');
 const userService = require('./user.service');
+const sessionService = require('./session.service');
 const Token = require('../models/token.model');
 const ApiError = require('../utils/ApiError');
 const { tokenTypes } = require('../config/tokens');
 const logger = require('../config/logger');
+const redisService = require('./redis.service');
 
 /**
  * Login with email and password
  * @param {string} email
  * @param {string} password
- * @returns {Promise<User>}
+ * @param {string} otp - Optional 2FA OTP
+ * @param {Object} sessionData - Session metadata
+ * @returns {Promise<Object>} User and session info
  */
-const loginUserWithEmailAndPassword = async (email, password, otp) => {
+const loginUserWithEmailAndPassword = async (email, password, otp, sessionData = {}) => {
   const user = await userService.getUserByEmail(email);
   if (!user || !(await user.isPasswordMatch(password))) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
@@ -35,7 +39,14 @@ const loginUserWithEmailAndPassword = async (email, password, otp) => {
     }
   }
 
-  return user;
+  // Create new session
+  const sessionId = await sessionService.createSession(user.id, {
+    ...sessionData,
+    loginMethod: 'email_password',
+    twoFactorUsed: !!user.isTwoFactorAuthEnabled
+  });
+
+  return { user, sessionId };
 };
 
 /**
@@ -43,9 +54,10 @@ const loginUserWithEmailAndPassword = async (email, password, otp) => {
  * @param {string} identifier - Email or phone number
  * @param {string} password
  * @param {string} otp - One-time password for two-factor authentication
- * @returns {Promise<User>}
+ * @param {Object} sessionData - Session metadata
+ * @returns {Promise<Object>} User and session info
  */
-const loginUser = async (identifier, password, otp) => {
+const loginUser = async (identifier, password, otp, sessionData = {}) => {
   // Check if the identifier is an email or a phone number
   const isEmail = validator.isEmail(identifier);
   const isPhoneNumber = validator.isMobilePhone(identifier, 'any', { strictMode: false });
@@ -86,38 +98,120 @@ const loginUser = async (identifier, password, otp) => {
     }
   }
 
-  return user;
+  // Create new session
+  const sessionId = await sessionService.createSession(user.id, {
+    ...sessionData,
+    loginMethod: isEmail ? 'email_password' : 'phone_password',
+    twoFactorUsed: !!user.isTwoFactorAuthEnabled
+  });
+
+  return { user, sessionId };
 };
 
 /**
  * Logout
  * @param {string} refreshToken
+ * @param {string} accessToken - Access token to blacklist
+ * @param {string} sessionId - Session ID to terminate
  * @returns {Promise}
  */
-const logout = async (refreshToken) => {
+const logout = async (refreshToken, accessToken, sessionId) => {
   const TokenModel = await Token();
   const refreshTokenDoc = await TokenModel.findOne({ token: refreshToken, type: tokenTypes.REFRESH, blacklisted: false });
   if (!refreshTokenDoc) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Not found');
   }
+
+  const userId = refreshTokenDoc.user.toString();
+
+  // Initialize Redis connection if needed
+  try {
+    if (!redisService.isConnected) {
+      await redisService.connect();
+    }
+
+    // Blacklist the access token for the remaining time until it expires naturally
+    if (accessToken) {
+      const jwt = require('jsonwebtoken');
+      const config = require('../config/config');
+      
+      try {
+        const decoded = jwt.decode(accessToken);
+        const now = Math.floor(Date.now() / 1000);
+        const remainingTime = decoded.exp - now;
+        
+        if (remainingTime > 0) {
+          await redisService.blacklistToken(accessToken, remainingTime);
+          logger.info(`Access token blacklisted for user: ${userId}`);
+        }
+      } catch (error) {
+        logger.warn('Failed to decode access token for blacklisting:', error.message);
+      }
+    }
+  } catch (error) {
+    logger.warn('Failed to blacklist token during logout:', error.message);
+  }
+
+  // Terminate the session
+  if (sessionId) {
+    await sessionService.terminateSession(userId, sessionId);
+  }
+
+  // Remove refresh token from database
   await refreshTokenDoc.remove();
+  
+  logger.info(`User logged out: ${userId}`);
 };
 
 /**
  * Refresh auth tokens
  * @param {string} refreshToken
+ * @param {string} accessToken - Current access token to blacklist
  * @returns {Promise<Object>}
  */
-const refreshAuth = async (refreshToken) => {
+const refreshAuth = async (refreshToken, accessToken) => {
   try {
     const refreshTokenDoc = await tokenService.verifyToken(refreshToken, tokenTypes.REFRESH);
     const user = await userService.getUserById(refreshTokenDoc.user);
     if (!user) {
-      throw new Error();
+      throw new Error('User not found');
     }
+
+    // Initialize Redis connection if needed
+    try {
+      if (!redisService.isConnected) {
+        await redisService.connect();
+      }
+
+      // Blacklist the old access token
+      if (accessToken) {
+        const jwt = require('jsonwebtoken');
+        try {
+          const decoded = jwt.decode(accessToken);
+          const now = Math.floor(Date.now() / 1000);
+          const remainingTime = decoded.exp - now;
+          
+          if (remainingTime > 0) {
+            await redisService.blacklistToken(accessToken, remainingTime);
+          }
+        } catch (error) {
+          logger.warn('Failed to decode access token for blacklisting during refresh:', error.message);
+        }
+      }
+    } catch (error) {
+      logger.warn('Failed to blacklist token during refresh:', error.message);
+    }
+
+    // Remove the old refresh token
     await refreshTokenDoc.remove();
-    return tokenService.generateAuthTokens(user);
+    
+    // Generate new token pair (refresh token rotation)
+    const newTokens = await tokenService.generateAuthTokens(user);
+    
+    logger.info(`Tokens refreshed for user: ${user.id}`);
+    return newTokens;
   } catch (error) {
+    logger.error('Token refresh failed:', error);
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
   }
 };
@@ -192,6 +286,44 @@ const verifyEmail = async (otp) => {
   }
 };
 
+/**
+ * Invalidate all user tokens (emergency logout)
+ * @param {string} userId
+ * @returns {Promise}
+ */
+const invalidateAllUserTokens = async (userId) => {
+  try {
+    const TokenModel = await Token();
+    
+    // Remove all refresh tokens from database
+    await TokenModel.deleteMany({ user: userId, type: tokenTypes.REFRESH });
+    
+    // Initialize Redis connection if needed
+    try {
+      if (!redisService.isConnected) {
+        await redisService.connect();
+      }
+      
+      // Blacklist all user tokens for the maximum possible token lifetime
+      const config = require('../config/config');
+      const maxTokenLifetime = Math.max(
+        config.jwt.accessExpirationMinutes * 60,
+        config.jwt.refreshExpirationDays * 24 * 60 * 60
+      );
+      
+      await redisService.blacklistUserTokens(userId, maxTokenLifetime);
+      
+      logger.info(`All tokens invalidated for user: ${userId}`);
+    } catch (error) {
+      logger.warn('Failed to blacklist user tokens in Redis:', error.message);
+    }
+    
+  } catch (error) {
+    logger.error('Failed to invalidate user tokens:', error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to invalidate tokens');
+  }
+};
+
 module.exports = {
   loginUserWithEmailAndPassword,
   loginUser,
@@ -199,4 +331,5 @@ module.exports = {
   refreshAuth,
   resetPassword,
   verifyEmail,
+  invalidateAllUserTokens,
 };

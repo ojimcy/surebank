@@ -61,6 +61,13 @@ const envVarsSchema = Joi.object()
     PAYSTACK_SECRET_KEY: Joi.string().required().description('Paystack secret key'),
     PAYSTACK_CALLBACK_URL: Joi.string().required().description('Paystack callback URL'),
     FRONTEND_URL: Joi.string().required().description('Frontend URL'),
+    ADMIN_URL: Joi.string().description('Admin dashboard URL'),
+    ALLOWED_ORIGINS: Joi.string().description('Comma-separated list of allowed CORS origins'),
+    REDIS_HOST: Joi.string().default('localhost').description('Redis host'),
+    REDIS_PORT: Joi.number().default(6379).description('Redis port'),
+    REDIS_PASSWORD: Joi.string().description('Redis password'),
+    REDIS_DB: Joi.number().default(0).description('Redis database number'),
+    REDIS_TLS: Joi.string().default('false').description('Enable Redis TLS'),
   })
   .unknown();
 
@@ -148,5 +155,22 @@ module.exports = {
     callbackUrl: envVars.PAYSTACK_CALLBACK_URL,
     frontendUrl: envVars.FRONTEND_URL,
     baseUrl: envVars.PAYSTACK_BASE_URL,
+  },
+  cors: {
+    allowedOrigins: envVars.ALLOWED_ORIGINS ? envVars.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()) : [
+      envVars.FRONTEND_URL,
+      envVars.CLIENT_URL,
+      envVars.ADMIN_URL,
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5173'
+    ].filter(Boolean),
+  },
+  redis: {
+    host: envVars.REDIS_HOST,
+    port: envVars.REDIS_PORT,
+    password: envVars.REDIS_PASSWORD,
+    db: envVars.REDIS_DB,
+    tls: envVars.REDIS_TLS === 'true',
   },
 };

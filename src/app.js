@@ -3,68 +3,99 @@ const helmet = require('helmet');
 const xss = require('xss-clean');
 const mongoSanitize = require('express-mongo-sanitize');
 const compression = require('compression');
-const cors = require('cors');
 const passport = require('passport');
 const httpStatus = require('http-status');
 const config = require('./config/config');
 const morgan = require('./config/morgan');
 const { jwtStrategy } = require('./config/passport');
 const { authLimiter } = require('./middlewares/rateLimiter');
+const corsMiddleware = require('./middlewares/cors');
+const { 
+  globalApiLimiter, 
+  ipBasedLimiter 
+} = require('./middlewares/globalRateLimit');
+const { 
+  securityHeaders, 
+  requestId, 
+  removeSensitiveHeaders, 
+  apiVersioning 
+} = require('./middlewares/security');
+const { 
+  sanitizeInput, 
+  preventInjection, 
+  preventParameterPollution, 
+  validateRequestSize 
+} = require('./middlewares/validation');
 const routes = require('./routes/v1');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
 const logger = require('./config/logger');
+const redisService = require('./services/redis.service');
 
 const app = express();
+
+// Initialize Redis connection on startup
+(async () => {
+  try {
+    await redisService.connect();
+    logger.info('Redis connected successfully');
+  } catch (error) {
+    logger.warn('Redis connection failed, continuing without cache:', error.message);
+  }
+})();
+
+// Trust proxy for proper IP detection
+app.set('trust proxy', 1);
 
 if (config.env !== 'test') {
   app.use(morgan.successHandler);
   app.use(morgan.errorHandler);
 }
 
-// set security HTTP headers
-app.use(helmet());
+// Early security middleware
+app.use(removeSensitiveHeaders);
+app.use(requestId);
+app.use(securityHeaders);
+app.use(apiVersioning);
+
+// Rate limiting (applied early)
+app.use(ipBasedLimiter);
+app.use(globalApiLimiter);
+
+// Request validation and security
+app.use(validateRequestSize(2 * 1024 * 1024)); // 2MB limit
+app.use(preventParameterPollution(['tags', 'categories'])); // Whitelist arrays
+app.use(preventInjection);
+app.use(sanitizeInput);
+
+// set security HTTP headers (enhanced)
+app.use(helmet({
+  contentSecurityPolicy: false, // We handle this in securityHeaders
+  crossOriginEmbedderPolicy: false // Allow PayStack integration
+}));
+
+// CORS with enhanced security
+app.use(corsMiddleware);
 
 // parse json request body
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // parse urlencoded request body
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// sanitize request data
+// sanitize request data (additional layer)
 app.use(xss());
 app.use(mongoSanitize());
 
 // gzip compression
 app.use(compression());
 
-// enable cors
-// app.use(cors({ credentials: true }));
-// app.options('*', cors({ credentials: true }));
-
-// enable cors with credentials for the specific frontend domain
-const corsOptions = {
-  origin: '*',
-  credentials: true,
-};
-app.use(cors(corsOptions));
-
-// Allow requests from surebankstores.ng
-// const corsOptions = {
-//   origin: 'https://surebankstores.ng',
-//   origin: 'http://localhost:3001',
-// };
-
-app.use(cors(corsOptions));
-
 // jwt authentication
 app.use(passport.initialize());
 passport.use('jwt', jwtStrategy);
 
 // limit repeated failed requests to auth endpoints
-if (config.env === 'production') {
-  app.use('/v1/auth', authLimiter);
-}
+app.use('/v1/auth', authLimiter);
 
 // v1 api routes
 app.use('/v1', routes);

@@ -24,25 +24,52 @@ const register = catchAsync(async (req, res) => {
 
 const login = catchAsync(async (req, res) => {
   const { email, password, otp } = req.body;
-  const user = await authService.loginUserWithEmailAndPassword(email, password, otp);
+  const sessionData = {
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent'),
+    deviceFingerprint: req.get('X-Device-Fingerprint')
+  };
+  
+  const { user, sessionId } = await authService.loginUserWithEmailAndPassword(email, password, otp, sessionData);
   const tokens = await tokenService.generateAuthTokens(user);
-  res.send({ user, tokens });
+  
+  res.send({ 
+    user, 
+    tokens,
+    sessionId,
+    message: 'Login successful' 
+  });
 });
 
 const loginUser = catchAsync(async (req, res) => {
   const { identifier, password, otp } = req.body;
-  const user = await authService.loginUser(identifier, password, otp);
+  const sessionData = {
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent'),
+    deviceFingerprint: req.get('X-Device-Fingerprint')
+  };
+  
+  const { user, sessionId } = await authService.loginUser(identifier, password, otp, sessionData);
   const tokens = await tokenService.generateAuthTokens(user);
-  res.send({ user, tokens });
+  
+  res.send({ 
+    user, 
+    tokens,
+    sessionId,
+    message: 'Login successful' 
+  });
 });
 
 const logout = catchAsync(async (req, res) => {
-  await authService.logout(req.body.refreshToken);
+  const accessToken = req.userToken; // From passport middleware
+  const sessionId = req.body.sessionId; // Session ID from client
+  await authService.logout(req.body.refreshToken, accessToken, sessionId);
   res.status(httpStatus.NO_CONTENT).send();
 });
 
 const refreshTokens = catchAsync(async (req, res) => {
-  const tokens = await authService.refreshAuth(req.body.refreshToken);
+  const accessToken = req.userToken; // From passport middleware (if available)
+  const tokens = await authService.refreshAuth(req.body.refreshToken, accessToken);
   res.send({ ...tokens });
 });
 
