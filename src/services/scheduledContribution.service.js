@@ -48,36 +48,37 @@ const calculateNextPaymentDate = (currentDate, frequency) => {
  */
 const validatePackage = async (packageId, userId, contributionType) => {
     let PackageModel;
+    let packageData;
 
     switch (contributionType) {
         case 'ds':
             PackageModel = await DsPackage();
+            // DS packages use custom 'id' field, not '_id'
+            packageData = await PackageModel.findOne({ id: packageId });
             break;
         case 'sb':
             PackageModel = await SbPackage();
+            // SB packages use standard MongoDB '_id' field
+            packageData = await PackageModel.findById(packageId);
             break;
         case 'ibs':
             PackageModel = await InterestPackage();
+            // IB packages use standard MongoDB '_id' field
+            packageData = await PackageModel.findById(packageId);
             break;
         default:
             throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid contribution type');
     }
 
-    const package = await PackageModel.findById(packageId);
-
-    if (!package) {
+    if (!packageData) {
         throw new ApiError(httpStatus.NOT_FOUND, 'Package not found');
     }
 
-    if (package.userId.toString() !== userId) {
-        throw new ApiError(httpStatus.FORBIDDEN, 'Package does not belong to user');
-    }
-
-    if (package.status === 'closed' || package.status === 'completed') {
+    if (packageData.status === 'closed' || packageData.status === 'completed') {
         throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot schedule contributions to closed package');
     }
 
-    return package;
+    return packageData;
 };
 
 /**
@@ -162,8 +163,21 @@ const getUserScheduledContributions = async (userId, filters = {}) => {
         const schedules = await ScheduledContributionModel.find(query)
             .populate('storedCardId', 'cardType last4 bank')
             .sort({ createdAt: -1 });
+        console.log("schedule", schedules);
 
-        return schedules;
+        // Transform data to match frontend expectations
+        const transformedSchedules = schedules.map(schedule => {
+            const scheduleObj = schedule.toObject();
+            return {
+                ...scheduleObj,
+                // Map backend fields to frontend expected fields
+                successfulContributions: scheduleObj.totalPayments || 0,
+                totalContributions: scheduleObj.totalPayments + (scheduleObj.failedPayments || 0),
+                failedContributions: scheduleObj.failedPayments || 0
+            };
+        });
+
+        return transformedSchedules;
     } catch (error) {
         logger.error(`Error getting scheduled contributions for user ${userId}:`, error);
         throw error;
@@ -366,7 +380,7 @@ const processFailedPayment = async (schedule, paymentLog, chargeResponse) => {
         const logUpdate = {
             status: shouldRetry ? 'failed' : 'failed',
             errorMessage,
-            errorCode: chargeResponse.data?.gateway_response || 'unknown',
+            errorCode: (chargeResponse.data && chargeResponse.data.gateway_response) || 'unknown',
             retryCount,
             processedAt: new Date(),
         };

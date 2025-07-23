@@ -31,11 +31,16 @@ const getUserSchedules = catchAsync(async (req, res) => {
 
     const schedules = await scheduledContributionService.getUserScheduledContributions(userId, filters);
 
-    res.status(httpStatus.OK).json({
-        success: true,
-        message: 'Scheduled contributions retrieved successfully',
-        data: schedules,
-    });
+    // Transform the response to match frontend expectations
+    const response = {
+        schedules: schedules,
+        totalSchedules: schedules.length,
+        page: parseInt(filters.page) || 1,
+        limit: parseInt(filters.limit) || 10,
+        totalPages: Math.ceil(schedules.length / (parseInt(filters.limit) || 10))
+    };
+
+    res.status(httpStatus.OK).json(response);
 });
 
 /**
