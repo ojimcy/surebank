@@ -133,7 +133,8 @@ const createStaff = async (staffData) => {
  * @returns {Promise<Branch>}
  */
 const getBranchStaffById = async (id) => {
-  return BranchStaff.findOne({ staffId: id });
+  const BranchStaffModel = await BranchStaff();
+  return BranchStaffModel.findOne({ staffId: id });
 };
 /**
  * Update the role of a staff member

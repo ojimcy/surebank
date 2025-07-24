@@ -30,6 +30,7 @@ const getUserSchedules = catchAsync(async (req, res) => {
     const filters = req.query;
 
     const schedules = await scheduledContributionService.getUserScheduledContributions(userId, filters);
+    console.log('schdules', schedules);
 
     // Transform the response to match frontend expectations
     const response = {
@@ -39,7 +40,7 @@ const getUserSchedules = catchAsync(async (req, res) => {
         limit: parseInt(filters.limit) || 10,
         totalPages: Math.ceil(schedules.length / (parseInt(filters.limit) || 10))
     };
-
+    console.log('users s', response)
     res.status(httpStatus.OK).json(response);
 });
 

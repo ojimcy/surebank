@@ -156,14 +156,18 @@ const createScheduledContribution = async (scheduleData) => {
  */
 const getUserScheduledContributions = async (userId, filters = {}) => {
     const ScheduledContributionModel = await ScheduledContribution();
+    // Ensure StoredCard model is registered for population
+    await StoredCard();
 
     try {
-        const query = { userId, ...filters };
-
+        // Extract pagination and non-query params
+        const { page, limit, ...queryFilters } = filters;
+        
+        const query = { userId, ...queryFilters };
+        
         const schedules = await ScheduledContributionModel.find(query)
             .populate('storedCardId', 'cardType last4 bank')
             .sort({ createdAt: -1 });
-        console.log("schedule", schedules);
 
         // Transform data to match frontend expectations
         const transformedSchedules = schedules.map(schedule => {
@@ -191,6 +195,8 @@ const getUserScheduledContributions = async (userId, filters = {}) => {
  */
 const getDueScheduledContributions = async (dueDate = new Date()) => {
     const ScheduledContributionModel = await ScheduledContribution();
+    // Ensure StoredCard model is registered for population
+    await StoredCard();
 
     try {
         const dueSchedules = await ScheduledContributionModel.find({
@@ -217,7 +223,7 @@ const getDueScheduledContributions = async (dueDate = new Date()) => {
  */
 const processScheduledPayment = async (schedule) => {
     const ScheduledPaymentLogModel = await ScheduledPaymentLog();
-    const ScheduledContributionModel = await ScheduledContribution();
+    await ScheduledContribution();
 
     try {
         // Get stored card details
@@ -431,6 +437,8 @@ const processFailedPayment = async (schedule, paymentLog, chargeResponse) => {
  */
 const getScheduledContribution = async (scheduleId, userId) => {
     const ScheduledContributionModel = await ScheduledContribution();
+    // Ensure StoredCard model is registered for population
+    await StoredCard();
 
     try {
         const schedule = await ScheduledContributionModel.findOne({
@@ -458,6 +466,8 @@ const getScheduledContribution = async (scheduleId, userId) => {
  */
 const updateScheduledContribution = async (scheduleId, userId, updateData) => {
     const ScheduledContributionModel = await ScheduledContribution();
+    // Ensure StoredCard model is registered for population
+    await StoredCard();
 
     try {
         const schedule = await ScheduledContributionModel.findOne({
@@ -496,6 +506,8 @@ const updateScheduledContribution = async (scheduleId, userId, updateData) => {
  */
 const pauseScheduledContribution = async (scheduleId, userId, pausedUntil = null) => {
     const ScheduledContributionModel = await ScheduledContribution();
+    // Ensure StoredCard model is registered for population
+    await StoredCard();
 
     try {
         const schedule = await ScheduledContributionModel.findOne({
@@ -542,6 +554,8 @@ const pauseScheduledContribution = async (scheduleId, userId, pausedUntil = null
  */
 const resumeScheduledContribution = async (scheduleId, userId) => {
     const ScheduledContributionModel = await ScheduledContribution();
+    // Ensure StoredCard model is registered for population
+    await StoredCard();
 
     try {
         const schedule = await ScheduledContributionModel.findOne({
@@ -585,6 +599,8 @@ const resumeScheduledContribution = async (scheduleId, userId) => {
  */
 const cancelScheduledContribution = async (scheduleId, userId) => {
     const ScheduledContributionModel = await ScheduledContribution();
+    // Ensure StoredCard model is registered for population
+    await StoredCard();
 
     try {
         const schedule = await ScheduledContributionModel.findOne({

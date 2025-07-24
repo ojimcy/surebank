@@ -449,7 +449,6 @@ const saveDailyContribution = async (contributionInput) => {
         userPackageId,
         {
           $inc: {
-            totalContribution: -userPackage.amountPerDay,
             deductionCount: expectedDeduction - userPackage.deductionCount,
             totalCharge: userPackage.amountPerDay,
           },
@@ -489,16 +488,18 @@ const saveDailyContribution = async (contributionInput) => {
       { session }
     );
 
-    // Update total contribution and charge SMS fees atomically
-    userPackage.totalContribution += contributionInput.amount;
-    // Deduct SMS_FFE from contribution amount
-
-    // const netContributionAmount = contributionInput.amount - SMS_FFE;
+    // Calculate net contribution after charges
+    const chargeAmount = userPackage.deductionCount < expectedDeduction ? userPackage.amountPerDay : 0;
+    const netContribution = contributionInput.amount - chargeAmount;
+    
+    // Update total contribution with net amount (contribution minus any charges)
+    userPackage.totalContribution += netContribution;
+    
     await PackageModel.findByIdAndUpdate(
       userPackageId,
       {
         $set: { totalCount },
-        $inc: { totalContribution: contributionInput.amount },
+        $inc: { totalContribution: netContribution },
       },
       { session }
     );
@@ -521,7 +522,7 @@ const saveDailyContribution = async (contributionInput) => {
         target: userPackage.target,
         cashierName: cashier ? cashier.firstName : undefined,
       },
-      packageData: userPackage,
+      packageData: { ...userPackage, totalContribution: userPackage.totalContribution },
       accountData: userAccount,
     });
 

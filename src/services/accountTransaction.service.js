@@ -559,6 +559,8 @@ const getCustomerwithdrawals = async (
 ) => {
   const skip = (page - 1) * limit;
   try {
+    // Ensure AccountTransaction model is registered
+    const AccountTransactionModel = await AccountTransaction();
     const query = {};
 
     if (startDate && endDate) {
@@ -589,7 +591,7 @@ const getCustomerwithdrawals = async (
     }
 
     query.narration = { $in: ['Request Cash', 'Request Cash SB', ...(narration ? [narration] : [])] };
-    const withdrawals = await AccountTransaction.find(query)
+    const withdrawals = await AccountTransactionModel.find(query)
       .populate([
         {
           path: 'createdBy',
