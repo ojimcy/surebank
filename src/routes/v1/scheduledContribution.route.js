@@ -36,4 +36,31 @@ router
     .route('/:scheduleId/logs')
     .get(auth(), validate(scheduledContributionValidation.getPaymentLogs), scheduledContributionController.getPaymentLogs);
 
+// Admin endpoints
+router
+    .route('/admin/all')
+    .get(auth(), validate(scheduledContributionValidation.getAllSchedules), scheduledContributionController.getAllSchedules);
+
+router
+    .route('/admin/process-due')
+    .post(auth(), scheduledContributionController.processDueContributions)
+    .get(auth(), scheduledContributionController.processDueContributions);
+
+router
+    .route('/admin/due-list')
+    .get(auth(), scheduledContributionController.getDueContributionsList);
+
+// Admin endpoints for scheduler management (local development only)
+router
+    .route('/admin/scheduler/trigger')
+    .post(auth(), scheduledContributionController.manuallyTriggerScheduler);
+
+router
+    .route('/admin/scheduler/stats')
+    .get(auth(), scheduledContributionController.getSchedulerStats);
+
+router
+    .route('/admin/scheduler/restart')
+    .post(auth(), scheduledContributionController.restartScheduler);
+
 module.exports = router; 

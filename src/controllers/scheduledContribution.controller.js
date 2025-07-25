@@ -1,6 +1,7 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 const { scheduledContributionService } = require('../services');
+const config = require('../config/config');
 
 /**
  * Create a scheduled contribution
@@ -190,6 +191,209 @@ const getScheduleStats = catchAsync(async (req, res) => {
     });
 });
 
+/**
+ * Process due scheduled contributions (Admin/Testing endpoint)
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const processDueContributions = catchAsync(async (req, res) => {
+    const dueDate = req.query.dueDate ? new Date(req.query.dueDate) : new Date();
+    
+    // Get due contributions
+    const dueContributions = await scheduledContributionService.getDueScheduledContributions(dueDate);
+    
+    if (dueContributions.length === 0) {
+        return res.status(httpStatus.OK).json({
+            success: true,
+            message: 'No due contributions found',
+            data: {
+                processed: 0,
+                results: []
+            }
+        });
+    }
+
+    // Process each due contribution
+    const results = [];
+    for (const contribution of dueContributions) {
+        try {
+            const result = await scheduledContributionService.processScheduledPayment(contribution);
+            results.push({
+                scheduleId: contribution._id,
+                success: result.success,
+                result: result
+            });
+        } catch (error) {
+            results.push({
+                scheduleId: contribution._id,
+                success: false,
+                error: error.message
+            });
+        }
+    }
+
+    res.status(httpStatus.OK).json({
+        success: true,
+        message: `Processed ${dueContributions.length} due contributions`,
+        data: {
+            processed: dueContributions.length,
+            results: results
+        }
+    });
+});
+
+/**
+ * Get list of due contributions without processing (Debug endpoint)
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getDueContributionsList = catchAsync(async (req, res) => {
+    const dueDate = req.query.dueDate ? new Date(req.query.dueDate) : new Date();
+    
+    // Get due contributions
+    const dueContributions = await scheduledContributionService.getDueScheduledContributions(dueDate);
+    
+    res.status(httpStatus.OK).json({
+        success: true,
+        message: `Found ${dueContributions.length} due contributions`,
+        data: {
+            dueDate: dueDate.toISOString(),
+            count: dueContributions.length,
+            contributions: dueContributions.map(contrib => ({
+                id: contrib._id,
+                userId: contrib.userId,
+                amount: contrib.amount,
+                frequency: contrib.frequency,
+                contributionType: contrib.contributionType,
+                nextPaymentDate: contrib.nextPaymentDate,
+                status: contrib.status,
+                isActive: contrib.isActive,
+                createdAt: contrib.createdAt
+            }))
+        }
+    });
+});
+
+/**
+ * Get all scheduled contributions (Admin only)
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getAllSchedules = catchAsync(async (req, res) => {
+    const filters = req.query;
+
+    const result = await scheduledContributionService.getAllScheduledContributions(filters);
+
+    res.status(httpStatus.OK).json({
+        success: true,
+        message: 'All scheduled contributions retrieved successfully',
+        data: result.schedules,
+        pagination: result.pagination,
+        summary: result.summary,
+    });
+});
+
+/**
+ * Manually trigger scheduler (Local development only)
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const manuallyTriggerScheduler = catchAsync(async (req, res) => {
+    // Only allow in development/test environments
+    if (config.env === 'production') {
+        return res.status(httpStatus.FORBIDDEN).json({
+            success: false,
+            message: 'Scheduler trigger not available in production'
+        });
+    }
+
+    try {
+        const schedulerService = require('../services/scheduler.service');
+        const job = await schedulerService.manuallyTriggerProcessor();
+        
+        res.status(httpStatus.OK).json({
+            success: true,
+            message: 'Scheduler triggered manually',
+            data: {
+                jobId: job.id,
+                timestamp: new Date().toISOString()
+            }
+        });
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to trigger scheduler',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Get scheduler statistics (Local development only)
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getSchedulerStats = catchAsync(async (req, res) => {
+    // Only allow in development/test environments
+    if (config.env === 'production') {
+        return res.status(httpStatus.FORBIDDEN).json({
+            success: false,
+            message: 'Scheduler stats not available in production'
+        });
+    }
+
+    try {
+        const schedulerService = require('../services/scheduler.service');
+        const stats = await schedulerService.getJobStats();
+        
+        res.status(httpStatus.OK).json({
+            success: true,
+            message: 'Scheduler statistics retrieved successfully',
+            data: stats
+        });
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to get scheduler stats',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Restart scheduler (Local development only)
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const restartScheduler = catchAsync(async (req, res) => {
+    // Only allow in development/test environments
+    if (config.env === 'production') {
+        return res.status(httpStatus.FORBIDDEN).json({
+            success: false,
+            message: 'Scheduler restart not available in production'
+        });
+    }
+
+    try {
+        const schedulerService = require('../services/scheduler.service');
+        await schedulerService.restartScheduledContributionsProcessor();
+        
+        res.status(httpStatus.OK).json({
+            success: true,
+            message: 'Scheduler restarted successfully',
+            data: {
+                timestamp: new Date().toISOString()
+            }
+        });
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to restart scheduler',
+            error: error.message
+        });
+    }
+});
+
 module.exports = {
     createSchedule,
     getUserSchedules,
@@ -200,4 +404,10 @@ module.exports = {
     cancelSchedule,
     getPaymentLogs,
     getScheduleStats,
+    processDueContributions,
+    getDueContributionsList,
+    getAllSchedules,
+    manuallyTriggerScheduler,
+    getSchedulerStats,
+    restartScheduler,
 }; 

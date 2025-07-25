@@ -279,12 +279,25 @@ const chargeAuthorization = async (data) => {
   try {
     logger.info(`Charging authorization code: ${data.authorization_code} for amount: ${data.amount}`);
 
-    const response = await paystackClient.transaction.chargeAuthorization(data);
+    // Use direct HTTP API call since the paystack-api package method might not exist
+    const response = await axios.post(
+      'https://api.paystack.co/transaction/charge_authorization',
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${config.paystack.secretKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-    logger.info(`Authorization charge response: ${response.status ? 'Success' : 'Failed'}`);
-    return response;
+    const result = response.data;
+    logger.info(`Authorization charge response: ${result.status ? 'Success' : 'Failed'}`);
+    
+    return result;
   } catch (error) {
-    logger.error('Error charging authorization:', error);
+    const errorMessage = error.response && error.response.data ? error.response.data : error.message;
+    logger.error('Error charging authorization:', errorMessage);
     throw error;
   }
 };

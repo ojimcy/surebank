@@ -73,6 +73,23 @@ const getPaymentLogs = {
     }),
 };
 
+const getAllSchedules = {
+    query: Joi.object().keys({
+        status: Joi.string().valid('active', 'paused', 'suspended', 'completed', 'cancelled').optional(),
+        contributionType: Joi.string().valid('ds', 'sb', 'ibs').optional(),
+        userId: Joi.string().custom(objectId).optional(),
+        packageId: Joi.string().custom(objectId).optional(),
+        frequency: Joi.string().valid('daily', 'weekly', 'bi-weekly', 'monthly').optional(),
+        isActive: Joi.boolean().optional(),
+        isDue: Joi.boolean().optional(),
+        sortBy: Joi.string().valid('createdAt', 'nextPaymentDate', 'amount', 'status').default('createdAt'),
+        sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(20),
+        search: Joi.string().optional(), // Search by user email or name
+    }),
+};
+
 module.exports = {
     createSchedule,
     getUserSchedules,
@@ -82,4 +99,5 @@ module.exports = {
     resumeSchedule,
     cancelSchedule,
     getPaymentLogs,
+    getAllSchedules,
 }; 

@@ -87,6 +87,18 @@ functions:
       - httpApi: '*'
     layers:
       - !Ref DependenciesLambdaLayer
+  
+  processScheduledContributions:
+    handler: sls.processScheduledContributions
+    timeout: 900  # 15 minutes
+    memorySize: 1024
+    events:
+      - schedule: 
+          rate: rate(5 minutes)  # Run every 5 minutes
+          description: 'Process scheduled contributions every 5 minutes'
+          enabled: true
+    layers:
+      - !Ref DependenciesLambdaLayer
 
 plugins:
   - serverless-offline
