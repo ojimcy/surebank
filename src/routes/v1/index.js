@@ -38,6 +38,7 @@ const s3Route = require('./s3.route');
 const healthRoute = require('./health.route');
 const storedCardRoute = require('./storedCard.route');
 const scheduledContributionRoute = require('./scheduledContribution.route');
+const systemRoute = require('./system.route');
 
 const router = express.Router();
 
@@ -189,6 +190,10 @@ const defaultRoutes = [
   {
     path: '/scheduled-contributions',
     route: scheduledContributionRoute,
+  },
+  {
+    path: '/system',
+    route: systemRoute,
   },
 ];
 

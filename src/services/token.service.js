@@ -1,11 +1,29 @@
 const jwt = require('jsonwebtoken');
 const moment = require('moment');
+const crypto = require('crypto');
 const httpStatus = require('http-status');
 const config = require('../config/config');
 const userService = require('./user.service');
 const { Token } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { tokenTypes } = require('../config/tokens');
+
+/**
+ * Generate cryptographically secure OTP
+ * @param {number} length - Length of OTP (default: 6)
+ * @returns {string} - Numeric OTP
+ */
+const generateSecureOTP = (length = 6) => {
+  let otp = '';
+  
+  for (let i = 0; i < length; i++) {
+    // Generate random digit (0-9) using crypto.randomInt
+    const digit = crypto.randomInt(0, 10);
+    otp += digit.toString();
+  }
+  
+  return otp;
+};
 
 /**
  * Generate token
@@ -97,7 +115,7 @@ const generateResetPasswordToken = async (email) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'No users found with this email');
   }
-  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+  const otp = generateSecureOTP(6); // 6-digit cryptographically secure OTP
   const expires = moment().add(config.jwt.resetPasswordExpirationMinutes, 'minutes');
   const TokenModel = await Token();
 
@@ -141,7 +159,7 @@ const verifyResetPasswordToken = async (otp) => {
  * @returns {Promise<string>}
  */
 const generateVerifyEmailToken = async (user) => {
-  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+  const otp = generateSecureOTP(6); // 6-digit cryptographically secure OTP
   const expires = moment().add(config.jwt.verifyEmailExpirationMinutes, 'minutes');
   const TokenModel = await Token();
 

@@ -41,7 +41,11 @@ provider:
           Action:
             - secretsmanager:GetSecretValue
           Resource:
-            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:sb/prod/mongo-*
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/prod/database-*
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/prod/jwt-*
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/prod/paystack-*
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/prod/system-*
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/prod/communications-*
         - Effect: Allow
           Action:
             - s3:PutObject

@@ -4,6 +4,8 @@ const Joi = require('joi');
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
+// Note: Secrets initialization is handled in sls.js for serverless environments
+
 const envVarsSchema = Joi.object()
   .keys({
     NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
@@ -68,6 +70,9 @@ const envVarsSchema = Joi.object()
     REDIS_PASSWORD: Joi.string().description('Redis password'),
     REDIS_DB: Joi.number().default(0).description('Redis database number'),
     REDIS_TLS: Joi.string().default('false').description('Enable Redis TLS'),
+    UPSTASH_REDIS_URL: Joi.string().description('Upstash Redis URL'),
+    UPSTASH_REDIS_TOKEN: Joi.string().description('Upstash Redis token'),
+    USE_UPSTASH: Joi.string().default('false').description('Use Upstash Redis service'),
   })
   .unknown();
 
@@ -172,5 +177,10 @@ module.exports = {
     password: envVars.REDIS_PASSWORD,
     db: envVars.REDIS_DB,
     tls: envVars.REDIS_TLS === 'true',
+  },
+  upstash: {
+    url: envVars.UPSTASH_REDIS_URL,
+    token: envVars.UPSTASH_REDIS_TOKEN,
+    enabled: envVars.USE_UPSTASH === 'true',
   },
 };

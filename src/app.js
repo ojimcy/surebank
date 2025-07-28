@@ -31,6 +31,7 @@ const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
 const logger = require('./config/logger');
 const redisService = require('./services/redis.service');
+const { createCSRFMiddleware } = require('./middlewares/csrf');
 
 const app = express();
 
@@ -93,6 +94,20 @@ app.use(compression());
 // jwt authentication
 app.use(passport.initialize());
 passport.use('jwt', jwtStrategy);
+
+// CSRF protection for state-changing operations
+const csrfProtection = createCSRFMiddleware({
+  excludedPaths: [
+    '/api/v1/paystack/webhook',
+    '/api/v1/auth/login',
+    '/api/v1/auth/register',
+    '/api/v1/auth/refresh-tokens',
+    '/api/v1/health',
+  ]
+});
+
+app.use(csrfProtection.generateToken);
+app.use(csrfProtection.validateToken);
 
 // limit repeated failed requests to auth endpoints
 app.use('/v1/auth', authLimiter);

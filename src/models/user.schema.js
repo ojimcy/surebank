@@ -61,9 +61,28 @@ const userSchema = mongoose.Schema(
       required: true,
       trim: true,
       minlength: 8,
+      maxlength: 128,
       validate(value) {
-        if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
-          throw new Error('Password must contain at least one letter and one number');
+        // Enhanced password validation with 8 character minimum
+        const errors = [];
+        
+        if (value.length < 8) errors.push('Password must be at least 8 characters long');
+        if (value.length > 128) errors.push('Password must not exceed 128 characters');
+        if (!/[a-z]/.test(value)) errors.push('Password must contain at least one lowercase letter');
+        if (!/[A-Z]/.test(value)) errors.push('Password must contain at least one uppercase letter');
+        if (!/\d/.test(value)) errors.push('Password must contain at least one number');
+        if (!/[@$!%*?&]/.test(value)) errors.push('Password must contain at least one special character (@$!%*?&)');
+        if (/\s/.test(value)) errors.push('Password must not contain spaces');
+        
+        // Check for common weak patterns
+        const commonPatterns = ['password', '12345678', 'qwerty', 'letmein'];
+        const lowerValue = value.toLowerCase();
+        if (commonPatterns.some(pattern => lowerValue.includes(pattern))) {
+          errors.push('Password contains common patterns. Please choose a more unique password');
+        }
+        
+        if (errors.length > 0) {
+          throw new Error(errors.join('. '));
         }
       },
       private: true, // used by the toJSON plugin
@@ -180,13 +199,20 @@ const userSchema = mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    passwordAttempts: {
+    loginAttempts: {
       type: Number,
       default: 0,
     },
     lockUntil: {
       type: Date,
     },
+    passwordHistory: [{
+      hash: String,
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+    }],
   },
   {
     timestamps: true,
@@ -232,10 +258,113 @@ userSchema.methods.isPasswordMatch = async function (password) {
   return bcrypt.compare(password, user.password);
 };
 
+/**
+ * Check if account is locked
+ * @returns {boolean}
+ */
+userSchema.methods.isLocked = function() {
+  return this.lockUntil && this.lockUntil > Date.now();
+};
+
+/**
+ * Increment login attempts and lock account if max attempts reached
+ * @returns {Promise}
+ */
+userSchema.methods.incLoginAttempts = function() {
+  const maxAttempts = 5;
+  const lockTime = 30 * 60 * 1000; // 30 minutes
+  
+  // Reset attempts if lockout has expired
+  if (this.lockUntil && this.lockUntil < Date.now()) {
+    return this.updateOne({
+      $set: { loginAttempts: 1 },
+      $unset: { lockUntil: 1 }
+    });
+  }
+  
+  const updates = { $inc: { loginAttempts: 1 } };
+  
+  // Lock account if max attempts reached
+  if (this.loginAttempts + 1 >= maxAttempts && !this.isLocked()) {
+    updates.$set = { 
+      lockUntil: Date.now() + lockTime 
+    };
+  }
+  
+  return this.updateOne(updates);
+};
+
+/**
+ * Reset login attempts
+ * @returns {Promise}
+ */
+userSchema.methods.resetLoginAttempts = function() {
+  return this.updateOne({
+    $set: { loginAttempts: 0 },
+    $unset: { lockUntil: 1 }
+  });
+};
+
+/**
+ * Check if password was recently used
+ * @param {string} newPassword
+ * @returns {Promise<boolean>}
+ */
+userSchema.methods.checkPasswordHistory = async function(newPassword) {
+  const maxHistory = 5; // Remember last 5 passwords
+  
+  if (!this.passwordHistory || this.passwordHistory.length === 0) {
+    return true; // No history, password is okay
+  }
+  
+  // Check against recent passwords
+  for (const oldPassword of this.passwordHistory.slice(0, maxHistory)) {
+    const isMatch = await bcrypt.compare(newPassword, oldPassword.hash);
+    if (isMatch) {
+      return false; // Password was used before
+    }
+  }
+  
+  return true; // Password is new
+};
+
+/**
+ * Update password history
+ * @param {string} hashedPassword
+ */
+userSchema.methods.updatePasswordHistory = function(hashedPassword) {
+  const maxHistory = 5;
+  
+  // Add new password to history
+  if (!this.passwordHistory) {
+    this.passwordHistory = [];
+  }
+  
+  this.passwordHistory.unshift({
+    hash: hashedPassword,
+    createdAt: new Date(),
+  });
+  
+  // Keep only last N passwords
+  if (this.passwordHistory.length > maxHistory) {
+    this.passwordHistory = this.passwordHistory.slice(0, maxHistory);
+  }
+  
+  this.lastPasswordChange = new Date();
+};
+
 userSchema.pre('save', async function (next) {
   const user = this;
   if (user.isModified('password')) {
-    user.password = await bcrypt.hash(user.password, 8);
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(user.password, 10); // Increased salt rounds for security
+    
+    // Update password history before setting new password
+    if (!user.isNew) { // Don't add to history for new users
+      user.updatePasswordHistory(user.password); // Store the old hashed password
+    }
+    
+    user.password = hashedPassword;
   }
 
   next();

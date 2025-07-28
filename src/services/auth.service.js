@@ -20,12 +20,38 @@ const redisService = require('./redis.service');
  */
 const loginUserWithEmailAndPassword = async (email, password, otp, sessionData = {}) => {
   const user = await userService.getUserByEmail(email);
-  if (!user || !(await user.isPasswordMatch(password))) {
+  
+  if (!user) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
+  }
+
+  // Check if account is locked
+  if (user.isLocked()) {
+    const lockTime = Math.ceil((user.lockUntil - Date.now()) / (1000 * 60));
+    throw new ApiError(httpStatus.LOCKED, `Account is locked. Try again in ${lockTime} minutes.`);
   }
 
   if (!user.isActive) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Account deactivated, pls contact admin');
+  }
+
+  // Check password
+  const isPasswordMatch = await user.isPasswordMatch(password);
+  if (!isPasswordMatch) {
+    // Increment login attempts on failed password
+    await user.incLoginAttempts();
+    
+    const attemptsLeft = Math.max(0, 5 - (user.loginAttempts + 1));
+    if (attemptsLeft === 0) {
+      throw new ApiError(httpStatus.LOCKED, 'Account locked due to too many failed attempts. Try again in 30 minutes.');
+    } else {
+      throw new ApiError(httpStatus.UNAUTHORIZED, `Incorrect email or password. ${attemptsLeft} attempts remaining.`);
+    }
+  }
+
+  // Reset login attempts on successful password
+  if (user.loginAttempts > 0) {
+    await user.resetLoginAttempts();
   }
 
   if (user.isTwoFactorAuthEnabled) {
@@ -232,15 +258,11 @@ const resetPassword = async (otp, newPassword) => {
       throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }
     
-    // Validate password strength
-    if (newPassword.length < 8) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Password must be at least 8 characters long');
-    }
-    
-    // Check if password has common patterns
-    const commonPatterns = ['password', '12345678', 'qwerty', user.email?.split('@')[0]];
-    if (commonPatterns.some(pattern => newPassword.toLowerCase().includes(pattern))) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Password is too common or contains personal information');
+    // The password validation will be handled by the user schema validator
+    // Check password history to prevent reuse
+    const isPasswordNew = await user.checkPasswordHistory(newPassword);
+    if (!isPasswordNew) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot reuse a recent password. Please choose a different password.');
     }
 
     // Update user's password and record the change time

@@ -3,10 +3,33 @@ const serverless = require('serverless-http');
 const app = require('./src/app');
 const config = require('./src/config/config');
 const logger = require('./src/config/logger');
+const { initializeSecrets } = require('./src/config/secrets');
 
-logger.info('Starting...');
-mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
-  logger.info('Connected to MongoDB');
+// Initialize application
+async function initialize() {
+  try {
+    logger.info('Starting application...');
+    
+    // Initialize secrets in production
+    if (config.env === 'production') {
+      logger.info('Initializing secrets from AWS Secrets Manager...');
+      await initializeSecrets();
+    }
+    
+    // Connect to MongoDB
+    await mongoose.connect(config.mongoose.url, config.mongoose.options);
+    logger.info('Connected to MongoDB');
+    
+  } catch (error) {
+    logger.error('Failed to initialize application:', error);
+    throw error;
+  }
+}
+
+// Initialize on startup
+initialize().catch((error) => {
+  logger.error('Startup failed:', error);
+  process.exit(1);
 });
 
 module.exports.handler = serverless(app);
@@ -16,6 +39,11 @@ module.exports.handler = serverless(app);
 module.exports.processScheduledContributions = async (event, context) => {
   try {
     logger.info('Processing scheduled contributions via Lambda function');
+    
+    // Initialize secrets in production
+    if (config.env === 'production') {
+      await initializeSecrets();
+    }
     
     // Connect to MongoDB if not already connected
     if (mongoose.connection.readyState !== 1) {
