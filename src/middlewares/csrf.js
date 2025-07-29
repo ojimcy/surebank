@@ -121,6 +121,12 @@ const createCSRFMiddleware = (options = {}) => {
         return next();
       }
 
+      // Skip CSRF validation in development environment
+      if (process.env.NODE_ENV === 'development') {
+        logger.info('CSRF validation skipped in development mode');
+        return next();
+      }
+
       // Get token and secret from headers
       const token = req.headers['x-csrf-token'];
       const secret = req.headers['x-csrf-secret'];

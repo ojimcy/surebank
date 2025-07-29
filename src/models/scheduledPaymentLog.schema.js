@@ -28,7 +28,7 @@ const scheduledPaymentLogSchema = mongoose.Schema(
         status: {
             type: String,
             required: true,
-            enum: ['pending', 'processing', 'success', 'failed', 'cancelled'],
+            enum: ['pending', 'processing', 'success', 'failed', 'cancelled', 'pending_retry'],
             default: 'pending',
             comment: 'Status of the payment attempt',
         },

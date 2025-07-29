@@ -5,6 +5,7 @@ const PAYMENT_STATUS = ['approved', 'cancelled', 'pending'];
 const COMMISSION = ['ds_commission', 'sb_commission'];
 const CONTRIBUTION_CIRCLE = 31;
 const SMS_FFE = 5;
+const MAX_RETRIES = 5;
 
 module.exports = {
   ACCOUNT_TYPE,
@@ -14,4 +15,5 @@ module.exports = {
   COMMISSION,
   CONTRIBUTION_CIRCLE,
   SMS_FFE,
+  MAX_RETRIES,
 };

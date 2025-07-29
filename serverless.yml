@@ -4,8 +4,9 @@ frameworkVersion: '4'
 provider:
   name: aws
   runtime: nodejs22.x
+  region: us-east-2
   memorySize: 512
-  timeout: 90
+  timeout: 30
   environment: ${file(env.json)}
   httpApi:
     cors:
@@ -98,8 +99,8 @@ functions:
     memorySize: 1024
     events:
       - schedule: 
-          rate: rate(5 minutes)  # Run every 5 minutes
-          description: 'Process scheduled contributions every 5 minutes'
+          rate: cron(0 6 * * ? *)  # Run daily at 6 AM UTC
+          description: 'Process scheduled contributions daily at 6 AM UTC'
           enabled: true
     layers:
       - !Ref DependenciesLambdaLayer

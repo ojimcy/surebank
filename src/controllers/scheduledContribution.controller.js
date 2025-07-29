@@ -41,7 +41,6 @@ const getUserSchedules = catchAsync(async (req, res) => {
         limit: parseInt(filters.limit) || 10,
         totalPages: Math.ceil(schedules.length / (parseInt(filters.limit) || 10))
     };
-    console.log('users s', response)
     res.status(httpStatus.OK).json(response);
 });
 

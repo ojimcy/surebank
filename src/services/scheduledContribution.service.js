@@ -9,6 +9,7 @@ const dailySavingsService = require('./dailySavings.service');
 const sbPackageService = require('./sbPackage.service');
 const logger = require('../config/logger');
 const { v4: uuidv4 } = require('uuid');
+const { MAX_RETRIES } = require('../constants/account');
 
 /**
  * Calculate next payment date based on frequency
@@ -105,7 +106,7 @@ const createScheduledContribution = async (scheduleData) => {
         const packageData = await validatePackage(packageId, userId, contributionType);
         
         // Additional validation: ensure package belongs to the user
-        if (packageData.userId && packageData.userId.toString() !== userId) {
+        if (packageData.userId && packageData.userId.toString() !== userId.toString()) {
             throw new ApiError(httpStatus.FORBIDDEN, 'Cannot create schedule for package that belongs to another user');
         }
 
@@ -200,10 +201,12 @@ const getUserScheduledContributions = async (userId, filters = {}) => {
  */
 const getDueScheduledContributions = async (dueDate = new Date()) => {
     const ScheduledContributionModel = await ScheduledContribution();
+    const ScheduledPaymentLogModel = await ScheduledPaymentLog();
     // Ensure StoredCard model is registered for population
     await StoredCard();
 
     try {
+        // Get regular due schedules
         const dueSchedules = await ScheduledContributionModel.find({
             status: 'active',
             isActive: true,
@@ -213,6 +216,41 @@ const getDueScheduledContributions = async (dueDate = new Date()) => {
                 { endDate: { $gte: dueDate } },
             ],
         }).populate('storedCardId', 'authorizationCode isActive last4 cardType bank');
+
+        // Get schedules with pending retry payments
+        const retryLogs = await ScheduledPaymentLogModel.find({
+            status: 'pending_retry',
+            nextRetryAt: { $lte: dueDate }
+        }).select('scheduledContributionId');
+
+        if (retryLogs.length > 0) {
+            const retryScheduleIds = retryLogs.map(log => log.scheduledContributionId);
+            const retrySchedules = await ScheduledContributionModel.find({
+                _id: { $in: retryScheduleIds },
+                status: 'active',
+                isActive: true
+            }).populate('storedCardId', 'authorizationCode isActive last4 cardType bank');
+
+            // Combine and deduplicate schedules
+            const allScheduleIds = new Set();
+            const combinedSchedules = [];
+
+            dueSchedules.forEach(schedule => {
+                if (!allScheduleIds.has(schedule._id.toString())) {
+                    allScheduleIds.add(schedule._id.toString());
+                    combinedSchedules.push(schedule);
+                }
+            });
+
+            retrySchedules.forEach(schedule => {
+                if (!allScheduleIds.has(schedule._id.toString())) {
+                    allScheduleIds.add(schedule._id.toString());
+                    combinedSchedules.push(schedule);
+                }
+            });
+
+            return combinedSchedules;
+        }
 
         return dueSchedules;
     } catch (error) {
@@ -330,9 +368,8 @@ const processScheduledPayment = async (schedule) => {
             { new: true }
         );
 
-        // Suspend if max retries reached (default maxRetries to 3 if not set)
-        const maxRetries = updatedSchedule.maxRetries || 3;
-        if (updatedSchedule.failedPayments >= maxRetries) {
+        // Suspend if max retries reached (2 failures: initial + 1 retry)
+        if (updatedSchedule.failedPayments >= MAX_RETRIES) {
             await ScheduledContributionModel.findByIdAndUpdate(schedule._id, {
                 status: 'suspended',
                 suspendedReason: 'Max retries reached',
@@ -518,8 +555,8 @@ const processFailedPayment = async (schedule, paymentLog, chargeResponse) => {
     try {
         const errorMessage = chargeResponse.message || 'Payment failed';
         const retryCount = (paymentLog.retryCount || 0) + 1;
-        const maxRetries = paymentLog.maxRetries || 3;
-        const shouldRetry = retryCount < maxRetries;
+        const maxRetries = 1; // Only one retry per day
+        const shouldRetry = retryCount <= maxRetries;
 
         // Update payment log
         const logUpdate = {
@@ -531,9 +568,8 @@ const processFailedPayment = async (schedule, paymentLog, chargeResponse) => {
         };
 
         if (shouldRetry) {
-            // Schedule retry (exponential backoff: 1min, 4min, 16min for testing)
-            const retryMinutes = Math.pow(4, retryCount - 1);
-            logUpdate.nextRetryAt = new Date(Date.now() + retryMinutes * 60 * 1000);
+            // Schedule retry for 6 hours later (same day)
+            logUpdate.nextRetryAt = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours
             logUpdate.status = 'pending_retry';
         }
 
@@ -546,8 +582,8 @@ const processFailedPayment = async (schedule, paymentLog, chargeResponse) => {
             lastAttemptDate: new Date(),
         };
 
-        // If too many failures, suspend the schedule
-        if (failedPayments >= 3) {
+        // If too many failures, suspend the schedule (2 failures: initial + 1 retry)
+        if (failedPayments >= 2) {
             scheduleUpdate.status = 'suspended';
             scheduleUpdate.isActive = false;
             scheduleUpdate.suspendedReason = 'Too many failed payment attempts';
