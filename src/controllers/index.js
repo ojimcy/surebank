@@ -24,3 +24,4 @@ module.exports.userPortalController = require('./userPortal.controller');
 module.exports.paymentController = require('./payment.controller');
 module.exports.storedCardController = require('./storedCard.controller');
 module.exports.scheduledContributionController = require('./scheduledContribution.controller');
+module.exports.sesWebhookController = require('./sesWebhook.controller');

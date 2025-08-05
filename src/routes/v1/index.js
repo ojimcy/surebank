@@ -39,6 +39,7 @@ const healthRoute = require('./health.route');
 const storedCardRoute = require('./storedCard.route');
 const scheduledContributionRoute = require('./scheduledContribution.route');
 const systemRoute = require('./system.route');
+const sesWebhookRoute = require('./sesWebhook.route');
 
 const router = express.Router();
 
@@ -194,6 +195,10 @@ const defaultRoutes = [
   {
     path: '/system',
     route: systemRoute,
+  },
+  {
+    path: '/ses',
+    route: sesWebhookRoute,
   },
 ];
 

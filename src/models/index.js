@@ -43,3 +43,5 @@ module.exports.KYC = require('./kyc.model');
 module.exports.StoredCard = require('./storedCard.model');
 module.exports.ScheduledContribution = require('./scheduledContribution.model');
 module.exports.ScheduledPaymentLog = require('./scheduledPaymentLog.model');
+module.exports.EmailSuppression = require('./emailSuppression.schema');
+module.exports.EmailEvent = require('./emailEvent.schema');

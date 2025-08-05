@@ -73,6 +73,8 @@ const envVarsSchema = Joi.object()
     UPSTASH_REDIS_URL: Joi.string().description('Upstash Redis URL'),
     UPSTASH_REDIS_TOKEN: Joi.string().description('Upstash Redis token'),
     USE_UPSTASH: Joi.string().default('false').description('Use Upstash Redis service'),
+    SES_CONFIGURATION_SET: Joi.string().default('surebank-email-tracking').description('AWS SES configuration set name'),
+    SES_SNS_TOPIC_ARN: Joi.string().description('AWS SNS topic ARN for SES notifications'),
   })
   .unknown();
 
@@ -182,5 +184,9 @@ module.exports = {
     url: envVars.UPSTASH_REDIS_URL,
     token: envVars.UPSTASH_REDIS_TOKEN,
     enabled: envVars.USE_UPSTASH === 'true',
+  },
+  ses: {
+    configurationSet: envVars.SES_CONFIGURATION_SET,
+    snsTopicArn: envVars.SES_SNS_TOPIC_ARN,
   },
 };

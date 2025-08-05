@@ -2,7 +2,6 @@ const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
 const httpStatus = require('http-status');
 const config = require('../config/config');
 const logger = require('../config/logger');
-const { EmailSuppression, EmailEvent } = require('../models');
 const verifyEmailTemplate = require('../templates/emails/verify-email.template');
 const resetPasswordTemplate = require('../templates/emails/reset-password.template');
 const dailySavingsContributionTemplate = require('../templates/emails/daily-savings-contribution.template');
@@ -17,13 +16,7 @@ const orderPaymentTemplate = require('../templates/emails/order-payment.template
 const withdrawalApprovedTemplate = require('../templates/emails/withdrawal-approved.template');
 const ApiError = require('../utils/ApiError');
 
-const client = new SESClient({ 
-  region: 'us-east-1',
-  maxAttempts: 3, // Enable automatic retry
-});
-
-// Configuration set for tracking
-const CONFIGURATION_SET = config.ses?.configurationSet || 'surebank-email-tracking';
+const client = new SESClient({ region: 'us-east-1' });
 
 const emailTemplates = {
   VERIFY_EMAIL: {
@@ -81,81 +74,12 @@ const formatEmailSource = (email) => {
 };
 
 /**
- * Check if email is in suppression list
- * @param {string} email - Email address to check
- * @returns {Promise<boolean>} - True if email is suppressed
- */
-const isEmailSuppressed = async (email) => {
-  try {
-    return await EmailSuppression.isEmailSuppressed(email);
-  } catch (error) {
-    logger.error('Error checking email suppression:', error);
-    // If we can't check, allow sending but log the error
-    return false;
-  }
-};
-
-/**
- * Sleep function for retry delays
- * @param {number} ms - Milliseconds to sleep
- */
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
- * Send email with retry logic
- * @param {Object} params - SES send parameters
- * @param {number} attempt - Current attempt number
- * @returns {Promise<Object>} - SES response
- */
-const sendEmailWithRetry = async (params, attempt = 1) => {
-  try {
-    const response = await client.send(new SendEmailCommand(params));
-    
-    // Record successful send event
-    const recipients = params.Destination.ToAddresses || [];
-    for (const recipient of recipients) {
-      await EmailEvent.create({
-        messageId: response.MessageId,
-        eventType: 'send',
-        email: recipient,
-        timestamp: new Date(),
-        source: params.Source,
-        configurationSet: params.ConfigurationSet,
-      });
-    }
-    
-    return response;
-  } catch (error) {
-    const isRetryable = 
-      error.name === 'ServiceUnavailableException' ||
-      error.name === 'TooManyRequestsException' ||
-      error.name === 'RequestTimeout' ||
-      error.$metadata?.httpStatusCode >= 500;
-
-    if (isRetryable && attempt < 3) {
-      const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s
-      logger.warn(`Email send attempt ${attempt} failed, retrying in ${delay}ms:`, error.message);
-      await sleep(delay);
-      return sendEmailWithRetry(params, attempt + 1);
-    }
-
-    throw error;
-  }
-};
-
-/**
  * Send verification email
  * @param {string} to
  * @param {string} otp
  * @returns {Promise}
  */
 const sendVerificationEmail = async (to, otp) => {
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping verification email`);
-    throw new ApiError(httpStatus.BAD_REQUEST, 'This email address cannot receive emails due to previous bounce or complaint');
-  }
-
   const data = {
     name: to.split('@')[0],
     otp,
@@ -177,11 +101,10 @@ const sendVerificationEmail = async (to, otp) => {
         },
       },
     },
-    ConfigurationSet: CONFIGURATION_SET,
   };
 
   try {
-    await sendEmailWithRetry(params);
+    await client.send(new SendEmailCommand(params));
     logger.info(`Verification email sent to ${to}`);
   } catch (error) {
     logger.error('Error sending verification email:', error);
@@ -193,12 +116,6 @@ const sendVerificationEmail = async (to, otp) => {
 };
 
 const sendResetPasswordEmail = async (to, otp) => {
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping reset password email`);
-    throw new ApiError(httpStatus.BAD_REQUEST, 'This email address cannot receive emails due to previous bounce or complaint');
-  }
-
   const data = {
     name: to.split('@')[0],
     otp,
@@ -220,11 +137,10 @@ const sendResetPasswordEmail = async (to, otp) => {
         },
       },
     },
-    ConfigurationSet: CONFIGURATION_SET,
   };
 
   try {
-    await sendEmailWithRetry(params);
+    await client.send(new SendEmailCommand(params));
     logger.info(`Reset password email sent to ${to}`);
   } catch (error) {
     logger.error('Error sending reset password email:', error);
@@ -248,12 +164,6 @@ const sendResetPasswordEmail = async (to, otp) => {
  * @returns {Promise}
  */
 const sendPackageCreationEmail = async (to, packageDetails) => {
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping package creation email`);
-    return; // Don't throw error for transactional emails, just skip
-  }
-
   const {
     name: packageName,
     userName = to.split('@')[0],
@@ -287,11 +197,10 @@ const sendPackageCreationEmail = async (to, packageDetails) => {
         },
       },
     },
-    ConfigurationSet: CONFIGURATION_SET,
   };
 
   try {
-    await sendEmailWithRetry(params);
+    await client.send(new SendEmailCommand(params));
     logger.info(`Package creation email sent to ${to}`);
   } catch (error) {
     logger.error('Error sending package creation email:', error);
@@ -319,12 +228,6 @@ const sendPackageCreationEmail = async (to, packageDetails) => {
  * @returns {Promise}
  */
 const sendGenericPackageCreationEmail = async (to, packageDetails) => {
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping generic package creation email`);
-    return; // Don't throw error for transactional emails, just skip
-  }
-
   const {
     userName = to.split('@')[0],
     packageType,
@@ -368,11 +271,10 @@ const sendGenericPackageCreationEmail = async (to, packageDetails) => {
         },
       },
     },
-    ConfigurationSet: CONFIGURATION_SET,
   };
 
   try {
-    await sendEmailWithRetry(params);
+    await client.send(new SendEmailCommand(params));
     logger.info(`Generic package creation email (${packageType}) sent to ${to}`);
   } catch (error) {
     logger.error('Error sending generic package creation email:', error);
@@ -400,12 +302,6 @@ const sendGenericPackageCreationEmail = async (to, packageDetails) => {
  * @returns {Promise}
  */
 const sendGenericContributionEmail = async (to, contributionDetails) => {
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping generic contribution email`);
-    return; // Don't throw error for transactional emails, just skip
-  }
-
   const {
     userName = to.split('@')[0],
     packageType,
@@ -449,11 +345,10 @@ const sendGenericContributionEmail = async (to, contributionDetails) => {
         },
       },
     },
-    ConfigurationSet: CONFIGURATION_SET,
   };
 
   try {
-    await sendEmailWithRetry(params);
+    await client.send(new SendEmailCommand(params));
     logger.info(`Generic contribution confirmation email (${packageType}) sent to ${to}`);
   } catch (error) {
     logger.error('Error sending generic contribution confirmation email:', error);
@@ -477,12 +372,6 @@ const sendGenericContributionEmail = async (to, contributionDetails) => {
  */
 const sendEmail = async (options) => {
   const { to, subject, text, html, template, templateData } = options;
-
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping email`);
-    return; // Don't throw error for general emails, just skip
-  }
 
   let emailContent;
 
@@ -531,11 +420,10 @@ const sendEmail = async (options) => {
       ToAddresses: [to],
     },
     Message: emailContent,
-    ConfigurationSet: CONFIGURATION_SET,
   };
 
   try {
-    await sendEmailWithRetry(params);
+    await client.send(new SendEmailCommand(params));
     logger.info(`Email sent to ${to}`);
   } catch (error) {
     logger.error('Error sending email:', error);
