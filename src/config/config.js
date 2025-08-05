@@ -44,7 +44,7 @@ const envVarsSchema = Joi.object()
     SMS_PROVIDER_URL: Joi.string().description('SMS provider URL'),
     META_PHONE_NUMBER_ID: Joi.string().description('Meta phone number ID'),
     META_ACCESS_TOKEN: Joi.string().description('Meta access token'),
-    AWS_REGION: Joi.string().default('us-east-1').description('AWS Region for services'),
+    APP_AWS_REGION: Joi.string().default('us-east-1').description('AWS Region for services'),
     AWS_ACCESS_KEY_ID: Joi.string().description('AWS Access Key ID for S3'),
     AWS_SECRET_ACCESS_KEY: Joi.string().description('AWS Secret Access Key for S3'),
     AWS_S3_BUCKET: Joi.string().required().description('AWS S3 Bucket name'),
@@ -147,7 +147,7 @@ module.exports = {
     accessToken: envVars.META_ACCESS_TOKEN,
   },
   aws: {
-    region: envVars.AWS_REGION,
+    region: envVars.APP_AWS_REGION,
     secretName: envVars.MONGODB_SECRET_NAME,
     accessKeyId: envVars.AWS_ACCESS_KEY_ID,
     secretAccessKey: envVars.AWS_SECRET_ACCESS_KEY,

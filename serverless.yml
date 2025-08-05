@@ -4,10 +4,11 @@ frameworkVersion: '4'
 provider:
   name: aws
   runtime: nodejs22.x
-  region: us-east-2
+  region: ${opt:region, 'us-east-2'}
+  stage: ${opt:stage, 'prod'}
   memorySize: 512
   timeout: 30
-  environment: ${file(env.json)}
+  environment: ${file(env.${self:provider.stage}.json)}
   httpApi:
     cors:
       allowedOrigins:
@@ -43,11 +44,11 @@ provider:
           Action:
             - secretsmanager:GetSecretValue
           Resource:
-            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/prod/database-*
-            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/prod/jwt-*
-            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/prod/paystack-*
-            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/prod/system-*
-            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/prod/communications-*
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/${self:provider.stage}/database-*
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/${self:provider.stage}/jwt-*
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/${self:provider.stage}/paystack-*
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/${self:provider.stage}/system-*
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/${self:provider.stage}/communications-*
         - Effect: Allow
           Action:
             - s3:PutObject

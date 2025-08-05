@@ -9,7 +9,7 @@ function initializeAWS() {
     try {
       const AWS = require('aws-sdk');
       secretsManager = new AWS.SecretsManager({
-        region: process.env.AWS_REGION || 'us-east-1'
+        region: process.env.APP_AWS_REGION || 'us-east-1'
       });
     } catch (error) {
       logger.error('AWS SDK not available:', error.message);

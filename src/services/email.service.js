@@ -18,7 +18,7 @@ const withdrawalApprovedTemplate = require('../templates/emails/withdrawal-appro
 const ApiError = require('../utils/ApiError');
 
 const client = new SESClient({ 
-  region: 'us-east-1',
+  region: config.aws.region,
   maxAttempts: 3, // Enable automatic retry
 });
 
