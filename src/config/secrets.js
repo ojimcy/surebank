@@ -1,3 +1,4 @@
+const AWS = require('aws-sdk');
 const config = require('./config');
 const logger = require('./logger');
 
@@ -7,9 +8,8 @@ let secretsManager = null;
 function initializeAWS() {
   if (!secretsManager) {
     try {
-      const AWS = require('aws-sdk');
       secretsManager = new AWS.SecretsManager({
-        region: process.env.APP_AWS_REGION || 'us-east-1'
+        region: process.env.APP_AWS_REGION || 'us-east-1',
       });
     } catch (error) {
       logger.error('AWS SDK not available:', error.message);
@@ -30,15 +30,14 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
  */
 async function getSecret(secretName) {
   // Check cache first
-  if (secretsCache[secretName] && 
-      secretsCache[secretName].timestamp > Date.now() - CACHE_TTL) {
+  if (secretsCache[secretName] && secretsCache[secretName].timestamp > Date.now() - CACHE_TTL) {
     return secretsCache[secretName].value;
   }
 
   try {
     const sm = initializeAWS();
     const data = await sm.getSecretValue({ SecretId: secretName }).promise();
-    
+
     let secretValue;
     if ('SecretString' in data) {
       secretValue = JSON.parse(data.SecretString);
@@ -51,7 +50,7 @@ async function getSecret(secretName) {
     // Cache the secret
     secretsCache[secretName] = {
       value: secretValue,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     return secretValue;
@@ -79,14 +78,14 @@ async function initializeSecrets() {
       getSecret('surebank/prod/jwt'),
       getSecret('surebank/prod/paystack'),
       getSecret('surebank/prod/system'),
-      getSecret('surebank/prod/communications')
+      getSecret('surebank/prod/communications'),
     ]);
 
     // Database secrets
     const dbSecrets = secrets[0];
     process.env.MONGODB_URL = dbSecrets.MONGODB_URL;
     process.env.ENCRYPTION_KEY = dbSecrets.ENCRYPTION_KEY;
-    
+
     // JWT secrets
     const jwtSecrets = secrets[1];
     process.env.JWT_SECRET = jwtSecrets.JWT_SECRET;
@@ -94,14 +93,14 @@ async function initializeSecrets() {
     process.env.JWT_REFRESH_EXPIRATION_DAYS = jwtSecrets.JWT_REFRESH_EXPIRATION_DAYS;
     process.env.JWT_RESET_PASSWORD_EXPIRATION_MINUTES = jwtSecrets.JWT_RESET_PASSWORD_EXPIRATION_MINUTES;
     process.env.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES = jwtSecrets.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES;
-    
+
     // Paystack secrets
     const paystackSecrets = secrets[2];
     process.env.PAYSTACK_SECRET_KEY = paystackSecrets.PAYSTACK_SECRET_KEY;
     process.env.PAYSTACK_PUBLIC_KEY = paystackSecrets.PAYSTACK_PUBLIC_KEY;
     process.env.PAYSTACK_CALLBACK_URL = paystackSecrets.PAYSTACK_CALLBACK_URL;
     process.env.PAYSTACK_BASE_URL = paystackSecrets.PAYSTACK_BASE_URL;
-    
+
     // System configuration
     const systemSecrets = secrets[3];
     process.env.SYSTEM_ACCOUNT_ID = systemSecrets.SYSTEM_ACCOUNT_ID;
@@ -113,7 +112,7 @@ async function initializeSecrets() {
     process.env.CLIENT_URL = systemSecrets.CLIENT_URL;
     process.env.FRONTEND_URL = systemSecrets.FRONTEND_URL;
     process.env.MOBILE_APP_SCHEME = systemSecrets.MOBILE_APP_SCHEME;
-    
+
     // Communication secrets
     const commSecrets = secrets[4];
     process.env.EMAIL_FROM = commSecrets.EMAIL_FROM;
@@ -148,11 +147,11 @@ async function initializeSecrets() {
 async function rotateSecrets() {
   try {
     // Clear cache to force refresh
-    Object.keys(secretsCache).forEach(key => delete secretsCache[key]);
-    
+    Object.keys(secretsCache).forEach((key) => delete secretsCache[key]);
+
     // Re-initialize secrets
     await initializeSecrets();
-    
+
     logger.info('Secrets rotated successfully');
   } catch (error) {
     logger.error('Failed to rotate secrets:', error);
@@ -163,5 +162,5 @@ async function rotateSecrets() {
 module.exports = {
   getSecret,
   initializeSecrets,
-  rotateSecrets
+  rotateSecrets,
 };

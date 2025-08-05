@@ -151,7 +151,6 @@ const createConnection = async (options) => {
     connectionPromise = new Promise((resolve, reject) => {
       try {
         conn = mongoose.createConnection(config.mongoose.url, options);
-
         // Set up connection event handlers
         conn.on('connected', () => {
           logger.info('MongoDB connected successfully');
