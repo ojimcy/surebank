@@ -13,6 +13,7 @@ const { authLimiter } = require('./middlewares/rateLimiter');
 const routes = require('./routes/v1');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
+const performanceMonitor = require('./middlewares/performanceMonitor');
 
 const app = express();
 
@@ -41,12 +42,41 @@ app.use(compression());
 // app.use(cors({ credentials: true }));
 // app.options('*', cors({ credentials: true }));
 
-// enable cors with credentials for the specific frontend domain
+// CORS configuration for both local and serverless environments
 const corsOptions = {
-  origin: '*',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    
+    // For production, allow specific domains
+    if (config.env === 'production') {
+      const allowedOrigins = [
+        'https://surebankstores.ng',
+        'https://www.surebankstores.ng',
+        'http://surebankstores.ng',
+        'http://www.surebankstores.ng'
+      ];
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    } else {
+      // For development/test, allow any origin
+      callback(null, true);
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Api-Key'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
+
 app.use(cors(corsOptions));
+
+// Explicitly handle OPTIONS requests for serverless
+app.options('*', cors(corsOptions));
 
 // Allow requests from surebankstores.ng
 // const corsOptions = {
@@ -55,6 +85,9 @@ app.use(cors(corsOptions));
 // };
 
 app.use(cors(corsOptions));
+
+// Add performance monitoring
+app.use(performanceMonitor);
 
 // jwt authentication
 app.use(passport.initialize());

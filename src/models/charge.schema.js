@@ -50,4 +50,17 @@ const chargeSchema = mongoose.Schema(
 chargeSchema.plugin(toJSON);
 chargeSchema.plugin(paginate);
 
+// Add indexes for performance optimization
+chargeSchema.index({ date: 1 });
+chargeSchema.index({ branchId: 1 });
+chargeSchema.index({ reasons: 1 });
+chargeSchema.index({ userId: 1 });
+chargeSchema.index({ createdBy: 1 });
+chargeSchema.index({ packageId: 1 });
+
+// Compound indexes for common query patterns
+chargeSchema.index({ date: 1, branchId: 1 });
+chargeSchema.index({ date: 1, reasons: 1 });
+chargeSchema.index({ reasons: 1, branchId: 1 });
+
 module.exports = chargeSchema;

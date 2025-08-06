@@ -334,14 +334,10 @@ const getProductsBySlug = async (collectionSlug) => {
   // Extract the product IDs from the collection
   const productIds = collection.products;
 
-  // Retrieve detailed information for each product using the IDs
-  const products = await Promise.all(
-    productIds.map(async (productId) => {
-      // Assuming ProductCatalogueModel is the correct model for detailed product information
-      const productDetails = await ProductCatalogueModel.findById(productId);
-      return productDetails;
-    })
-  );
+  // Retrieve all products in a single query instead of N+1 queries
+  const products = await ProductCatalogueModel.find({
+    _id: { $in: productIds },
+  }).lean();
 
   return products;
 };

@@ -50,4 +50,18 @@ const contributionSchema = mongoose.Schema(
 contributionSchema.plugin(toJSON);
 contributionSchema.plugin(paginate);
 
+// Add indexes for performance optimization
+contributionSchema.index({ date: 1 });
+contributionSchema.index({ branchId: 1 });
+contributionSchema.index({ createdBy: 1 });
+contributionSchema.index({ narration: 1 });
+contributionSchema.index({ packageId: 1 });
+contributionSchema.index({ accountNumber: 1 });
+
+// Compound indexes for common query patterns
+contributionSchema.index({ date: 1, branchId: 1 });
+contributionSchema.index({ date: 1, createdBy: 1 });
+contributionSchema.index({ date: 1, branchId: 1, createdBy: 1 });
+contributionSchema.index({ date: 1, narration: 1 });
+
 module.exports = contributionSchema;

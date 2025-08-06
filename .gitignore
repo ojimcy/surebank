@@ -77,10 +77,33 @@ build
 # yarn error logs
 yarn-error.log
 
-# Environment varibales
-.env*
+# Environment variables
+.env
+.env.local
+.env.*.local
+env.json
+!.env.template
 !.env*.example
 
 # Code coverage
 coverage
 .serverless
+
+# Deployment info
+deployment-info.txt
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# PM2 logs
+.pm2/
+
+# Layers
+layers/dependencies/nodejs/node_modules/

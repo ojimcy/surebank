@@ -1,34 +1,201 @@
-service: surebank-api
+service: surebank-api-${env:NODE_ENV, 'dev'}
 frameworkVersion: '3'
 
 provider:
   name: aws
   runtime: nodejs18.x
-  # timeout: 90
-  environment: ${file(env.json)}
+  stage: ${opt:stage, env:NODE_ENV, 'development'}
+  region: ${env:AWS_REGION, 'us-east-1'}
+  # Environment-based memory allocation
+  memorySize: ${self:custom.envSettings.${self:provider.stage}.memorySize}
+  timeout: ${env:LAMBDA_TIMEOUT, '30'}
+  # deploymentBucket:
+  #   name: surebank-serverless-deployments-${self:provider.stage}-${self:provider.region}
+  #   versioning: true
+  #   serverSideEncryption: AES256
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    PORT: ${self:custom.envFileContent.PORT}
+    MONGODB_URL: ${self:custom.envFileContent.MONGODB_URL}
+    MONGODB_URL_DEV: ${self:custom.envFileContent.MONGODB_URL_DEV}
+    JWT_SECRET: ${self:custom.envFileContent.JWT_SECRET}
+    JWT_ACCESS_EXPIRATION_MINUTES: ${self:custom.envFileContent.JWT_ACCESS_EXPIRATION_MINUTES}
+    JWT_REFRESH_EXPIRATION_DAYS: ${self:custom.envFileContent.JWT_REFRESH_EXPIRATION_DAYS}
+    JWT_RESET_PASSWORD_EXPIRATION_MINUTES: ${self:custom.envFileContent.JWT_RESET_PASSWORD_EXPIRATION_MINUTES}
+    JWT_VERIFY_EMAIL_EXPIRATION_MINUTES: ${self:custom.envFileContent.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES}
+    SYSTEM_ACCOUNT_ID: ${self:custom.envFileContent.SYSTEM_ACCOUNT_ID}
+    SMART_CHAIN_NODE: ${self:custom.envFileContent.SMART_CHAIN_NODE}
+    MATIC_NODE: ${self:custom.envFileContent.MATIC_NODE}
+    MASTER_ADDRESS_PK: ${self:custom.envFileContent.MASTER_ADDRESS_PK}
+    SMTP_HOST: ${self:custom.envFileContent.SMTP_HOST}
+    SMTP_PORT: ${self:custom.envFileContent.SMTP_PORT}
+    SMTP_USERNAME: ${self:custom.envFileContent.SMTP_USERNAME}
+    SMTP_PASSWORD: ${self:custom.envFileContent.SMTP_PASSWORD}
+    EMAIL_FROM: ${self:custom.envFileContent.EMAIL_FROM}
+    EMAIL_TEMPLATE_DIRECTORY: ${self:custom.envFileContent.EMAIL_TEMPLATE_DIRECTORY}
+    SMS_TEMPLATE_DIRECTORY: ${self:custom.envFileContent.SMS_TEMPLATE_DIRECTORY}
+    MAILGUN_DOMAIN: ${self:custom.envFileContent.MAILGUN_DOMAIN}
+    MAILGUN_API_KEY: ${self:custom.envFileContent.MAILGUN_API_KEY}
+    MAILGUN_API_USERNAME: ${self:custom.envFileContent.MAILGUN_API_USERNAME}
+    MAILGUN_BASE_URL: ${self:custom.envFileContent.MAILGUN_BASE_URL}
+    RELOADLY_CLIENT_ID: ${self:custom.envFileContent.RELOADLY_CLIENT_ID}
+    RELOADLY_CLIENT_SECRET: ${self:custom.envFileContent.RELOADLY_CLIENT_SECRET}
+    RELOADLY_TOPUPS_BASE_URL: ${self:custom.envFileContent.RELOADLY_TOPUPS_BASE_URL}
+    SMS_API_TOKEN: ${self:custom.envFileContent.SMS_API_TOKEN}
+    SMS_SENDER: ${self:custom.envFileContent.SMS_SENDER}
+    META_PHONE_NUMBER_ID: ${self:custom.envFileContent.META_PHONE_NUMBER_ID}
+    META_ACCESS_TOKEN: ${self:custom.envFileContent.META_ACCESS_TOKEN}
   httpApi:
-    cors:
-      allowedOrigins:
-        - https://surebankstores.ng
-        - http://localhost:3001 
-      allowedMethods:
-        - GET
-        - POST
-        - PUT
-        - PATCH
-        - DELETE
-        - OPTIONS
-      allowedHeaders:
-        - Content-Type
-        - Authorization
-        - X-Requested-With
-      allowCredentials: true
+    # CORS handled by Express middleware instead
+  tags:
+    Environment: ${self:provider.stage}
+    Project: surebank-api
+  stackTags:
+    Environment: ${self:provider.stage}
+    Project: surebank-api
+  # Enable X-Ray tracing for production
+  tracing:
+    lambda: ${self:custom.envSettings.${self:provider.stage}.enableTracing}
+    apiGateway: ${self:custom.envSettings.${self:provider.stage}.enableTracing}
 
 functions:
   api:
     handler: sls.handler
+    memorySize: ${self:custom.envSettings.${self:provider.stage}.memorySize}
+    timeout: ${env:LAMBDA_TIMEOUT, '30'}
+    # reservedConcurrency: ${self:custom.envSettings.${self:provider.stage}.reservedConcurrency}
+    # provisionedConcurrency: ${self:custom.envSettings.${self:provider.stage}.provisionedConcurrency, null}
     events:
       - httpApi: '*'
+    environment:
+      NODE_ENV: ${self:provider.stage}
+      LOG_LEVEL: ${self:custom.envSettings.${self:provider.stage}.logLevel}
+      PORT: ${self:custom.envFileContent.PORT}
+      MONGODB_URL: ${self:custom.envFileContent.MONGODB_URL}
+      MONGODB_URL_DEV: ${self:custom.envFileContent.MONGODB_URL_DEV}
+      JWT_SECRET: ${self:custom.envFileContent.JWT_SECRET}
+      JWT_ACCESS_EXPIRATION_MINUTES: ${self:custom.envFileContent.JWT_ACCESS_EXPIRATION_MINUTES}
+      JWT_REFRESH_EXPIRATION_DAYS: ${self:custom.envFileContent.JWT_REFRESH_EXPIRATION_DAYS}
+      JWT_RESET_PASSWORD_EXPIRATION_MINUTES: ${self:custom.envFileContent.JWT_RESET_PASSWORD_EXPIRATION_MINUTES}
+      JWT_VERIFY_EMAIL_EXPIRATION_MINUTES: ${self:custom.envFileContent.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES}
+      SYSTEM_ACCOUNT_ID: ${self:custom.envFileContent.SYSTEM_ACCOUNT_ID}
+      SMART_CHAIN_NODE: ${self:custom.envFileContent.SMART_CHAIN_NODE}
+      MATIC_NODE: ${self:custom.envFileContent.MATIC_NODE}
+      MASTER_ADDRESS_PK: ${self:custom.envFileContent.MASTER_ADDRESS_PK}
+      SMTP_HOST: ${self:custom.envFileContent.SMTP_HOST}
+      SMTP_PORT: ${self:custom.envFileContent.SMTP_PORT}
+      SMTP_USERNAME: ${self:custom.envFileContent.SMTP_USERNAME}
+      SMTP_PASSWORD: ${self:custom.envFileContent.SMTP_PASSWORD}
+      EMAIL_FROM: ${self:custom.envFileContent.EMAIL_FROM}
+      EMAIL_TEMPLATE_DIRECTORY: ${self:custom.envFileContent.EMAIL_TEMPLATE_DIRECTORY}
+      SMS_TEMPLATE_DIRECTORY: ${self:custom.envFileContent.SMS_TEMPLATE_DIRECTORY}
+      MAILGUN_DOMAIN: ${self:custom.envFileContent.MAILGUN_DOMAIN}
+      MAILGUN_API_KEY: ${self:custom.envFileContent.MAILGUN_API_KEY}
+      MAILGUN_API_USERNAME: ${self:custom.envFileContent.MAILGUN_API_USERNAME}
+      MAILGUN_BASE_URL: ${self:custom.envFileContent.MAILGUN_BASE_URL}
+      RELOADLY_CLIENT_ID: ${self:custom.envFileContent.RELOADLY_CLIENT_ID}
+      RELOADLY_CLIENT_SECRET: ${self:custom.envFileContent.RELOADLY_CLIENT_SECRET}
+      RELOADLY_TOPUPS_BASE_URL: ${self:custom.envFileContent.RELOADLY_TOPUPS_BASE_URL}
+      SMS_API_TOKEN: ${self:custom.envFileContent.SMS_API_TOKEN}
+      SMS_SENDER: ${self:custom.envFileContent.SMS_SENDER}
+      META_PHONE_NUMBER_ID: ${self:custom.envFileContent.META_PHONE_NUMBER_ID}
+      META_ACCESS_TOKEN: ${self:custom.envFileContent.META_ACCESS_TOKEN}
+    # Dead letter queue for production
+    deadLetter: ${self:custom.envSettings.${self:provider.stage}.deadLetter, null}
+
+# Environment-specific settings
+custom:
+  envSettings:
+    development:
+      memorySize: 1024
+      reservedConcurrency: 10
+      logLevel: debug
+      enableTracing: false
+      corsOrigins:
+        - http://localhost:3001
+        - http://localhost:3001
+        - http://localhost:8081
+    production:
+      memorySize: 2048
+      # reservedConcurrency: 50  # Commented out due to account limits
+      # provisionedConcurrency: 5  # Commented out due to account limits
+      logLevel: warn
+      enableTracing: true
+      corsOrigins:
+        - https://surebankstores.ng
+        - https://www.surebankstores.ng
+      deadLetter:
+        targetArn: !GetAtt DeadLetterQueue.Arn
+    test:
+      memorySize: 512
+      reservedConcurrency: 5
+      logLevel: error
+      enableTracing: false
+      corsOrigins:
+        - http://localhost:3000
+  serverless-offline:
+    httpPort: 3000
+    host: 0.0.0.0
+    stage: ${self:provider.stage}
+  envFileContent: ${file(./env.json)}
+
+# Production-only resources
+resources:
+  Conditions:
+    IsProduction:
+      Fn::Equals:
+        - ${self:provider.stage}
+        - production
+  Resources:
+    # Dead Letter Queue (production only)
+    DeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Condition: IsProduction
+      Properties:
+        QueueName: surebank-api-${self:provider.stage}-dlq
+        MessageRetentionPeriod: 1209600  # 14 days
+
+    # CloudWatch Log Group with retention
+    ApiLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/surebank-api-${self:provider.stage}-api
+        RetentionInDays: ${self:custom.envSettings.${self:provider.stage}.logRetentionDays, '7'}
+
+    # Production-only CloudWatch Alarms
+    HighErrorRateAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Condition: IsProduction
+      Properties:
+        AlarmName: surebank-api-${self:provider.stage}-high-error-rate
+        AlarmDescription: High error rate detected
+        MetricName: Errors
+        Namespace: AWS/Lambda
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 2
+        Threshold: 10
+        ComparisonOperator: GreaterThanThreshold
+        Dimensions:
+          - Name: FunctionName
+            Value: !Ref ApiLambdaFunction
+
+    HighDurationAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Condition: IsProduction
+      Properties:
+        AlarmName: surebank-api-${self:provider.stage}-high-duration
+        AlarmDescription: High duration detected
+        MetricName: Duration
+        Namespace: AWS/Lambda
+        Statistic: Average
+        Period: 300
+        EvaluationPeriods: 2
+        Threshold: 25000  # 25 seconds
+        ComparisonOperator: GreaterThanThreshold
+        Dimensions:
+          - Name: FunctionName
+            Value: !Ref ApiLambdaFunction
 
 plugins:
   - serverless-offline

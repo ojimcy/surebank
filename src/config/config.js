@@ -1,8 +1,4 @@
-const dotenv = require('dotenv');
-const path = require('path');
 const Joi = require('joi');
-
-dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const envVarsSchema = Joi.object()
   .keys({
@@ -49,27 +45,51 @@ if (error) {
   throw new Error(`Config validation error: ${error.message}`);
 }
 
+// Environment-based configuration
+const isProduction = envVars.NODE_ENV === 'production';
+const isDevelopment = envVars.NODE_ENV === 'development';
+const isTest = envVars.NODE_ENV === 'test';
+
 module.exports = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   systemAccountId: envVars.SYSTEM_ACCOUNT_ID,
   mongoose: {
-    url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : ''),
+    url: isTest 
+      ? envVars.MONGODB_URL + '-test'
+      : isDevelopment && envVars.MONGODB_URL_DEV
+        ? envVars.MONGODB_URL_DEV
+        : envVars.MONGODB_URL,
     options: {
       useCreateIndex: true,
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      // Production-specific options
+      ...(isProduction && {
+        maxPoolSize: 10,
+        minPoolSize: 2,
+        maxIdleTimeMS: 30000,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+      }),
+      // Development-specific options
+      ...(isDevelopment && {
+        maxPoolSize: 5,
+        serverSelectionTimeoutMS: 10000,
+      }),
     },
   },
-  bscNode: envVars.SMART_CHAIN_NODE,
-  maticNode: envVars.MATIC_NODE,
+  // Environment-based blockchain nodes
+  bscNode: envVars.SMART_CHAIN_NODE || (isProduction ? 'https://bsc-dataseed.binance.org' : 'https://bsc-testnet.publicnode.com'),
+  maticNode: envVars.MATIC_NODE || (isProduction ? 'https://polygon-rpc.com' : 'https://polygon-testnet.publicnode.com'),
   masterAddressPK: envVars.MASTER_ADDRESS_PK,
   jwt: {
     secret: envVars.JWT_SECRET,
-    accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES,
-    refreshExpirationDays: envVars.JWT_REFRESH_EXPIRATION_DAYS,
-    resetPasswordExpirationMinutes: envVars.JWT_RESET_PASSWORD_EXPIRATION_MINUTES,
-    verifyEmailExpirationMinutes: envVars.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES,
+    // Environment-based JWT expiration times
+    accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES || (isProduction ? 15 : 30),
+    refreshExpirationDays: envVars.JWT_REFRESH_EXPIRATION_DAYS || (isProduction ? 7 : 30),
+    resetPasswordExpirationMinutes: envVars.JWT_RESET_PASSWORD_EXPIRATION_MINUTES || (isProduction ? 5 : 10),
+    verifyEmailExpirationMinutes: envVars.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES || 10,
   },
   email: {
     mailgun: {
@@ -91,13 +111,15 @@ module.exports = {
   },
   sms: {
     apiToken: envVars.SMS_API_TOKEN,
-    smsSender: envVars.SMS_SENDER,
+    // Environment-based SMS sender
+    smsSender: envVars.SMS_SENDER || (isProduction ? 'SUREBANK' : 'SUREBANK-DEV'),
     templateDirectory: envVars.SMS_TEMPLATE_DIRECTORY.toString().trimEnd('/'),
   },
   reloadly: {
     clientId: envVars.RELOADLY_CLIENT_ID,
     clientSecret: envVars.RELOADLY_CLIENT_SECRET,
-    topupsBaseUrl: envVars.RELOADLY_TOPUPS_BASE_URL,
+    // Environment-based Reloadly URLs
+    topupsBaseUrl: envVars.RELOADLY_TOPUPS_BASE_URL || (isProduction ? 'https://topups.reloadly.com' : 'https://topups-sandbox.reloadly.com'),
   },
   twilio: {
     accountSid: envVars.TWILIO_ACCOUNT_SID,

@@ -14,6 +14,9 @@ const getTotalContributions = catchAsync(async (req, res) => {
     narration
   );
 
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   res.status(httpStatus.OK).json(totalContributions);
 });
 

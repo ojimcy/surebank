@@ -307,6 +307,7 @@ const getCharges = async (filterOpts, paginationOpts) => {
     .skip(skip)
     .limit(limit)
     .sort(sortBy)
+    .lean()
     .exec();
 
   return charges;
@@ -425,22 +426,32 @@ const getSbPackages = async (filter, options) => {
  * @param {string} createdBy - User ID (optional)
  * @returns {Promise<number>} Sum of daily contributions
  */
-const getSumOfDailyContributionsByDate = async (startDate, endDate, branchId, createdBy, narration) => {
-  const ContributionModel = await Contribution();
-  try {
-    const query = {};
-    if (startDate) query.date = { $gte: startDate };
-    if (endDate) query.date = { ...query.date, $lte: endDate };
-    if (branchId) query.branchId = branchId;
-    if (createdBy) query.createdBy = createdBy;
-    if (narration) query.narration = narration;
+const { getOrSetContributionSum } = require('./cache.service');
 
-    const contributions = await ContributionModel.find(query);
-    const sumTotal = contributions.reduce((total, contribution) => total + contribution.amount, 0);
-    return sumTotal;
-  } catch (error) {
-    throw new ApiError('Failed to get the sum of daily contributions', error);
-  }
+const getSumOfDailyContributionsByDate = async (startDate, endDate, branchId, createdBy, narration) => {
+  const params = { startDate, endDate, branchId, createdBy, narration };
+
+  return getOrSetContributionSum(params, async () => {
+    const ContributionModel = await Contribution();
+    try {
+      const query = {};
+      if (startDate) query.date = { $gte: startDate };
+      if (endDate) query.date = { ...query.date, $lte: endDate };
+      if (branchId) query.branchId = branchId;
+      if (createdBy) query.createdBy = createdBy;
+      if (narration) query.narration = narration;
+
+      // Use MongoDB aggregation to sum on the database side instead of fetching all records
+      const result = await ContributionModel.aggregate([
+        { $match: query },
+        { $group: { _id: null, totalAmount: { $sum: '$amount' } } },
+      ]);
+
+      return result.length > 0 ? result[0].totalAmount : 0;
+    } catch (error) {
+      throw new ApiError('Failed to get the sum of daily contributions', error);
+    }
+  });
 };
 
 /**
@@ -484,6 +495,7 @@ const getOtherCharges = async (filterOptions) => {
           select: 'name',
         },
       ])
+      .lean()
       .exec();
 
     const totalAmountResult = await ChargeModel.aggregate([
