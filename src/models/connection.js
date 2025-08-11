@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const config = require('../config/config');
 const logger = require('../config/logger');
-const { getSecret } = require('../utils/secretsManager');
 
 const accountSchema = require('./account.schema');
 const accountTransactionSchema = require('./accountTransaction.schema');
@@ -153,7 +152,7 @@ const createConnection = async (options) => {
         conn = mongoose.createConnection(config.mongoose.url, options);
         // Set up connection event handlers
         conn.on('connected', () => {
-          logger.info('MongoDB connected successfully');
+          logger.info('MongoDB connected successfully', config.mongoose.url);
           // Register models on successful connection
           registerModels();
           isConnecting = false;
@@ -217,17 +216,6 @@ const createConnection = async (options) => {
  */
 const getConnection = async () => {
   if (!conn || conn.readyState !== 1) {
-    let sslCA;
-
-    if (process.env.NODE_ENV === 'production') {
-      try {
-        sslCA = await getSecret(config.aws.secretName);
-      } catch (error) {
-        logger.error('Failed to retrieve MongoDB certificate from Secrets Manager:', error);
-        throw error;
-      }
-    }
-
     const options = {
       ...config.mongoose.options,
       useNewUrlParser: true,
@@ -238,11 +226,6 @@ const getConnection = async () => {
       socketTimeoutMS: 45000,
       maxPoolSize: 10,
       minPoolSize: 2,
-      ...(process.env.NODE_ENV === 'production' && {
-        ssl: true,
-        sslValidate: true,
-        sslCA: Buffer.from(sslCA, 'base64'),
-      }),
     };
 
     await createConnection(options);

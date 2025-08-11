@@ -1,5 +1,4 @@
 const httpStatus = require('http-status');
-const logger = require('../config/logger');
 const { Contribution, AccountTransaction, DsPackage, SbPackage, InterestPackage } = require('../models');
 const ApiError = require('../utils/ApiError');
 
@@ -45,7 +44,7 @@ const getManagerDashboardSummary = async (
       $match: {
         ...branchFilter,
         ...dateFilter,
-        narration: 'Daily contribution via Paystack',
+        narration: { $regex: /daily\s*contribution/i },
       },
     },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -57,7 +56,7 @@ const getManagerDashboardSummary = async (
       $match: {
         ...branchFilter,
         ...dateFilter,
-        narration: 'SB contribution via Paystack',
+        narration: { $regex: /sb\s*contribution/i },
       },
     },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -104,7 +103,7 @@ const getManagerDashboardSummary = async (
       $match: {
         ...managerFilter,
         ...dateFilter,
-        narration: 'Daily contribution via Paystack',
+        narration: { $regex: /daily\s*contribution/i },
       },
     },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -116,7 +115,7 @@ const getManagerDashboardSummary = async (
       $match: {
         ...managerFilter,
         ...dateFilter,
-        narration: 'SB contribution via Paystack',
+        narration: { $regex: /sb\s*contribution/i },
       },
     },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -250,7 +249,7 @@ const getAdminDashboardSummary = async (ContributionModel, AccountTransactionMod
       $match: {
         ...adminFilter,
         ...dateFilter,
-        narration: 'Daily contribution via Paystack',
+        narration: { $regex: /daily\s*contribution/i },
       },
     },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -262,7 +261,7 @@ const getAdminDashboardSummary = async (ContributionModel, AccountTransactionMod
       $match: {
         ...adminFilter,
         ...yesterdayFilter,
-        narration: 'Daily contribution via Paystack',
+        narration: { $regex: /daily\s*contribution/i },
       },
     },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -274,7 +273,7 @@ const getAdminDashboardSummary = async (ContributionModel, AccountTransactionMod
       $match: {
         ...adminFilter,
         ...dateFilter,
-        narration: 'SB contribution via Paystack',
+        narration: { $regex: /sb\s*contribution/i },
       },
     },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -286,7 +285,7 @@ const getAdminDashboardSummary = async (ContributionModel, AccountTransactionMod
       $match: {
         ...adminFilter,
         ...yesterdayFilter,
-        narration: 'SB contribution via Paystack',
+        narration: { $regex: /sb\s*contribution/i },
       },
     },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -408,7 +407,7 @@ const getUserRepDashboardSummary = async (
       $match: {
         ...userRepFilter,
         ...dateFilter,
-        narration: 'Daily contribution via Paystack',
+        narration: { $regex: /daily\s*contribution/i },
       },
     },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -420,7 +419,7 @@ const getUserRepDashboardSummary = async (
       $match: {
         ...userRepFilter,
         ...dateFilter,
-        narration: 'SB contribution via Paystack',
+        narration: { $regex: /sb\s*contribution/i },
       },
     },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -452,7 +451,7 @@ const getUserRepDashboardSummary = async (
       $match: {
         ...userRepFilter,
         ...dateFilter,
-        narration: 'Daily contribution via Paystack',
+        narration: { $regex: /daily\s*contribution/i },
       },
     },
     {
@@ -471,7 +470,7 @@ const getUserRepDashboardSummary = async (
       $match: {
         ...userRepFilter,
         ...dateFilter,
-        narration: 'SB contribution via Paystack',
+        narration: { $regex: /sb\s*contribution/i },
       },
     },
     {
@@ -585,7 +584,7 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
       {
         $match: {
           ...branchFilter,
-          narration: 'SB contribution via Paystack',
+          narration: { $regex: /sb\s*contribution/i },
         },
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -607,7 +606,7 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
       {
         $match: {
           ...branchFilter,
-          narration: 'Daily contribution via Paystack',
+          narration: { $regex: /daily\s*contribution/i },
         },
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -712,15 +711,13 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
-    logger.info('checking dailySavingsWithdrawalsToday');
-    logger.info('dailySavingsWithdrawalsToday', dailySavingsWithdrawalsToday);
 
     const sbDailyTotal = await ContributionModel.aggregate([
       {
         $match: {
           ...branchFilter,
           ...dateFilter,
-          narration: 'SB contribution via Paystack',
+          narration: { $regex: /sb\s*contribution/i },
         },
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -731,7 +728,7 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
         $match: {
           ...branchFilter,
           ...dateFilter,
-          narration: 'Daily contribution via Paystack',
+          narration: { $regex: /daily\s*contribution/i },
         },
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -752,7 +749,6 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
       ...branchFilter,
       status: 'active',
     });
-
     // Calculate total contributions (sum of all contributions minus withdrawals - net balance)
     const sbNetBalance =
       (sbContributions[0] && sbContributions[0].total ? sbContributions[0].total : 0) -

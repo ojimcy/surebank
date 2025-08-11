@@ -46,15 +46,6 @@ provider:
       statements:
         - Effect: Allow
           Action:
-            - secretsmanager:GetSecretValue
-          Resource:
-            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/${self:provider.stage}/database-*
-            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/${self:provider.stage}/jwt-*
-            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/${self:provider.stage}/paystack-*
-            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/${self:provider.stage}/system-*
-            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:surebank/${self:provider.stage}/communications-*
-        - Effect: Allow
-          Action:
             - s3:PutObject
             - s3:DeleteObject
           Resource:

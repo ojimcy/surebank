@@ -3,18 +3,25 @@ const serverless = require('serverless-http');
 const app = require('./src/app');
 const config = require('./src/config/config');
 const logger = require('./src/config/logger');
-const { initializeSecrets } = require('./src/config/secrets');
+
+// Load environment variables from env.json if not already set
+const fs = require('fs');
+const path = require('path');
+const envPath = path.join(__dirname, 'env.json');
+if (fs.existsSync(envPath)) {
+  const envConfig = require('./env.json');
+  Object.keys(envConfig).forEach((key) => {
+    if (!process.env[key]) {
+      process.env[key] = String(envConfig[key]);
+    }
+  });
+  logger.info('Environment variables loaded from env.json');
+}
 
 // Initialize application
 async function initialize() {
   try {
     logger.info('Starting application...');
-    
-    // Initialize secrets in production
-    if (config.env === 'production') {
-      logger.info('Initializing secrets from AWS Secrets Manager...');
-      await initializeSecrets();
-    }
     
     // Connect to MongoDB
     await mongoose.connect(config.mongoose.url, config.mongoose.options);
@@ -39,11 +46,6 @@ module.exports.handler = serverless(app);
 module.exports.processScheduledContributions = async (event, context) => {
   try {
     logger.info('Processing scheduled contributions via Lambda function');
-    
-    // Initialize secrets in production
-    if (config.env === 'production') {
-      await initializeSecrets();
-    }
     
     // Connect to MongoDB if not already connected
     if (mongoose.connection.readyState !== 1) {
