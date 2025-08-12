@@ -25,11 +25,8 @@ const generateUploadPresignedUrl = async (userId, fileName, contentType, documen
     Bucket: config.aws.s3Bucket,
     Key: key,
     ContentType: contentType,
-    Metadata: {
-      'user-id': userId,
-      'document-type': documentType,
-      'original-name': encodeURIComponent(fileName),
-    },
+    // Remove Metadata from presigned URL generation
+    // Metadata will be added via query parameters in the presigned URL
   });
 
   try {

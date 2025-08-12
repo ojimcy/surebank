@@ -30,15 +30,6 @@ module.exports = (data) =>
       </p>
     </div>
 
-    <div style="margin: 30px 0; padding: 20px; background-color: #E8F5E9; border-radius: 8px; text-align: left;">
-      <h3 style="color: #2E7D32; margin-top: 0;">Why verify your email?</h3>
-      <ul style="color: #1B5E20; padding-left: 20px;">
-        <li>Secure your account</li>
-        <li>Receive important account notifications</li>
-        <li>Reset your password if needed</li>
-        <li>Get updates about your transactions</li>
-      </ul>
-    </div>
 
     <div style="margin: 30px 0; padding: 20px; background-color: #FFF3E0; border-radius: 8px; text-align: left;">
       <h3 style="color: #E65100; margin-top: 0;">Security Tips</h3>
@@ -52,15 +43,6 @@ module.exports = (data) =>
     <p style="color: #6C757D; font-size: 14px;">
       If you didn't create an account with SureBank, please ignore this email or contact our support team if you have concerns.
     </p>
-
-    <div style="margin-top: 30px;">
-      <p style="color: #6C757D; font-size: 14px;">Need help? Contact our support team</p>
-      <a href="mailto:support@surebank.com" style="
-        color: #007BFF;
-        text-decoration: none;
-        font-weight: bold;
-      ">support@surebank.com</a>
-    </div>
   </div>
 `,
     'Verify Your Email Address'

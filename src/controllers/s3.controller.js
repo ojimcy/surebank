@@ -17,13 +17,14 @@ const generatePresignedUrl = catchAsync(async (req, res) => {
 });
 
 const getFileAccessUrl = catchAsync(async (req, res) => {
-  const { key } = req.params;
+  // Support either req.params.key (from :key(*)) or req.params[0] (from wildcard)
+  const key = req.params.key || req.params[0];
   const url = s3Service.getFileUrl(key);
   res.status(httpStatus.OK).json({ url });
 });
 
 const deleteS3File = catchAsync(async (req, res) => {
-  const { key } = req.params;
+  const key = req.params.key || req.params[0];
   await s3Service.deleteFile(key);
   res.status(httpStatus.OK).json({ success: true, message: 'File deleted successfully' });
 });

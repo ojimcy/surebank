@@ -8,8 +8,9 @@ const router = express.Router();
 
 router.post('/presigned-url', auth('s3'), validate(s3Validation.generatePresignedUrl), s3Controller.generatePresignedUrl);
 
-router.get('/files/:key', auth('s3'), validate(s3Validation.getFileAccessUrl), s3Controller.getFileAccessUrl);
+// Allow S3 keys that contain slashes by using the Express wildcard parameter pattern
+router.get('/files/:key(*)', auth('s3'), validate(s3Validation.getFileAccessUrl), s3Controller.getFileAccessUrl);
 
-router.delete('/files/:key', auth('s3'), validate(s3Validation.deleteS3File), s3Controller.deleteS3File);
+router.delete('/files/:key(*)', auth('s3'), validate(s3Validation.deleteS3File), s3Controller.deleteS3File);
 
 module.exports = router;

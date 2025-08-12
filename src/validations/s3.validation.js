@@ -9,15 +9,24 @@ const generatePresignedUrl = {
 };
 
 const getFileAccessUrl = {
-  params: Joi.object().keys({
-    key: Joi.string().required(),
-  }),
+  // Allow either "key" (from ":key(*)") or index 0 (from wildcard "/*") and tolerate unknown params
+  params: Joi.object()
+    .keys({
+      key: Joi.string(),
+      0: Joi.string(),
+    })
+    .or('key', '0')
+    .unknown(true),
 };
 
 const deleteS3File = {
-  params: Joi.object().keys({
-    key: Joi.string().required(),
-  }),
+  params: Joi.object()
+    .keys({
+      key: Joi.string(),
+      0: Joi.string(),
+    })
+    .or('key', '0')
+    .unknown(true),
 };
 
 module.exports = {
