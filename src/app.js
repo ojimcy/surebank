@@ -127,7 +127,7 @@ app.get('/health', (req, res) => {
 
   res.status(httpStatus.OK).json({
     status: 'ok',
-    service: 'surebank-api',
+    service: 'surebank',
     version: process.env.npm_package_version || '1.7.0',
     uptime: Math.floor(process.uptime()),
   });

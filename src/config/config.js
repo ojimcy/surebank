@@ -84,15 +84,20 @@ if (error) {
   throw new Error(`Config validation error: ${error.message}`);
 }
 
-// Helper function to determine MongoDB URL
+// Helper function to determine MongoDB URL based on environment and stage
 const getMongoDbUrl = () => {
   if (envVars.NODE_ENV === 'test') {
     return `${envVars.MONGODB_URL}-test`;
   }
-  if (envVars.NODE_ENV === 'development') {
+  // Check STAGE environment variable for serverless deployments
+  const stage = process.env.STAGE || envVars.NODE_ENV;
+  if (stage === 'dev' || envVars.NODE_ENV === 'development') {
     return envVars.MONGODB_URL_DEV;
   }
-  return envVars.MONGODB_URL;
+  if (stage === 'prod' || envVars.NODE_ENV === 'production') {
+    return envVars.MONGODB_URL;
+  }
+  return envVars.MONGODB_URL_DEV; // Default to dev for safety
 };
 
 module.exports = {

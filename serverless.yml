@@ -1,18 +1,16 @@
-service: surebank-api
+service: surebank
 frameworkVersion: '4'
 
-# Disable Serverless Dashboard to avoid certificate issues
-dashboard:
-  enabled: false
+# Serverless Dashboard disabled
 
 provider:
   name: aws
   runtime: nodejs22.x
-  region: ${opt:region, 'us-east-2'}
-  stage: ${opt:stage, 'prod'}
-  memorySize: 512
-  timeout: 90
-  environment: ${file(env.json)}
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  memorySize: ${self:custom.memorySize.${self:provider.stage}, 512}
+  timeout: ${self:custom.timeout.${self:provider.stage}, 90}
+  environment: ${file(env-wrapper.js)}
   httpApi:
     cors:
       allowedOrigins:
@@ -101,6 +99,17 @@ functions:
           enabled: true
     layers:
       - !Ref DependenciesLambdaLayer
+
+custom:
+  memorySize:
+    dev: 512
+    prod: 1024
+  timeout:
+    dev: 29
+    prod: 29
+  nodeEnv:
+    dev: development
+    prod: production
 
 plugins:
   - serverless-offline

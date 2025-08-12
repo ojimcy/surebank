@@ -152,7 +152,6 @@ const createConnection = async (options) => {
         conn = mongoose.createConnection(config.mongoose.url, options);
         // Set up connection event handlers
         conn.on('connected', () => {
-          logger.info('MongoDB connected successfully', config.mongoose.url);
           // Register models on successful connection
           registerModels();
           isConnecting = false;
