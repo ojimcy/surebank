@@ -59,10 +59,10 @@ const approveKyc = {
   }),
   body: Joi.object().keys({
     status: Joi.string().required().valid('approved', 'rejected'),
-    remarks: Joi.string().when('status', {
+    remarks: Joi.string().allow('').when('status', {
       is: 'rejected',
       then: Joi.required(),
-      otherwise: Joi.optional(),
+      otherwise: Joi.optional().allow(''),
     }),
   }),
 };
