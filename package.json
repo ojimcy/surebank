@@ -99,6 +99,8 @@
     "xss-clean": "^0.1.1"
   },
   "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "coveralls": "^3.0.7",
     "dotenv-cli": "^8.0.0",
     "eslint": "^7.32.0",

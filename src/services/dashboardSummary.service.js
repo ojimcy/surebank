@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { Contribution, AccountTransaction, DsPackage, SbPackage, InterestPackage } = require('../models');
+const { Contribution, AccountTransaction, DsPackage, SbPackage, InterestPackage, Order } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -529,6 +529,7 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
     const DsPackageModel = await DsPackage();
     const SbPackageModel = await SbPackage();
     const InterestPackageModel = await InterestPackage();
+    const OrderModel = await Order();
 
     const summary = {};
 
@@ -595,10 +596,22 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
         $match: {
           ...branchFilter,
           direction: 'outflow',
-          narration: { $in: ['Request cash', 'Self withdrawal request - sb'] },
+          status: 'approved',
+          narration: { $in: ['Self withdrawal request - sb', 'Request Cash SB'] },
         },
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]);
+
+    // SB Sales (paid orders)
+    const sbSales = await OrderModel.aggregate([
+      {
+        $match: {
+          ...branchFilter,
+          status: 'paid',
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } },
     ]);
 
     // DS Net Balance
@@ -617,7 +630,8 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
         $match: {
           ...branchFilter,
           direction: 'outflow',
-          narration: { $in: ['Request cash', 'Self withdrawal request - ds'] },
+          status: 'approved',
+          narration: { $in: ['Request Cash', 'Self withdrawal request - ds', 'Request Cash DS'] },
         },
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -749,10 +763,14 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
       ...branchFilter,
       status: 'active',
     });
-    // Calculate total contributions (sum of all contributions minus withdrawals - net balance)
+    // Calculate total contributions (sum of all contributions minus withdrawals and sales - net balance)
+    console.log('sbContributions', sbContributions);
+    console.log('sbWithdrawals', sbWithdrawals);
+    console.log('sbSales', sbSales);
     const sbNetBalance =
       (sbContributions[0] && sbContributions[0].total ? sbContributions[0].total : 0) -
-      (sbWithdrawals[0] && sbWithdrawals[0].total ? sbWithdrawals[0].total : 0);
+      (sbWithdrawals[0] && sbWithdrawals[0].total ? sbWithdrawals[0].total : 0) -
+      (sbSales[0] && sbSales[0].total ? sbSales[0].total : 0);
     const dsNetBalance =
       (dsContributions[0] && dsContributions[0].total ? dsContributions[0].total : 0) -
       (dsWithdrawals[0] && dsWithdrawals[0].total ? dsWithdrawals[0].total : 0);
@@ -775,6 +793,7 @@ const getDashboardSummary = async (role, branchId, options = {}) => {
     summary.ibsPrincipalTotal = ibsPrincipalTotal;
     summary.ibsInterestTotal = ibsInterestTotal;
     summary.ibsWithdrawalsTotal = ibsWithdrawalsTotal;
+    summary.sbSalesTotal = sbSales[0] && sbSales[0].total ? sbSales[0].total : 0;
 
     return summary;
   } catch (error) {
