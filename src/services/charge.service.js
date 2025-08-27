@@ -7,6 +7,7 @@ const { getUserByPhoneNumber } = require('./user.service');
 /**
  * Save a charge and update the count in the associated package
  * @param {Object} chargeInput - Charge input
+ * @param {string} [chargeInput.customerName] - Optional customer name
  * @returns {Promise<Object>} Result of the operation
  */
 const chargeDsCustomer = async (chargeInput) => {
@@ -22,21 +23,24 @@ const chargeDsCustomer = async (chargeInput) => {
       throw new Error('Package not found');
     }
     const currentDate = new Date().getTime();
+    
+    const chargeData = {
+      branchId: packageDetails.branchId,
+      userId: chargeInput.userId,
+      date: currentDate,
+      amount: chargeInput.amount,
+      createdBy: chargeInput.createdBy,
+      packageId: chargeInput.packageId,
+      reasons: chargeInput.reasons,
+    };
+
+    // Add optional customerName if provided
+    if (chargeInput.customerName) {
+      chargeData.customerName = chargeInput.customerName;
+    }
+
     // Create a new charge
-    const charge = await ChargeModel.create(
-      [
-        {
-          branchId: packageDetails.branchId,
-          userId: chargeInput.userId,
-          date: currentDate,
-          amount: chargeInput.amount,
-          createdBy: chargeInput.createdBy,
-          packageId: chargeInput.packageId,
-          reasons: chargeInput.reasons,
-        },
-      ],
-      { session }
-    );
+    const charge = await ChargeModel.create([chargeData], { session });
 
     await PackageModel.findByIdAndUpdate(
       chargeInput.packageId,
@@ -60,6 +64,7 @@ const chargeDsCustomer = async (chargeInput) => {
 /**
  * Save a charge and update the count in the associated package
  * @param {Object} chargeInput - Charge input
+ * @param {string} [chargeInput.customerName] - Optional customer name
  * @returns {Promise<Object>} Result of the operation
  */
 const chargeSbCustomer = async (chargeInput) => {
@@ -80,22 +85,25 @@ const chargeSbCustomer = async (chargeInput) => {
     const account = await AccountModel.findOne({ accountNumber });
 
     const currentDate = new Date().getTime();
+    
+    const chargeData = {
+      branchId: account.branchId,
+      userId: chargeInput.userId,
+      date: currentDate,
+      amount: chargeInput.amount,
+      createdBy: chargeInput.createdBy,
+      packageId: chargeInput.packageId,
+      reasons: chargeInput.reasons,
+      productCatalogueId: chargeInput.productCatalogueId,
+    };
+
+    // Add optional customerName if provided
+    if (chargeInput.customerName) {
+      chargeData.customerName = chargeInput.customerName;
+    }
+
     // Create a new charge
-    const charge = await ChargeModel.create(
-      [
-        {
-          branchId: account.branchId,
-          userId: chargeInput.userId,
-          date: currentDate,
-          amount: chargeInput.amount,
-          createdBy: chargeInput.createdBy,
-          packageId: chargeInput.packageId,
-          reasons: chargeInput.reasons,
-          productCatalogueId: chargeInput.productCatalogueId,
-        },
-      ],
-      { session }
-    );
+    const charge = await ChargeModel.create([chargeData], { session });
 
     await PackageModel.findByIdAndUpdate(
       chargeInput.packageId,
@@ -152,9 +160,13 @@ const chargeSmsFees = async (phoneNumber, numberOfSMS, createdBy, branchId) => {
  * @param {number} costTotal - The cost price of the product
  * @param {number} totalAmount - The selling price of the product
  * @param {string} userId - The ID of the user initiating the charge
+ * @param {string} createdBy - The ID of the user creating the charge
+ * @param {string} branchId - The branch ID
+ * @param {string} productCatalogueId - The product catalogue ID
+ * @param {string} [customerName] - Optional customer name
  * @returns {Promise<Object>} Result of the operation
  */
-const saveSbProfit = async (costTotal, totalAmount, userId, createdBy, branchId, productCatalogueId) => {
+const saveSbProfit = async (costTotal, totalAmount, userId, createdBy, branchId, productCatalogueId, customerName = null) => {
   const ChargeModel = await Charge();
   const currentDate = new Date().getTime();
   const profit = totalAmount - costTotal;
@@ -163,7 +175,7 @@ const saveSbProfit = async (costTotal, totalAmount, userId, createdBy, branchId,
     return null;
   }
 
-  const charge = await ChargeModel.create({
+  const chargeData = {
     branchId,
     userId,
     date: currentDate,
@@ -171,7 +183,14 @@ const saveSbProfit = async (costTotal, totalAmount, userId, createdBy, branchId,
     createdBy,
     reasons: 'Profit from SB',
     productCatalogueId,
-  });
+  };
+
+  // Add optional customerName if provided
+  if (customerName) {
+    chargeData.customerName = customerName;
+  }
+
+  const charge = await ChargeModel.create(chargeData);
 
   const populatedCharge = await ChargeModel.findById(charge._id).populate([
     { path: 'branchId', select: 'name' },

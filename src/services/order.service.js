@@ -124,7 +124,8 @@ const createOrder = async (userId, orderDetails) => {
             userId,
             userId,
             orderDetails.deliveryAddress.branchId,
-            item.productCatalogueId
+            item.productCatalogueId,
+            orderDetails.deliveryAddress.fullName // customerName
           );
         }
       })

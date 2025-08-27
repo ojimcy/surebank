@@ -40,6 +40,10 @@ const chargeSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    customerName: {
+      type: String,
+      required: false,
+    },
   },
   {
     timestamps: true,
