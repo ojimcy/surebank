@@ -40,6 +40,8 @@ const storedCardRoute = require('./storedCard.route');
 const scheduledContributionRoute = require('./scheduledContribution.route');
 const systemRoute = require('./system.route');
 const sesWebhookRoute = require('./sesWebhook.route');
+const mailjetWebhookRoute = require('./mailjetWebhook.route');
+const emailTestingRoute = require('./emailTesting.route');
 
 const router = express.Router();
 
@@ -200,6 +202,10 @@ const defaultRoutes = [
     path: '/ses',
     route: sesWebhookRoute,
   },
+  {
+    path: '/mailjet',
+    route: mailjetWebhookRoute,
+  },
 ];
 
 const devRoutes = [
@@ -207,6 +213,10 @@ const devRoutes = [
   {
     path: '/docs',
     route: docsRoute,
+  },
+  {
+    path: '/email-testing',
+    route: emailTestingRoute,
   },
 ];
 

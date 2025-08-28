@@ -1,5 +1,8 @@
 module.exports.authService = require('./auth.service');
-module.exports.emailService = require('./email.service');
+module.exports.emailService = require('./mailjet.service'); // Updated to use Mailjet
+module.exports.legacyEmailService = require('./email.service'); // Keep old service for backward compatibility
+module.exports.mailjetService = require('./mailjet.service');
+module.exports.emailQueueService = require('./emailQueue.service');
 module.exports.tokenService = require('./token.service');
 module.exports.userService = require('./user.service');
 module.exports.branchService = require('./branch.service');

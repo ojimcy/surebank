@@ -1,29 +1,34 @@
-const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
 const httpStatus = require('http-status');
 const config = require('../config/config');
 const logger = require('../config/logger');
-const { EmailSuppression, EmailEvent } = require('../models');
-const verifyEmailTemplate = require('../templates/emails/verify-email.template');
-const resetPasswordTemplate = require('../templates/emails/reset-password.template');
+const ApiError = require('../utils/ApiError');
+const mailjetService = require('./mailjet.service');
+
+// Import MJML templates (fallback to regular templates if MJML not available)
+const getTemplate = (templateName) => {
+  try {
+    // Try to load MJML version first
+    return require(`../templates/emails/${templateName}-mjml.template`);
+  } catch (error) {
+    // Fallback to regular template
+    logger.warn(`MJML template not found for ${templateName}, using regular template`);
+    return require(`../templates/emails/${templateName}.template`);
+  }
+};
+
+const verifyEmailTemplate = getTemplate('verify-email');
+const resetPasswordTemplate = getTemplate('reset-password');
 const dailySavingsContributionTemplate = require('../templates/emails/daily-savings-contribution.template');
 const accountActivityTemplate = require('../templates/emails/account-activity.template');
-const packageCreatedTemplate = require('../templates/emails/package-created.template');
+const packageCreatedTemplate = getTemplate('package-created');
 const packageMaturedTemplate = require('../templates/emails/package-matured.template');
 const genericPackageCreatedTemplate = require('../templates/emails/generic-package-created.template');
 const genericContributionTemplate = require('../templates/emails/generic-contribution.template');
-const withdrawalRequestTemplate = require('../templates/emails/withdrawal-request.template');
-const orderCreatedTemplate = require('../templates/emails/order-created.template');
-const orderPaymentTemplate = require('../templates/emails/order-payment.template');
-const withdrawalApprovedTemplate = require('../templates/emails/withdrawal-approved.template');
-const ApiError = require('../utils/ApiError');
-
-const client = new SESClient({ 
-  region: config.aws.region,
-  maxAttempts: 3, // Enable automatic retry
-});
-
-// Configuration set for tracking
-const CONFIGURATION_SET = config.ses?.configurationSet || 'surebank-email-tracking';
+const withdrawalRequestTemplate = getTemplate('withdrawal-request');
+const orderCreatedTemplate = getTemplate('order-created');
+const orderPaymentTemplate = getTemplate('order-payment');
+const withdrawalApprovedTemplate = getTemplate('withdrawal-approved');
+const transactionAlertTemplate = getTemplate('transaction-alert');
 
 const emailTemplates = {
   VERIFY_EMAIL: {
@@ -74,74 +79,15 @@ const emailTemplates = {
     subject: 'Payment Confirmation',
     html: orderPaymentTemplate,
   },
+  TRANSACTION_ALERT: {
+    subject: 'Transaction Alert',
+    html: transactionAlertTemplate,
+  },
 };
 
-const formatEmailSource = (email) => {
-  return `SureBank Stores Limited <${email}>`;
-};
+// This service now acts as a wrapper around mailjet.service.js
+// maintaining backward compatibility while using Mailjet for email delivery
 
-/**
- * Check if email is in suppression list
- * @param {string} email - Email address to check
- * @returns {Promise<boolean>} - True if email is suppressed
- */
-const isEmailSuppressed = async (email) => {
-  try {
-    return await EmailSuppression.isEmailSuppressed(email);
-  } catch (error) {
-    logger.error('Error checking email suppression:', error);
-    // If we can't check, allow sending but log the error
-    return false;
-  }
-};
-
-/**
- * Sleep function for retry delays
- * @param {number} ms - Milliseconds to sleep
- */
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
- * Send email with retry logic
- * @param {Object} params - SES send parameters
- * @param {number} attempt - Current attempt number
- * @returns {Promise<Object>} - SES response
- */
-const sendEmailWithRetry = async (params, attempt = 1) => {
-  try {
-    const response = await client.send(new SendEmailCommand(params));
-    
-    // Record successful send event
-    const recipients = params.Destination.ToAddresses || [];
-    for (const recipient of recipients) {
-      await EmailEvent.create({
-        messageId: response.MessageId,
-        eventType: 'send',
-        email: recipient,
-        timestamp: new Date(),
-        source: params.Source,
-        configurationSet: params.ConfigurationSet,
-      });
-    }
-    
-    return response;
-  } catch (error) {
-    const isRetryable = 
-      error.name === 'ServiceUnavailableException' ||
-      error.name === 'TooManyRequestsException' ||
-      error.name === 'RequestTimeout' ||
-      error.$metadata?.httpStatusCode >= 500;
-
-    if (isRetryable && attempt < 3) {
-      const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s
-      logger.warn(`Email send attempt ${attempt} failed, retrying in ${delay}ms:`, error.message);
-      await sleep(delay);
-      return sendEmailWithRetry(params, attempt + 1);
-    }
-
-    throw error;
-  }
-};
 
 /**
  * Send verification email
@@ -150,87 +96,51 @@ const sendEmailWithRetry = async (params, attempt = 1) => {
  * @returns {Promise}
  */
 const sendVerificationEmail = async (to, otp) => {
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping verification email`);
-    throw new ApiError(httpStatus.BAD_REQUEST, 'This email address cannot receive emails due to previous bounce or complaint');
-  }
-
   const data = {
     name: to.split('@')[0],
     otp,
     expiryTime: config.jwt.verifyEmailExpirationMinutes,
   };
 
-  const params = {
-    Source: formatEmailSource(config.email.from),
-    Destination: {
-      ToAddresses: [to],
-    },
-    Message: {
-      Subject: {
-        Data: emailTemplates.VERIFY_EMAIL.subject,
-      },
-      Body: {
-        Html: {
-          Data: emailTemplates.VERIFY_EMAIL.html(data),
-        },
-      },
-    },
-    ConfigurationSet: CONFIGURATION_SET,
-  };
-
   try {
-    await sendEmailWithRetry(params);
+    await mailjetService.sendEmail({
+      to,
+      subject: emailTemplates.VERIFY_EMAIL.subject,
+      html: emailTemplates.VERIFY_EMAIL.html(data),
+      templateData: data,
+      category: 'verification'
+    });
     logger.info(`Verification email sent to ${to}`);
   } catch (error) {
     logger.error('Error sending verification email:', error);
-    if (error.message && error.message.includes('not verified')) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Email sending failed: Please verify your email address in AWS SES first');
-    }
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send verification email');
   }
 };
 
+/**
+ * Send reset password email
+ * @param {string} to
+ * @param {string} otp
+ * @returns {Promise}
+ */
 const sendResetPasswordEmail = async (to, otp) => {
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping reset password email`);
-    throw new ApiError(httpStatus.BAD_REQUEST, 'This email address cannot receive emails due to previous bounce or complaint');
-  }
-
   const data = {
     name: to.split('@')[0],
     otp,
     expiryTime: config.jwt.resetPasswordExpirationMinutes,
   };
 
-  const params = {
-    Source: formatEmailSource(config.email.from),
-    Destination: {
-      ToAddresses: [to],
-    },
-    Message: {
-      Subject: {
-        Data: emailTemplates.RESET_PASSWORD.subject,
-      },
-      Body: {
-        Html: {
-          Data: emailTemplates.RESET_PASSWORD.html(data),
-        },
-      },
-    },
-    ConfigurationSet: CONFIGURATION_SET,
-  };
-
   try {
-    await sendEmailWithRetry(params);
+    await mailjetService.sendEmail({
+      to,
+      subject: emailTemplates.RESET_PASSWORD.subject,
+      html: emailTemplates.RESET_PASSWORD.html(data),
+      templateData: data,
+      category: 'password_reset'
+    });
     logger.info(`Reset password email sent to ${to}`);
   } catch (error) {
     logger.error('Error sending reset password email:', error);
-    if (error.message && error.message.includes('not verified')) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Email sending failed: Please verify your email address in AWS SES first');
-    }
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send reset password email');
   }
 };
@@ -248,12 +158,6 @@ const sendResetPasswordEmail = async (to, otp) => {
  * @returns {Promise}
  */
 const sendPackageCreationEmail = async (to, packageDetails) => {
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping package creation email`);
-    return; // Don't throw error for transactional emails, just skip
-  }
-
   const {
     name: packageName,
     userName = to.split('@')[0],
@@ -272,33 +176,18 @@ const sendPackageCreationEmail = async (to, packageDetails) => {
     dashboardUrl,
   };
 
-  const params = {
-    Source: formatEmailSource(config.email.from),
-    Destination: {
-      ToAddresses: [to],
-    },
-    Message: {
-      Subject: {
-        Data: emailTemplates.PACKAGE_CREATED.subject,
-      },
-      Body: {
-        Html: {
-          Data: emailTemplates.PACKAGE_CREATED.html(data),
-        },
-      },
-    },
-    ConfigurationSet: CONFIGURATION_SET,
-  };
-
   try {
-    await sendEmailWithRetry(params);
+    await mailjetService.sendEmail({
+      to,
+      subject: emailTemplates.PACKAGE_CREATED.subject,
+      html: emailTemplates.PACKAGE_CREATED.html(data),
+      templateData: data,
+      category: 'package_notification'
+    });
     logger.info(`Package creation email sent to ${to}`);
   } catch (error) {
     logger.error('Error sending package creation email:', error);
-    if (error.message && error.message.includes('not verified')) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Email sending failed: Please verify your email address in AWS SES first');
-    }
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send package creation email');
+    // Don't throw error for transactional emails, just log
   }
 };
 
@@ -319,12 +208,6 @@ const sendPackageCreationEmail = async (to, packageDetails) => {
  * @returns {Promise}
  */
 const sendGenericPackageCreationEmail = async (to, packageDetails) => {
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping generic package creation email`);
-    return; // Don't throw error for transactional emails, just skip
-  }
-
   const {
     userName = to.split('@')[0],
     packageType,
@@ -353,33 +236,18 @@ const sendGenericPackageCreationEmail = async (to, packageDetails) => {
     packageId,
   };
 
-  const params = {
-    Source: formatEmailSource(config.email.from),
-    Destination: {
-      ToAddresses: [to],
-    },
-    Message: {
-      Subject: {
-        Data: emailTemplates.GENERIC_PACKAGE_CREATED.subject,
-      },
-      Body: {
-        Html: {
-          Data: emailTemplates.GENERIC_PACKAGE_CREATED.html(data),
-        },
-      },
-    },
-    ConfigurationSet: CONFIGURATION_SET,
-  };
-
   try {
-    await sendEmailWithRetry(params);
+    await mailjetService.sendEmail({
+      to,
+      subject: emailTemplates.GENERIC_PACKAGE_CREATED.subject,
+      html: emailTemplates.GENERIC_PACKAGE_CREATED.html(data),
+      templateData: data,
+      category: 'package_notification'
+    });
     logger.info(`Generic package creation email (${packageType}) sent to ${to}`);
   } catch (error) {
     logger.error('Error sending generic package creation email:', error);
-    if (error.message && error.message.includes('not verified')) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Email sending failed: Please verify your email address in AWS SES first');
-    }
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send generic package creation email');
+    // Don't throw error for transactional emails, just log
   }
 };
 
@@ -400,12 +268,6 @@ const sendGenericPackageCreationEmail = async (to, packageDetails) => {
  * @returns {Promise}
  */
 const sendGenericContributionEmail = async (to, contributionDetails) => {
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping generic contribution email`);
-    return; // Don't throw error for transactional emails, just skip
-  }
-
   const {
     userName = to.split('@')[0],
     packageType,
@@ -434,33 +296,18 @@ const sendGenericContributionEmail = async (to, contributionDetails) => {
     progress: packageType === 'sb' ? (totalContribution / targetAmount) * 100 : (30 / totalCount) * 100,
   };
 
-  const params = {
-    Source: formatEmailSource(config.email.from),
-    Destination: {
-      ToAddresses: [to],
-    },
-    Message: {
-      Subject: {
-        Data: emailTemplates.GENERIC_CONTRIBUTION.subject,
-      },
-      Body: {
-        Html: {
-          Data: emailTemplates.GENERIC_CONTRIBUTION.html(data),
-        },
-      },
-    },
-    ConfigurationSet: CONFIGURATION_SET,
-  };
-
   try {
-    await sendEmailWithRetry(params);
+    await mailjetService.sendEmail({
+      to,
+      subject: emailTemplates.GENERIC_CONTRIBUTION.subject,
+      html: emailTemplates.GENERIC_CONTRIBUTION.html(data),
+      templateData: data,
+      category: 'contribution_notification'
+    });
     logger.info(`Generic contribution confirmation email (${packageType}) sent to ${to}`);
   } catch (error) {
     logger.error('Error sending generic contribution confirmation email:', error);
-    if (error.message && error.message.includes('not verified')) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Email sending failed: Please verify your email address in AWS SES first');
-    }
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send generic contribution confirmation email');
+    // Don't throw error for transactional emails, just log
   }
 };
 
@@ -473,76 +320,34 @@ const sendGenericContributionEmail = async (to, contributionDetails) => {
  * @param {string} [options.html] - HTML content
  * @param {string} [options.template] - Template name (from emailTemplates)
  * @param {Object} [options.templateData] - Template data
+ * @param {string} [options.category] - Email category for tracking
  * @returns {Promise}
  */
 const sendEmail = async (options) => {
-  const { to, subject, text, html, template, templateData } = options;
+  const { to, subject, text, html, template, templateData, category } = options;
 
-  // Check if email is suppressed
-  if (await isEmailSuppressed(to)) {
-    logger.warn(`Email ${to} is in suppression list, skipping email`);
-    return; // Don't throw error for general emails, just skip
-  }
-
-  let emailContent;
+  let finalHtml = html;
+  let finalSubject = subject;
 
   if (template && emailTemplates[template.toUpperCase()]) {
     const templateConfig = emailTemplates[template.toUpperCase()];
-    const renderedHtml = templateConfig.html(templateData || {});
-    emailContent = {
-      Subject: {
-        Data: templateConfig.subject,
-      },
-      Body: {
-        Html: {
-          Data: renderedHtml || 'No content provided',
-        },
-      },
-    };
-  } else {
-    // Ensure at least one body type is provided
-    const defaultText = 'No content provided';
-    emailContent = {
-      Subject: {
-        Data: subject || 'No subject',
-      },
-      Body: {
-        ...(text || !html
-          ? {
-            Text: {
-              Data: text || defaultText,
-            },
-          }
-          : {}),
-        ...(html
-          ? {
-            Html: {
-              Data: html,
-            },
-          }
-          : {}),
-      },
-    };
+    finalHtml = templateConfig.html(templateData || {});
+    finalSubject = templateConfig.subject;
   }
 
-  const params = {
-    Source: formatEmailSource(config.email.from),
-    Destination: {
-      ToAddresses: [to],
-    },
-    Message: emailContent,
-    ConfigurationSet: CONFIGURATION_SET,
-  };
-
   try {
-    await sendEmailWithRetry(params);
+    await mailjetService.sendEmail({
+      to,
+      subject: finalSubject || 'No subject',
+      text: text,
+      html: finalHtml || text || 'No content provided',
+      templateData,
+      category: category || 'general'
+    });
     logger.info(`Email sent to ${to}`);
   } catch (error) {
     logger.error('Error sending email:', error);
-    if (error.message && error.message.includes('not verified')) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Email sending failed: Please verify your email address in AWS SES first');
-    }
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to send email');
+    // Don't throw error for general emails, just log
   }
 };
 

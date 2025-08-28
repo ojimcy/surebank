@@ -23,3 +23,5 @@ module.exports.paystackValidation = require('./paystack.validation');
 module.exports.s3Validation = require('./s3.validation');
 module.exports.storedCardValidation = require('./storedCard.validation');
 module.exports.scheduledContributionValidation = require('./scheduledContribution.validation');
+module.exports.mailjetWebhookValidation = require('./mailjetWebhook.validation');
+module.exports.emailTestingValidation = require('./emailTesting.validation');

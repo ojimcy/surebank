@@ -75,6 +75,12 @@ const envVarsSchema = Joi.object()
     USE_UPSTASH: Joi.string().default('false').description('Use Upstash Redis service'),
     SES_CONFIGURATION_SET: Joi.string().default('surebank-email-tracking').description('AWS SES configuration set name'),
     SES_SNS_TOPIC_ARN: Joi.string().description('AWS SNS topic ARN for SES notifications'),
+    MAILJET_API_KEY: Joi.string().description('Mailjet API key'),
+    MAILJET_API_SECRET: Joi.string().description('Mailjet API secret'),
+    MAILJET_BASE_URL: Joi.string().default('https://api.mailjet.com/v3.1').description('Mailjet base URL'),
+    MAILJET_FROM_EMAIL: Joi.string().description('Mailjet from email address'),
+    MAILJET_FROM_NAME: Joi.string().description('Mailjet from name'),
+    MAILJET_WEBHOOK_SECRET: Joi.string().description('Mailjet webhook secret for validation'),
   })
   .unknown();
 
@@ -210,5 +216,13 @@ module.exports = {
   ses: {
     configurationSet: envVars.SES_CONFIGURATION_SET,
     snsTopicArn: envVars.SES_SNS_TOPIC_ARN,
+  },
+  mailjet: {
+    apiKey: envVars.MAILJET_API_KEY,
+    apiSecret: envVars.MAILJET_API_SECRET,
+    baseUrl: envVars.MAILJET_BASE_URL,
+    fromEmail: envVars.MAILJET_FROM_EMAIL,
+    fromName: envVars.MAILJET_FROM_NAME,
+    webhookSecret: envVars.MAILJET_WEBHOOK_SECRET,
   },
 };

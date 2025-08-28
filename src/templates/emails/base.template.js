@@ -189,14 +189,14 @@ module.exports = (content, title) => `
     </div>
     <div class="footer">
       <div class="social-links">
-        <a href="https://facebook.com/surebank">Facebook</a>
-        <a href="https://twitter.com/surebank">Twitter</a>
-        <a href="https://instagram.com/surebank">Instagram</a>
+        <a href="https://facebook.com/surebankstores">Facebook</a>
+        <a href="https://twitter.com/surebankstores">Twitter</a>
+        <a href="https://instagram.com/surebankstores">Instagram</a>
       </div>
-      <p>This is an automated message from SureBank. Please do not reply to this email.</p>
-      <p>If you have any questions, please contact our support team at support@surebank.com</p>
+      <p>This is an automated message from SureBankStores. Please do not reply to this email.</p>
+      <p>If you have any questions, please contact our support team at support@surebankstores.ng</p>
       <p>&copy; ${new Date().getFullYear()} SureBank. All rights reserved.</p>
-      <p>Plot 123, Sample Street, Lagos, Nigeria</p>
+      <p>Lagos, Nigeria</p>
     </div>
   </div>
 </body>

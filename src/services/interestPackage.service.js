@@ -6,7 +6,7 @@ const { getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
 const { sendNotification, getUserNotificationPreference, sendMultiChannelNotification } = require('./notification.service');
 const paymentService = require('./payment.service');
-const emailService = require('./email.service');
+const { sendTransactionalEmail, sendPackageCreationEmail } = require('./mailjet.service');
 const { makeCustomerDeposit } = require('./accountTransaction.service');
 
 const interestRateConfig = require('../config/interestRates');
@@ -119,7 +119,7 @@ const calculateInterestForPackage = async (packageId) => {
       if (userEmail) {
         const emailPreference = await getUserNotificationPreference(interestPackage.userId, 'package_matured');
         if (emailPreference === 'email' || emailPreference === 'both') {
-          await emailService.sendEmail({
+          await sendTransactionalEmail({
             to: userEmail,
             subject: 'Package Maturity Alert',
             template: 'PACKAGE_MATURITY_ALERT',
@@ -273,7 +273,7 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
     try {
       const emailPreference = await getUserNotificationPreference(packageData.userId, 'package_created');
       if (emailPreference === 'email' || emailPreference === 'both') {
-        await emailService.sendPackageCreationEmail(userEmail, {
+        await sendPackageCreationEmail(userEmail, {
           name: interestPackage.name || interestRateInfo.name,
           packageName: interestPackage.name || interestRateInfo.name,
           userName: userAccount.firstName || (userEmail ? userEmail.split('@')[0] : 'Valued Customer'),
@@ -861,7 +861,7 @@ const processVerifiedPayment = async (paymentData) => {
         // Check user preference for this notification type
         const emailPreference = await getUserNotificationPreference(packageData.userId, 'package_created');
         if (emailPreference === 'email' || emailPreference === 'both') {
-          await emailService.sendPackageCreationEmail(userEmail, {
+          await sendPackageCreationEmail(userEmail, {
             name: packageData.name,
             packageName: packageData.name,
             userName: user && user.firstName ? user.firstName : 'Valued Customer',

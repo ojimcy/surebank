@@ -3,7 +3,8 @@ const ApiError = require('../utils/ApiError');
 const { Notification, NotificationPreference, User } = require('../models');
 const logger = require('../config/logger');
 const notificationPreferenceSchema = require('../models/notificationPreference.schema');
-const { sendEmail, sendGenericPackageCreationEmail, sendGenericContributionEmail } = require('./email.service');
+const { sendGenericPackageCreationEmail, sendGenericContributionEmail } = require('./mailjet.service');
+const { queueEmail, EMAIL_PRIORITIES } = require('./emailQueue.service');
 const { sendSms } = require('./sms.service');
 
 const createNotification = async (input) => {
@@ -308,25 +309,45 @@ const sendMultiChannelNotification = async ({ userId, type, user, data, notifica
         if (emailPreference === 'email' || emailPreference === 'both') {
           const { subject, template, templateData, html } = notificationContent.email;
 
+          // Determine email priority based on notification type
+          const getEmailPriority = (notificationType) => {
+            const highPriorityTypes = ['security_alert', 'login_alert', 'password_reset', 'account_activity'];
+            const normalPriorityTypes = ['transaction_alert', 'payment_confirmation', 'package_created'];
+
+            if (highPriorityTypes.includes(notificationType)) {
+              return EMAIL_PRIORITIES.HIGH;
+            } else if (normalPriorityTypes.includes(notificationType)) {
+              return EMAIL_PRIORITIES.NORMAL;
+            }
+            return EMAIL_PRIORITIES.NORMAL;
+          };
+
+          const priority = getEmailPriority(type);
+
           // Support both template-based and direct HTML emails
           if (html) {
-            await sendEmail({
+            // Queue email for better reliability and performance
+            await queueEmail({
               to: userToUse.email,
               subject,
               html,
-            });
+              tracking: { opens: true, clicks: true }
+            }, { priority });
           } else if (template === 'PACKAGE_CREATION') {
-            // Special case for package creation emails
+            // Special case for package creation emails - send immediately for better UX
             await sendGenericPackageCreationEmail(userToUse.email, templateData);
           } else if (template === 'CONTRIBUTION') {
+            // Special case for contribution emails - send immediately for better UX
             await sendGenericContributionEmail(userToUse.email, templateData);
           } else {
-            await sendEmail({
+            // Queue template-based emails
+            await queueEmail({
               to: userToUse.email,
               subject,
               template,
               templateData,
-            });
+              tracking: { opens: true, clicks: true }
+            }, { priority });
           }
 
           result.email = true;

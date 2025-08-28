@@ -30,26 +30,6 @@ module.exports = (data) =>
       </p>
     </div>
 
-    <div style="margin: 30px 0; padding: 20px; background-color: #FFF3E0; border-radius: 8px; text-align: left;">
-      <h3 style="color: #E65100; margin-top: 0;">Important Security Notice</h3>
-      <ul style="color: #EF6C00; padding-left: 20px;">
-        <li>Never share this code with anyone</li>
-        <li>Our team will never ask for this code</li>
-        <li>The code is valid for a limited time only</li>
-        <li>Make sure you're on our official website: surebank.com</li>
-      </ul>
-    </div>
-
-    <div style="margin: 30px 0; padding: 20px; background-color: #F3E5F5; border-radius: 8px; text-align: left;">
-      <h3 style="color: #6A1B9A; margin-top: 0;">After Resetting Your Password</h3>
-      <ul style="color: #7B1FA2; padding-left: 20px;">
-        <li>Use a strong, unique password</li>
-        <li>Enable two-factor authentication for extra security</li>
-        <li>Update your password on other devices</li>
-        <li>Review your recent account activity</li>
-      </ul>
-    </div>
-
     <div style="
       background-color: #FFEBEE;
       border-radius: 8px;
@@ -80,7 +60,7 @@ module.exports = (data) =>
           margin: 0 10px;
         ">Call Support</a>
         |
-        <a href="mailto:support@surebank.com" style="
+        <a href="mailto:support@surebankstores.ng" style="
           color: #007BFF;
           text-decoration: none;
           font-weight: bold;
@@ -96,9 +76,11 @@ module.exports = (data) =>
       padding-top: 20px;
       border-top: 1px solid #E9ECEF;
     ">
-      This password reset request was made from IP address ${data.ipAddress} on ${new Date(
-      data.timestamp
-    ).toLocaleString()}. 
+      ${data.ipAddress && data.timestamp ? 
+        `This password reset request was made from IP address ${data.ipAddress} on ${new Date(
+          data.timestamp
+        ).toLocaleString()}. ` : 
+        'This password reset request was made recently. '}
       If this wasn't you, please contact our support team immediately.
     </p>
   </div>
