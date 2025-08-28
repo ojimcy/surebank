@@ -16,6 +16,7 @@ module.exports.merchantService = require('./merchant.service');
 module.exports.productService = require('./product.service');
 module.exports.storeService = require('./store.service');
 module.exports.brandService = require('./brand.service');
+module.exports.categoryService = require('./category.service');
 module.exports.cartService = require('./cart.service');
 module.exports.salesService = require('./sales.service');
 module.exports.reportService = require('./reports.service');

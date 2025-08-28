@@ -492,6 +492,15 @@ const getProductCatalogue = async (filter, options) => {
         merchantId: 1,
         createdAt: 1,
         updatedAt: 1,
+        // Calculate average rating from reviews
+        averageRating: {
+          $cond: {
+            if: { $gt: [{ $size: '$reviews' }, 0] },
+            then: { $avg: '$reviews.rating' },
+            else: 0
+          }
+        },
+        reviewCount: { $size: '$reviews' },
         productId: {
           _id: '$productData._id',
           status: '$productData.status',
@@ -506,6 +515,7 @@ const getProductCatalogue = async (filter, options) => {
           slug: '$productData.slug',
           createdAt: '$productData.createdAt',
           updatedAt: '$productData.updatedAt',
+          ratings: '$productData.ratings',
           brand: { $arrayElemAt: ['$brandData', 0] },
           categoryId: { $arrayElemAt: ['$categoryData', 0] },
         },
@@ -555,7 +565,7 @@ const getProductCatalogue = async (filter, options) => {
     model: 'Product',
     populate: [
       { path: 'brand', model: 'Brand', select: 'name' },
-      { path: 'categoryId', model: 'Category', select: 'title' },
+      { path: 'categoryId', model: 'Category', select: 'title slug' },
     ],
   };
 
@@ -569,9 +579,28 @@ const getProductCatalogue = async (filter, options) => {
     .limit(limit)
     .sort(sortBy || { createdAt: -1 });
 
+  // Calculate ratings for each product
+  const productsWithRatings = products.map(product => {
+    const productObj = product.toObject();
+    
+    // Calculate average rating from reviews
+    if (productObj.reviews && productObj.reviews.length > 0) {
+      const validRatings = productObj.reviews.filter(review => review.rating != null);
+      productObj.averageRating = validRatings.length > 0 
+        ? validRatings.reduce((sum, review) => sum + review.rating, 0) / validRatings.length
+        : 0;
+      productObj.reviewCount = validRatings.length;
+    } else {
+      productObj.averageRating = 0;
+      productObj.reviewCount = 0;
+    }
+    
+    return productObj;
+  });
+
   // Return paginated results
   return {
-    results: products,
+    results: productsWithRatings,
     page,
     limit,
     totalPages: Math.ceil(totalResults / limit),

@@ -7,6 +7,7 @@ const docsRoute = require('./docs.route');
 const securityRoute = require('./security.route');
 const notificationRoute = require('./notification.route');
 const branchRoute = require('./branch.route');
+const categoryRoute = require('./category.route');
 const accountRoute = require('./account.route');
 const accountingRoute = require('./accounting.route');
 const accountTransactionRoute = require('./accountTransaction.route');
@@ -69,6 +70,10 @@ const defaultRoutes = [
   {
     path: '/branch',
     route: branchRoute,
+  },
+  {
+    path: '/categories',
+    route: categoryRoute,
   },
   {
     path: '/accounts',
