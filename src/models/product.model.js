@@ -1,18 +1,10 @@
-const { getConnection } = require('./connection');
-const productSchema = require('./product.schema');
-
-let model = null;
+const { getModel } = require('./connection');
 
 /**
  * @returns Product
  */
 const Product = async () => {
-  if (!model) {
-    const conn = await getConnection();
-    model = conn.model('Product', productSchema);
-  }
-
-  return model;
+  return await getModel('Product');
 };
 
 module.exports = Product;
