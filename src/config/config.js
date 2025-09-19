@@ -55,7 +55,7 @@ module.exports = {
   port: envVars.PORT,
   systemAccountId: envVars.SYSTEM_ACCOUNT_ID,
   mongoose: {
-    url: isTest 
+    url: isTest
       ? envVars.MONGODB_URL + '-test'
       : isDevelopment && envVars.MONGODB_URL_DEV
         ? envVars.MONGODB_URL_DEV
