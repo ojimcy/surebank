@@ -420,6 +420,59 @@ const getCardDetailsFromAuthorization = (authorization) => {
   };
 };
 
+/**
+ * List banks from Paystack
+ * @param {Object} options - Query options
+ * @param {string} options.country - Country code (default: 'nigeria')
+ * @param {number} options.perPage - Number of records per page
+ * @param {string} options.currency - Currency code (default: 'NGN')
+ * @returns {Promise<Object>} List of banks
+ */
+const listBanks = async (options = {}) => {
+  try {
+    const params = {
+      country: options.country || 'nigeria',
+      perPage: options.perPage || 100,
+      ...options,
+    };
+    const response = await paystackClient.misc.listBanks(params);
+    logger.info(`Listed ${response.data.data ? response.data.data.length : 0} banks from Paystack`);
+    return response;
+  } catch (error) {
+    logger.error('Error listing banks from Paystack:', error);
+    throw error;
+  }
+};
+
+/**
+ * Resolve bank account number to get account details
+ * @param {Object} data - Account data
+ * @param {string} data.account_number - Account number to resolve
+ * @param {string} data.bank_code - Bank code
+ * @returns {Promise<Object>} Account details including account name
+ */
+const resolveBankAccount = async (data) => {
+  try {
+    const response = await axios.get('https://api.paystack.co/bank/resolve', {
+      params: {
+        account_number: data.account_number,
+        bank_code: data.bank_code,
+      },
+      headers: {
+        Authorization: `Bearer ${config.paystack.secretKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    logger.info(`Resolved account ${data.account_number} at bank ${data.bank_code}`);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response && error.response.data ? error.response.data : error.message;
+    logger.error('Error resolving bank account:', errorMessage);
+    throw error;
+  }
+};
+
 module.exports = {
   paystackClient,
   verifyPaystackInitialization,
@@ -442,4 +495,6 @@ module.exports = {
   deactivateAuthorization,
   isAuthorizationReusable,
   getCardDetailsFromAuthorization,
+  listBanks,
+  resolveBankAccount,
 };

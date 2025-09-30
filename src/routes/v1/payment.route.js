@@ -128,6 +128,29 @@ router.post(
   userPortalController.processSelfWithdrawal
 );
 
+/**
+ * GET /v1/payments/banks
+ * Get list of Nigerian banks from Paystack
+ * @auth Required
+ * @returns {Array} List of banks with code and name
+ */
+router.get('/banks', auth(), paymentController.getBanks);
+
+/**
+ * POST /v1/payments/verify-bank-account
+ * Verify bank account number and get account name
+ * @auth Required
+ * @body {string} bankCode - Bank code
+ * @body {string} accountNumber - Account number to verify
+ * @returns {Object} Account details including account name
+ */
+router.post(
+  '/verify-bank-account',
+  auth(),
+  validate(paymentValidation.verifyBankAccount),
+  paymentController.verifyBankAccount
+);
+
 // Future payment-related routes can be added here
 // router.get('/transactions', ...);
 

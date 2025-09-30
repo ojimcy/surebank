@@ -120,6 +120,13 @@ const multiAccountWithdrawalRequest = {
   }),
 };
 
+const verifyBankAccount = {
+  body: Joi.object().keys({
+    bankCode: Joi.string().required(),
+    accountNumber: Joi.string().length(10).required(),
+  }),
+};
+
 module.exports = {
   initializeDsContribution,
   verifyPayment,
@@ -130,4 +137,5 @@ module.exports = {
   processSelfWithdrawal,
   initializeContribution,
   multiAccountWithdrawalRequest,
+  verifyBankAccount,
 };
