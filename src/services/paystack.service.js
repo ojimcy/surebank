@@ -430,12 +430,22 @@ const getCardDetailsFromAuthorization = (authorization) => {
  */
 const listBanks = async (options = {}) => {
   try {
-    const params = {
+    const params = new URLSearchParams({
       country: options.country || 'nigeria',
-      perPage: options.perPage || 100,
-      ...options,
-    };
-    const response = await paystackClient.misc.listBanks(params);
+      perPage: (options.perPage || 100).toString(),
+    });
+
+    if (options.currency) {
+      params.append('currency', options.currency);
+    }
+
+    const response = await axios.get(`https://api.paystack.co/bank?${params.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${config.paystack.secretKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
     logger.info(`Listed ${response.data.data ? response.data.data.length : 0} banks from Paystack`);
     return response;
   } catch (error) {
