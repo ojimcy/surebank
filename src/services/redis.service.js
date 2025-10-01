@@ -41,7 +41,12 @@ class RedisService {
       });
 
       this.client.on('error', (err) => {
-        logger.error('Redis client error:', err);
+        // Only log critical errors, not connection retries
+        if (!err.message.includes('ECONNREFUSED') && !err.message.includes('ETIMEDOUT')) {
+          logger.error('Redis client error:', err.message);
+        } else {
+          logger.debug('Redis connection issue (will retry):', err.message);
+        }
         this.isConnected = false;
       });
 

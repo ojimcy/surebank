@@ -16,15 +16,15 @@ const baseMjmlTemplate = require('./base-mjml.template');
  */
 module.exports = (data) => {
   const isCritical = data.critical;
-  const alertColor = isCritical ? '#DC2626' : '#D97706';
+  const alertColor = isCritical ? '#EF4444' : '#F59E0B';
   const alertBgColor = isCritical ? '#FEF2F2' : '#FFFBEB';
   const alertTextColor = isCritical ? '#991B1B' : '#92400E';
 
   const content = `
     <mj-text font-size="24px" font-weight="600" color="${alertColor}" padding="0 0 20px 0" align="center">
-      ⚠️ Security Alert
+      Security Alert
     </mj-text>
-    
+
     <mj-text font-size="16px" color="#4B5563" padding="0 0 30px 0">
       Dear ${data.name || 'Valued Customer'},
     </mj-text>
@@ -156,7 +156,7 @@ module.exports = (data) => {
     ${data.securitySettingsUrl ? `
     <mj-section padding="0 0 30px 0">
       <mj-column>
-        <mj-button 
+        <mj-button
           href="${data.securitySettingsUrl}"
           background-color="${alertColor}"
           color="#FFFFFF"

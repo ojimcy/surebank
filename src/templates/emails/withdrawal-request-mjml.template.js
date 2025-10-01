@@ -16,10 +16,10 @@ const baseMjmlTemplate = require('./base-mjml.template');
  */
 module.exports = (data) => {
   const content = `
-    <mj-text font-size="24px" font-weight="600" color="#111827" padding="0 0 20px 0">
+    <mj-text font-size="24px" font-weight="600" color="#0f172a" padding="0 0 20px 0">
       Withdrawal Request Submitted
     </mj-text>
-    
+
     <mj-text font-size="16px" color="#4B5563" padding="0 0 30px 0">
       Dear ${data.name || 'Valued Customer'},
     </mj-text>
@@ -131,9 +131,9 @@ module.exports = (data) => {
     </mj-section>
     
     <!-- Help Section -->
-    <mj-text font-size="14px" color="#6B7280" padding="30px 0 0 0" align="center">
+    <mj-text font-size="14px" color="#64748b" padding="30px 0 0 0" align="center">
       Need help? Contact our support team at
-      <a href="mailto:support@surebankstores.ng" style="color: #0052CC;">support@surebankstores.ng</a>
+      <a href="mailto:support@surebankstores.ng" style="color: #0066A1;">support@surebankstores.ng</a>
     </mj-text>
   `;
 

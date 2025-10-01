@@ -16,7 +16,7 @@ const baseMjmlTemplate = require('./base-mjml.template');
  */
 module.exports = (data) => {
   const isCredit = data.activityType === 'credit';
-  const alertColor = isCredit ? '#059669' : '#EA580C';
+  const alertColor = isCredit ? '#10B981' : '#EA580C';
   const alertBgColor = isCredit ? '#ECFDF5' : '#FFF7ED';
   const alertTextColor = isCredit ? '#065F46' : '#9A3412';
   const icon = isCredit ? '↓' : '↑';
@@ -55,7 +55,7 @@ module.exports = (data) => {
         <!-- Transaction Info -->
         <mj-table padding="20px 40px 0 40px">
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px; width: 35%;">Date:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px; width: 35%;">Date:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px;">
               ${new Date(data.date || Date.now()).toLocaleString('en-NG', {
                 year: 'numeric',
@@ -67,21 +67,21 @@ module.exports = (data) => {
             </td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px;">Description:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Description:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px;">
               ${data.description || 'Transaction'}
             </td>
           </tr>
           ${data.reference ? `
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px;">Reference:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Reference:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px; font-family: 'Courier New', monospace;">
               ${data.reference}
             </td>
           </tr>
           ` : ''}
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px; font-weight: 600;">Balance:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px; font-weight: 600;">Balance:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 16px; font-weight: 700;">
               ₦${(data.balance || 0).toLocaleString()}
             </td>
@@ -130,7 +130,7 @@ module.exports = (data) => {
       <mj-column>
         <mj-button 
           href="${data.dashboardUrl}"
-          background-color="#0052CC"
+          background-color="#0066A1"
           color="#FFFFFF"
           font-size="16px"
           font-weight="600"
