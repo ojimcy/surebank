@@ -424,14 +424,19 @@ const createMultiAccountWithdrawalRequest = async (withdrawalData, userId) => {
 
     await session.commitTransaction();
 
-    // Send notifications after successful transaction
-    await sendMultiAccountWithdrawalNotifications({
-      userId,
-      withdrawalRequests: withdrawalResults,
-      bankName,
-      bankAccountNumber,
-      totalAmount,
-    });
+    // Send notifications after successful transaction (don't fail the request if notifications fail)
+    try {
+      await sendMultiAccountWithdrawalNotifications({
+        userId,
+        withdrawalRequests: withdrawalResults,
+        bankName,
+        bankAccountNumber,
+        totalAmount,
+      });
+    } catch (notificationError) {
+      // Log the error but don't fail the request
+      logger.error('Failed to send withdrawal notifications:', notificationError);
+    }
 
     return {
       withdrawalRequests: withdrawalResults,
