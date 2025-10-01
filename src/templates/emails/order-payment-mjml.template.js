@@ -41,7 +41,7 @@ module.exports = (data) => {
       </td>
       <td style="padding: 12px; border-bottom: 1px solid #E5E7EB; color: #111827; font-size: 14px;">
         <strong>${product.name || 'Product'}</strong>
-        ${product.description ? `<br/><span style="color: #6B7280; font-size: 12px;">${product.description}</span>` : ''}
+        ${product.description ? `<br/><span style="color: #64748b; font-size: 12px;">${product.description}</span>` : ''}
       </td>
       <td style="padding: 12px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px; text-align: center;">
         ${product.quantity || 1}
@@ -71,7 +71,7 @@ module.exports = (data) => {
   };
 
   const content = `
-    <mj-text font-size="24px" font-weight="600" color="#059669" padding="0 0 20px 0">
+    <mj-text font-size="24px" font-weight="600" color="#10B981" padding="0 0 20px 0">
       ✓ Payment Successful
     </mj-text>
     
@@ -95,7 +95,7 @@ module.exports = (data) => {
           ₦${(totalAmount || 0).toLocaleString()}
         </mj-text>
         
-        <mj-text align="center" font-size="14px" color="#059669" padding="15px 0 0 0">
+        <mj-text align="center" font-size="14px" color="#10B981" padding="15px 0 0 0">
           Successfully Paid
         </mj-text>
       </mj-column>
@@ -110,13 +110,13 @@ module.exports = (data) => {
       <mj-column>
         <mj-table>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px; width: 40%;">Order Number:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px; width: 40%;">Order Number:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px; font-weight: 600;">
               ${orderNumber || 'N/A'}
             </td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Payment Date:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Payment Date:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px;">
               ${new Date(paymentDate || Date.now()).toLocaleString('en-NG', {
                 year: 'numeric',
@@ -128,14 +128,14 @@ module.exports = (data) => {
             </td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Payment Method:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Payment Method:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px;">
               ${getPaymentMethodDisplay(paymentMethod)}
             </td>
           </tr>
           ${accountNumber ? `
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Account Number:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Account Number:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px;">
               ${accountNumber}
             </td>
@@ -143,7 +143,7 @@ module.exports = (data) => {
           ` : ''}
           ${transactionReference ? `
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Transaction Ref:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Transaction Ref:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px; font-family: 'Courier New', monospace;">
               ${transactionReference}
             </td>
@@ -151,7 +151,7 @@ module.exports = (data) => {
           ` : ''}
           <tr>
             <td style="padding: 12px 0 0 0; color: #111827; font-size: 16px; font-weight: 600;">Amount Paid:</td>
-            <td style="padding: 12px 0 0 0; color: #059669; font-size: 18px; font-weight: 700;">
+            <td style="padding: 12px 0 0 0; color: #10B981; font-size: 18px; font-weight: 700;">
               ₦${(totalAmount || 0).toLocaleString()}
             </td>
           </tr>
@@ -187,14 +187,14 @@ module.exports = (data) => {
             </tr>
           </thead>
           <tbody>
-            ${productRows || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #6B7280;">No items</td></tr>'}
+            ${productRows || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #64748b;">No items</td></tr>'}
           </tbody>
           <tfoot>
             <tr>
               <td colspan="4" style="padding: 16px 12px; border-top: 2px solid #E5E7EB; text-align: right; color: #111827; font-size: 16px; font-weight: 600;">
                 Total Paid:
               </td>
-              <td style="padding: 16px 12px; border-top: 2px solid #E5E7EB; text-align: right; color: #059669; font-size: 18px; font-weight: 700;">
+              <td style="padding: 16px 12px; border-top: 2px solid #E5E7EB; text-align: right; color: #10B981; font-size: 18px; font-weight: 700;">
                 ₦${(totalAmount || 0).toLocaleString()}
               </td>
             </tr>
@@ -230,7 +230,7 @@ module.exports = (data) => {
       Thank you for shopping with SureBank!
     </mj-text>
     
-    <mj-text font-size="14px" color="#6B7280" padding="0" align="center">
+    <mj-text font-size="14px" color="#64748b" padding="0" align="center">
       We appreciate your business and look forward to serving you again.
     </mj-text>
   `;

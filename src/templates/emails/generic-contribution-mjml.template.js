@@ -55,7 +55,7 @@ module.exports = (data) => {
         <mj-text align="center" font-size="14px" color="#065F46" padding="0 0 10px 0">
           Contribution Amount
         </mj-text>
-        <mj-text align="center" font-size="32px" font-weight="700" color="#059669">
+        <mj-text align="center" font-size="32px" font-weight="700" color="#10B981">
           ₦${(contributionAmount || 0).toLocaleString()}
         </mj-text>
         <mj-text align="center" font-size="13px" color="#065F46" padding="10px 0 0 0">
@@ -73,25 +73,25 @@ module.exports = (data) => {
         
         <mj-table>
           <tr style="border-bottom: 1px solid #E5E7EB;">
-            <td style="padding: 12px 0; color: #6B7280; font-size: 14px; width: 40%;">Product Name:</td>
+            <td style="padding: 12px 0; color: #64748b; font-size: 14px; width: 40%;">Product Name:</td>
             <td style="padding: 12px 0; color: #111827; font-size: 14px; font-weight: 500;">
               ${productName || 'N/A'}
             </td>
           </tr>
           <tr style="border-bottom: 1px solid #E5E7EB;">
-            <td style="padding: 12px 0; color: #6B7280; font-size: 14px;">Package Type:</td>
+            <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Package Type:</td>
             <td style="padding: 12px 0; color: #111827; font-size: 14px;">
               ${packageTypeLabel}
             </td>
           </tr>
           <tr style="border-bottom: 1px solid #E5E7EB;">
-            <td style="padding: 12px 0; color: #6B7280; font-size: 14px;">Package ID:</td>
+            <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Package ID:</td>
             <td style="padding: 12px 0; color: #111827; font-size: 14px;">
               ${packageId || accountNumber || 'N/A'}
             </td>
           </tr>
           <tr style="border-bottom: 1px solid #E5E7EB;">
-            <td style="padding: 12px 0; color: #6B7280; font-size: 14px;">Contribution Date:</td>
+            <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Contribution Date:</td>
             <td style="padding: 12px 0; color: #111827; font-size: 14px;">
               ${new Date(date || Date.now()).toLocaleDateString('en-NG', {
                 weekday: 'long',
@@ -113,7 +113,7 @@ module.exports = (data) => {
         </mj-text>
         
         <!-- Progress Bar -->
-        <mj-text padding="0 0 10px 0" font-size="14px" color="#6B7280">
+        <mj-text padding="0 0 10px 0" font-size="14px" color="#64748b">
           ${progress.toFixed(1)}% Complete
         </mj-text>
         
@@ -128,7 +128,7 @@ module.exports = (data) => {
             <div style="
               width: ${Math.min(progress, 100)}%;
               height: 100%;
-              background: linear-gradient(90deg, #059669 0%, #047857 100%);
+              background: linear-gradient(90deg, #10B981 0%, #047857 100%);
               border-radius: 12px;
               transition: width 0.3s ease;
             "></div>
@@ -138,31 +138,31 @@ module.exports = (data) => {
         <!-- Amount Details -->
         <mj-table>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Total Saved:</td>
-            <td style="padding: 8px 0; color: #059669; font-size: 16px; font-weight: 600; text-align: right;">
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Total Saved:</td>
+            <td style="padding: 8px 0; color: #10B981; font-size: 16px; font-weight: 600; text-align: right;">
               ₦${(totalContribution || 0).toLocaleString()}
             </td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Target Amount:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Target Amount:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 16px; font-weight: 600; text-align: right;">
               ₦${(targetAmount || 0).toLocaleString()}
             </td>
           </tr>
           <tr>
-            <td style="padding: 8px 0 0 0; color: #6B7280; font-size: 14px;">Remaining:</td>
-            <td style="padding: 8px 0 0 0; color: #6B7280; font-size: 14px; text-align: right;">
+            <td style="padding: 8px 0 0 0; color: #64748b; font-size: 14px;">Remaining:</td>
+            <td style="padding: 8px 0 0 0; color: #64748b; font-size: 14px; text-align: right;">
               ₦${remainingAmount.toLocaleString()}
             </td>
           </tr>
         </mj-table>
         
         ${progress >= 100 ? `
-        <mj-text padding="20px 0 0 0" align="center" font-size="16px" color="#059669" font-weight="600">
+        <mj-text padding="20px 0 0 0" align="center" font-size="16px" color="#10B981" font-weight="600">
           🎉 Congratulations! You've reached your target!
         </mj-text>
         ` : progress >= 75 ? `
-        <mj-text padding="20px 0 0 0" align="center" font-size="14px" color="#059669">
+        <mj-text padding="20px 0 0 0" align="center" font-size="14px" color="#10B981">
           Almost there! You're ${(100 - progress).toFixed(1)}% away from your goal!
         </mj-text>
         ` : ''}
@@ -175,7 +175,7 @@ module.exports = (data) => {
       <mj-column>
         <mj-button 
           href="${dashboardUrl}"
-          background-color="#0052CC"
+          background-color="#0066A1"
           color="#FFFFFF"
           font-size="16px"
           font-weight="600"
@@ -195,7 +195,7 @@ module.exports = (data) => {
         <mj-text font-size="15px" color="#111827" align="center">
           Thank you for choosing SureBank for your financial needs.
         </mj-text>
-        <mj-text font-size="14px" color="#6B7280" align="center" padding="10px 0 0 0">
+        <mj-text font-size="14px" color="#64748b" align="center" padding="10px 0 0 0">
           Best Regards,<br/>
           <strong>SureBank Team</strong>
         </mj-text>

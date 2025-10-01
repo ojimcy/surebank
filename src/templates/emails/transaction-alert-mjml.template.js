@@ -22,17 +22,17 @@ module.exports = (data) => {
   const isPending = data.status === 'pending';
   
   const getStatusColor = () => {
-    if (isSuccessful) return '#059669';
-    if (isFailed) return '#DC2626';
-    if (isPending) return '#D97706';
-    return '#6B7280';
+    if (isSuccessful) return '#10B981';
+    if (isFailed) return '#EF4444';
+    if (isPending) return '#F59E0B';
+    return '#64748b';
   };
 
   const getStatusBgColor = () => {
     if (isSuccessful) return '#ECFDF5';
     if (isFailed) return '#FEF2F2';
     if (isPending) return '#FFFBEB';
-    return '#F9FAFB';
+    return '#f8fafc';
   };
 
   const getTransactionIcon = () => {
@@ -170,9 +170,9 @@ module.exports = (data) => {
     ${data.receiptUrl ? `
     <mj-section padding="30px 0 0 0">
       <mj-column>
-        <mj-button 
+        <mj-button
           href="${data.receiptUrl}"
-          background-color="#0052CC"
+          background-color="#0066A1"
           color="#FFFFFF"
           font-size="16px"
           font-weight="600"
@@ -201,9 +201,9 @@ module.exports = (data) => {
     </mj-section>
     
     <!-- Support Section -->
-    <mj-text font-size="14px" color="#6B7280" padding="30px 0 0 0" align="center">
+    <mj-text font-size="14px" color="#64748b" padding="30px 0 0 0" align="center">
       Notice any discrepancies? Contact our support team immediately at<br/>
-      <a href="mailto:support@surebankstores.ng" style="color: #0052CC;">support@surebankstores.ng</a>
+      <a href="mailto:support@surebankstores.ng" style="color: #0066A1;">support@surebankstores.ng</a>
       or call our 24/7 helpline
     </mj-text>
   `;
@@ -229,6 +229,6 @@ module.exports = (data) => {
     title: 'Transaction Alert - SureBank',
     preheader,
     showUnsubscribe: false,
-    headerColor: isSuccessful ? '#059669' : isFailed ? '#DC2626' : '#0052CC'
+    headerColor: isSuccessful ? '#10B981' : isFailed ? '#EF4444' : '#0066A1'
   });
 };

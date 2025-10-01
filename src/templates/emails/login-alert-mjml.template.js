@@ -16,17 +16,17 @@ const baseMjmlTemplate = require('./base-mjml.template');
  */
 module.exports = (data) => {
   const isSuspicious = data.suspicious;
-  const alertColor = isSuspicious ? '#DC2626' : '#059669';
+  const alertColor = isSuspicious ? '#EF4444' : '#10B981';
   const alertBgColor = isSuspicious ? '#FEF2F2' : '#ECFDF5';
   const alertTextColor = isSuspicious ? '#991B1B' : '#065F46';
-  const alertIcon = isSuspicious ? '⚠️' : '✓';
+  const alertIcon = isSuspicious ? '⚠' : '✓';
   const alertTitle = isSuspicious ? 'Suspicious Login Detected' : 'Successful Login';
 
   const content = `
-    <mj-text font-size="24px" font-weight="600" color="#111827" padding="0 0 20px 0" align="center">
+    <mj-text font-size="24px" font-weight="600" color="#0f172a" padding="0 0 20px 0" align="center">
       ${alertIcon} New Login Alert
     </mj-text>
-    
+
     <mj-text font-size="16px" color="#4B5563" padding="0 0 30px 0">
       Dear ${data.name || 'Valued Customer'},
     </mj-text>
@@ -100,7 +100,7 @@ module.exports = (data) => {
     <mj-section background-color="#FEF2F2" padding="25px" border-radius="8px" margin="20px 0">
       <mj-column>
         <mj-text font-size="16px" font-weight="600" color="#991B1B" padding="0 0 15px 0">
-          ⚠️ If this wasn't you, take immediate action:
+          If this wasn't you, take immediate action:
         </mj-text>
         
         <mj-text font-size="14px" color="#991B1B" line-height="1.8">
@@ -111,7 +111,7 @@ module.exports = (data) => {
               height: 24px;
               line-height: 24px;
               text-align: center;
-              background-color: #DC2626;
+              background-color: #EF4444;
               color: white;
               border-radius: 50%;
               font-size: 12px;
@@ -127,7 +127,7 @@ module.exports = (data) => {
               height: 24px;
               line-height: 24px;
               text-align: center;
-              background-color: #DC2626;
+              background-color: #EF4444;
               color: white;
               border-radius: 50%;
               font-size: 12px;
@@ -143,7 +143,7 @@ module.exports = (data) => {
               height: 24px;
               line-height: 24px;
               text-align: center;
-              background-color: #DC2626;
+              background-color: #EF4444;
               color: white;
               border-radius: 50%;
               font-size: 12px;
@@ -159,7 +159,7 @@ module.exports = (data) => {
               height: 24px;
               line-height: 24px;
               text-align: center;
-              background-color: #DC2626;
+              background-color: #EF4444;
               color: white;
               border-radius: 50%;
               font-size: 12px;
@@ -175,9 +175,9 @@ module.exports = (data) => {
     <!-- Secure Account Button -->
     <mj-section padding="0 0 30px 0">
       <mj-column>
-        <mj-button 
+        <mj-button
           href="${data.securitySettingsUrl || '#'}"
-          background-color="#DC2626"
+          background-color="#EF4444"
           color="#FFFFFF"
           font-size="16px"
           font-weight="600"
@@ -219,21 +219,21 @@ module.exports = (data) => {
     </mj-section>
     
     <!-- Support Section -->
-    <mj-text font-size="14px" color="#6B7280" padding="30px 0 0 0" align="center">
-      ${isSuspicious ? 
-        '<strong style="color: #DC2626;">Need immediate help?</strong><br/>' : 
+    <mj-text font-size="14px" color="#64748b" padding="30px 0 0 0" align="center">
+      ${isSuspicious ?
+        '<strong style="color: #EF4444;">Need immediate help?</strong><br/>' :
         'Have questions about this login?<br/>'
       }
-      Contact our support team at 
-      <a href="mailto:support@surebankstores.ng" style="color: #0052CC;">support@surebankstores.ng</a>
+      Contact our support team at
+      <a href="mailto:support@surebankstores.ng" style="color: #0066A1;">support@surebankstores.ng</a>
       ${isSuspicious ? '<br/>or call our 24/7 hotline: 0800-SUREBANK' : ''}
     </mj-text>
   `;
 
   return baseMjmlTemplate(content, {
     title: 'Login Alert - SureBank',
-    preheader: isSuspicious ? 
-      '⚠️ Suspicious login detected on your account' : 
+    preheader: isSuspicious ?
+      'Suspicious login detected on your account' :
       `New login from ${data.location || 'your device'}`,
     showUnsubscribe: false,
     headerColor: alertColor

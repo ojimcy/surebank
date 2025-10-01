@@ -29,7 +29,7 @@ module.exports = (data) => {
       </td>
       <td style="padding: 12px; border-bottom: 1px solid #E5E7EB; color: #111827; font-size: 14px;">
         <strong>${product.name || 'Product'}</strong>
-        ${product.description ? `<br/><span style="color: #6B7280; font-size: 12px;">${product.description}</span>` : ''}
+        ${product.description ? `<br/><span style="color: #64748b; font-size: 12px;">${product.description}</span>` : ''}
       </td>
       <td style="padding: 12px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px; text-align: center;">
         ${product.quantity || 1}
@@ -65,13 +65,13 @@ module.exports = (data) => {
         
         <mj-table>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Order Number:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Order Number:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px; font-weight: 600; text-align: right;">
               ${orderNumber || 'N/A'}
             </td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Order Date:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Order Date:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right;">
               ${new Date().toLocaleString('en-NG', {
                 year: 'numeric',
@@ -84,7 +84,7 @@ module.exports = (data) => {
           </tr>
           <tr>
             <td style="padding: 12px 0 0 0; color: #111827; font-size: 16px; font-weight: 600;">Total Amount:</td>
-            <td style="padding: 12px 0 0 0; color: #059669; font-size: 20px; font-weight: 700; text-align: right;">
+            <td style="padding: 12px 0 0 0; color: #10B981; font-size: 20px; font-weight: 700; text-align: right;">
               ₦${(totalAmount || 0).toLocaleString()}
             </td>
           </tr>
@@ -120,14 +120,14 @@ module.exports = (data) => {
             </tr>
           </thead>
           <tbody>
-            ${productRows || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #6B7280;">No items</td></tr>'}
+            ${productRows || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #64748b;">No items</td></tr>'}
           </tbody>
           <tfoot>
             <tr>
               <td colspan="4" style="padding: 16px 12px; border-top: 2px solid #E5E7EB; text-align: right; color: #111827; font-size: 16px; font-weight: 600;">
                 Total:
               </td>
-              <td style="padding: 16px 12px; border-top: 2px solid #E5E7EB; text-align: right; color: #059669; font-size: 18px; font-weight: 700;">
+              <td style="padding: 16px 12px; border-top: 2px solid #E5E7EB; text-align: right; color: #10B981; font-size: 18px; font-weight: 700;">
                 ₦${(totalAmount || 0).toLocaleString()}
               </td>
             </tr>
@@ -145,31 +145,31 @@ module.exports = (data) => {
       <mj-column>
         <mj-table>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px; width: 30%;">Full Name:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px; width: 30%;">Full Name:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px;">
               ${deliveryAddress.fullName || 'N/A'}
             </td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Phone:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Phone:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px;">
               ${deliveryAddress.phoneNumber || 'N/A'}
             </td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Address:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Address:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px;">
               ${deliveryAddress.address || 'N/A'}
             </td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">City:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">City:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px;">
               ${deliveryAddress.city || 'N/A'}
             </td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">State:</td>
+            <td style="padding: 8px 0; color: #64748b; font-size: 14px;">State:</td>
             <td style="padding: 8px 0; color: #111827; font-size: 14px;">
               ${deliveryAddress.state || 'N/A'}
             </td>
@@ -195,7 +195,7 @@ module.exports = (data) => {
       Thank you for shopping with SureBank!
     </mj-text>
     
-    <mj-text font-size="14px" color="#6B7280" padding="0" align="center">
+    <mj-text font-size="14px" color="#64748b" padding="0" align="center">
       We appreciate your business and look forward to serving you again.
     </mj-text>
   `;

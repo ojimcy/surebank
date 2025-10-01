@@ -32,7 +32,7 @@ module.exports = (data) => {
             padding: 8px 20px;
             border-radius: 20px;
             background-color: #ECFDF5;
-            color: #059669;
+            color: #10B981;
             font-size: 14px;
             font-weight: 600;
             text-transform: uppercase;
@@ -42,7 +42,7 @@ module.exports = (data) => {
           </span>
         </mj-text>
         
-        <mj-text align="center" font-size="36px" font-weight="700" color="#059669" padding="0 0 20px 0">
+        <mj-text align="center" font-size="36px" font-weight="700" color="#10B981" padding="0 0 20px 0">
           ₦${(data.amount || 0).toLocaleString()}
         </mj-text>
         
@@ -51,13 +51,13 @@ module.exports = (data) => {
         <!-- Transaction Details -->
         <mj-table padding="20px 20px 0 20px">
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px; width: 40%;">Transaction Type:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px; width: 40%;">Transaction Type:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px;">
               Daily Savings Contribution
             </td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px;">Date:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Date:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px;">
               ${new Date().toLocaleString('en-NG', {
                 year: 'numeric',
@@ -69,7 +69,7 @@ module.exports = (data) => {
             </td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px;">Reference:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Reference:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px;">
               <span style="font-family: 'Courier New', monospace; font-size: 13px;">
                 ${data.reference || 'N/A'}
@@ -77,7 +77,7 @@ module.exports = (data) => {
             </td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px;">Payment Method:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Payment Method:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px;">
               ${data.paymentMethod || 'Online Payment'}
             </td>
@@ -146,7 +146,7 @@ module.exports = (data) => {
                 "></div>
               </div>
             </mj-text>
-            <mj-text padding="10px 0 0 0" font-size="13px" color="#6B7280">
+            <mj-text padding="10px 0 0 0" font-size="13px" color="#64748b">
               Target: ₦${data.targetAmount.toLocaleString()} 
               ${data.daysRemaining ? `• ${data.daysRemaining} days remaining` : ''}
             </mj-text>
@@ -188,7 +188,7 @@ module.exports = (data) => {
       <mj-column>
         <mj-button 
           href="${data.dashboardUrl}"
-          background-color="#0052CC"
+          background-color="#0066A1"
           color="#FFFFFF"
           font-size="16px"
           font-weight="600"

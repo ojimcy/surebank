@@ -23,7 +23,7 @@ module.exports = (data) => {
   const needsReview = status === 'needs_review';
   
   // Determine colors based on status
-  const statusColor = isApproved ? '#059669' : isRejected ? '#DC2626' : '#D97706';
+  const statusColor = isApproved ? '#10B981' : isRejected ? '#EF4444' : '#F59E0B';
   const statusBgColor = isApproved ? '#ECFDF5' : isRejected ? '#FEF2F2' : '#FFFBEB';
   const statusTextColor = isApproved ? '#065F46' : isRejected ? '#991B1B' : '#92400E';
   const statusIcon = isApproved ? '✓' : isRejected ? '✗' : '⚠';
@@ -33,10 +33,10 @@ module.exports = (data) => {
   ).join(' ');
 
   const content = `
-    <mj-text font-size="24px" font-weight="600" color="#111827" padding="0 0 20px 0" align="center">
+    <mj-text font-size="24px" font-weight="600" color="#0f172a" padding="0 0 20px 0" align="center">
       KYC Status Update
     </mj-text>
-    
+
     <mj-text font-size="16px" color="#4B5563" padding="0 0 30px 0">
       Dear ${data.name || 'Valued Customer'},
     </mj-text>
@@ -153,7 +153,7 @@ module.exports = (data) => {
                 height: 24px;
                 line-height: 24px;
                 text-align: center;
-                background-color: #0052CC;
+                background-color: #0066A1;
                 color: white;
                 border-radius: 50%;
                 font-size: 12px;
@@ -172,9 +172,9 @@ module.exports = (data) => {
     ${data.actionRequired && data.actionUrl ? `
     <mj-section padding="30px 0">
       <mj-column>
-        <mj-button 
+        <mj-button
           href="${data.actionUrl}"
-          background-color="${isApproved ? '#059669' : '#0052CC'}"
+          background-color="${isApproved ? '#10B981' : '#0066A1'}"
           color="#FFFFFF"
           font-size="16px"
           font-weight="600"
@@ -193,10 +193,10 @@ module.exports = (data) => {
     <mj-section background-color="#ECFDF5" padding="20px" border-radius="8px" margin="20px 0">
       <mj-column>
         <mj-text font-size="16px" font-weight="600" color="#065F46" padding="0 0 10px 0" align="center">
-          🎉 Congratulations!
+          Congratulations!
         </mj-text>
         <mj-text font-size="14px" color="#065F46" align="center" line-height="1.6">
-          Your account is now fully verified. You can enjoy all the features and benefits of SureBank services 
+          Your account is now fully verified. You can enjoy all the features and benefits of SureBank services
           without any restrictions.
         </mj-text>
       </mj-column>
@@ -219,10 +219,10 @@ module.exports = (data) => {
     </mj-section>
     
     <!-- Support Section -->
-    <mj-text font-size="14px" color="#6B7280" padding="30px 0 0 0" align="center">
+    <mj-text font-size="14px" color="#64748b" padding="30px 0 0 0" align="center">
       Need help with your KYC verification?<br/>
-      Contact our support team at 
-      <a href="mailto:support@surebankstores.ng" style="color: #0052CC;">support@surebankstores.ng</a>
+      Contact our support team at
+      <a href="mailto:support@surebankstores.ng" style="color: #0066A1;">support@surebankstores.ng</a>
     </mj-text>
   `;
 

@@ -26,11 +26,11 @@ module.exports = (data) => {
       : `Your subscription package for ${data.productName || 'your goal'} has been created successfully.`;
 
   const content = `
-    <mj-text font-size="28px" font-weight="600" color="#0052CC" padding="0 0 10px 0" align="center">
+    <mj-text font-size="28px" font-weight="600" color="#0066A1" padding="0 0 10px 0" align="center">
       ${packageTitle}
     </mj-text>
     
-    <mj-text font-size="18px" color="#059669" padding="0 0 30px 0" align="center">
+    <mj-text font-size="18px" color="#10B981" padding="0 0 30px 0" align="center">
       ✓ Your savings journey has begun!
     </mj-text>
     
@@ -44,55 +44,55 @@ module.exports = (data) => {
     </mj-text>
     
     <!-- Package Summary Card -->
-    <mj-section background-color="#F9FBFD" padding="25px" border="1px solid #E2E8F0" border-left="4px solid #0052CC" border-radius="8px">
+    <mj-section background-color="#F9FBFD" padding="25px" border="1px solid #E2E8F0" border-left="4px solid #0066A1" border-radius="8px">
       <mj-column>
-        <mj-text font-size="18px" font-weight="600" color="#0052CC" padding="0 0 20px 0" border-bottom="1px solid #E2E8F0">
+        <mj-text font-size="18px" font-weight="600" color="#0066A1" padding="0 0 20px 0" border-bottom="1px solid #E2E8F0">
           Package Summary
         </mj-text>
         
         <mj-table padding="20px 0 0 0">
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px; font-weight: 600; width: 40%;">Package Name:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px; font-weight: 600; width: 40%;">Package Name:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px;">
               ${data.productName || data.target || 'Savings Package'}
             </td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px; font-weight: 600;">Package Type:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px; font-weight: 600;">Package Type:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px;">
               ${packageTypeLabel}
             </td>
           </tr>
           ${data.packageType === 'ds' ? `
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px; font-weight: 600;">Daily Amount:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px; font-weight: 600;">Daily Amount:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px; font-weight: 600;">
               ₦${(data.amountPerDay || 0).toLocaleString()}
             </td>
           </tr>
           ` : ''}
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px; font-weight: 600;">Target Amount:</td>
-            <td style="padding: 10px 0; color: #059669; font-size: 16px; font-weight: 700;">
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px; font-weight: 600;">Target Amount:</td>
+            <td style="padding: 10px 0; color: #10B981; font-size: 16px; font-weight: 700;">
               ₦${(data.targetAmount || 0).toLocaleString()}
             </td>
           </tr>
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px; font-weight: 600;">Current Balance:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px; font-weight: 600;">Current Balance:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px;">
               ₦${(data.currentContribution || 0).toLocaleString()}
             </td>
           </tr>
           ${data.accountNumber ? `
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px; font-weight: 600;">Account Number:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px; font-weight: 600;">Account Number:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px;">
               ${data.accountNumber}
             </td>
           </tr>
           ` : ''}
           <tr>
-            <td style="padding: 10px 0; color: #6B7280; font-size: 14px; font-weight: 600;">Creation Date:</td>
+            <td style="padding: 10px 0; color: #64748b; font-size: 14px; font-weight: 600;">Creation Date:</td>
             <td style="padding: 10px 0; color: #111827; font-size: 14px;">
               ${new Date(data.date || Date.now()).toLocaleDateString('en-NG', {
                 day: 'numeric',
@@ -114,19 +114,19 @@ module.exports = (data) => {
         
         <mj-text font-size="14px" color="#4B5563" line-height="1.8">
           <div style="margin-bottom: 12px;">
-            <span style="color: #0052CC; font-weight: bold;">✓</span> 
+            <span style="color: #0066A1; font-weight: bold;">✓</span> 
             <strong>Disciplined Savings:</strong> Regular saving helps build a strong financial foundation
           </div>
           <div style="margin-bottom: 12px;">
-            <span style="color: #0052CC; font-weight: bold;">✓</span> 
+            <span style="color: #0066A1; font-weight: bold;">✓</span> 
             <strong>Goal Achievement:</strong> Stay on track to reach your financial goals
           </div>
           <div style="margin-bottom: 12px;">
-            <span style="color: #0052CC; font-weight: bold;">✓</span> 
+            <span style="color: #0066A1; font-weight: bold;">✓</span> 
             <strong>Financial Security:</strong> Build a safety net for your future needs
           </div>
           <div style="margin-bottom: 12px;">
-            <span style="color: #0052CC; font-weight: bold;">✓</span> 
+            <span style="color: #0066A1; font-weight: bold;">✓</span> 
             <strong>Easy Monitoring:</strong> Track your savings progress through our online dashboard
           </div>
         </mj-text>
@@ -174,7 +174,7 @@ module.exports = (data) => {
       <mj-column>
         <mj-button 
           href="${data.dashboardUrl}"
-          background-color="#0052CC"
+          background-color="#0066A1"
           color="#FFFFFF"
           font-size="16px"
           font-weight="600"
@@ -191,13 +191,13 @@ module.exports = (data) => {
     <!-- Footer Message -->
     <mj-section padding="20px 0" border-top="1px solid #E5E7EB">
       <mj-column>
-        <mj-text font-size="15px" color="#6B7280" line-height="1.6">
+        <mj-text font-size="15px" color="#64748b" line-height="1.6">
           Thank you for choosing SureBank as your trusted financial partner. If you have any questions 
           about your savings or need assistance, please contact our customer service team at 
           support@surebankstores.ng.
         </mj-text>
         
-        <mj-text font-size="15px" color="#6B7280" padding="15px 0 0 0">
+        <mj-text font-size="15px" color="#64748b" padding="15px 0 0 0">
           Best regards,<br/>
           <strong style="color: #111827;">The SureBank Team</strong>
         </mj-text>
