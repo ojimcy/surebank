@@ -35,13 +35,14 @@ const { createCSRFMiddleware } = require('./middlewares/csrf');
 
 const app = express();
 
-// Initialize Redis connection on startup
+// Initialize Redis connection on startup (with graceful fallback)
 (async () => {
   try {
     await redisService.connect();
-    logger.info('Redis connected successfully');
+    logger.info('✅ Redis connected successfully');
   } catch (error) {
-    logger.warn('Redis connection failed, continuing without cache:', error.message);
+    logger.warn('⚠️ Redis connection failed, using in-memory fallback:', error.message);
+    logger.info('Application will continue with reduced caching capabilities');
   }
 })();
 

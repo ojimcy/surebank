@@ -35,25 +35,36 @@ class OptimizedRedisService {
       // Use Upstash Redis configuration
       let redisConfig;
       
-      if (config.upstash?.enabled && config.upstash?.url && config.upstash?.token) {
-        // Upstash configuration
+      if (
+        config.upstash &&
+        config.upstash.enabled &&
+        config.upstash.url &&
+        config.upstash.token
+      ) {
+        // Upstash configuration - properly parse URL
+        const upstashHost = config.upstash.url
+          .replace('https://', '')
+          .replace('http://', '')
+          .replace(/\/$/, ''); // Remove trailing slash if present
+
         redisConfig = {
-          host: config.upstash.url.replace('https://', ''),
+          host: upstashHost,
           port: 6379,
           password: config.upstash.token,
           tls: {},
           family: 4,
           maxRetriesPerRequest: 3,
+          connectTimeout: 10000,
           retryStrategy: (times) => {
             if (times > 3) {
-              logger.error('Upstash Redis connection failed, switching to fallback mode');
+              logger.warn('Upstash Redis connection failed after 3 retries, switching to fallback mode');
               this.fallbackMode = true;
               return null;
             }
             return Math.min(times * 50, 2000);
           }
         };
-        logger.info('Using Upstash Redis configuration');
+        logger.info(`Using Upstash Redis: ${upstashHost}`);
       } else {
         // Standard Redis configuration
         redisConfig = {
@@ -84,7 +95,12 @@ class OptimizedRedisService {
       });
 
       this.redis.on('error', (err) => {
-        logger.error('Redis error:', err);
+        // Only log critical errors, not connection retries
+        if (!err.message.includes('ECONNREFUSED') && !err.message.includes('ETIMEDOUT')) {
+          logger.error('Redis error:', err.message);
+        } else {
+          logger.debug('Redis connection issue (will retry):', err.message);
+        }
         this.isConnected = false;
       });
 

@@ -31,6 +31,8 @@
     "health-check": "node scripts/health-checker.js",
     "test": "cross-env NODE_ENV=test dotenv -e .env.test jest -i --colors --verbose --detectOpenHandles",
     "test:watch": "cross-env NODE_ENV=test dotenv -e .env.test jest -i --watchAll",
+    "test:redis": "node scripts/test-redis-full.js",
+    "test:redis:quick": "node scripts/test-upstash-connection.js",
     "coverage": "cross-env NODE_ENV=test dotenv -e .env.test jest -i --coverage",
     "coverage:coveralls": "cross-env NODE_ENV=test dotenv -e .env.test jest -i --coverage --coverageReporters=text-lcov | coveralls",
     "lint": "eslint .",
