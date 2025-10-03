@@ -38,4 +38,13 @@ router
 router.get('/types', auth(), notificationController.getNotificationTypes);
 router.post('/unsubscribe', auth(), notificationController.unsubscribeFromAll);
 router.post('/unsubscribe/:type', auth(), notificationController.unsubscribeFromNotificationType);
+
+// Preset routes
+router.get('/presets/available', auth(), notificationController.getPresets);
+router.post('/presets/apply', auth(), notificationController.applyPreset);
+
+// Category routes
+router.get('/categories', auth(), notificationController.getCategories);
+router.post('/categories/update', auth(), notificationController.updateCategoryPreferences);
+
 module.exports = router;

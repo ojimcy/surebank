@@ -1,7 +1,8 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
-const { authService, userService, tokenService, emailService } = require('../services');
+const { authService, userService, tokenService, emailService, notificationService } = require('../services');
 const { ApiError } = require('../utils/ApiError');
+const config = require('../config/config');
 
 const register = catchAsync(async (req, res) => {
   // Set the role to 'user' for self-registered users
@@ -9,9 +10,20 @@ const register = catchAsync(async (req, res) => {
 
   const user = await userService.createUser(req.body);
 
-  // Generate verification token and send verification email
+  // Generate verification token and send verification email using unified notification service
   const verifyEmailOTP = await tokenService.generateVerifyEmailToken(user);
-  await emailService.sendVerificationEmail(user.email, verifyEmailOTP);
+
+  // Use templated notification for consistent multi-channel delivery
+  await notificationService.sendTemplatedNotification({
+    userId: user.id,
+    templateType: 'VERIFY_EMAIL',
+    user,
+    data: {
+      name: user.firstName || user.email.split('@')[0],
+      otp: verifyEmailOTP,
+      expiryTime: config.jwt.verifyEmailExpirationMinutes,
+    },
+  });
 
   const tokens = await tokenService.generateAuthTokens(user);
 
@@ -75,7 +87,19 @@ const refreshTokens = catchAsync(async (req, res) => {
 
 const forgotPassword = catchAsync(async (req, res) => {
   const { otp, user } = await tokenService.generateResetPasswordToken(req.body.email);
-  await emailService.sendResetPasswordEmail(user.email, otp);
+
+  // Use templated notification for consistent multi-channel delivery
+  await notificationService.sendTemplatedNotification({
+    userId: user.id,
+    templateType: 'RESET_PASSWORD',
+    user,
+    data: {
+      name: user.firstName || user.email.split('@')[0],
+      otp,
+      expiryTime: config.jwt.resetPasswordExpirationMinutes,
+    },
+  });
+
   res.status(httpStatus.NO_CONTENT).send();
 });
 
@@ -91,7 +115,19 @@ const sendVerificationEmail = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
   const verifyEmailOTP = await tokenService.generateVerifyEmailToken(user);
-  await emailService.sendVerificationEmail(user.email, verifyEmailOTP);
+
+  // Use templated notification for consistent multi-channel delivery
+  await notificationService.sendTemplatedNotification({
+    userId: user.id,
+    templateType: 'VERIFY_EMAIL',
+    user,
+    data: {
+      name: user.firstName || user.email.split('@')[0],
+      otp: verifyEmailOTP,
+      expiryTime: config.jwt.verifyEmailExpirationMinutes,
+    },
+  });
+
   res.status(httpStatus.NO_CONTENT).send();
 });
 

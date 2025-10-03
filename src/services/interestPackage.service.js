@@ -6,8 +6,8 @@ const { getUserAccount } = require('./account.service');
 const logger = require('../config/logger');
 const { sendNotification, getUserNotificationPreference, sendMultiChannelNotification } = require('./notification.service');
 const paymentService = require('./payment.service');
-const { sendTransactionalEmail, sendPackageCreationEmail } = require('./mailjet.service');
 const { makeCustomerDeposit } = require('./accountTransaction.service');
+const config = require('../config/config');
 
 const interestRateConfig = require('../config/interestRates');
 const { sendSMS } = require('./sms.service');
@@ -101,56 +101,51 @@ const calculateInterestForPackage = async (packageId) => {
   // Send notification about maturity if needed
   if (isMatured && interestPackage.status === 'active') {
     try {
-      // Get user's email for notification
+      // Get user details for notification
       const user = await UserModel.findById(interestPackage.userId);
-      const userEmail = user ? user.email : null;
-      const phoneNumber = user ? user.phoneNumber : null;
 
-      // Create in-app notification
-      await sendNotification(interestPackage.userId, 'package_matured', {
-        title: 'Interest Package Matured',
-        body: `Your Interest-Based Savings package "${interestPackage.name}" has matured.`,
-        reference: interestPackage._id.toString(),
-        relatedEntityId: interestPackage._id,
-        relatedEntityType: 'interest_package',
-      });
-
-      // Send email notification if user has email
-      if (userEmail) {
-        const emailPreference = await getUserNotificationPreference(interestPackage.userId, 'package_matured');
-        if (emailPreference === 'email' || emailPreference === 'both') {
-          await sendTransactionalEmail({
-            to: userEmail,
+      // Send multi-channel notification for package maturity
+      await sendMultiChannelNotification({
+        userId: interestPackage.userId,
+        type: 'package_maturity_alert',
+        user,
+        data: {
+          packageId: interestPackage._id,
+          packageName: interestPackage.name,
+          principalAmount: interestPackage.principalAmount,
+          currentBalance: updatedPackage.currentBalance,
+          interestAccrued: updatedPackage.interestAccrued,
+        },
+        notificationContent: {
+          inApp: {
+            title: 'Interest Package Matured',
+            body: `Your Interest-Based Savings package "${interestPackage.name}" has matured with a total of ₦${updatedPackage.currentBalance.toFixed(2)}.`,
+          },
+          email: {
             subject: 'Package Maturity Alert',
             template: 'PACKAGE_MATURITY_ALERT',
             templateData: {
-              name: user && user.firstName ? user.firstName : 'Valued Customer',
+              name: user.firstName || user.email.split('@')[0] || 'Valued Customer',
               packageName: interestPackage.name,
               principalAmount: interestPackage.principalAmount,
-              currentBalance: interestPackage.currentBalance,
+              currentBalance: updatedPackage.currentBalance,
               interestRate: interestPackage.interestRate,
-              interestAccrued: interestPackage.interestAccrued,
+              interestAccrued: updatedPackage.interestAccrued,
               accountNumber: interestPackage.accountNumber,
               maturityDate: interestPackage.maturityDate,
               startDate: interestPackage.startDate,
-              dashboardUrl: `${process.env.FRONTEND_URL}/packages/${interestPackage._id}`,
+              dashboardUrl: `${config.paystack.frontendUrl}/packages/${interestPackage._id}`,
             },
-          });
-        }
-      }
-
-      // Send SMS notification if user has phone number
-      if (phoneNumber) {
-        const smsPreference = await getUserNotificationPreference(interestPackage.userId, 'package_matured');
-        if (smsPreference === 'sms' || smsPreference === 'both') {
-          const message = `Your Investment Package "${interestPackage.name
-            }" has matured with a total amount of ${interestPackage.currentBalance.toFixed(2)}. Login to withdraw your funds.`;
-          await sendSMS({
-            to: phoneNumber,
-            message,
-          });
-        }
-      }
+          },
+          sms: `Your Investment Package "${interestPackage.name}" has matured with a total amount of ₦${updatedPackage.currentBalance.toFixed(2)}. Login to withdraw your funds.`,
+        },
+        notificationData: {
+          reference: interestPackage._id.toString(),
+          relatedEntityId: interestPackage._id,
+          relatedEntityType: 'interest_package',
+        },
+      });
+      logger.info(`Package maturity notifications sent successfully for package ${interestPackage._id}`);
     } catch (error) {
       logger.error('Error sending maturity notification:', error);
       // Continue execution even if notification fails
@@ -249,63 +244,56 @@ const createInterestPackage = async (packageDataInput, paymentReference = null) 
   // Create the package with all necessary data
   const interestPackage = await InterestPackageModel.create(finalPackageData);
 
-  // Get user's email for notification
-  const { email: userEmail, phoneNumber } = userAccount.userId;
+  // Get user details for notification
+  const UserModel = await User();
+  const user = await UserModel.findById(packageData.userId);
 
-  // Create in-app notification
+  // Send multi-channel notification for package creation
   try {
-    await sendNotification(packageData.userId, 'package_created', {
-      title: `${interestRateInfo.name} Package Created`,
-      body: `Your Interest-Based Savings package (${interestRateInfo.rate
-        }% interest per annum) has been created successfully. It will mature on ${new Date(
-          maturityDate
-        ).toLocaleDateString()}.`,
-      reference: interestPackage._id.toString(),
+    await sendMultiChannelNotification({
+      userId: packageData.userId,
+      type: 'package_created',
+      user,
+      data: {
+        packageId: interestPackage._id,
+        packageName: interestPackage.name || interestRateInfo.name,
+        interestRate: interestRateInfo.rate,
+        principalAmount: packageData.principalAmount,
+        maturityDate: new Date(maturityDate).toLocaleDateString(),
+        lockPeriod: packageData.lockPeriod,
+      },
+      notificationContent: {
+        inApp: {
+          title: `${interestRateInfo.name} Package Created`,
+          body: `Your Interest-Based Savings package (${interestRateInfo.rate}% interest per annum) has been created successfully. It will mature on ${new Date(maturityDate).toLocaleDateString()}.`,
+        },
+        email: {
+          subject: 'Package Created Successfully',
+          template: 'PACKAGE_CREATED',
+          templateData: {
+            name: interestPackage.name || interestRateInfo.name,
+            packageName: interestPackage.name || interestRateInfo.name,
+            userName: user.firstName || user.email.split('@')[0] || 'Valued Customer',
+            interestRate: interestRateInfo.rate,
+            startDate,
+            maturityDate,
+            amount: packageData.principalAmount,
+            dashboardUrl: `${config.paystack.frontendUrl}/packages/${interestPackage._id}`,
+            lockPeriod: packageData.lockPeriod,
+          },
+        },
+        sms: `Your IBS Package (${interestRateInfo.rate}%) of ₦${packageData.principalAmount} has been created successfully. It will mature on ${new Date(maturityDate).toLocaleDateString()}.`,
+      },
+      notificationData: {
+        reference: interestPackage._id.toString(),
+        relatedEntityId: interestPackage._id,
+        relatedEntityType: 'interest_package',
+      },
     });
+    logger.info(`Package creation notifications sent successfully for package ${interestPackage._id}`);
   } catch (error) {
-    logger.error('Error sending in-app notification:', error);
+    logger.error('Error sending package creation notifications:', error);
     // Notification failure doesn't block package creation
-  }
-
-  // Send email notification if user has email
-  if (userEmail) {
-    // Check user preference for this notification type
-    try {
-      const emailPreference = await getUserNotificationPreference(packageData.userId, 'package_created');
-      if (emailPreference === 'email' || emailPreference === 'both') {
-        await sendPackageCreationEmail(userEmail, {
-          name: interestPackage.name || interestRateInfo.name,
-          packageName: interestPackage.name || interestRateInfo.name,
-          userName: userAccount.firstName || (userEmail ? userEmail.split('@')[0] : 'Valued Customer'),
-          interestRate: interestRateInfo.rate,
-          startDate,
-          maturityDate,
-          amount: packageData.principalAmount,
-          dashboardUrl: `${process.env.FRONTEND_URL}/packages/${interestPackage._id}`,
-          lockPeriod: packageData.lockPeriod,
-        });
-      }
-    } catch (error) {
-      logger.error('Error sending package creation email:', error);
-    }
-  }
-
-  // Send SMS notification if user has phone number
-  if (phoneNumber) {
-    // Check user preference for this notification type
-    try {
-      const smsPreference = await getUserNotificationPreference(packageData.userId, 'package_created');
-      if (smsPreference === 'sms' || smsPreference === 'both') {
-        const message = `Your IBS Package (${interestRateInfo.rate}%) of ${packageData.principalAmount
-          } has been created successfully. It will mature on ${new Date(maturityDate).toLocaleDateString()}.`;
-        await sendSMS({
-          to: phoneNumber,
-          message,
-        });
-      }
-    } catch (error) {
-      logger.error('Error sending package creation SMS:', error);
-    }
   }
 
   return interestPackage;

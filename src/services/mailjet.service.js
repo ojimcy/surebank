@@ -59,6 +59,18 @@ const emailTemplates = {
     templateId: null,
     subject: 'Withdrawal Request Approved',
   },
+  WITHDRAWAL_SUCCESS: {
+    templateId: null,
+    subject: 'Withdrawal Processed Successfully',
+  },
+  WITHDRAWAL_FAILED: {
+    templateId: null,
+    subject: 'Withdrawal Failed',
+  },
+  DEPOSIT_CONFIRMATION: {
+    templateId: null,
+    subject: 'Deposit Confirmation',
+  },
   ORDER_CREATED: {
     templateId: null,
     subject: 'Order Confirmation',

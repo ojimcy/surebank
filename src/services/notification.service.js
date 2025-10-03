@@ -3,9 +3,15 @@ const ApiError = require('../utils/ApiError');
 const { Notification, NotificationPreference, User } = require('../models');
 const logger = require('../config/logger');
 const notificationPreferenceSchema = require('../models/notificationPreference.schema');
-const { sendGenericPackageCreationEmail, sendGenericContributionEmail } = require('./mailjet.service');
 const { queueEmail, EMAIL_PRIORITIES } = require('./emailQueue.service');
 const { sendSms } = require('./sms.service');
+const {
+  getPreset,
+  getAllPresets,
+  getCategoryTypes,
+  getAllCategories,
+  detectPreset,
+} = require('../config/notificationPresets');
 
 const createNotification = async (input) => {
   const NotificationModel = await Notification();
@@ -272,6 +278,8 @@ const sendMultiChannelNotification = async ({ userId, type, user, data, notifica
   };
 
   try {
+    logger.info(`Starting multi-channel notification for user ${userId}, type: ${type}`);
+
     // Fetch user if not provided
     let userToUse = user;
     if (!userToUse) {
@@ -294,11 +302,15 @@ const sendMultiChannelNotification = async ({ userId, type, user, data, notifica
           ...notificationData,
         };
 
+        logger.info(`Sending in-app notification to user ${userId} for type ${type}`);
         await sendNotification(userId, type, inAppData);
         result.inApp = true;
-        logger.info(`In-app notification sent to user ${userId} for type ${type}`);
+        logger.info(`In-app notification sent successfully to user ${userId} for type ${type}`);
       } catch (error) {
-        logger.error(`Error sending in-app notification to user ${userId}:`, error);
+        logger.error(`Error sending in-app notification to user ${userId} for type ${type}:`, {
+          error: error.message,
+          stack: error.stack,
+        });
       }
     }
 
@@ -306,13 +318,16 @@ const sendMultiChannelNotification = async ({ userId, type, user, data, notifica
     if (notificationContent.email && userToUse.email) {
       try {
         const emailPreference = await getUserNotificationPreference(userId, type);
-        if (emailPreference === 'email' || emailPreference === 'both') {
+
+        if (!emailPreference || emailPreference === 'none') {
+          logger.info(`Email notification skipped for user ${userId} - preference is ${emailPreference || 'none'} for type ${type}`);
+        } else if (emailPreference === 'email' || emailPreference === 'both') {
           const { subject, template, templateData, html } = notificationContent.email;
 
           // Determine email priority based on notification type
           const getEmailPriority = (notificationType) => {
-            const highPriorityTypes = ['security_alert', 'login_alert', 'password_reset', 'account_activity'];
-            const normalPriorityTypes = ['transaction_alert', 'payment_confirmation', 'package_created'];
+            const highPriorityTypes = ['security_alert', 'login_alert', 'password_reset', 'account_activity', 'withdrawal_failed', 'withdrawal_success'];
+            const normalPriorityTypes = ['transaction_alert', 'payment_confirmation', 'package_created', 'contribution_notification', 'deposit_confirmation'];
 
             if (highPriorityTypes.includes(notificationType)) {
               return EMAIL_PRIORITIES.HIGH;
@@ -325,22 +340,20 @@ const sendMultiChannelNotification = async ({ userId, type, user, data, notifica
           const priority = getEmailPriority(type);
 
           // Support both template-based and direct HTML emails
+          // All emails are now queued for consistency and reliability
           if (html) {
-            // Queue email for better reliability and performance
+            // Queue HTML email for better reliability and performance
+            logger.info(`Queueing HTML email to ${userToUse.email} for type ${type} with priority ${priority}`);
             await queueEmail({
               to: userToUse.email,
               subject,
               html,
               tracking: { opens: true, clicks: true }
             }, { priority });
-          } else if (template === 'PACKAGE_CREATION') {
-            // Special case for package creation emails - send immediately for better UX
-            await sendGenericPackageCreationEmail(userToUse.email, templateData);
-          } else if (template === 'CONTRIBUTION') {
-            // Special case for contribution emails - send immediately for better UX
-            await sendGenericContributionEmail(userToUse.email, templateData);
           } else {
-            // Queue template-based emails
+            // Queue all template-based emails through the email queue
+            // This ensures consistent delivery and respects user preferences
+            logger.info(`Queueing template email (${template}) to ${userToUse.email} for type ${type} with priority ${priority}`);
             await queueEmail({
               to: userToUse.email,
               subject,
@@ -351,11 +364,18 @@ const sendMultiChannelNotification = async ({ userId, type, user, data, notifica
           }
 
           result.email = true;
-          logger.info(`Email notification sent to ${userToUse.email} for type ${type}`);
+          logger.info(`Email notification queued successfully to ${userToUse.email} for type ${type}`);
         }
       } catch (error) {
-        logger.error(`Error sending email notification to ${userToUse.email}:`, error);
+        logger.error(`Error sending email notification to ${userToUse.email} for type ${type}:`, {
+          error: error.message,
+          stack: error.stack,
+          userId,
+          type,
+        });
       }
+    } else if (!userToUse.email) {
+      logger.warn(`Email notification skipped for user ${userId} - no email address available`);
     }
 
     // Send SMS notification if enabled for this type
@@ -373,9 +393,15 @@ const sendMultiChannelNotification = async ({ userId, type, user, data, notifica
       }
     }
 
+    logger.info(`Multi-channel notification completed for user ${userId}, type: ${type}. Results: inApp=${result.inApp}, email=${result.email}, sms=${result.sms}`);
     return result;
   } catch (error) {
-    logger.error(`Error in multi-channel notification for user ${userId} and type ${type}:`, error);
+    logger.error(`Error in multi-channel notification for user ${userId} and type ${type}:`, {
+      error: error.message,
+      stack: error.stack,
+      userId,
+      type,
+    });
     // Continue execution by returning the result so far
     return result;
   }
@@ -403,6 +429,7 @@ const readAllNotifications = async (userId) => {
  * Notification templates registry - centralized definitions for all notification types
  */
 const NOTIFICATION_TEMPLATES = {
+  // Withdrawal notifications
   WITHDRAWAL_REQUEST: {
     inApp: {
       title: 'Withdrawal Request Received',
@@ -419,7 +446,7 @@ const NOTIFICATION_TEMPLATES = {
   WITHDRAWAL_APPROVED: {
     inApp: {
       title: 'Withdrawal Request Approved',
-      bodyTemplate: 'Your withdrawal request of ₦{{amount}} has been processed.',
+      bodyTemplate: 'Your withdrawal request of ₦{{amount}} has been approved.',
     },
     email: {
       subject: 'Withdrawal Request Approved',
@@ -452,6 +479,19 @@ const NOTIFICATION_TEMPLATES = {
     sms: 'Your withdrawal of ₦{{amount}} from account {{accountNumber}} failed to process.',
   },
 
+  // Deposit notifications
+  DEPOSIT_CONFIRMATION: {
+    inApp: {
+      title: 'Deposit Successful',
+      bodyTemplate: 'Your account has been credited with ₦{{amount}}. New balance: ₦{{newBalance}}.',
+    },
+    email: {
+      subject: 'Deposit Confirmation',
+      template: 'DEPOSIT_CONFIRMATION',
+    },
+    sms: 'Your account {{accountNumber}} has been credited with ₦{{amount}}. New balance: ₦{{newBalance}}.',
+  },
+
   // Package related notifications
   PACKAGE_CREATED: {
     inApp: {
@@ -463,6 +503,18 @@ const NOTIFICATION_TEMPLATES = {
       template: 'PACKAGE_CREATION',
     },
     sms: 'Your {{packageType}} package for {{target}} has been created successfully.',
+  },
+
+  PACKAGE_MATURITY_ALERT: {
+    inApp: {
+      title: 'Package Matured',
+      bodyTemplate: 'Your {{packageName}} package has matured. Total amount: ₦{{currentBalance}}.',
+    },
+    email: {
+      subject: 'Package Maturity Alert',
+      template: 'PACKAGE_MATURITY_ALERT',
+    },
+    sms: 'Your {{packageName}} package has matured. Total: ₦{{currentBalance}}. Login to withdraw.',
   },
 
   CONTRIBUTION: {
@@ -477,7 +529,70 @@ const NOTIFICATION_TEMPLATES = {
     sms: 'Your contribution of ₦{{amount}} to account {{accountNumber}} was successful. New balance: ₦{{totalContribution}}.',
   },
 
-  // order updates
+  // Authentication notifications
+  VERIFY_EMAIL: {
+    inApp: {
+      title: 'Verify Your Email',
+      bodyTemplate: 'Please verify your email address using the OTP: {{otp}}',
+    },
+    email: {
+      subject: 'Verify Your Email Address',
+      template: 'VERIFY_EMAIL',
+    },
+    sms: 'Your SureBank verification code is: {{otp}}. Valid for {{expiryTime}} minutes.',
+  },
+
+  RESET_PASSWORD: {
+    inApp: {
+      title: 'Password Reset Requested',
+      bodyTemplate: 'Use this OTP to reset your password: {{otp}}',
+    },
+    email: {
+      subject: 'Reset Your Password',
+      template: 'RESET_PASSWORD',
+    },
+    sms: 'Your SureBank password reset code is: {{otp}}. Valid for {{expiryTime}} minutes.',
+  },
+
+  // Security notifications
+  SECURITY_ALERT: {
+    inApp: {
+      title: 'Security Alert',
+      bodyTemplate: 'Unusual activity detected on your account: {{alertType}}',
+    },
+    email: {
+      subject: 'Security Alert - Important Account Activity',
+      template: 'SECURITY_ALERT',
+    },
+    sms: 'Security alert: {{alertType}}. If this wasn\'t you, contact support immediately.',
+  },
+
+  LOGIN_ALERT: {
+    inApp: {
+      title: 'New Login Detected',
+      bodyTemplate: 'New login from {{location}} at {{timestamp}}.',
+    },
+    email: {
+      subject: 'New Login to Your Account',
+      template: 'LOGIN_ALERT',
+    },
+    sms: 'New login detected from {{location}}. If this wasn\'t you, secure your account immediately.',
+  },
+
+  // KYC notifications
+  KYC_UPDATE: {
+    inApp: {
+      title: 'KYC Status Update',
+      bodyTemplate: 'Your KYC verification status: {{status}}.',
+    },
+    email: {
+      subject: 'KYC Verification Update',
+      template: 'KYC_UPDATE',
+    },
+    sms: 'Your KYC verification is {{status}}. {{message}}',
+  },
+
+  // Order notifications
   ORDER_CREATED: {
     inApp: {
       title: 'Order Confirmation',
@@ -500,6 +615,55 @@ const NOTIFICATION_TEMPLATES = {
       template: 'ORDER-PAYMENT',
     },
     sms: 'Your payment of ₦{{totalAmount}} for order #{{orderNumber}} was successful.',
+  },
+
+  ORDER_SHIPPED: {
+    inApp: {
+      title: 'Order Shipped',
+      bodyTemplate: 'Your order #{{orderNumber}} has been shipped and is on its way.',
+    },
+    email: {
+      subject: 'Your Order Has Been Shipped',
+      template: 'ORDER-SHIPPED',
+    },
+    sms: 'Your order #{{orderNumber}} has been shipped. Track: {{trackingNumber}}',
+  },
+
+  ORDER_DELIVERED: {
+    inApp: {
+      title: 'Order Delivered',
+      bodyTemplate: 'Your order #{{orderNumber}} has been delivered.',
+    },
+    email: {
+      subject: 'Order Delivered Successfully',
+      template: 'ORDER-DELIVERED',
+    },
+    sms: 'Your order #{{orderNumber}} has been delivered. Enjoy!',
+  },
+
+  // Account activity notifications
+  TRANSACTION_ALERT: {
+    inApp: {
+      title: 'Transaction Alert',
+      bodyTemplate: '₦{{amount}} {{direction}} - {{narration}}. New balance: ₦{{balance}}.',
+    },
+    email: {
+      subject: 'Transaction Alert',
+      template: 'TRANSACTION_ALERT',
+    },
+    sms: '₦{{amount}} {{direction}} - {{narration}}. Balance: ₦{{balance}}',
+  },
+
+  ACCOUNT_ACTIVITY: {
+    inApp: {
+      title: 'Account Activity',
+      bodyTemplate: 'Activity on your account: {{activity}}',
+    },
+    email: {
+      subject: 'Account Activity Notification',
+      template: 'ACCOUNT_ACTIVITY',
+    },
+    sms: 'Account activity: {{activity}}',
   },
 };
 
@@ -589,6 +753,111 @@ const sendTemplatedNotification = async ({ userId, templateType, data, user, met
   });
 };
 
+/**
+ * Apply a notification preset to user preferences
+ * @param {ObjectId} userId - User ID
+ * @param {string} presetName - Preset name ('minimal', 'balanced', 'everything')
+ * @returns {Promise<NotificationPreference>}
+ */
+const applyPreset = async (userId, presetName) => {
+  const NotificationPreferenceModel = await NotificationPreference();
+
+  // Validate preset name
+  if (!['minimal', 'balanced', 'everything'].includes(presetName)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Invalid preset: ${presetName}`);
+  }
+
+  // Get the preset configuration
+  const preset = getPreset(presetName);
+
+  // Get or create user preferences
+  let preferences = await NotificationPreferenceModel.findOne({ userId });
+  if (!preferences) {
+    preferences = await NotificationPreferenceModel.create({ userId });
+  }
+
+  // Apply preset preferences
+  Object.entries(preset.preferences).forEach(([type, channel]) => {
+    preferences.preferences.set(type, channel);
+  });
+
+  // Update preset field
+  preferences.preset = presetName;
+
+  await preferences.save();
+  logger.info(`Applied ${presetName} preset for user ${userId}`);
+  return preferences;
+};
+
+/**
+ * Update notification preferences for an entire category
+ * @param {ObjectId} userId - User ID
+ * @param {string} category - Category name
+ * @param {Array<string>} channels - Array of enabled channels ('in-app', 'email', 'sms')
+ * @returns {Promise<NotificationPreference>}
+ */
+const updateCategoryPreferences = async (userId, category, channels) => {
+  const NotificationPreferenceModel = await NotificationPreference();
+
+  // Get category notification types
+  const categoryTypes = getCategoryTypes(category);
+  if (categoryTypes.length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Invalid category: ${category}`);
+  }
+
+  // Validate channels
+  if (!Array.isArray(channels)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Channels must be an array');
+  }
+
+  // Convert channels array to notification channel string
+  let channelValue;
+  if (channels.length === 0) {
+    channelValue = 'none';
+  } else if (channels.length === 3 || (channels.includes('in-app') && channels.includes('email'))) {
+    channelValue = 'both';
+  } else if (channels.length === 1) {
+    channelValue = channels[0];
+  } else {
+    // For 2 channels that aren't in-app+email, use 'both'
+    channelValue = 'both';
+  }
+
+  // Get user preferences
+  let preferences = await NotificationPreferenceModel.findOne({ userId });
+  if (!preferences) {
+    preferences = await NotificationPreferenceModel.create({ userId });
+  }
+
+  // Update all types in the category
+  categoryTypes.forEach((type) => {
+    preferences.preferences.set(type, channelValue);
+  });
+
+  // Switch to custom preset since user is making manual changes
+  preferences.preset = 'custom';
+
+  await preferences.save();
+  logger.info(`Updated category ${category} preferences for user ${userId}`);
+  return preferences;
+};
+
+/**
+ * Get available notification presets
+ * @returns {Object} Available presets
+ */
+const getAvailablePresets = () => {
+  return getAllPresets();
+};
+
+/**
+ * Get notification categories
+ * @returns {Object} Notification categories
+ */
+const getNotificationCategories = () => {
+  return getAllCategories();
+};
+
 module.exports = {
   createNotification,
   getNotifications,
@@ -608,4 +877,8 @@ module.exports = {
   NOTIFICATION_TEMPLATES,
   sendTemplatedNotification,
   getNotificationContent,
+  applyPreset,
+  updateCategoryPreferences,
+  getAvailablePresets,
+  getNotificationCategories,
 };

@@ -65,6 +65,30 @@ const unsubscribeFromNotificationType = catchAsync(async (req, res) => {
   res.send(preferences);
 });
 
+const applyPreset = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const { preset } = req.body;
+  const preferences = await notificationService.applyPreset(userId, preset);
+  res.send(preferences);
+});
+
+const updateCategoryPreferences = catchAsync(async (req, res) => {
+  const userId = req.user._id;
+  const { category, channels } = req.body;
+  const preferences = await notificationService.updateCategoryPreferences(userId, category, channels);
+  res.send(preferences);
+});
+
+const getPresets = catchAsync(async (req, res) => {
+  const presets = notificationService.getAvailablePresets();
+  res.send(presets);
+});
+
+const getCategories = catchAsync(async (req, res) => {
+  const categories = notificationService.getNotificationCategories();
+  res.send(categories);
+});
+
 module.exports = {
   getNotifications,
   pendingNotificationCount,
@@ -76,4 +100,8 @@ module.exports = {
   unsubscribeFromNotificationType,
   deleteNotification,
   readAllNotifications,
+  applyPreset,
+  updateCategoryPreferences,
+  getPresets,
+  getCategories,
 };

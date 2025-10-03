@@ -105,7 +105,7 @@ const handleContributionNotification = async ({ user, data, notificationData, pa
     // Send notifications through all channels based on user preferences
     await sendMultiChannelNotification({
       userId: user._id,
-      type: 'account_activities',
+      type: 'contribution_notification', // Changed from 'account_activities' to proper type
       user,
       data: { ...data, phoneNumber: accountData && accountData.phoneNumber }, // Pass accountData's phoneNumber for fallback
       notificationContent,

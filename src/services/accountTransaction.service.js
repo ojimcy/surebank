@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
 const httpStatus = require('http-status');
-const { Account, AccountTransaction } = require('../models');
+const { Account, AccountTransaction, User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { sendWithdrawalApprovalNotification } = require('./transactionNotification.service');
+const notificationService = require('./notification.service');
+const logger = require('../config/logger');
 
 /**
  * Get user and account details by account number
@@ -64,6 +66,33 @@ const makeCustomerDeposit = async (depositInput) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    // Send deposit confirmation notification
+    try {
+      const UserModel = await User();
+      const user = await UserModel.findById(account.userId);
+
+      if (user) {
+        await notificationService.sendTemplatedNotification({
+          userId: account.userId,
+          templateType: 'DEPOSIT_CONFIRMATION',
+          user,
+          data: {
+            name: user.firstName || user.email?.split('@')[0] || 'Valued Customer',
+            amount: depositInput.amount,
+            accountNumber: depositInput.accountNumber,
+            newBalance: updatedBalance.availableBalance,
+            narration: depositInput.narration || 'Deposit',
+            reference: customerDeposit[0]._id.toString(),
+            date: new Date(transactionDate),
+          },
+        });
+        logger.info(`Deposit confirmation notification sent for account ${depositInput.accountNumber}`);
+      }
+    } catch (notificationError) {
+      // Log but don't fail the deposit if notification fails
+      logger.error('Failed to send deposit confirmation notification:', notificationError);
+    }
 
     return {
       availableBalance: updatedBalance.availableBalance,

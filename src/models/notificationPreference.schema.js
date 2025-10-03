@@ -13,8 +13,13 @@ const NOTIFICATION_TYPES = [
   'login_alerts',
   'package_created',
   'package_matured',
+  'package_maturity_alert',
   'withdrawal_request',
   'withdrawal_approval',
+  'withdrawal_success',
+  'withdrawal_failed',
+  'deposit_confirmation',
+  'contribution_notification',
   'daily_savings',
   'order_updates',
   'order_created',
@@ -37,8 +42,13 @@ const DEFAULT_PREFERENCES = {
   login_alerts: 'both',
   package_created: 'both',
   package_matured: 'both',
+  package_maturity_alert: 'both',
   withdrawal_request: 'both',
   withdrawal_approval: 'both',
+  withdrawal_success: 'both',
+  withdrawal_failed: 'both',
+  deposit_confirmation: 'both',
+  contribution_notification: 'both',
   daily_savings: 'both',
   order_updates: 'email',
   order_created: 'email',
@@ -46,6 +56,7 @@ const DEFAULT_PREFERENCES = {
   order_shipped: 'email',
   order_delivered: 'email',
   order_canceled: 'email',
+  order_refund: 'email',
 };
 
 const notificationPreferenceSchema = mongoose.Schema(
@@ -55,6 +66,11 @@ const notificationPreferenceSchema = mongoose.Schema(
       ref: 'User',
       required: true,
       unique: true,
+    },
+    preset: {
+      type: String,
+      enum: ['minimal', 'balanced', 'everything', 'custom'],
+      default: 'balanced', // Default to balanced preset for new users
     },
     preferences: {
       type: Map,
