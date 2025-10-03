@@ -355,33 +355,23 @@ const processScheduledPayment = async (schedule) => {
         }
     } catch (error) {
         logger.error(`Error processing scheduled payment for schedule ${schedule._id}:`, error);
-        
-        // Update retry count and suspend if max retries reached
+
+        // Don't mark as failed payment for all errors - distinguish between payment failures and processing errors
+        // Payment failures are handled in processFailedPayment, this is for unexpected errors
         const ScheduledContributionModel = await ScheduledContribution();
-        const updatedSchedule = await ScheduledContributionModel.findByIdAndUpdate(
+
+        // Only update lastAttemptDate for unexpected errors
+        await ScheduledContributionModel.findByIdAndUpdate(
             schedule._id,
             {
-                $inc: { failedPayments: 1 },
-                nextPaymentDate: schedule.frequency ? calculateNextPaymentDate(new Date(), schedule.frequency) : new Date(Date.now() + 24 * 60 * 60 * 1000), // Default to 1 day if no frequency
                 lastAttemptDate: new Date(),
-            },
-            { new: true }
+            }
         );
-
-        // Suspend if max retries reached (2 failures: initial + 1 retry)
-        if (updatedSchedule.failedPayments >= MAX_RETRIES) {
-            await ScheduledContributionModel.findByIdAndUpdate(schedule._id, {
-                status: 'suspended',
-                suspendedReason: 'Max retries reached',
-                suspendedAt: new Date()
-            });
-        }
 
         return {
             success: false,
             message: error.message || 'Payment processing failed',
             error: 'PROCESSING_FAILED',
-            retryCount: updatedSchedule.failedPayments
         };
     }
 };
@@ -426,32 +416,32 @@ const processSuccessfulPayment = async (schedule, paymentLog, chargeData) => {
                     );
                 } catch (error) {
                     if (error.message === 'User mismatch for package contribution') {
-                        logger.error(`DS Package ownership mismatch for scheduled contribution - suspending schedule`, {
+                        logger.error(`DS Package ownership mismatch for scheduled contribution - cancelling schedule`, {
                             scheduleId: schedule._id,
                             packageId: schedule.packageId,
                             userId: schedule.userId,
                             error: error.message
                         });
-                        
+
                         // Since payment was successful but contribution failed due to data issue,
-                        // we need to update the schedule stats and then suspend it
+                        // cancel the schedule (not suspend) as this is a data integrity problem
                         const ScheduledContributionModel = await ScheduledContribution();
                         const nextPaymentDate = calculateNextPaymentDate(schedule.nextPaymentDate, schedule.frequency);
-                        
+
                         await ScheduledContributionModel.findByIdAndUpdate(schedule._id, {
-                            status: 'suspended',
-                            suspendedReason: 'Package ownership mismatch - data integrity issue',
-                            suspendedAt: new Date(),
+                            status: 'cancelled',
                             isActive: false,
+                            cancelledAt: new Date(),
                             // Still update payment stats since money was charged
                             lastPaymentDate: new Date(),
                             nextPaymentDate,
                             totalPayments: (schedule.totalPayments || 0) + 1,
                             totalAmount: (schedule.totalAmount || 0) + schedule.amount,
                             lastAttemptDate: new Date(),
+                            failedPayments: 0, // Reset on success
                         });
-                        
-                        throw new Error(`Schedule suspended: Package ${schedule.packageId} does not belong to user ${schedule.userId}`);
+
+                        throw new Error(`Schedule cancelled: Package ${schedule.packageId} does not belong to user ${schedule.userId}`);
                     }
                     throw error;
                 }
@@ -467,32 +457,32 @@ const processSuccessfulPayment = async (schedule, paymentLog, chargeData) => {
                     );
                 } catch (error) {
                     if (error.message === 'User mismatch for package contribution') {
-                        logger.error(`DS Package ownership mismatch for scheduled contribution - suspending schedule`, {
+                        logger.error(`SB Package ownership mismatch for scheduled contribution - cancelling schedule`, {
                             scheduleId: schedule._id,
                             packageId: schedule.packageId,
                             userId: schedule.userId,
                             error: error.message
                         });
-                        
+
                         // Since payment was successful but contribution failed due to data issue,
-                        // we need to update the schedule stats and then suspend it
+                        // cancel the schedule (not suspend) as this is a data integrity problem
                         const ScheduledContributionModel = await ScheduledContribution();
                         const nextPaymentDate = calculateNextPaymentDate(schedule.nextPaymentDate, schedule.frequency);
-                        
+
                         await ScheduledContributionModel.findByIdAndUpdate(schedule._id, {
-                            status: 'suspended',
-                            suspendedReason: 'Package ownership mismatch - data integrity issue',
-                            suspendedAt: new Date(),
+                            status: 'cancelled',
                             isActive: false,
+                            cancelledAt: new Date(),
                             // Still update payment stats since money was charged
                             lastPaymentDate: new Date(),
                             nextPaymentDate,
                             totalPayments: (schedule.totalPayments || 0) + 1,
                             totalAmount: (schedule.totalAmount || 0) + schedule.amount,
                             lastAttemptDate: new Date(),
+                            failedPayments: 0, // Reset on success
                         });
-                        
-                        throw new Error(`Schedule suspended: Package ${schedule.packageId} does not belong to user ${schedule.userId}`);
+
+                        throw new Error(`Schedule cancelled: Package ${schedule.packageId} does not belong to user ${schedule.userId}`);
                     }
                     throw error;
                 }
@@ -555,7 +545,7 @@ const processFailedPayment = async (schedule, paymentLog, chargeResponse) => {
     try {
         const errorMessage = chargeResponse.message || 'Payment failed';
         const retryCount = (paymentLog.retryCount || 0) + 1;
-        const maxRetries = 1; // Only one retry per day
+        const maxRetries = 2; // Two retries (3 total attempts)
         const shouldRetry = retryCount <= maxRetries;
 
         // Update payment log
@@ -582,8 +572,8 @@ const processFailedPayment = async (schedule, paymentLog, chargeResponse) => {
             lastAttemptDate: new Date(),
         };
 
-        // If too many failures, suspend the schedule (2 failures: initial + 1 retry)
-        if (failedPayments >= 2) {
+        // If too many failures, suspend the schedule (3 failures: initial + 2 retries)
+        if (failedPayments >= 3) {
             scheduleUpdate.status = 'suspended';
             scheduleUpdate.isActive = false;
             scheduleUpdate.suspendedReason = 'Too many failed payment attempts';

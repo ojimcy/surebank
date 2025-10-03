@@ -96,6 +96,31 @@ const scheduledContributionSchema = mongoose.Schema(
             default: 'active',
             comment: 'Current status of the schedule',
         },
+        suspendedReason: {
+            type: String,
+            required: false,
+            comment: 'Reason for suspension',
+        },
+        suspendedAt: {
+            type: Date,
+            required: false,
+            comment: 'Date when the schedule was suspended',
+        },
+        pausedAt: {
+            type: Date,
+            required: false,
+            comment: 'Date when the schedule was paused',
+        },
+        cancelledAt: {
+            type: Date,
+            required: false,
+            comment: 'Date when the schedule was cancelled',
+        },
+        lastAttemptDate: {
+            type: Date,
+            required: false,
+            comment: 'Last payment attempt date (success or failure)',
+        },
         metadata: {
             type: Object,
             default: {},
