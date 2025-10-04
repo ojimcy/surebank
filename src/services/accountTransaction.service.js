@@ -78,7 +78,7 @@ const makeCustomerDeposit = async (depositInput) => {
           templateType: 'DEPOSIT_CONFIRMATION',
           user,
           data: {
-            name: user.firstName || user.email?.split('@')[0] || 'Valued Customer',
+            name: user.firstName || user.email.split('@')[0] || 'Valued Customer',
             amount: depositInput.amount,
             accountNumber: depositInput.accountNumber,
             newBalance: updatedBalance.availableBalance,
@@ -465,7 +465,10 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
 
     return withdrawalRequest;
   } catch (error) {
-    throw new ApiError('Failed to make customer withdrawal', error);
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(500, 'Failed to make customer withdrawal', false, error.stack);
   }
 };
 
