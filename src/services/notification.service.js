@@ -326,8 +326,8 @@ const sendMultiChannelNotification = async ({ userId, type, user, data, notifica
 
           // Determine email priority based on notification type
           const getEmailPriority = (notificationType) => {
-            const highPriorityTypes = ['security_alert', 'login_alert', 'password_reset', 'account_activity', 'withdrawal_failed', 'withdrawal_success'];
-            const normalPriorityTypes = ['transaction_alert', 'payment_confirmation', 'package_created', 'contribution_notification', 'deposit_confirmation'];
+            const highPriorityTypes = ['security_alert', 'login_alert', 'password_reset', 'account_activity', 'withdrawal_failed', 'withdrawal_success', 'withdrawal_approval'];
+            const normalPriorityTypes = ['transaction_alert', 'payment_confirmation', 'package_created', 'contribution_notification', 'deposit_confirmation', 'withdrawal_request'];
 
             if (highPriorityTypes.includes(notificationType)) {
               return EMAIL_PRIORITIES.HIGH;

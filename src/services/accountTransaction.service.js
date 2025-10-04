@@ -454,13 +454,16 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
     // );
     // await sendSms(phone, message);
 
-    await sendWithdrawalApprovalNotification({
+    // Send notification asynchronously - don't block the withdrawal approval
+    sendWithdrawalApprovalNotification({
       userId: withdrawalRequest.userId,
       amount: withdrawalRequest.amount,
       accountNumber: withdrawalRequest.accountNumber,
       reference: withdrawalRequest._id.toString(),
       phoneNumber: account.phoneNumber,
       availableBalance: account.availableBalance,
+    }).catch((notificationError) => {
+      logger.error('Failed to send withdrawal approval notification:', notificationError);
     });
 
     return withdrawalRequest;
