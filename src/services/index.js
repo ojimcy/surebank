@@ -41,3 +41,4 @@ module.exports.s3Service = require('./s3.service');
 module.exports.storedCardService = require('./storedCard.service');
 module.exports.scheduledContributionService = require('./scheduledContribution.service');
 module.exports.sesWebhookService = require('./sesWebhook.service');
+module.exports.notificationService = require('./notification.service');
