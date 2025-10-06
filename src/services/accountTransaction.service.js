@@ -78,7 +78,7 @@ const makeCustomerDeposit = async (depositInput) => {
           templateType: 'DEPOSIT_CONFIRMATION',
           user,
           data: {
-            name: user.firstName || user.email?.split('@')[0] || 'Valued Customer',
+            name: user.firstName || user.email.split('@')[0] || 'Valued Customer',
             amount: depositInput.amount,
             accountNumber: depositInput.accountNumber,
             newBalance: updatedBalance.availableBalance,
@@ -454,18 +454,24 @@ const makeCustomerWithdrawal = async (requestId, approvedBy) => {
     // );
     // await sendSms(phone, message);
 
-    await sendWithdrawalApprovalNotification({
+    // Send notification asynchronously - don't block the withdrawal approval
+    sendWithdrawalApprovalNotification({
       userId: withdrawalRequest.userId,
       amount: withdrawalRequest.amount,
       accountNumber: withdrawalRequest.accountNumber,
       reference: withdrawalRequest._id.toString(),
       phoneNumber: account.phoneNumber,
       availableBalance: account.availableBalance,
+    }).catch((notificationError) => {
+      logger.error('Failed to send withdrawal approval notification:', notificationError);
     });
 
     return withdrawalRequest;
   } catch (error) {
-    throw new ApiError('Failed to make customer withdrawal', error);
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(500, 'Failed to make customer withdrawal', false, error.stack);
   }
 };
 

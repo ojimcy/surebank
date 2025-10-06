@@ -14,7 +14,9 @@ let commandResetTime = Date.now() + 24 * 60 * 60 * 1000;
 // Reset command counter daily
 setInterval(() => {
   if (Date.now() >= commandResetTime) {
-    logger.info(`Daily Redis commands used: ${dailyCommandCount}`);
+    if (dailyCommandCount > 1000) {
+      logger.info(`Daily Redis commands: ${dailyCommandCount}`);
+    }
     dailyCommandCount = 0;
     commandResetTime = Date.now() + 24 * 60 * 60 * 1000;
   }
@@ -57,14 +59,13 @@ class OptimizedRedisService {
           connectTimeout: 10000,
           retryStrategy: (times) => {
             if (times > 3) {
-              logger.warn('Upstash Redis connection failed after 3 retries, switching to fallback mode');
               this.fallbackMode = true;
               return null;
             }
             return Math.min(times * 50, 2000);
           }
         };
-        logger.info(`Using Upstash Redis: ${upstashHost}`);
+        logger.info(`Using Upstash Redis`);
       } else {
         // Standard Redis configuration
         redisConfig = {
@@ -89,17 +90,15 @@ class OptimizedRedisService {
       this.redis = new Redis(redisConfig);
 
       this.redis.on('connect', () => {
-        logger.info('Connected to Redis (Upstash)');
+        logger.info('Redis connected');
         this.isConnected = true;
         this.fallbackMode = false;
       });
 
       this.redis.on('error', (err) => {
-        // Only log critical errors, not connection retries
-        if (!err.message.includes('ECONNREFUSED') && !err.message.includes('ETIMEDOUT')) {
+        // Only log critical errors
+        if (!err.message.includes('ECONNREFUSED') && !err.message.includes('ETIMEDOUT') && !err.message.includes('ENOTFOUND')) {
           logger.error('Redis error:', err.message);
-        } else {
-          logger.debug('Redis connection issue (will retry):', err.message);
         }
         this.isConnected = false;
       });
@@ -118,9 +117,10 @@ class OptimizedRedisService {
    */
   trackCommand(count = 1) {
     dailyCommandCount += count;
-    
-    if (dailyCommandCount >= COMMAND_LIMIT_WARNING && dailyCommandCount < COMMAND_LIMIT_WARNING + 10) {
-      logger.warn(`Redis command usage high: ${dailyCommandCount} commands used today`);
+
+    // Only warn once when hitting 80% threshold
+    if (dailyCommandCount === COMMAND_LIMIT_WARNING) {
+      logger.warn(`Redis usage: ${dailyCommandCount} commands (80% of daily limit)`);
     }
   }
 
@@ -335,7 +335,6 @@ class OptimizedRedisService {
    */
   clearMemoryCache() {
     memoryCache.clear();
-    logger.info('Memory cache cleared');
   }
 }
 

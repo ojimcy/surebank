@@ -41,17 +41,17 @@ class RedisService {
       });
 
       this.client.on('error', (err) => {
-        // Only log critical errors, not connection retries
-        if (!err.message.includes('ECONNREFUSED') && !err.message.includes('ETIMEDOUT')) {
-          logger.error('Redis client error:', err.message);
-        } else {
-          logger.debug('Redis connection issue (will retry):', err.message);
+        // Only log critical errors
+        if (!err.message.includes('ECONNREFUSED') && !err.message.includes('ETIMEDOUT') && !err.message.includes('ENOTFOUND')) {
+          logger.error('Redis error:', err.message);
         }
         this.isConnected = false;
       });
 
       this.client.on('close', () => {
-        logger.warn('Redis client disconnected');
+        if (this.isConnected) {
+          logger.warn('Redis disconnected');
+        }
         this.isConnected = false;
       });
 
@@ -90,7 +90,6 @@ class RedisService {
 
       const key = `blacklist:${token}`;
       await this.client.setex(key, expirationSeconds, '1');
-      logger.debug(`Token blacklisted: ${token.substring(0, 10)}...`);
       return true;
     } catch (error) {
       logger.error('Error blacklisting token:', error);
@@ -138,7 +137,6 @@ class RedisService {
 
       const key = `user_blacklist:${userId}`;
       await this.client.setex(key, expirationSeconds, '1');
-      logger.debug(`All tokens blacklisted for user: ${userId}`);
       return true;
     } catch (error) {
       logger.error('Error blacklisting user tokens:', error);

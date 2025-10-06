@@ -9,12 +9,10 @@ class RedisWrapper {
   constructor() {
     // Use Upstash if enabled in config
     const useUpstash = config.upstash?.enabled || (config.env === 'production' && config.upstash?.url);
-    
+
     if (useUpstash) {
-      logger.info('Using Upstash Redis service (optimized for free tier)');
       this.implementation = UpstashRedisService;
     } else {
-      logger.info('Using standard Redis service');
       this.implementation = OriginalRedisService;
     }
   }
@@ -77,9 +75,8 @@ class RedisWrapper {
     if (this.implementation.getUserSessions) {
       return this.implementation.getUserSessions(userId);
     }
-    
+
     // Upstash implementation - avoid KEYS command
-    logger.warn('getUserSessions not optimized for Upstash, this may use many commands');
     return [];
   }
 
@@ -109,9 +106,8 @@ class RedisWrapper {
     if (this.implementation.deleteAllUserSessions) {
       return this.implementation.deleteAllUserSessions(userId);
     }
-    
-    // For Upstash, we'd need to track session IDs separately
-    logger.warn('deleteAllUserSessions not optimized for Upstash');
+
+    // For Upstash, session tracking would need separate implementation
     return false;
   }
 
