@@ -22,9 +22,12 @@ const authLimiter = isTestEnv
         // Use both IP and user agent to prevent simple IP spoofing
         return `${req.ip}-${req.headers['user-agent'] || 'unknown'}`;
       },
-      handler: (req, res, next, options) => {
+      handler: (req, res) => {
         logger.warn(`Rate limit exceeded: ${req.ip} on ${req.path}`);
-        res.status(options.statusCode).send(options.message);
+        res.status(httpStatus.TOO_MANY_REQUESTS).json({
+          status: httpStatus.TOO_MANY_REQUESTS,
+          message: 'Too many authentication attempts, please try again after 15 minutes',
+        });
       },
     });
 
@@ -44,9 +47,12 @@ const registrationLimiter = isTestEnv
         // Use both IP and user agent to prevent simple IP spoofing
         return `${req.ip}-${req.headers['user-agent'] || 'unknown'}`;
       },
-      handler: (req, res, next, options) => {
+      handler: (req, res) => {
         logger.warn(`Registration rate limit exceeded: ${req.ip}`);
-        res.status(options.statusCode).send(options.message);
+        res.status(httpStatus.TOO_MANY_REQUESTS).json({
+          status: httpStatus.TOO_MANY_REQUESTS,
+          message: 'Too many registration attempts, please try again after an hour',
+        });
       },
     });
 
@@ -66,9 +72,12 @@ const passwordResetLimiter = isTestEnv
         // For password reset, also consider the email being reset
         return `${req.ip}-${req.body.email || 'unknown'}`;
       },
-      handler: (req, res, next, options) => {
+      handler: (req, res) => {
         logger.warn(`Password reset rate limit exceeded: ${req.ip} for email: ${req.body.email || 'unknown'}`);
-        res.status(options.statusCode).send(options.message);
+        res.status(httpStatus.TOO_MANY_REQUESTS).json({
+          status: httpStatus.TOO_MANY_REQUESTS,
+          message: 'Too many password reset attempts, please try again after an hour',
+        });
       },
     });
 
@@ -88,9 +97,12 @@ const verificationEmailLimiter = isTestEnv
         // For email verification, also consider the email being verified
         return `${req.ip}-${req.body.email || 'unknown'}`;
       },
-      handler: (req, res, next, options) => {
+      handler: (req, res) => {
         logger.warn(`Email verification rate limit exceeded: ${req.ip} for email: ${req.body.email || 'unknown'}`);
-        res.status(options.statusCode).send(options.message);
+        res.status(httpStatus.TOO_MANY_REQUESTS).json({
+          status: httpStatus.TOO_MANY_REQUESTS,
+          message: 'Too many verification email requests, please try again after an hour',
+        });
       },
     });
 
