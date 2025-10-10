@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const mongoose = require('mongoose');
-const { ProductRequest, Product, ProductCatalogue, ProductCollection, Collection, Category } = require('../models');
+const { ProductRequest, Product, ProductCatalogue, ProductCollection, Collection, Category, Brand } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getMerchantByUserId } = require('./merchant.service');
 const { getCategoryById, getBrandById } = require('./store.service');
@@ -107,29 +107,72 @@ const deleteProductRequest = async (requestId, merchantId) => {
 const createProductCatalogue = async (productData, userId) => {
   const ProductModel = await Product();
   const ProductCatalogueModel = await ProductCatalogue();
-  // Check if the product exists and is available
-  const product = await ProductModel.findById(productData.productId);
-  if (!product) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Product not found or not available');
-  }
+  const CategoryModel = await Category();
+  const BrandModel = await Brand();
 
-  // get merchant id
+  // get merchant id - make it optional for admin users
+  let merchantId;
   const merchant = await getMerchantByUserId(userId);
-  if (!merchant) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Merchant not found, please apply');
+  if (merchant) {
+    merchantId = merchant._id;
+  } else {
+    // For admin users without merchant account, use a default merchant or the userId
+    merchantId = userId;
   }
 
   // Check if the name is unique
   const existingProductCatalogue = await ProductCatalogueModel.findOne({
     name: productData.name,
-    merchantId: merchant._id,
+    merchantId: merchantId,
   });
   if (existingProductCatalogue) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Product with the same name already exists in the catalogue');
   }
 
+  let productId = productData.productId;
+
+  // If no productId is provided, create a base product first
+  if (!productId) {
+    // Get or create default category and brand
+    let defaultCategory = await CategoryModel.findOne({ name: 'General' });
+    if (!defaultCategory) {
+      defaultCategory = await CategoryModel.create({
+        name: 'General',
+        description: 'General product category',
+      });
+    }
+
+    let defaultBrand = await BrandModel.findOne({ name: 'Generic' });
+    if (!defaultBrand) {
+      defaultBrand = await BrandModel.create({
+        name: 'Generic',
+        description: 'Generic brand',
+      });
+    }
+
+    // Create a basic product entry with minimal required fields
+    const baseProduct = await ProductModel.create({
+      name: productData.name,
+      description: productData.description || 'Product description',
+      categoryId: productData.categoryId || defaultCategory._id,
+      brand: productData.brand || defaultBrand._id,
+      status: 'approved', // Auto-approve for admin/merchant created products
+    });
+    productId = baseProduct._id;
+  } else {
+    // Check if the product exists and is available
+    const product = await ProductModel.findById(productData.productId);
+    if (!product) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Product not found or not available');
+    }
+  }
+
   // Create the product catalogue entry
-  const productCatalogue = await ProductCatalogueModel.create({ ...productData, merchantId: merchant._id });
+  const productCatalogue = await ProductCatalogueModel.create({
+    ...productData,
+    productId,
+    merchantId: merchantId
+  });
 
   return productCatalogue;
 };
