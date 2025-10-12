@@ -53,7 +53,6 @@ const submitKycRequest = async (userId, kycData) => {
     kycBody.idType = kycData.idType;
     kycBody.idNumber = kycData.idNumber;
     kycBody.idImage = kycData.idImage;
-    kycBody.selfieImage = kycData.selfieImage;
     kycBody.expiryDate = kycData.expiryDate;
     kycBody.address = kycData.address;
 
