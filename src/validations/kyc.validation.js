@@ -27,11 +27,6 @@ const submitKyc = {
       then: Joi.required(),
       otherwise: Joi.forbidden(),
     }),
-    selfieImage: Joi.string().when('kycType', {
-      is: 'id',
-      then: Joi.required(),
-      otherwise: Joi.forbidden(),
-    }),
     expiryDate: Joi.date().when('kycType', {
       is: 'id',
       then: Joi.required(),

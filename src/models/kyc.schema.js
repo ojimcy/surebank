@@ -43,9 +43,6 @@ const kycSchema = mongoose.Schema(
     idImage: {
       type: String, // URL/path to uploaded ID
     },
-    selfieImage: {
-      type: String, // URL/path to uploaded selfie
-    },
     expiryDate: {
       type: Date,
     },

@@ -39,6 +39,16 @@ const updateProductRequest = {
     description: Joi.string().optional(),
     longDescription: Joi.string().optional(),
     image: Joi.string().optional(),
+    images: Joi.alternatives().try(
+      Joi.array().items(Joi.string()),
+      Joi.string()
+    ).optional(),
+    featuredImage: Joi.string().optional(),
+    tags: Joi.alternatives().try(
+      Joi.array().items(Joi.string()),
+      Joi.string()
+    ).optional(),
+    isSbAvailable: Joi.boolean().optional(),
   }),
 };
 
@@ -53,15 +63,25 @@ const deleteProductRequest = {
 
 const createProductCatalogue = {
   body: Joi.object().keys({
-    productId: Joi.string().required().custom(objectId),
+    productId: Joi.string().optional().custom(objectId),
     featuredImage: Joi.string().optional(),
-    images: Joi.string().optional(),
+    images: Joi.alternatives().try(
+      Joi.array().items(Joi.string()),
+      Joi.string()
+    ).optional(),
     name: Joi.string().required(),
     description: Joi.string().required(),
     sellingPrice: Joi.number().required(),
     costPrice: Joi.number().required(),
     quantity: Joi.number().required(),
     discount: Joi.number().optional(),
+    tags: Joi.alternatives().try(
+      Joi.array().items(Joi.string()),
+      Joi.string()
+    ).optional(),
+    isSbAvailable: Joi.boolean().optional(),
+    categoryId: Joi.string().optional().custom(objectId),
+    brand: Joi.string().optional().custom(objectId),
   }),
 };
 
@@ -108,7 +128,11 @@ const updateProductCatalogue = {
   body: Joi.object().keys({
     name: Joi.string().optional(),
     description: Joi.string().optional(),
-    images: Joi.string().optional(),
+    featuredImage: Joi.string().optional(),
+    images: Joi.alternatives().try(
+      Joi.array().items(Joi.string()),
+      Joi.string()
+    ).optional(),
     barcode: Joi.string().optional(),
     categoryId: Joi.string().optional().custom(objectId),
     subCategoryId: Joi.string().optional().custom(objectId),
@@ -121,10 +145,14 @@ const updateProductCatalogue = {
     variations: Joi.array().optional(),
     shipping: Joi.string().optional(),
     stock: Joi.string().optional(),
-    discount: Joi.number().optional(),
-    tags: Joi.string().optional(),
-    slug: Joi.string().optional(),
     quantity: Joi.number().optional(),
+    discount: Joi.number().optional(),
+    tags: Joi.alternatives().try(
+      Joi.array().items(Joi.string()),
+      Joi.string()
+    ).optional(),
+    isSbAvailable: Joi.boolean().optional(),
+    slug: Joi.string().optional(),
   }),
 };
 
