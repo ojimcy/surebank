@@ -66,8 +66,9 @@ const kycSchema = require('./src/models/kyc.schema');
 const storedCardSchema = require('./src/models/storedCard.schema');
 const scheduledContributionSchema = require('./src/models/scheduledContribution.schema');
 const scheduledPaymentLogSchema = require('./src/models/scheduledPaymentLog.schema');
-const emailSuppressionSchema = require('./src/models/emailSuppression.schema');
-const emailEventSchema = require('./src/models/emailEvent.schema');
+// Note: These already export models, not schemas - requiring them registers the models
+require('./src/models/emailSuppression.schema');
+require('./src/models/emailEvent.schema');
 
 // Track if models have been registered
 let modelsRegistered = false;
@@ -130,8 +131,7 @@ function registerModels() {
     mongoose.model('StoredCard', storedCardSchema);
     mongoose.model('ScheduledContribution', scheduledContributionSchema);
     mongoose.model('ScheduledPaymentLog', scheduledPaymentLogSchema);
-    mongoose.model('EmailSuppression', emailSuppressionSchema);
-    mongoose.model('EmailEvent', emailEventSchema);
+    // EmailSuppression and EmailEvent are already registered in their schema files
 
     // Ensure DsPackage is properly registered
     mongoose.model('DsPackage', packageSchema);
