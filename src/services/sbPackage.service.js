@@ -314,17 +314,23 @@ const createUserInitiatedSbPackage = async (sbPackageData) => {
   });
 
   // Send notification using the standardized notification function
-  await sendSbNotifications({
-    userId: sbPackageData.userId,
-    notificationType: 'package_created',
-    data: {
-      productName: product.name,
-      targetAmount: product.sellingPrice,
-      accountNumber,
-      packageId: sbPackage._id,
-      reference: sbPackage._id.toString(),
-    },
-  });
+  // Wrap in try-catch to prevent notification errors from affecting package creation response
+  try {
+    await sendSbNotifications({
+      userId: sbPackageData.userId,
+      notificationType: 'package_created',
+      data: {
+        productName: product.name,
+        targetAmount: product.sellingPrice,
+        accountNumber,
+        packageId: sbPackage._id,
+        reference: sbPackage._id.toString(),
+      },
+    });
+  } catch (notificationError) {
+    // Log the error but don't throw - package was created successfully
+    logger.error('Error sending package creation notification:', notificationError);
+  }
 
   return sbPackage;
 };
