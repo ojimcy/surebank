@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const mongoose = require('mongoose');
-const { ProductRequest, Product, ProductCatalogue, ProductCollection, Collection, Category } = require('../models');
+const { ProductRequest, Product, ProductCatalogue, ProductCollection, Collection, Category, Brand } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { getMerchantByUserId } = require('./merchant.service');
 const { getCategoryById, getBrandById } = require('./store.service');
@@ -380,7 +380,12 @@ const getProductsBySlug = async (collectionSlug) => {
 };
 
 const getProductCatalogue = async (filter, options) => {
+  // Ensure all required models are loaded before proceeding (critical for serverless cold starts)
   const ProductCatalogueModel = await ProductCatalogue();
+  const ProductModel = await Product();
+  const CategoryModel = await Category();
+  const BrandModel = await Brand();
+
   const { limit, page, sortBy } = options;
   const skip = (page - 1) * limit;
 
@@ -537,7 +542,7 @@ const getProductCatalogue = async (filter, options) => {
   // If no product filtering needed, use the standard approach with populate
   // First get products with filter criteria to get their IDs
   if (filter.categoryId || filter.subCategoryId || filter.brand) {
-    const ProductModel = await Product();
+    // Reuse ProductModel already loaded above
     const productQuery = {};
 
     if (filter.categoryId) {
@@ -562,10 +567,9 @@ const getProductCatalogue = async (filter, options) => {
 
   const populateOptions = {
     path: 'productId',
-    model: 'Product',
     populate: [
-      { path: 'brand', model: 'Brand', select: 'name' },
-      { path: 'categoryId', model: 'Category', select: 'title slug' },
+      { path: 'brand', select: 'name' },
+      { path: 'categoryId', select: 'title slug' },
     ],
   };
 
@@ -614,10 +618,9 @@ const viewMyProductCatalogue = async (userId) => {
   const products = await ProductCatalogueModel.find({ merchantId: merchant._id }).populate([
     {
       path: 'productId',
-      model: 'Product',
       populate: [
-        { path: 'brand', model: 'Brand', select: 'name' },
-        { path: 'categoryId', model: 'Category', select: 'title' },
+        { path: 'brand', select: 'name' },
+        { path: 'categoryId', select: 'title' },
       ],
     },
   ]);
@@ -651,10 +654,9 @@ const getProductCatalogueById = async (id) => {
   const product = await ProductCatalogueModel.findById(id).populate([
     {
       path: 'productId',
-      model: 'Product',
       populate: [
-        { path: 'brand', model: 'Brand', select: 'name' },
-        { path: 'categoryId', model: 'Category', select: 'title' },
+        { path: 'brand', select: 'name' },
+        { path: 'categoryId', select: 'title' },
       ],
     },
   ]);

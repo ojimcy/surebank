@@ -243,6 +243,14 @@ const getConnection = async () => {
 const getModel = async (modelName) => {
   await getConnection();
 
+  // Ensure models are registered (safety check for serverless cold starts)
+  if (Object.keys(models).length === 0) {
+    const registered = registerModels();
+    if (!registered) {
+      throw new Error('Failed to register models');
+    }
+  }
+
   if (!models[modelName]) {
     throw new Error(`Model ${modelName} not found. Available models: ${Object.keys(models).join(', ')}`);
   }
