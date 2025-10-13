@@ -219,6 +219,7 @@ const getConnection = async () => {
       ...config.mongoose.options,
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      useFindAndModify: false, // Disable deprecated findAndModify
       bufferCommands: false,
       serverSelectionTimeoutMS: 5000,
       heartbeatFrequencyMS: 2000,

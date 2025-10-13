@@ -22,12 +22,43 @@ const redisConfig = config.upstash.enabled
       ...(config.redis.tls && { tls: {} }),
     };
 
-// Create Redis connection
+// Create Redis connection with proper timeout settings for Lambda
 const redisConnection = new IORedis(redisConfig, {
+  connectTimeout: 5000, // 5 seconds to establish connection
   maxRetriesPerRequest: 3,
   retryDelayOnFailover: 100,
   enableReadyCheck: false,
-  maxRetriesPerRequest: null,
+  enableOfflineQueue: false, // Don't queue commands when offline
+  lazyConnect: false, // Connect immediately
+  commandTimeout: 5000, // 5 seconds for command execution
+});
+
+// Track Redis connection state
+let redisConnected = false;
+
+// Handle Redis connection events
+redisConnection.on('connect', () => {
+  logger.info('Email queue Redis connection established');
+  redisConnected = true;
+});
+
+redisConnection.on('ready', () => {
+  logger.info('Email queue Redis connection ready');
+  redisConnected = true;
+});
+
+redisConnection.on('error', (err) => {
+  logger.error('Email queue Redis connection error:', err.message);
+  redisConnected = false;
+});
+
+redisConnection.on('close', () => {
+  logger.warn('Email queue Redis connection closed');
+  redisConnected = false;
+});
+
+redisConnection.on('reconnecting', () => {
+  logger.info('Email queue Redis reconnecting...');
 });
 
 // Email queue configuration
@@ -252,23 +283,49 @@ const queueEmail = async (emailData, options = {}) => {
     },
   };
 
-  const job = await emailQueue.add(
-    EMAIL_JOB_TYPES.SINGLE,
-    {
-      type: EMAIL_JOB_TYPES.SINGLE,
-      emailData,
-      createdAt: new Date().toISOString(),
-    },
-    jobOptions
-  );
+  try {
+    // Check if Redis is connected before attempting to queue
+    if (!redisConnected) {
+      logger.warn(`Email queue unavailable (Redis not connected). Email to ${emailData.to} will not be queued.`);
+      return {
+        jobId: null,
+        recipient: emailData.to,
+        priority,
+        delay,
+        status: 'skipped_redis_unavailable',
+      };
+    }
 
-  logger.info(`Email queued with job ID: ${job.id} for ${emailData.to}`);
-  return {
-    jobId: job.id,
-    recipient: emailData.to,
-    priority,
-    delay,
-  };
+    const job = await emailQueue.add(
+      EMAIL_JOB_TYPES.SINGLE,
+      {
+        type: EMAIL_JOB_TYPES.SINGLE,
+        emailData,
+        createdAt: new Date().toISOString(),
+      },
+      jobOptions
+    );
+
+    logger.info(`Email queued with job ID: ${job.id} for ${emailData.to}`);
+    return {
+      jobId: job.id,
+      recipient: emailData.to,
+      priority,
+      delay,
+      status: 'queued',
+    };
+  } catch (error) {
+    // Log error but don't throw - allow the application to continue
+    logger.error(`Failed to queue email to ${emailData.to}:`, error.message);
+    return {
+      jobId: null,
+      recipient: emailData.to,
+      priority,
+      delay,
+      status: 'failed',
+      error: error.message,
+    };
+  }
 };
 
 /**
