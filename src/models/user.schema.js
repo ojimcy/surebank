@@ -63,24 +63,13 @@ const userSchema = mongoose.Schema(
       minlength: 8,
       maxlength: 128,
       validate(value) {
-        // Enhanced password validation with 8 character minimum
+        // Simplified password validation - 8 characters minimum only
         const errors = [];
-        
+
         if (value.length < 8) errors.push('Password must be at least 8 characters long');
         if (value.length > 128) errors.push('Password must not exceed 128 characters');
-        if (!/[a-z]/.test(value)) errors.push('Password must contain at least one lowercase letter');
-        if (!/[A-Z]/.test(value)) errors.push('Password must contain at least one uppercase letter');
-        if (!/\d/.test(value)) errors.push('Password must contain at least one number');
-        if (!/[@$!%*?&]/.test(value)) errors.push('Password must contain at least one special character (@$!%*?&)');
         if (/\s/.test(value)) errors.push('Password must not contain spaces');
-        
-        // Check for common weak patterns
-        const commonPatterns = ['password', '12345678', 'qwerty', 'letmein'];
-        const lowerValue = value.toLowerCase();
-        if (commonPatterns.some(pattern => lowerValue.includes(pattern))) {
-          errors.push('Password contains common patterns. Please choose a more unique password');
-        }
-        
+
         if (errors.length > 0) {
           throw new Error(errors.join('. '));
         }
