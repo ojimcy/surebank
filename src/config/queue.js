@@ -13,6 +13,7 @@ class QueueService {
   async initialize() {
     try {
       // Create Redis connection for BullMQ
+      // Note: maxRetriesPerRequest MUST be null for BullMQ blocking operations
       this.connection = new Redis({
         host: config.redis.host,
         port: config.redis.port,
@@ -21,7 +22,7 @@ class QueueService {
         retryDelayOnFailover: 100,
         retryDelayOnClusterDown: 300,
         enableReadyCheck: true,
-        maxRetriesPerRequest: 3,
+        maxRetriesPerRequest: null, // Required by BullMQ for blocking operations
         connectionName: 'surebank-queue',
         ...(config.env === 'production' && config.redis.tls ? { tls: {} } : {}),
       });

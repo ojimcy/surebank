@@ -23,9 +23,10 @@ const redisConfig = config.upstash.enabled
     };
 
 // Create Redis connection with proper timeout settings for Lambda
+// Note: maxRetriesPerRequest MUST be null for BullMQ blocking operations
 const redisConnection = new IORedis(redisConfig, {
   connectTimeout: 5000, // 5 seconds to establish connection
-  maxRetriesPerRequest: 3,
+  maxRetriesPerRequest: null, // Required by BullMQ for blocking operations
   retryDelayOnFailover: 100,
   enableReadyCheck: false,
   enableOfflineQueue: false, // Don't queue commands when offline
