@@ -112,7 +112,7 @@ const deployBridge = () => {
     // eslint-disable-next-line no-console
     console.log('\n📋 Next Steps:');
     // eslint-disable-next-line no-console
-    console.log('1. Ensure the bridge is accessible at: https://surebank.sonicflare.net/payments/success');
+    console.log('1. Ensure the bridge is accessible at: https://stores.surebankstores.ng/payments/success');
     // eslint-disable-next-line no-console
     console.log('2. Test mobile payment flow');
     // eslint-disable-next-line no-console
@@ -131,7 +131,7 @@ const deployBridge = () => {
  * Generate test URLs for verification
  */
 const generateTestUrls = () => {
-  const baseUrl = process.env.FRONTEND_URL || 'https://surebank.sonicflare.net';
+  const baseUrl = process.env.FRONTEND_URL || 'https://stores.surebankstores.ng';
 
   // eslint-disable-next-line no-console
   console.log('\n🧪 Test URLs for Bridge Verification:');

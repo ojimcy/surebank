@@ -68,13 +68,12 @@ const getPlatformUrl = (req, defaultUrl, contributionType, reference) => {
 
 /**
  * Get mobile-friendly callback URL for payment initialization
- * Since Paystack requires web addresses (HTTP/HTTPS), we use a web bridge URL
- * that can redirect to mobile app for mobile requests
+ * Returns deep link for mobile apps and web URL for web clients
  *
  * @param {Object} req - Express request object
  * @param {string} contributionType - Type of contribution
  * @param {string} packageId - Package ID (optional)
- * @returns {string} Callback URL
+ * @returns {string} Callback URL (deep link for mobile, web URL for web)
  */
 const getMobileCallbackUrl = (req, contributionType, packageId = null) => {
   const isMobile = isMobileApp(req);
@@ -90,35 +89,44 @@ const getMobileCallbackUrl = (req, contributionType, packageId = null) => {
     },
   });
 
-  // Paystack requires web addresses (HTTP/HTTPS), not custom URL schemes
-  // So we use a web bridge URL that points to our React app's payment success page
-  const baseUrl = process.env.FRONTEND_URL || 'https://surebank.sonicflare.net';
-  const params = new URLSearchParams({
-    type: contributionType,
-    ...(packageId && { packageId }),
-    ...(isMobile && { platform: 'mobile' }), // Add platform indicator for the React component
-  });
-
-  const webBridgeUrl = `${baseUrl}/payments/success?${params.toString()}`;
-
   if (isMobile) {
-    logger.info('Generated mobile bridge callback URL:', {
+    // Return deep link for mobile app - Paystack will redirect to this after payment
+    const baseScheme = process.env.MOBILE_APP_SCHEME || 'surebank';
+    const params = new URLSearchParams({
+      type: contributionType,
+      ...(packageId && { packageId }),
+    });
+
+    const deepLink = `${baseScheme}://payment/callback?${params.toString()}`;
+
+    logger.info('Generated mobile deep link callback URL:', {
       contributionType,
       packageId,
       platform: 'mobile',
-      webBridgeUrl,
-      note: 'This web URL will detect mobile platform and redirect to app',
+      deepLink,
+      note: 'App will open with this deep link after payment',
     });
-  } else {
-    logger.info('Generated web callback URL:', {
-      contributionType,
-      packageId,
-      platform: 'web',
-      webBridgeUrl,
-    });
+
+    return deepLink;
   }
 
-  return webBridgeUrl;
+  // For web clients, use web URL
+  const baseUrl = process.env.FRONTEND_URL || 'https://stores.surebankstores.ng';
+  const params = new URLSearchParams({
+    type: contributionType,
+    ...(packageId && { packageId }),
+  });
+
+  const webUrl = `${baseUrl}/payments/success?${params.toString()}`;
+
+  logger.info('Generated web callback URL:', {
+    contributionType,
+    packageId,
+    platform: 'web',
+    webUrl,
+  });
+
+  return webUrl;
 };
 
 module.exports = {

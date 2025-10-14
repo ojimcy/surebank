@@ -45,6 +45,7 @@ cat > /tmp/cors-config.json <<EOF
                 "https://surebank.ng",
                 "https://surebank.sonicflare.net",
                 "https://admin.surebankstores.ng",
+                "https://stores.surebankstores.ng",
                 "https://localhost",
                 "https://localhost:8081",
                 "http://localhost:8081",

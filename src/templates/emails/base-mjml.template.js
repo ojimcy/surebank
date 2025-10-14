@@ -149,11 +149,11 @@ module.exports = (content, options = {}) => {
           <mj-column>
             ${showLogo ? `
             <mj-image 
-              src="${process.env.FRONTEND_URL || 'https://surebank.sonicflare.net'}/icon.png" 
+              src="${process.env.FRONTEND_URL || 'https://stores.surebankstores.ng'}/icon.png" 
               alt="SureBank" 
               width="180px" 
               align="center"
-              href="${process.env.FRONTEND_URL || 'https://surebank.sonicflare.net'}"
+              href="${process.env.FRONTEND_URL || 'https://stores.surebankstores.ng'}"
             />
             ` : `
             <mj-text color="#FFFFFF" font-size="28px" font-weight="700" align="center">

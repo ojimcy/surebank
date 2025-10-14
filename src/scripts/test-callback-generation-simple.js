@@ -37,7 +37,7 @@ const getMobileCallbackUrl = (req, contributionType, packageId = null) => {
 
   // Paystack requires web addresses (HTTP/HTTPS), not custom URL schemes
   // So we use a web bridge URL that can redirect to mobile app
-  const baseUrl = process.env.FRONTEND_URL || 'https://surebank.sonicflare.net';
+  const baseUrl = process.env.FRONTEND_URL || 'https://stores.surebankstores.ng';
   const params = new URLSearchParams({
     type: contributionType,
     ...(packageId && { packageId }),
