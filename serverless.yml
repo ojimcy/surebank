@@ -14,8 +14,7 @@ provider:
   httpApi:
     cors:
       allowedOrigins:
-        - 'https://surebank.ng'
-        - 'https://surebank.sonicflare.net'
+        - 'https://surebankstores.ng'
         - 'https://admin.surebankstores.ng'
         - 'https://stores.surebankstores.ng'
         - 'http://localhost:8081'
