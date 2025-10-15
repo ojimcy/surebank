@@ -284,11 +284,6 @@ const getAccountById = async (id) => {
 const createSelfAccount = async (userId, accountType) => {
   const accountModel = await Account();
   const user = await getUserById(userId);
-  // kyc check
-  if (user.kycStatus !== 'verified') {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Please complete your KYC to create an account');
-  }
-
   // Check if the user already has an account of the specified type
   const existingAccount = await accountModel.findOne({ userId, accountType });
   if (existingAccount) {

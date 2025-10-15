@@ -28,10 +28,6 @@ const createVirtualAccount = async (userId) => {
       throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }
 
-    // Check if user has completed KYC
-    if (user.kycStatus !== 'verified') {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'User must complete KYC verification first');
-    }
 
     // Generate a unique reference
     const reference = `va_${uuidv4()}`;
