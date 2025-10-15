@@ -1,7 +1,13 @@
 const logger = require('../config/logger');
-const mailjetService = require('./mailjet.service');
+const queueService = require('../config/queue');
+const emailWorker = require('../workers/email.worker');
 
-// Email priorities (kept for compatibility)
+/**
+ * Email Queue Service
+ * Manages email sending through the in-memory queue system
+ */
+
+// Email priorities (for backward compatibility)
 const EMAIL_PRIORITIES = {
   CRITICAL: 1,    // Security alerts, password resets
   HIGH: 2,        // Transaction confirmations, OTP
@@ -10,52 +16,202 @@ const EMAIL_PRIORITIES = {
   BULK: 5,        // Mass communications
 };
 
-// Email job types (kept for compatibility)
+// Email job types
 const EMAIL_JOB_TYPES = {
   SINGLE: 'send-single-email',
   BULK: 'send-bulk-emails',
   SCHEDULED: 'send-scheduled-email',
+  TEMPLATE: 'send-template-email',
   DRIP_CAMPAIGN: 'send-drip-campaign',
 };
 
-/**
- * Sleep function for delays
- * @param {number} ms - Milliseconds to sleep
- */
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// Initialize email queue on service load
+let emailQueue = null;
+let isInitialized = false;
 
 /**
- * Send email directly without queue
+ * Initialize email queue service
+ */
+const initializeEmailQueue = async () => {
+  if (isInitialized) return;
+
+  try {
+    // Initialize queue system
+    await queueService.initialize();
+
+    // Get email queue
+    emailQueue = queueService.getQueue('email-queue');
+
+    // Initialize email worker
+    emailWorker.initialize(queueService);
+
+    isInitialized = true;
+    logger.info('Email queue service initialized successfully');
+  } catch (error) {
+    logger.error('Failed to initialize email queue service:', error);
+    // Fall back to direct sending if queue initialization fails
+    isInitialized = false;
+  }
+};
+
+/**
+ * Queue an email for sending
  * @param {Object} emailData - Email data
- * @param {Object} options - Options (kept for compatibility)
- * @returns {Promise<Object>} - Result information
+ * @param {Object} options - Options including priority
+ * @returns {Promise<Object>} - Job information
  */
 const queueEmail = async (emailData, options = {}) => {
   const {
     priority = EMAIL_PRIORITIES.NORMAL,
+    delay = 0,
   } = options;
 
   try {
-    logger.info(`Sending email directly to ${emailData.to} (priority: ${priority})`);
+    // Ensure queue is initialized
+    if (!isInitialized) {
+      await initializeEmailQueue();
+    }
 
-    // Send email directly using Mailjet service
-    await mailjetService.sendTransactionalEmail(emailData);
+    // If queue is available, use it
+    if (emailQueue) {
+      logger.info(`Queueing email to ${emailData.to} with priority ${priority}`);
 
-    logger.info(`Email sent successfully to ${emailData.to}`);
-    return {
-      jobId: `direct-${Date.now()}`, // Generate a pseudo job ID for compatibility
-      recipient: emailData.to,
-      priority,
-      delay: 0,
-      status: 'sent',
-    };
+      const job = await queueService.addJob(
+        'email-queue',
+        EMAIL_JOB_TYPES.SINGLE,
+        emailData,
+        {
+          priority,
+          delay,
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000,
+          },
+        }
+      );
+
+      logger.info(`Email queued successfully with job ID: ${job.id}`);
+      return {
+        jobId: job.id,
+        recipient: emailData.to,
+        priority,
+        delay,
+        status: 'queued',
+      };
+    } else {
+      // Fall back to direct sending if queue is not available
+      logger.warn('Queue not available, falling back to direct send');
+      const mailjetService = require('./mailjet.service');
+      await mailjetService.sendTransactionalEmail(emailData);
+
+      return {
+        jobId: `direct-${Date.now()}`,
+        recipient: emailData.to,
+        priority,
+        delay: 0,
+        status: 'sent-direct',
+      };
+    }
   } catch (error) {
-    logger.error(`Failed to send email to ${emailData.to}:`, error.message);
+    logger.error(`Failed to queue email to ${emailData.to}:`, error.message);
+
+    // Try direct send as last resort
+    try {
+      const mailjetService = require('./mailjet.service');
+      await mailjetService.sendTransactionalEmail(emailData);
+
+      return {
+        jobId: `fallback-${Date.now()}`,
+        recipient: emailData.to,
+        priority,
+        delay: 0,
+        status: 'sent-fallback',
+        error: error.message,
+      };
+    } catch (fallbackError) {
+      logger.error(`Direct send also failed:`, fallbackError.message);
+      return {
+        jobId: null,
+        recipient: emailData.to,
+        priority,
+        delay: 0,
+        status: 'failed',
+        error: fallbackError.message,
+      };
+    }
+  }
+};
+
+/**
+ * Send bulk emails through queue
+ * @param {Array} emails - Array of email data objects
+ * @param {Object} options - Bulk send options
+ * @returns {Promise<Object>} - Job information
+ */
+const queueBulkEmails = async (emails, options = {}) => {
+  const {
+    batchSize = 50,
+    delayBetweenBatches = 1000,
+    priority = EMAIL_PRIORITIES.BULK,
+  } = options;
+
+  try {
+    // Ensure queue is initialized
+    if (!isInitialized) {
+      await initializeEmailQueue();
+    }
+
+    if (emailQueue) {
+      logger.info(`Queueing bulk email job for ${emails.length} emails`);
+
+      const job = await queueService.addJob(
+        'email-queue',
+        EMAIL_JOB_TYPES.BULK,
+        {
+          emails,
+          options: {
+            batchSize,
+            delayBetweenBatches,
+          },
+        },
+        {
+          priority,
+          attempts: 2,
+          backoff: {
+            type: 'exponential',
+            delay: 5000,
+          },
+        }
+      );
+
+      logger.info(`Bulk email job queued with ID: ${job.id}`);
+      return {
+        jobId: job.id,
+        totalEmails: emails.length,
+        priority,
+        status: 'queued',
+      };
+    } else {
+      // Fall back to direct bulk send
+      logger.warn('Queue not available for bulk emails, using direct send');
+      const emailWorker = require('../workers/email.worker');
+      const result = await emailWorker.sendBulkEmails({ emails, options });
+
+      return {
+        jobId: `bulk-direct-${Date.now()}`,
+        totalEmails: emails.length,
+        priority,
+        status: 'sent-direct',
+        result,
+      };
+    }
+  } catch (error) {
+    logger.error(`Failed to queue bulk emails:`, error.message);
     return {
       jobId: null,
-      recipient: emailData.to,
+      totalEmails: emails.length,
       priority,
-      delay: 0,
       status: 'failed',
       error: error.message,
     };
@@ -63,65 +219,7 @@ const queueEmail = async (emailData, options = {}) => {
 };
 
 /**
- * Send bulk emails with rate limiting
- * @param {Array} emails - Array of email data objects
- * @param {Object} options - Bulk send options
- * @returns {Promise<Object>} - Summary of sent emails
- */
-const queueBulkEmails = async (emails, options = {}) => {
-  const {
-    batchSize = 50,
-    delayBetweenBatches = 1000,
-    priority = EMAIL_PRIORITIES.BULK
-  } = options;
-
-  const results = {
-    total: emails.length,
-    sent: 0,
-    failed: 0,
-    errors: []
-  };
-
-  logger.info(`Starting bulk email send for ${emails.length} emails`);
-
-  for (let i = 0; i < emails.length; i += batchSize) {
-    const batch = emails.slice(i, i + batchSize);
-
-    const batchPromises = batch.map(async (emailData, index) => {
-      try {
-        await mailjetService.sendTransactionalEmail(emailData);
-        results.sent++;
-        logger.info(`Bulk email sent to ${emailData.to} (${results.sent}/${emails.length})`);
-      } catch (error) {
-        results.failed++;
-        results.errors.push({
-          email: emailData.to,
-          error: error.message,
-          index: i + index
-        });
-        logger.error(`Bulk email failed for ${emailData.to}:`, error.message);
-      }
-    });
-
-    await Promise.all(batchPromises);
-
-    // Add delay between batches to respect rate limits
-    if (i + batchSize < emails.length && delayBetweenBatches > 0) {
-      logger.info(`Waiting ${delayBetweenBatches}ms before next batch...`);
-      await sleep(delayBetweenBatches);
-    }
-
-    logger.info(`Processed batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(emails.length / batchSize)}`);
-  }
-
-  logger.info(`Bulk email send completed: ${results.sent} sent, ${results.failed} failed`);
-  return results;
-};
-
-/**
  * Schedule email for future delivery
- * Note: Without Redis/queue, this uses setTimeout for in-process scheduling
- * Will be lost if server restarts before scheduled time
  * @param {Object} emailData - Email data
  * @param {Date|string} scheduledFor - When to send the email
  * @param {Object} options - Options
@@ -137,97 +235,249 @@ const scheduleEmail = async (emailData, scheduledFor, options = {}) => {
 
   const delay = scheduledDate.getTime() - now.getTime();
   const { priority = EMAIL_PRIORITIES.NORMAL } = options;
-  const scheduleId = `schedule-${Date.now()}`;
 
-  // Schedule the email using setTimeout
-  setTimeout(async () => {
-    try {
-      await mailjetService.sendTransactionalEmail(emailData);
-      logger.info(`Scheduled email sent to ${emailData.to} at ${scheduledDate}`);
-    } catch (error) {
-      logger.error(`Failed to send scheduled email to ${emailData.to}:`, error.message);
+  try {
+    // Ensure queue is initialized
+    if (!isInitialized) {
+      await initializeEmailQueue();
     }
-  }, delay);
 
-  logger.info(`Email scheduled with ID: ${scheduleId} for ${emailData.to} at ${scheduledDate}`);
-  return {
-    jobId: scheduleId,
-    recipient: emailData.to,
-    scheduledFor: scheduledDate,
-    delay,
-  };
+    if (emailQueue) {
+      logger.info(`Scheduling email to ${emailData.to} for ${scheduledDate.toISOString()}`);
+
+      const job = await queueService.addJob(
+        'email-queue',
+        EMAIL_JOB_TYPES.SINGLE,
+        emailData,
+        {
+          priority,
+          delay,
+          attempts: 3,
+        }
+      );
+
+      logger.info(`Email scheduled with job ID: ${job.id}`);
+      return {
+        jobId: job.id,
+        recipient: emailData.to,
+        scheduledFor: scheduledDate,
+        delay,
+        status: 'scheduled',
+      };
+    } else {
+      // Fall back to setTimeout for scheduled emails
+      logger.warn('Queue not available, using setTimeout for scheduled email');
+
+      const scheduleId = `schedule-${Date.now()}`;
+      setTimeout(async () => {
+        try {
+          const mailjetService = require('./mailjet.service');
+          await mailjetService.sendTransactionalEmail(emailData);
+          logger.info(`Scheduled email sent to ${emailData.to} at ${scheduledDate}`);
+        } catch (error) {
+          logger.error(`Failed to send scheduled email to ${emailData.to}:`, error.message);
+        }
+      }, delay);
+
+      return {
+        jobId: scheduleId,
+        recipient: emailData.to,
+        scheduledFor: scheduledDate,
+        delay,
+        status: 'scheduled-timeout',
+      };
+    }
+  } catch (error) {
+    logger.error(`Failed to schedule email:`, error.message);
+    return {
+      jobId: null,
+      recipient: emailData.to,
+      scheduledFor: scheduledDate,
+      delay,
+      status: 'failed',
+      error: error.message,
+    };
+  }
 };
 
 /**
- * Get queue statistics (mock implementation for compatibility)
+ * Get queue statistics
  * @returns {Promise<Object>} - Queue statistics
  */
 const getQueueStats = async () => {
-  // Return empty stats since we don't have a real queue
-  return {
-    waiting: 0,
-    active: 0,
-    completed: 0,
-    failed: 0,
-    delayed: 0,
-    total: 0,
-    status: 'direct-send-mode',
-    message: 'Email service is running in direct send mode without queue'
-  };
+  try {
+    if (!isInitialized) {
+      await initializeEmailQueue();
+    }
+
+    if (emailQueue) {
+      const stats = await emailQueue.getJobCounts();
+      return {
+        ...stats,
+        status: 'queue-mode',
+        message: 'Email service is running with in-memory queue',
+      };
+    } else {
+      return {
+        waiting: 0,
+        active: 0,
+        completed: 0,
+        failed: 0,
+        delayed: 0,
+        total: 0,
+        status: 'direct-mode',
+        message: 'Email service is running in direct send mode',
+      };
+    }
+  } catch (error) {
+    logger.error('Error getting queue stats:', error);
+    return {
+      waiting: 0,
+      active: 0,
+      completed: 0,
+      failed: 0,
+      delayed: 0,
+      total: 0,
+      status: 'error',
+      message: error.message,
+    };
+  }
 };
 
 /**
- * Get failed jobs (mock implementation for compatibility)
+ * Get failed jobs
  * @param {number} limit - Maximum number of jobs to return
  * @returns {Promise<Array>} - Array of failed jobs
  */
 const getFailedJobs = async (limit = 50) => {
-  // Return empty array since we don't track failed jobs without queue
-  return [];
+  try {
+    if (!isInitialized) {
+      await initializeEmailQueue();
+    }
+
+    if (emailQueue) {
+      return await emailQueue.getFailed(0, limit - 1);
+    } else {
+      return [];
+    }
+  } catch (error) {
+    logger.error('Error getting failed jobs:', error);
+    return [];
+  }
 };
 
 /**
- * Retry failed job (mock implementation for compatibility)
+ * Retry failed job
  * @param {string} jobId - Job ID to retry
  * @returns {Promise<Object>} - Job information
  */
 const retryFailedJob = async (jobId) => {
-  logger.warn(`Retry requested for job ${jobId}, but queue is not available in direct send mode`);
-  return {
-    jobId,
-    status: 'not_available',
-    message: 'Job retry not available in direct send mode'
-  };
+  try {
+    if (!emailQueue) {
+      return {
+        jobId,
+        status: 'not_available',
+        message: 'Queue not available for retry',
+      };
+    }
+
+    // Get the failed job
+    const failedJobs = await emailQueue.getFailed();
+    const job = failedJobs.find(j => j.id === jobId);
+
+    if (!job) {
+      return {
+        jobId,
+        status: 'not_found',
+        message: 'Job not found in failed queue',
+      };
+    }
+
+    // Re-queue the job
+    const newJob = await queueService.addJob(
+      'email-queue',
+      job.name,
+      job.data,
+      {
+        priority: job.opts.priority || EMAIL_PRIORITIES.NORMAL,
+        attempts: 3,
+      }
+    );
+
+    logger.info(`Retried failed job ${jobId} as new job ${newJob.id}`);
+    return {
+      oldJobId: jobId,
+      newJobId: newJob.id,
+      status: 'retried',
+      message: 'Job retried successfully',
+    };
+  } catch (error) {
+    logger.error(`Error retrying job ${jobId}:`, error);
+    return {
+      jobId,
+      status: 'error',
+      message: error.message,
+    };
+  }
 };
 
 /**
- * Clean up old jobs (mock implementation for compatibility)
+ * Clean up old jobs
  * @param {Object} options - Cleanup options
  * @returns {Promise<Object>} - Cleanup summary
  */
 const cleanupJobs = async (options = {}) => {
-  // Nothing to clean up in direct send mode
-  return {
-    completed: 0,
-    failed: 0,
-    message: 'No cleanup needed in direct send mode'
-  };
+  const {
+    grace = 3600000, // 1 hour
+    limit = 100,
+    type = 'completed',
+  } = options;
+
+  try {
+    if (!emailQueue) {
+      return {
+        cleaned: 0,
+        message: 'Queue not available for cleanup',
+      };
+    }
+
+    const cleaned = await emailQueue.clean(grace, limit, type);
+
+    logger.info(`Cleaned ${cleaned} ${type} jobs from email queue`);
+    return {
+      cleaned,
+      type,
+      message: `Cleaned ${cleaned} ${type} jobs`,
+    };
+  } catch (error) {
+    logger.error('Error cleaning up jobs:', error);
+    return {
+      cleaned: 0,
+      error: error.message,
+    };
+  }
 };
 
 /**
- * Pause the queue (mock implementation for compatibility)
+ * Pause the queue
  * @returns {Promise<void>}
  */
 const pauseQueue = async () => {
-  logger.info('Email queue pause requested (no-op in direct send mode)');
+  if (emailQueue) {
+    emailQueue.pause();
+    logger.info('Email queue paused');
+  }
 };
 
 /**
- * Resume the queue (mock implementation for compatibility)
+ * Resume the queue
  * @returns {Promise<void>}
  */
 const resumeQueue = async () => {
-  logger.info('Email queue resume requested (no-op in direct send mode)');
+  if (emailQueue) {
+    emailQueue.resume();
+    logger.info('Email queue resumed');
+  }
 };
 
 /**
@@ -235,15 +485,27 @@ const resumeQueue = async () => {
  * @returns {Promise<void>}
  */
 const shutdown = async () => {
-  logger.info('Email service shutting down (direct send mode)');
+  try {
+    if (emailQueue) {
+      await emailQueue.close();
+      logger.info('Email queue closed gracefully');
+    }
+  } catch (error) {
+    logger.error('Error during email queue shutdown:', error);
+  }
 };
+
+// Initialize on module load
+initializeEmailQueue().catch(error => {
+  logger.error('Failed to initialize email queue on module load:', error);
+});
 
 // Handle graceful shutdown
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
 module.exports = {
-  emailQueue: null, // No queue in direct mode
+  emailQueue,
   queueEmail,
   queueBulkEmails,
   scheduleEmail,
