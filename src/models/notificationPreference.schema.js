@@ -28,6 +28,17 @@ const NOTIFICATION_TYPES = [
   'order_delivered',
   'order_canceled',
   'order_refund',
+  // Authentication & verification notifications
+  'reset_password',
+  'verify_email',
+  'password_reset',
+  'account_activity',
+  'security_alert',
+  'login_alert',
+  'transaction_alert',
+  'payment_confirmation',
+  'contribution',
+  'kyc_update',
 ];
 
 // Default preferences configuration for each notification type
@@ -57,6 +68,17 @@ const DEFAULT_PREFERENCES = {
   order_delivered: 'email',
   order_canceled: 'email',
   order_refund: 'email',
+  // Authentication & verification notifications - critical, always both channels
+  reset_password: 'both',
+  verify_email: 'both',
+  password_reset: 'both',
+  account_activity: 'both',
+  security_alert: 'both',
+  login_alert: 'both',
+  transaction_alert: 'both',
+  payment_confirmation: 'both',
+  contribution: 'both',
+  kyc_update: 'both',
 };
 
 const notificationPreferenceSchema = mongoose.Schema(

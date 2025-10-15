@@ -12,11 +12,14 @@ const PRESET_TYPES = ['minimal', 'balanced', 'everything', 'custom'];
 const CATEGORIES = {
   transactions: [
     'transaction_alerts',
+    'transaction_alert',
     'deposit_confirmation',
     'withdrawal_request',
     'withdrawal_approval',
     'withdrawal_success',
     'withdrawal_failed',
+    'payment_confirmation',
+    'contribution',
   ],
   packages: [
     'package_created',
@@ -28,11 +31,18 @@ const CATEGORIES = {
   ],
   security: [
     'security_alerts',
+    'security_alert',
     'login_alerts',
+    'login_alert',
+    'reset_password',
+    'password_reset',
+    'verify_email',
   ],
   account: [
     'account_activities',
+    'account_activity',
     'kyc_updates',
+    'kyc_update',
   ],
   orders: [
     'order_updates',
@@ -62,7 +72,12 @@ const PRESETS = {
     preferences: {
       // Security - Always on with all channels
       security_alerts: 'both',
+      security_alert: 'both',
       login_alerts: 'both',
+      login_alert: 'both',
+      reset_password: 'both',
+      password_reset: 'both',
+      verify_email: 'both',
 
       // Critical transactions only
       withdrawal_success: 'both',
@@ -71,6 +86,9 @@ const PRESETS = {
 
       // Everything else off
       transaction_alerts: 'none',
+      transaction_alert: 'none',
+      payment_confirmation: 'none',
+      contribution: 'none',
       withdrawal_request: 'none',
       withdrawal_approval: 'none',
       package_created: 'none',
@@ -80,7 +98,9 @@ const PRESETS = {
       daily_savings: 'none',
       savings_reminders: 'none',
       account_activities: 'none',
+      account_activity: 'none',
       kyc_updates: 'none',
+      kyc_update: 'none',
       order_updates: 'none',
       order_created: 'none',
       order_payment: 'none',
@@ -104,11 +124,14 @@ const PRESETS = {
     preferences: {
       // Transactions - In-app + Email
       transaction_alerts: 'both',
+      transaction_alert: 'both',
       deposit_confirmation: 'both',
       withdrawal_request: 'both',
       withdrawal_approval: 'both',
       withdrawal_success: 'both',
       withdrawal_failed: 'both',
+      payment_confirmation: 'both',
+      contribution: 'both',
 
       // Packages - In-app + Email
       package_created: 'both',
@@ -118,13 +141,20 @@ const PRESETS = {
       daily_savings: 'both',
       savings_reminders: 'both',
 
-      // Security - In-app + Email
+      // Security - In-app + Email (CRITICAL - always both)
       security_alerts: 'both',
+      security_alert: 'both',
       login_alerts: 'both',
+      login_alert: 'both',
+      reset_password: 'both',
+      password_reset: 'both',
+      verify_email: 'both',
 
       // Account - In-app + Email
       account_activities: 'both',
+      account_activity: 'both',
       kyc_updates: 'both',
+      kyc_update: 'both',
 
       // Orders - Email only
       order_updates: 'email',
@@ -152,11 +182,14 @@ const PRESETS = {
     preferences: {
       // Everything on with 'both' (in-app + email)
       transaction_alerts: 'both',
+      transaction_alert: 'both',
       deposit_confirmation: 'both',
       withdrawal_request: 'both',
       withdrawal_approval: 'both',
       withdrawal_success: 'both',
       withdrawal_failed: 'both',
+      payment_confirmation: 'both',
+      contribution: 'both',
       package_created: 'both',
       package_matured: 'both',
       package_maturity_alert: 'both',
@@ -164,9 +197,16 @@ const PRESETS = {
       daily_savings: 'both',
       savings_reminders: 'both',
       security_alerts: 'both',
+      security_alert: 'both',
       login_alerts: 'both',
+      login_alert: 'both',
+      reset_password: 'both',
+      password_reset: 'both',
+      verify_email: 'both',
       account_activities: 'both',
+      account_activity: 'both',
       kyc_updates: 'both',
+      kyc_update: 'both',
       order_updates: 'both',
       order_created: 'both',
       order_payment: 'both',
