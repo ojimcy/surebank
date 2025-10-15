@@ -287,14 +287,30 @@ const queueEmail = async (emailData, options = {}) => {
   try {
     // Check if Redis is connected before attempting to queue
     if (!redisConnected) {
-      logger.warn(`Email queue unavailable (Redis not connected). Email to ${emailData.to} will not be queued.`);
-      return {
-        jobId: null,
-        recipient: emailData.to,
-        priority,
-        delay,
-        status: 'skipped_redis_unavailable',
-      };
+      logger.warn(`Email queue unavailable (Redis not connected). Sending email directly to ${emailData.to}`);
+
+      // Fallback: Send email directly without queuing
+      try {
+        await mailjetService.sendTransactionalEmail(emailData);
+        logger.info(`Email sent directly (without queue) to ${emailData.to}`);
+        return {
+          jobId: null,
+          recipient: emailData.to,
+          priority,
+          delay,
+          status: 'sent_directly',
+        };
+      } catch (directSendError) {
+        logger.error(`Failed to send email directly to ${emailData.to}:`, directSendError.message);
+        return {
+          jobId: null,
+          recipient: emailData.to,
+          priority,
+          delay,
+          status: 'failed',
+          error: directSendError.message,
+        };
+      }
     }
 
     const job = await emailQueue.add(
