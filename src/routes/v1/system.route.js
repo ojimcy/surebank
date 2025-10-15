@@ -1,7 +1,7 @@
 const express = require('express');
 const auth = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
-const redisService = require('../../services/redis-wrapper.service');
+const redisService = require('../../services/redis.service');
 const config = require('../../config/config');
 const os = require('os');
 

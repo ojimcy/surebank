@@ -35,16 +35,9 @@ const { createCSRFMiddleware } = require('./middlewares/csrf');
 
 const app = express();
 
-// Initialize Redis connection on startup (with graceful fallback)
-(async () => {
-  try {
-    await redisService.connect();
-    logger.info('✅ Redis connected successfully');
-  } catch (error) {
-    logger.warn('⚠️ Redis connection failed, using in-memory fallback:', error.message);
-    logger.info('Application will continue with reduced caching capabilities');
-  }
-})();
+// Initialize in-memory token service
+// No external connection needed - service is ready immediately
+logger.info('✅ In-memory token service initialized (Redis-free mode)');
 
 // Trust proxy for proper IP detection
 app.set('trust proxy', 1);
