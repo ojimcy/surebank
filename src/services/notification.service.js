@@ -530,11 +530,9 @@ const NOTIFICATION_TEMPLATES = {
   },
 
   // Authentication notifications
+  // Note: OTP-based notifications (verify_email, reset_password) should NOT have in-app notifications
+  // because users cannot access them before logging in/verifying their account
   VERIFY_EMAIL: {
-    inApp: {
-      title: 'Verify Your Email',
-      bodyTemplate: 'Please verify your email address using the OTP: {{otp}}',
-    },
     email: {
       subject: 'Verify Your Email Address',
       template: 'VERIFY_EMAIL',
@@ -543,10 +541,6 @@ const NOTIFICATION_TEMPLATES = {
   },
 
   RESET_PASSWORD: {
-    inApp: {
-      title: 'Password Reset Requested',
-      bodyTemplate: 'Use this OTP to reset your password: {{otp}}',
-    },
     email: {
       subject: 'Reset Your Password',
       template: 'RESET_PASSWORD',

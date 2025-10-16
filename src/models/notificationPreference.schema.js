@@ -68,10 +68,13 @@ const DEFAULT_PREFERENCES = {
   order_delivered: 'email',
   order_canceled: 'email',
   order_refund: 'email',
-  // Authentication & verification notifications - critical, always both channels
-  reset_password: 'both',
-  verify_email: 'both',
-  password_reset: 'both',
+  // Authentication & verification notifications
+  // Note: OTP-based notifications should only use email/SMS (no in-app)
+  // Users cannot access in-app notifications before logging in/verifying
+  reset_password: 'email',
+  verify_email: 'email',
+  password_reset: 'email',
+  // Security and account notifications - use both channels
   account_activity: 'both',
   security_alert: 'both',
   login_alert: 'both',

@@ -75,9 +75,10 @@ const PRESETS = {
       security_alert: 'both',
       login_alerts: 'both',
       login_alert: 'both',
-      reset_password: 'both',
-      password_reset: 'both',
-      verify_email: 'both',
+      // OTP notifications - Email only (users can't access in-app before verifying)
+      reset_password: 'email',
+      password_reset: 'email',
+      verify_email: 'email',
 
       // Critical transactions only
       withdrawal_success: 'both',
@@ -146,9 +147,10 @@ const PRESETS = {
       security_alert: 'both',
       login_alerts: 'both',
       login_alert: 'both',
-      reset_password: 'both',
-      password_reset: 'both',
-      verify_email: 'both',
+      // OTP notifications - Email only (users can't access in-app before verifying)
+      reset_password: 'email',
+      password_reset: 'email',
+      verify_email: 'email',
 
       // Account - In-app + Email
       account_activities: 'both',
@@ -200,9 +202,10 @@ const PRESETS = {
       security_alert: 'both',
       login_alerts: 'both',
       login_alert: 'both',
-      reset_password: 'both',
-      password_reset: 'both',
-      verify_email: 'both',
+      // OTP notifications - Email only (users can't access in-app before verifying)
+      reset_password: 'email',
+      password_reset: 'email',
+      verify_email: 'email',
       account_activities: 'both',
       account_activity: 'both',
       kyc_updates: 'both',
