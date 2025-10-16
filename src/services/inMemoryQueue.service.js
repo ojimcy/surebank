@@ -304,10 +304,12 @@ class InMemoryQueue extends EventEmitter {
    * Process a single job
    */
   async processJob(job) {
+    logger.debug(`Looking for worker in queue "${this.name}" for job "${job.name}". Available workers: ${Array.from(this.workers.keys()).join(', ') || 'none'}`);
+
     const worker = this.workers.get('default') || this.workers.get(job.name);
 
     if (!worker) {
-      logger.error(`No worker registered for job ${job.name} in queue ${this.name}`);
+      logger.error(`No worker registered for job ${job.name} in queue ${this.name}. Available workers: ${Array.from(this.workers.keys()).join(', ') || 'none'}`);
       await this.failJob(job, new Error('No worker registered'));
       return;
     }
@@ -479,10 +481,17 @@ class InMemoryQueue extends EventEmitter {
       concurrency = 1;
     }
 
+    logger.info(`Registering worker for queue "${this.name}": name="${name}", concurrency=${concurrency}, workerType=${typeof worker}`);
+
+    if (typeof worker !== 'function') {
+      logger.error(`Invalid worker type for queue "${this.name}": expected function, got ${typeof worker}`);
+      return;
+    }
+
     this.workers.set(name, worker);
     this.options.concurrency = concurrency || this.options.concurrency;
 
-    logger.info(`Worker registered for queue "${this.name}" job type "${name}" with concurrency ${this.options.concurrency}`);
+    logger.info(`Worker registered for queue "${this.name}" job type "${name}" with concurrency ${this.options.concurrency}. Total workers: ${this.workers.size}`);
   }
 
   /**

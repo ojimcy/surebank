@@ -227,16 +227,26 @@ const sendTemplateEmail = async (data) => {
  */
 const initialize = (queueService) => {
   // Register worker with the queue
-  queueService.createWorker(QUEUE_NAME, processEmailJob, {
-    concurrency: 10, // Process up to 10 emails concurrently
-  });
+  // Use 'default' as the worker name so it processes all job types in the queue
+  const queue = queueService.getQueue(QUEUE_NAME);
+  if (!queue) {
+    logger.error(`Queue ${QUEUE_NAME} not found, cannot register email worker`);
+    return;
+  }
 
-  logger.info(`Email worker initialized for queue: ${QUEUE_NAME}`);
+  // Register the worker to process all jobs
+  // The worker will be registered as 'default' to handle all job types
+  logger.info(`Registering email worker for queue: ${QUEUE_NAME}`);
+  queue.process('default', 10, processEmailJob);
+
+  logger.info(`Email worker initialized for queue: ${QUEUE_NAME} with concurrency 10`);
 };
 
 module.exports = {
   QUEUE_NAME,
   JOB_TYPES,
   processEmailJob,
+  sendSingleEmail,
+  sendBulkEmails,
   initialize,
 };

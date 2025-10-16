@@ -28,30 +28,51 @@ const EMAIL_JOB_TYPES = {
 // Initialize email queue on service load
 let emailQueue = null;
 let isInitialized = false;
+let initializationPromise = null;
 
 /**
  * Initialize email queue service
  */
 const initializeEmailQueue = async () => {
+  // Return existing initialization promise if already in progress
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+
   if (isInitialized) return;
 
-  try {
-    // Initialize queue system
-    await queueService.initialize();
+  initializationPromise = (async () => {
+    try {
+      logger.info('Initializing email queue service...');
 
-    // Get email queue
-    emailQueue = queueService.getQueue('email-queue');
+      // Initialize queue system
+      await queueService.initialize();
+      logger.info('Queue system initialized');
 
-    // Initialize email worker
-    emailWorker.initialize(queueService);
+      // Get email queue
+      emailQueue = queueService.getQueue('email-queue');
+      if (!emailQueue) {
+        throw new Error('Failed to get email-queue from queue service');
+      }
+      logger.info('Email queue retrieved successfully');
 
-    isInitialized = true;
-    logger.info('Email queue service initialized successfully');
-  } catch (error) {
-    logger.error('Failed to initialize email queue service:', error);
-    // Fall back to direct sending if queue initialization fails
-    isInitialized = false;
-  }
+      // Initialize email worker
+      logger.info('Initializing email worker...');
+      emailWorker.initialize(queueService);
+      logger.info('Email worker initialized');
+
+      isInitialized = true;
+      logger.info('Email queue service initialized successfully');
+    } catch (error) {
+      logger.error('Failed to initialize email queue service:', error);
+      // Fall back to direct sending if queue initialization fails
+      isInitialized = false;
+      initializationPromise = null; // Allow retry on next call
+      throw error;
+    }
+  })();
+
+  return initializationPromise;
 };
 
 /**
