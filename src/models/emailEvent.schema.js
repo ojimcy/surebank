@@ -11,7 +11,24 @@ const emailEventSchema = mongoose.Schema(
     eventType: {
       type: String,
       required: true,
-      enum: ['send', 'bounce', 'complaint', 'delivery', 'reject', 'open', 'click', 'renderingFailure'],
+      enum: [
+        'send',
+        'sent',       // Mailjet: Email sent
+        'bounce',
+        'complaint',
+        'delivery',
+        'delivered',  // Mailjet: Email delivered
+        'reject',
+        'open',
+        'opened',     // Mailjet: Email opened
+        'click',
+        'clicked',    // Mailjet: Link clicked
+        'blocked',    // Mailjet: Email blocked
+        'spam',       // Mailjet: Marked as spam
+        'unsub',      // Mailjet: Unsubscribed
+        'typofix',    // Mailjet: Email typo fixed
+        'renderingFailure',
+      ],
       index: true,
     },
     email: {
